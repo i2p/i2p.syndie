@@ -1051,7 +1051,7 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
     public void translate(TranslationRegistry registry) {
         _nameLabel.setText(registry.getText("Name") + ':');
         _locationLabel.setText(registry.getText("Archive URL") + ':');
-        _locationAdvanced.setText(registry.getText("Advanced..."));
+        _locationAdvanced.setText(registry.getText("Advanced") + "...");
         _locationAdvancedSendKey.setText(registry.getText("Specify posting key"));
         _locationAdvancedReadKey.setText(registry.getText("Specify reading key"));
         _locationAdvancedFreenet.setText(registry.getText("Configure freenet settings"));

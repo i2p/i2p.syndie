@@ -766,7 +766,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
     public void translate(TranslationRegistry registry) {
         super.translate(registry);
         //_searchMenuView.setText(registry.getText("View"));
-        _searchAdvanced.setText(registry.getText("Search..."));
+        _searchAdvanced.setText(registry.getText("Search") + "...");
         if (_searchDetailPopup != null)
             _searchDetailPopup.setText(registry.getText("Search"));
     }

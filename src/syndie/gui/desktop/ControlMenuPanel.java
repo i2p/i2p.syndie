@@ -285,7 +285,7 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
             _httpservStatus.setText(_translationRegistry.getText("Running - press to stop"));
             _httpservStatus.setEnabled(true);
         } else if (HTTPServ.startInProgress()) {
-            _httpservStatus.setText(_translationRegistry.getText("Startup in progress..."));
+            _httpservStatus.setText(_translationRegistry.getText("Startup in progress") + "...");
             _httpservStatus.setEnabled(false);
         } else {
             _httpservStatus.setText(_translationRegistry.getText("Not running - press to start"));
@@ -614,7 +614,7 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
         _importLabel.setText(registry.getText("Import: "));
         _importFile.setText(registry.getText("individual message"));
         _importBulk.setText(registry.getText("directory (recursively)"));
-        _importBrowse.setText(registry.getText("Browse..."));
+        _importBrowse.setText(registry.getText("Browse") + "...");
         _import.setText(registry.getText("Import"));
         //_tabbedUI.setText(registry.getText("Advanced: Display the tabbed UI"));
         _changePass.setText(registry.getText("Change Syndie instance passphrase"));
@@ -622,7 +622,7 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
         _sql.setText(registry.getText("Advanced: SQL interface"));
         _open.setText(registry.getText("Open"));
         _switchLabel.setText(registry.getText("Log in to a different Syndie instance") + ':');
-        _switchBrowse.setText(registry.getText("Browse..."));
+        _switchBrowse.setText(registry.getText("Browse") + "...");
         _switchOpen.setText(registry.getText("Open selected"));
         _welcome.setText(registry.getText("Reshow welcome screen"));
         _archiveMgr.setText(registry.getText("Archive manager"));
@@ -630,7 +630,7 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
 
         _httpservLabel.setText(registry.getText("Integrated HTTP-accessible archive server:"));
         _httpservOnStart.setText(registry.getText("Run on startup"));
-        _httpservOptions.setText(registry.getText("Configure..."));
+        _httpservOptions.setText(registry.getText("Configure") + "...");
         
         updateHttpservStatus();
     }

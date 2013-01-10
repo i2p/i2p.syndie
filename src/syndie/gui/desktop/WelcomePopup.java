@@ -159,7 +159,7 @@ public class WelcomePopup implements Themeable, Translatable {
     public void translate(TranslationRegistry registry) {
         _shell.setText(registry.getText("Welcome"));
         _greeting.setText(registry.getText("Welcome to your new Syndie instance!"));
-        _question.setText(registry.getText("Do you want to..."));
+        _question.setText(registry.getText("Do you want to") + "...");
         _tour.setText(registry.getText("take the tour?"));
         _configSharing.setText(registry.getText("configure your sharing policy?"));
         _configIdent.setText(registry.getText("configure your default identity?"));

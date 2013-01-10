@@ -380,7 +380,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
     
     private void buildMenuArchive(final SyncArchive archive) {
         MenuItem item = new MenuItem(_treeMenu, SWT.PUSH);
-        item.setText(_translationRegistry.getText("Settings..."));
+        item.setText(_translationRegistry.getText("Settings") + "...");
         item.setImage(ImageUtil.ICON_SETTINGS);
         item.addSelectionListener(new FireSelectionListener() {
             public void fire() {

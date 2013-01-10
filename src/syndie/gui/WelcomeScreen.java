@@ -265,7 +265,7 @@ public class WelcomeScreen extends Wizard {
             });
         }
         _avatarItems[_avatarItems.length-1] = new MenuItem(_avatarMenu, SWT.PUSH);
-        _avatarItems[_avatarItems.length-1].setText(_browser.getTranslationRegistry().getText("Other..."));
+        _avatarItems[_avatarItems.length-1].setText(_browser.getTranslationRegistry().getText("Other") + "...");
         _avatarItems[_avatarItems.length-1].addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickAvatar(); }
             public void widgetSelected(SelectionEvent selectionEvent) { pickAvatar(); }

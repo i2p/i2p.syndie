@@ -1401,7 +1401,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _privacy.removeAll();
         _privacy.add(_translationRegistry.getText("Anyone can read the post"));
         _privacy.add(_translationRegistry.getText("Authorized readers of the forum can read the post"));
-        _privacy.add(_translationRegistry.getText("Passphrase required to read the post..."));
+        _privacy.add(_translationRegistry.getText("Passphrase required to read the post") + "...");
         _privacy.add(_translationRegistry.getText("Only forum administrators can read the post"));
         _privacy.setRedraw(true);
     }

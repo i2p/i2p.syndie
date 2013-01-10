@@ -935,7 +935,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         public void translate(TranslationRegistry registry) {
             _filterLabel.setText(registry.getText("Filter:  Since:"));
 
-            _filterAdvanced.setText(registry.getText("Advanced..."));
+            _filterAdvanced.setText(registry.getText("Advanced") + "...");
             _filterKeywordLabel.setText(registry.getText("Text") + ':');
             _filterTagLabel.setText(registry.getText("Tag") + ':');
             _filterUnreadOnly.setText(registry.getText("Unread only"));
@@ -943,7 +943,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             
             _advancedScopeAll.setText(registry.getText("All forums"));
             _advancedScopeBookmarked.setText(registry.getText("Bookmarked forums"));
-            _advancedScopeOther.setText(registry.getText("Specific forum..."));
+            _advancedScopeOther.setText(registry.getText("Specific forum") + "...");
             
             _advancedPrivacyPublic.setText(registry.getText("Readable by: anyone"));
             _advancedPrivacyAuthorized.setText(registry.getText("Readable by: authorized readers"));

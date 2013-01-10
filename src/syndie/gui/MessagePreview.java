@@ -313,7 +313,7 @@ public class MessagePreview extends BaseComponent implements Themeable, Translat
     
     public void translate(TranslationRegistry registry) {
         _headerView.setText(registry.getText("View"));
-        _headerReply.setText(registry.getText("Reply..."));
+        _headerReply.setText(registry.getText("Reply") + "...");
         
         _headerReplyAuthorPrivate.setText(registry.getText("Send a private reply to the author"));
         _headerReplyForumPrivate.setText(registry.getText("Send a private reply to the forum administrators"));

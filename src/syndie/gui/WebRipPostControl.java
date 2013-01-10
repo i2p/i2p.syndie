@@ -202,7 +202,7 @@ public class WebRipPostControl extends WebRipPageControl {
     public void translate(TranslationRegistry registry) {
         super.translate(registry);
         _privacyPublic.setText(registry.getText("Anyone can read the rip"));
-        _privacyPBE.setText(registry.getText("Passphrase required to read the rip..."));
+        _privacyPBE.setText(registry.getText("Passphrase required to read the rip") + "...");
         _privacyAuthorized.setText(registry.getText("Only authorized people can read the rip"));
         _tagWithURL.setText(registry.getText("Tag the post with the URL?"));
         

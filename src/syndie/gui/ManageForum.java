@@ -1149,14 +1149,14 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
         _authReply.setText(registry.getText("Read forum feedback"));
 
         _archiveRemoveAll.setText(registry.getText("Remove all"));
-        _archiveSelect.setText(registry.getText("Select..."));
+        _archiveSelect.setText(registry.getText("Select") + "...");
         
         _refRemoveAll.setText(registry.getText("Remove all"));
-        _refSelect.setText(registry.getText("Select..."));
+        _refSelect.setText(registry.getText("Select") + "...");
         
         _banRemoveAll.setText(registry.getText("Remove all"));
-        _banSelect.setText(registry.getText("Select..."));
+        _banSelect.setText(registry.getText("Select") + "...");
     
-        _avatarOther.setText(registry.getText("Other..."));
+        _avatarOther.setText(registry.getText("Other") + "...");
     }
 }

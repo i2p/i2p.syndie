@@ -2286,7 +2286,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         });
         popup.setShowText(false);
         popup.limitOptions(false, false, false, true, true, false, false, false, false, false, false);
-        popup.showPopup(_translation.getText("Export..."));
+        popup.showPopup(_translation.getText("Export") + "...");
     }
     private void exportMessage(SyndieURI uri) {
         Hash scope = uri.getScope();

@@ -954,7 +954,7 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
         _watchedRoot.setImage(ImageUtil.ICON_WATCHEDFORUM);
         _importedRoot.setText(registry.getText("Imported resources"));
         _importedRoot.setImage(ImageUtil.ICON_IMPORTEDRESOURCES);
-        //_searchRoot.setText(registry.getText("Search results..."));
+        //_searchRoot.setText(registry.getText("Search results") + "...");
         //refreshBookmarks();
         //redrawPostable();
         //redrawManageable();

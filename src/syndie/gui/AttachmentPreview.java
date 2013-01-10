@@ -293,7 +293,7 @@ class AttachmentPreview extends BaseComponent implements Translatable, Themeable
         _sizeLabel.setText(registry.getText("Size") + ':');
         _typeLabel.setText(registry.getText("Type") + ':');
         _saveAsLabel.setText(registry.getText("Save as") + ':');
-        _saveAsBrowse.setText(registry.getText("Browse..."));
+        _saveAsBrowse.setText(registry.getText("Browse") + "...");
         _saveAsOk.setText(registry.getText("Save"));
     }
     

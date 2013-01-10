@@ -796,7 +796,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
     
     public void setNextSync(long when, boolean online) {
         if (!online) {
-            _nextSyncDate.setText(_translationRegistry.getText("Deferred..."));
+            _nextSyncDate.setText(_translationRegistry.getText("Deferred") + "...");
             _syncNow = false;
         } else if (when <= 0) {
             _nextSyncDate.setText(_translationRegistry.getText("None scheduled"));
