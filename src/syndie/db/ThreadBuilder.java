@@ -96,9 +96,9 @@ public class ThreadBuilder {
                         refContainer.msg = new Message();
                         refContainer.msg.id = ref;
                         
-                        timer.addEvent("building expanded ancestor");
+                        //timer.addEvent("building expanded ancestor");
                         int rc = ThreadAccumulatorJWZ.buildAncestors(_client, _ui, ref, tmiToAncestors);
-                        timer.addEvent("expanded ancestor built");
+                        //timer.addEvent("expanded ancestor built");
                         refContainer.msg.references = (List)tmiToAncestors.get(ref);
                         if (DEBUG) _ui.debugMessage("ancestors for " + ref + ": " + refContainer.msg.references);
                         

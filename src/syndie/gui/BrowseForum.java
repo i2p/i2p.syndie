@@ -2,8 +2,10 @@ package syndie.gui;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import net.i2p.data.Hash;
 import net.i2p.data.SigningPrivateKey;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.dnd.Clipboard;
@@ -35,6 +37,7 @@ import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+
 import syndie.Constants;
 import syndie.data.ChannelInfo;
 import syndie.data.MessageInfo;
@@ -50,13 +53,13 @@ import syndie.db.UI;
  *
  */
 public class BrowseForum extends BaseComponent implements MessageTree.MessageTreeListener, Translatable, Themeable {
-    private NavigationControl _navControl;
-    private BookmarkControl _bookmarkControl;
-    private URIControl _uriControl;
-    private DataCallback _dataCallback;
-    private BanControl _banControl;
+    private final NavigationControl _navControl;
+    private final BookmarkControl _bookmarkControl;
+    private final URIControl _uriControl;
+    private final DataCallback _dataCallback;
+    private final BanControl _banControl;
 
-    private Composite _parent;
+    private final Composite _parent;
     private Composite _root;
     private SashForm _sash;
     private Composite _top;
@@ -82,14 +85,14 @@ public class BrowseForum extends BaseComponent implements MessageTree.MessageTre
     private Label _metaIconAdmins;
     private Combo _metaRefCombo;
     private MessageTree _tree;
-    private MessageTree.MessageTreeListener _listener;
+    private final MessageTree.MessageTreeListener _listener;
     //private MessagePreview _preview;
     private Composite _filterRow;
     private Hash _scope;
-    private boolean _viewOnly;
+    private final boolean _viewOnly;
     //private boolean _shouldPreview;
     
-    private boolean _byForum;
+    private final boolean _byForum;
     
     public BrowseForum(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Composite parent, NavigationControl navControl, BookmarkControl bookmarkControl, URIControl uriControl, DataCallback callback, BanControl ban, MessageTree.MessageTreeListener lsnr, boolean byForum) {
         this(client, ui, themes, trans, parent, navControl, bookmarkControl, uriControl, callback, ban, lsnr, false, byForum);
@@ -140,7 +143,7 @@ public class BrowseForum extends BaseComponent implements MessageTree.MessageTre
         gd.exclude = true;
         _meta.setLayoutData(gd);
         gl = new GridLayout(9, false);
-        gl.horizontalSpacing = 0;
+        gl.horizontalSpacing = 6;
         gl.marginHeight = 0;
         gl.marginWidth = 0;
         gl.verticalSpacing = 0;

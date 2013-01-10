@@ -2119,16 +2119,12 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         if ( (name != null) && (name.length() > 0) )
             buf.append(name);
         if (buf.length() > 0)
-            buf.append(": ");
-        if ( (desc != null) && (desc.length() > 0) ) {
-            buf.append(desc);
-            if (buf.length() > 0)
-                buf.append(": ");
-        }
+            buf.append(' ');
         if (chan != null)
-            buf.append(chan.toBase64().substring(0,6));
-        else
-            buf.append("no channel hash ??????");
+            buf.append('[').append(chan.toBase64().substring(0,6)).append(']');
+        if ( (desc != null) && (desc.length() > 0) ) {
+            buf.append(' ').append(desc);
+        }
         return buf.toString();
     }
     
@@ -2237,9 +2233,9 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                 Hash pubHash = priv.toPublic().calculateHash();
                 String name = _client.getChannelName(pubHash);
                 if (name != null)
-                    name = name + " (" + pubHash.toBase64().substring(0,6) + ")";
+                    name = name + " [" + pubHash.toBase64().substring(0,6) + ']';
                 else
-                    name = "(" + pubHash.toBase64().substring(0,6) + ")";
+                    name = '[' + pubHash.toBase64().substring(0,6) + ']';
                 if (pubHash.equals(_forum)) {
                     _signAsChannel = pubHash;
                     _signAsCurrentLabel.setText(name);
@@ -2279,6 +2275,8 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     }
     
     public void pickAuthor() {
+        // TODO this popup has the wrong title "choose forum"
+        // and also has the "only include forums" text at the top
         final ForumReferenceChooserPopup popup = new ForumReferenceChooserPopup(_client, _ui, _themeRegistry, _translationRegistry, _navControl, _banControl, _bookmarkControl, _root, null, new IdentityChannelSource());
         popup.setListener(new ReferenceChooserTree.AcceptanceListener() {
             public void referenceAccepted(SyndieURI uri) {

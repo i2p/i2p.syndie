@@ -233,7 +233,9 @@ public class TextUI implements UI {
         TextUI ui = new TextUI(args);
         ui.run();
     }
+
     public TextUI(String args[]) { this(args, null, false); }
+
     public TextUI(String args[], TextEngine.ScriptListener listener, boolean debug) {
         this(debug);
         System.setProperty("jbigi.dontLog", "true");

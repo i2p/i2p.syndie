@@ -2,7 +2,9 @@ package syndie.gui;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import net.i2p.data.Hash;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.events.ShellListener;
@@ -16,13 +18,16 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.db.DBClient;
 import syndie.db.UI;
 
 /**
- *
+ * TODO this popup is also used for "choose author" from MessageEditor, but
+ * needs some small changes for that case.
+ * and also has the "only include forums" text at the top
  */
 public class ForumReferenceChooserPopup extends BaseComponent implements ReferenceChooserPopup, Themeable, Translatable {
     private Composite _parent;

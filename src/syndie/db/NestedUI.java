@@ -5,8 +5,9 @@ import java.util.List;
 /**
  */
 public class NestedUI implements UI {
-    protected UI _real;
+    protected final UI _real;
     private int _exit;
+
     public NestedUI(UI real) { _real = real; _exit = 0; }
     public int getExitCode() { return _exit; }
     public Opts readCommand() { return _real.readCommand(); }

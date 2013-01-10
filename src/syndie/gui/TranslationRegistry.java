@@ -17,23 +17,25 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
+
 import org.eclipse.swt.graphics.Image;
+
 import syndie.db.UI;
 
 /**
  *
  */
 public class TranslationRegistry {
-    private UI _ui;
-    private File _rootDir;
-    private Set _translatable;
+    private final UI _ui;
+    private final File _rootDir;
+    private final Set<Translatable> _translatable;
     private String _lang;
     private Properties _text;
-    private Map _images;
+    private Map<String, Image> _images;
     private Properties _baseText;
-    private Map _baseImages;
-    private Map _embeddedTranslations;
-    private Map _fileTranslations;
+    private Map<String, Image> _baseImages;
+    private Map<String, Properties> _embeddedTranslations;
+    private Map<String, Properties> _fileTranslations;
     
     public TranslationRegistry(UI ui, File rootDir) {
         _ui = ui;

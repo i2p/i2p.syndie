@@ -357,7 +357,8 @@ public class HTTPServ implements CLI.Command {
                     if (socket != null)
                         handle(socket);
                 } catch (IOException ioe) {
-                    _ui.debugMessage("Error handing socket", ioe);
+                    // normal, broken pipe etc.
+                    //_ui.debugMessage("Error handing socket", ioe);
                 } catch (InterruptedException ie) {}
             }
             _ui.debugMessage("Terminating runner " + Thread.currentThread().getName());

@@ -39,8 +39,6 @@ public class MessageFlagBar extends BaseComponent implements Translatable {
         _parent = parent;
         _includeTooltips = includeTooltips;
         _images = new ArrayList();
-        _realized = false;
-        _bg = null;
         initComponents();
     }
     
@@ -217,7 +215,9 @@ public class MessageFlagBar extends BaseComponent implements Translatable {
         _root = new Composite(_parent, SWT.NONE);
         //_root.setBackgroundMode(SWT.INHERIT_FORCE);
         FillLayout layout = new FillLayout(SWT.HORIZONTAL);
-        layout.spacing = 15;
+        layout.spacing = 20;
+        layout.marginHeight= 8;
+        layout.marginWidth= 5;
         _root.setLayout(layout);
         _translationRegistry.register(this);
         _realized = true;

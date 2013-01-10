@@ -43,8 +43,8 @@ public class ThemeRegistry {
     public void setToThemeLast(Themeable themeable) { _toThemeLast = themeable; }
     
     public void register(Themeable lsnr) { 
-        if (_ui != null)
-            _ui.debugMessage("register & apply theme to " + lsnr.getClass().getName() + "/" + System.identityHashCode(lsnr));
+        //if (_ui != null)
+        //    _ui.debugMessage("register & apply theme to " + lsnr.getClass().getName() + "/" + System.identityHashCode(lsnr));
         if (lsnr != _toThemeLast) {
             synchronized (_listeners) {
                 _listeners.add(lsnr);
@@ -53,8 +53,8 @@ public class ThemeRegistry {
         lsnr.applyTheme(_cur); 
     }
     public void unregister(Themeable lsnr) { 
-        if (_ui != null)
-            _ui.debugMessage("unregister " + lsnr.getClass().getName() + "/" + System.identityHashCode(lsnr));
+        //if (_ui != null)
+        //    _ui.debugMessage("unregister " + lsnr.getClass().getName() + "/" + System.identityHashCode(lsnr));
         synchronized (_listeners) {
             _listeners.remove(lsnr);
         }

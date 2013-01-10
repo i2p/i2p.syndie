@@ -4,8 +4,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
+
 import net.i2p.I2PAppContext;
 import net.i2p.data.Hash;
+
 import syndie.data.MessageInfo;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
@@ -19,10 +21,10 @@ import syndie.data.SyndieURI;
  * canonical form.
  */
 public class MessageThreadBuilder {
-    private DBClient _client;
-    private UI _ui;
-    private Map _uriToReferenceNode;
-    private List _pendingURI;
+    private final DBClient _client;
+    private final UI _ui;
+    private final Map<SyndieURI, ReferenceNode> _uriToReferenceNode;
+    private final List<SyndieURI> _pendingURI;
     private ThreadedReferenceNode _root;
     
     public MessageThreadBuilder(DBClient client, UI ui) {
