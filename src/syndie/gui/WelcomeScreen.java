@@ -324,7 +324,9 @@ public class WelcomeScreen extends Wizard {
     public void translate(TranslationRegistry registry) {
         super.translate(registry);
         
-        _welcomeMessage.setText(registry.getText(T_WELCOME, reflow(new String [] {
+        // TODO Fix this for tagging
+
+        _welcomeMessage.setText(registry.getText(reflow(new String [] {
                 "Welcome to Syndie!\n\n",
                 "This wizard will help you set up your new Syndie installation. First we'll set up your identity,",
                 "and then we'll configure some archives for you to syndicate with.\n\n",
@@ -332,9 +334,10 @@ public class WelcomeScreen extends Wizard {
                 "If I2P is not running, please start it and wait 5 minutes before proceeding."
         })));
         
-        _description.setText(registry.getText(T_DESC, reflow(new String [] {
+        _description.setText(registry.getText(reflow(new String [] {
                 "Syndie will create a new identity for you to use with which to post messages in other forums and to run",
                 "your own blog/forum"})));
+
         _nameLabel.setText(registry.getText("What name would you like to use for your new identity?"));
         _name.setText(registry.getText("Syndie user") + ' ' + (1001 + RandomSource.getInstance().nextInt(98888)));
         _avatarLabel.setText(registry.getText("What avatar would you like to use?"));
@@ -343,7 +346,7 @@ public class WelcomeScreen extends Wizard {
         _authenticateReplies.setText(registry.getText("Yes, let anyone reply to existing posts"));
         _authenticateAuth.setText(registry.getText("No"));
         
-        _archiveExplanationMessage.setText(registry.getText(T_ARCHIVEEXPLANATION, reflow(new String [] {
+        _archiveExplanationMessage.setText(registry.getText(reflow(new String [] {
                 "Next it's time to select some archives to syndicate with.\n\n",
                 "Syndie messages are propagated from one Syndie instance to another by a process called 'syndication'.",
                 "Each client connects to one or more archives and uploads any messages which the client has, but the",
@@ -351,11 +354,11 @@ public class WelcomeScreen extends Wizard {
                 "way messages are propagated from client to client and archive to archive within a Syndie community.\n\n",
                 "To join a Syndie community, you need to syndicate with one or more archives of that community."})));
         
-        _archiveInstructions.setText(registry.getText(T_ARCHIVEINSTRUCTIONS, reflow(new String [] {
+        _archiveInstructions.setText(registry.getText(reflow(new String [] {
                 "The default archives shipped with your Syndie install are listed above. Double-click a field to edit it.",
                 "Please make any necessary changes and uncheck any archives that you don't want."})));
         
-        _finishMessage.setText(registry.getText(T_FINISH, reflow(new String [] {
+        _finishMessage.setText(registry.getText(reflow(new String [] {
                 "Congratulations! Your Syndie installation is configured!\n\n",
                 "Click Finish to start exploring Syndie."})));
     }

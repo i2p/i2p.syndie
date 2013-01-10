@@ -49,11 +49,11 @@ public class ComponentBuilder {
         //return new ReferenceChooserPopupImpl(_client, _ui, _themes, _trans, parent, _navControl, _uriControl, lsnr);
         return new ForumReferenceChooserPopup(_client, _ui, _themes, _trans, _navControl, _banControl, _bookmarkControl, parent, lsnr);
     }
-    public ReferenceChooserPopup createReferenceChooserPopup(Shell parent, ReferenceChooserTree.AcceptanceListener lsnr, String titleKey, String titleVal) {
+    public ReferenceChooserPopup createReferenceChooserPopup(Shell parent, ReferenceChooserTree.AcceptanceListener lsnr, String titleVal) {
         //return new ReferenceChooserPopupImpl(_client, _ui, _themes, _trans, parent, _navControl, _uriControl, lsnr, titleKey, titleVal);
         return new ForumReferenceChooserPopup(_client, _ui, _themes, _trans, _navControl, _banControl, _bookmarkControl, parent, lsnr);
     }
-    public ReferenceChooserPopup createReferenceChooserPopup(Shell parent, String titleKey, String titleVal) {
+    public ReferenceChooserPopup createReferenceChooserPopup(Shell parent, String titleVal) {
         //return new ReferenceChooserPopupImpl(_client, _ui, _themes, _trans, parent, _navControl, _uriControl, titleKey, titleVal);
         return new ForumReferenceChooserPopup(_client, _ui, _themes, _trans, _navControl, _banControl, _bookmarkControl, parent, null);
     }

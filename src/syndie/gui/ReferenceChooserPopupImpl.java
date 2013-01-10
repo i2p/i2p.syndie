@@ -31,20 +31,31 @@ class ReferenceChooserPopupImpl extends BaseComponent implements ReferenceChoose
     private ReferenceChooserTree _tree;
     private ReferenceChooserSearch _search;
     private ReferenceChooserInfo _info;
-    private String _titleKey;
     private String _titleVal;
     
-    public ReferenceChooserPopupImpl(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Shell parent, NavigationControl navControl, URIControl uriControl, String titleKey, String titleVal) { this(client, ui, themes, trans, parent, navControl, uriControl, null, titleKey, titleVal); }
-    public ReferenceChooserPopupImpl(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Shell parent, NavigationControl navControl, URIControl uriControl) { this(client, ui, themes, trans, parent, navControl, uriControl, null); }
-    public ReferenceChooserPopupImpl(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Shell parent, NavigationControl navControl, URIControl uriControl, ReferenceChooserTree.AcceptanceListener lsnr) {
-        this(client, ui, themes, trans, parent, navControl, uriControl, lsnr, T_TITLE, "Reference chooser");
+    public ReferenceChooserPopupImpl(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans,
+                                     Shell parent, NavigationControl navControl, URIControl uriControl, String titleVal) {
+        this(client, ui, themes, trans, parent, navControl, uriControl, null, titleVal);
     }
-    public ReferenceChooserPopupImpl(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Shell parent, NavigationControl navControl, URIControl uriControl, ReferenceChooserTree.AcceptanceListener lsnr, String titleKey, String titleVal) {
+
+    public ReferenceChooserPopupImpl(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans,
+                                     Shell parent, NavigationControl navControl, URIControl uriControl) {
+        this(client, ui, themes, trans, parent, navControl, uriControl, (ReferenceChooserTree.AcceptanceListener)null);
+    }
+
+    public ReferenceChooserPopupImpl(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans,
+                                     Shell parent, NavigationControl navControl, URIControl uriControl,
+                                     ReferenceChooserTree.AcceptanceListener lsnr) {
+        this(client, ui, themes, trans, parent, navControl, uriControl, lsnr, _x("Reference chooser"));
+    }
+
+    public ReferenceChooserPopupImpl(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans,
+                                     Shell parent, NavigationControl navControl, URIControl uriControl,
+                                     ReferenceChooserTree.AcceptanceListener lsnr, String titleVal) {
         super(client, ui, themes, trans);
         _parent = parent;
         _navControl = navControl;
         _uriControl = uriControl;
-        _titleKey = titleKey;
         _titleVal = titleVal;
         _lsnr = lsnr;
         initComponents();
@@ -118,6 +129,6 @@ class ReferenceChooserPopupImpl extends BaseComponent implements ReferenceChoose
     
     
     public void translate(TranslationRegistry registry) {
-        _shell.setText(registry.getText(_titleKey, _titleVal));
+        _shell.setText(registry.getText(_titleVal));
     }
 }

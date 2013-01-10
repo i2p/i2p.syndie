@@ -65,7 +65,8 @@ do
 		# then ant distclean poupdate.
 		find $JPATHS -name *.java > $TMPFILE
 		xgettext -f $TMPFILE -F -L java --from-code=UTF-8 --add-comments\
-	                 --keyword=getText:2 \
+	                 --keyword=strans \
+	                 --keyword=_x \
 		         -o ${i}t
 		if [ $? -ne 0 ]
 		then

@@ -173,7 +173,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         _searchDetailPopup.setVisible(false);
     }
     private void searchAdvanced() { 
-        final ReferenceChooserPopup popup = ComponentBuilder.instance().createReferenceChooserPopup(getControl().getShell(), T_SEARCH_FORUM_TITLE, "Forum search");
+        final ReferenceChooserPopup popup = ComponentBuilder.instance().createReferenceChooserPopup(getControl().getShell(), _x("Forum search"));
         popup.setListener(new ReferenceChooserTree.AcceptanceListener() {
             public void referenceAccepted(SyndieURI uri) { _navControl.view(uri); }
             public void referenceChoiceAborted() { popup.dispose(); }

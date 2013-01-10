@@ -251,18 +251,18 @@ public class WebRipPageControl extends BaseComponent implements Translatable, Th
         _ripRunner = new WebRipRunner(_ui, _url.getText(), proxy, proxyPort, _client.getTempDir());
         _ripRunner.configure(_optionImages.getSelection(), _optionTorrents.getSelection(), getMaxAttachKB(), getMaxTotalKB(), _optionAllowFiles.getSelection(), _existingAttachments);
         _ripRunner.setListener(this);
-        statusUpdated(T_STATUS_INIT, DEFAULT_STATUS_INIT, "", false, false);
+        statusUpdated(DEFAULT_STATUS_INIT, "", false, false);
         
         _ui.debugMessage("nbrip start");
         _ripRunner.nonblockingRip();
     }
 
-    private static final String DEFAULT_STATUS_INIT = "Step 1 of 6: Rip initialized";
-    private static final String DEFAULT_STATUS_FETCHING_HTML = "Step 2 of 6: Fetching web page";
-    private static final String DEFAULT_STATUS_HTML_FETCHED = "Step 3 of 6: Web page fetched";
-    private static final String DEFAULT_STATUS_FETCHING_ATTACHMENTS = "Step 4 of 6: Fetching attachments - ";
-    private static final String DEFAULT_STATUS_ATTACHMENTS_FETCHED = "Step 5 of 6: Attachments fetched";
-    private static final String DEFAULT_STATUS_REWRITTEN = "Step 6 of 6: Web page rewritten";
+    private static final String DEFAULT_STATUS_INIT = _x("Step 1 of 6: Rip initialized");
+    private static final String DEFAULT_STATUS_FETCHING_HTML = _x("Step 2 of 6: Fetching web page");
+    private static final String DEFAULT_STATUS_HTML_FETCHED = _x("Step 3 of 6: Web page fetched");
+    private static final String DEFAULT_STATUS_FETCHING_ATTACHMENTS = _x("Step 4 of 6: Fetching attachments - ");
+    private static final String DEFAULT_STATUS_ATTACHMENTS_FETCHED = _x("Step 5 of 6: Attachments fetched");
+    private static final String DEFAULT_STATUS_REWRITTEN = _x("Step 6 of 6: Web page rewritten");
     
     private static final String DEFAULT_STATUS_ERROR = "Rip failed";
     
@@ -270,35 +270,30 @@ public class WebRipPageControl extends BaseComponent implements Translatable, Th
         if (_root.isDisposed()) return;
         _ui.debugMessage("statusUpdated caled in the wrc");
         int state = runner.getState();
-        final String key;
         final String def;
         final String detail;
         final boolean terminal;
         final boolean success;
         switch (state) {
             case WebRipRunner.STATE_FETCH_ATTACHMENTS_COMPLETE:
-                key = T_STATUS_ATTACHMENTS_FETCHED;
                 def = DEFAULT_STATUS_ATTACHMENTS_FETCHED;
                 detail = null;
                 terminal = false;
                 success = false;
                 break;
             case WebRipRunner.STATE_FETCH_HTML_COMPLETE:
-                key = T_STATUS_HTML_FETCHED;
                 def = DEFAULT_STATUS_HTML_FETCHED;
                 detail = null;
                 terminal = false;
                 success = false;
                 break;
             case WebRipRunner.STATE_REWRITE_HTML_COMPLETE:
-                key = T_STATUS_REWRITTEN;
                 def = DEFAULT_STATUS_REWRITTEN;
                 detail = null;
                 terminal = true;
                 success = true;
                 break;
             case WebRipRunner.STATE_STARTED_FETCH_ATTACHMENTS:
-                key = T_STATUS_FETCHING_ATTACHMENTS;
                 def = DEFAULT_STATUS_FETCHING_ATTACHMENTS;
                 int total = runner.getTotalAttachments();
                 int fetched = total - runner.getPendingAttachments();
@@ -307,7 +302,6 @@ public class WebRipPageControl extends BaseComponent implements Translatable, Th
                 success = false;
                 break;
             case WebRipRunner.STATE_STARTED_FETCH_HTML:
-                key = T_STATUS_FETCHING_HTML;
                 def = DEFAULT_STATUS_FETCHING_HTML;
                 detail = null;
                 terminal = false;
@@ -315,7 +309,6 @@ public class WebRipPageControl extends BaseComponent implements Translatable, Th
                 break;
             case WebRipRunner.STATE_INIT:
             case WebRipRunner.STATE_CONFIGURED:
-                key = T_STATUS_INIT;
                 def = DEFAULT_STATUS_INIT;
                 detail = null;
                 terminal = false;
@@ -323,7 +316,6 @@ public class WebRipPageControl extends BaseComponent implements Translatable, Th
                 break;
             case WebRipRunner.STATE_ERROR:
             default:
-                key = T_STATUS_ERROR;
                 def = DEFAULT_STATUS_ERROR;
                 StringBuilder buf = new StringBuilder();
                 _errorMessages = runner.getErrorMessages();
@@ -343,16 +335,16 @@ public class WebRipPageControl extends BaseComponent implements Translatable, Th
         
         _ui.debugMessage("nbrip status updated: " + def + "/" + detail + "/" + terminal + "/"+ success);
         
-        _root.getDisplay().asyncExec(new Runnable() { public void run() { statusUpdated(key, def, detail, terminal, success); } });
+        _root.getDisplay().asyncExec(new Runnable() { public void run() { statusUpdated(def, detail, terminal, success); } });
     }
 
     /** run in the swt thread to update the status bar */
-    private void statusUpdated(String translationKey, String translationDefault, String detail, boolean terminal, boolean success) {
+    private void statusUpdated(String translationDefault, String detail, boolean terminal, boolean success) {
         if (_status.isDisposed()) return;
         if ( (detail != null) && (detail.length() > 0) )
-            _status.setText(_translationRegistry.getText(translationKey, translationDefault) + ": " + detail);
+            _status.setText(_translationRegistry.getText(translationDefault) + ": " + detail);
         else
-            _status.setText(_translationRegistry.getText(translationKey, translationDefault));
+            _status.setText(_translationRegistry.getText(translationDefault));
         
         if (terminal && (_listener != null))
             _listener.ripComplete(success, _ripRunner);

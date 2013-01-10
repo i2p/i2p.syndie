@@ -407,9 +407,9 @@ class Desktop {
     }
     
     /** safe translate for startup before the translation registry has been created */
-    private String strans(String key, String defValue) {
+    private String strans(String defValue) {
         if (_translationRegistry != null)
-            return _translationRegistry.getText(key, defValue);
+            return _translationRegistry.getText(defValue);
         else
             return defValue;
     }
@@ -1081,7 +1081,7 @@ class Desktop {
             scopeName = scopeName + " [" + scope.toBase64().substring(0,6) + "]";
 
             MessageBox box = new MessageBox(_shell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
-            box.setMessage(_translationRegistry.getText(T_CONFIRMBAN, 
+            box.setMessage(_translationRegistry.getText(
                     "All of the messages in it will be removed and you will never receive " +
                     "any messages in it again, or posts written by the forum's owner.  Do you want to ban: ") 
                     + scopeName);
@@ -1113,7 +1113,7 @@ class Desktop {
             }
 
             MessageBox box = new MessageBox(_shell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
-            box.setMessage(getTranslationRegistry().getText(T_CONFIRMCANCEL, 
+            box.setMessage(getTranslationRegistry().getText(
                     "Do you really want to tell everyone to ignore this message: " + scopeName));
             box.setText(getTranslationRegistry().getText("Confirm cancel"));
             int rc = box.open();
@@ -1149,7 +1149,7 @@ class Desktop {
             }
 
             MessageBox box = new MessageBox(_shell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
-            box.setMessage(getTranslationRegistry().getText(T_CONFIRMDELETE, 
+            box.setMessage(getTranslationRegistry().getText(
                     "Do you really want to locally delete this message: " + scopeName));
             box.setText(getTranslationRegistry().getText("Confirm delete"));
             int rc = box.open();

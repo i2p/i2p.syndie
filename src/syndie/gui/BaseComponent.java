@@ -15,4 +15,13 @@ public class BaseComponent {
         _themeRegistry = themes;
         _translationRegistry = trans;
     }
+
+    /**
+     *  Tagging for static initializers. Does not translate!
+     *  @return s
+     *  @since 1.102b-5
+     */
+    protected static final String _x(String s) {
+        return s;
+    }
 }

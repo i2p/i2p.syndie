@@ -1792,7 +1792,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         scopeName = scopeName + " [" + scope.toBase64().substring(0,6) + "]";
 
         MessageBox box = new MessageBox(_shell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
-        box.setMessage(getTranslationRegistry().getText(T_CONFIRMBAN, 
+        box.setMessage(getTranslationRegistry().getText(
                 "All of the messages in it will be removed and you will never receive " +
                 "any messages in it again, or posts written by the forum's owner.  Do you want to ban: ") 
                 + scopeName);
@@ -1830,7 +1830,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         }
 
         MessageBox box = new MessageBox(_shell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
-        box.setMessage(getTranslationRegistry().getText(T_CONFIRMCANCEL, 
+        box.setMessage(getTranslationRegistry().getText(
                 "Do you really want to tell everyone to ignore this message: " + scopeName));
         box.setText(getTranslationRegistry().getText("Confirm cancel"));
         int rc = box.open();
@@ -1866,7 +1866,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         }
 
         MessageBox box = new MessageBox(_shell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
-        box.setMessage(getTranslationRegistry().getText(T_CONFIRMDELETE, 
+        box.setMessage(getTranslationRegistry().getText(
                 "Do you really want to locally delete this message: " + scopeName));
         box.setText(getTranslationRegistry().getText("Confirm delete"));
         int rc = box.open();
@@ -2368,7 +2368,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
     
     
     private void searchForums() {
-        final ReferenceChooserPopup popup = ComponentBuilder.instance().createReferenceChooserPopup(_shell, T_SEARCH_FORUM_TITLE, "Find forums");
+        final ReferenceChooserPopup popup = ComponentBuilder.instance().createReferenceChooserPopup(_shell, _x("Find forums"));
         popup.setListener(new ReferenceChooserTree.AcceptanceListener() {
             public void referenceAccepted(SyndieURI uri) { view(uri); }
             public void referenceChoiceAborted() { popup.dispose(); }
@@ -2837,5 +2837,14 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         showWaitCursor(false);
         long t5 = System.currentTimeMillis();
         debugMessage("applyTheme time: " + (t2-t1) + ", redraw: " + (t3-t2) + ", layout: " + (t4-t3) + ", redrawAgain: " + (t5-t4));
+    }
+
+    /**
+     *  Tagging for static initializers. Does not translate!
+     *  @return s
+     *  @since 1.102b-5
+     */
+    protected static final String _x(String s) {
+        return s;
     }
 }
