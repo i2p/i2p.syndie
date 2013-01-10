@@ -58,9 +58,9 @@ class Desktop {
     private String _passphrase;
     private TextEngine _engine;
     private DesktopUI _ui;
-    private Display _display;
+    private final Display _display;
     private Shell _shell;
-    private List _listeners;
+    private final List _listeners;
     private Composite _edgeNorthWest;
     private Composite _edgeNorthEast;
     private Composite _edgeSouthEast;
@@ -103,14 +103,14 @@ class Desktop {
     private TranslationRegistry _translationRegistry;
     private ThemeRegistry _themeRegistry;
     
-    private List _loadedPanels;
+    private final List _loadedPanels;
     private int _curPanelIndex;
     
     private NavigationControl _navControl;
-    private BanControl _banControl;
-    private BookmarkControl _bookmarkControl;
-    private DataCallback _dataCallback;
-    private LocalMessageCallback _localMessageCallback;
+    private final BanControl _banControl;
+    private final BookmarkControl _bookmarkControl;
+    private final DataCallback _dataCallback;
+    private final LocalMessageCallback _localMessageCallback;
     
     /** true when syndie creates a new instance on startup, and we then fire up a welcomepopup when ready */
     private boolean _shouldShowWelcome;
@@ -541,8 +541,10 @@ class Desktop {
             rect = mon[0].getClientArea();
         else
             rect = _display.getClientArea();
-        _shell.setSize(rect.width, rect.height);
-        _shell.setMaximized(true);
+        int x = Math.min(1000, rect.width);
+        int y = Math.min(600, rect.height);
+        _shell.setSize(x, y);
+        _shell.setMaximized(false);
         _shell.open();
         _shell.forceActive();
         _shell.forceFocus();

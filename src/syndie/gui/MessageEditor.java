@@ -1,6 +1,7 @@
 package syndie.gui;
 
 import com.swabunga.spell.engine.Word;
+
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -26,11 +27,13 @@ import java.util.TreeMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
+
 import net.i2p.data.Base64;
 import net.i2p.data.DataHelper;
 import net.i2p.data.Hash;
 import net.i2p.data.SessionKey;
 import net.i2p.data.SigningPrivateKey;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabItem;
@@ -71,6 +74,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
+
 import syndie.Constants;
 import syndie.data.ChannelInfo;
 import syndie.data.NymKey;
@@ -92,12 +96,12 @@ import syndie.db.UI;
  *
  */
 public class MessageEditor extends BaseComponent implements Themeable, Translatable, ImageBuilderPopup.ImageBuilderSource {
-    private DataCallback _dataCallback;
-    private NavigationControl _navControl;
-    private BanControl _banControl;
-    private BookmarkControl _bookmarkControl;
-    private URIControl _uriControl;
-    private Composite _parent;
+    private final DataCallback _dataCallback;
+    private final NavigationControl _navControl;
+    private final BanControl _banControl;
+    private final BookmarkControl _bookmarkControl;
+    private final URIControl _uriControl;
+    private final Composite _parent;
     private Composite _root;
     private Composite _toolbar;
     private Composite _headers;
@@ -145,14 +149,14 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     private MessageTree _threadTree;
     
     // state info
-    private List _pageEditors;
-    private List _pageTypes;
+    private final List _pageEditors;
+    private final List _pageTypes;
     
-    private List _attachmentRoots;
-    private List _attachmentPreviews;
-    private List _attachmentConfig;
-    private List _attachmentData;
-    private List _attachmentSummary;
+    private final List _attachmentRoots;
+    private final List _attachmentPreviews;
+    private final List _attachmentConfig;
+    private final List _attachmentData;
+    private final List _attachmentSummary;
     private String _selectedPageBGColor;
     private String _selectedPageBGImage;
     /** has it been modified since it was last persisted */
@@ -165,7 +169,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     /** cache some details for who we have keys to write to / manage / etc */
     private DBClient.ChannelCollector _nymChannels;
     /** set of MessageEditorListener */
-    private List _listeners;
+    private final List _listeners;
     
     /** forum the post is targetting */
     private Hash _forum;
@@ -186,7 +190,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     /** version is incremented each time the state is saved */
     private int _postponeVersion;
     
-    private List _editorStatusListeners;
+    private final List _editorStatusListeners;
     
     private boolean _buildToolbar;
     private boolean _allowPreview;
@@ -1697,6 +1701,9 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         for (int i = 0; i < _editorStatusListeners.size(); i++)
             ((EditorStatusListener)_editorStatusListeners.get(i)).statusUpdated(page, pages, attachment, attachments, type, pageLoaded, isHTML, hasAncestors);
         
+        // NPE via Desktop, initComponents() -> addPage() when _showActions is false
+        if (_preview == null)
+            return;
         _preview.setEnabled(isHTML);
         if (isHTML && getPageEditor(page).isPreviewShowing())
             _preview.setText(_translationRegistry.getText("Edit the message"));

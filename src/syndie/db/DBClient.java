@@ -636,8 +636,8 @@ public class DBClient {
                     _log.debug("Updating database version " + i + " to " + (i+1));
                 updateDB(i);
             } else {
-                if (_log.shouldLog(Log.DEBUG))
-                    _log.debug("No need for update " + i + " (version: " + version + ")");
+               // if (_log.shouldLog(Log.DEBUG))
+               //     _log.debug("No need for update " + i + " (version: " + version + ")");
             }
         }
     }
