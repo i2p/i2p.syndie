@@ -249,7 +249,7 @@ public class TextUI implements UI {
                 script = args[i].substring(1);
             else if (args[i].equals("--nostdin"))
                 readStdin = false;
-            else
+            else if (!args[i].startsWith("-"))
                 rootDir = args[i];
         }
         
