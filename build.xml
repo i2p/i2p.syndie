@@ -170,6 +170,7 @@
              <jar destfile="build/izpackpatch.jar"
                  basedir="resources/izpack/patches" />
         <delete file="${pkgtemp.dir}/lib/swt.jar" />
+        <copy file="resources/uninstall.ico" todir="${pkgtemp.dir}/Uninstaller" />
         <copy tofile="${pkgtemp.dir}/lib/swt.jar" file="@{swt}" />
         <izpack output="syndie-installer-${full.version}.bin.@{os}@{arch}.jar"
                 installerType="standard"
@@ -629,7 +630,6 @@
     </target>
 
     <target name="preppkg" depends="prep-docs, jar">
-        <copy file="resources/uninstall.ico" todir="${pkgtemp.dir}/Uninstaller" />
         <copy file="${swt.jar}" tofile="${pkgtemp.dir}/lib/swt.jar" />
         <copy file="${hsqldb.jar}" todir="${pkgtemp.dir}/lib" />
         <copy file="${i2p.jar}" todir="${pkgtemp.dir}/lib" />
