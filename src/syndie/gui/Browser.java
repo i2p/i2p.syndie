@@ -30,6 +30,7 @@ import net.i2p.data.Hash;
 import net.i2p.util.SecureFileOutputStream;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.SWTError;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabFolder2Listener;
 import org.eclipse.swt.custom.CTabFolderEvent;
@@ -73,6 +74,7 @@ import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.FileDialog;
+import org.eclipse.swt.widgets.FontDialog;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Link;
 import org.eclipse.swt.widgets.Listener;
@@ -171,6 +173,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
     private MenuItem _languageMenuRefresh;
     private Menu _styleMenu;
     private MenuItem _styleMenuRoot;
+    private MenuItem _styleMenuChangeFont;
     private MenuItem _styleMenuIncreaseFont;
     private MenuItem _styleMenuDecreaseFont;
     private MenuItem _styleMenuReset;
@@ -686,6 +689,11 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         _styleMenuRoot = new MenuItem(_viewMenu, SWT.CASCADE);
         _styleMenu = new Menu(_styleMenuRoot);
         _styleMenuRoot.setMenu(_styleMenu);
+        _styleMenuChangeFont = new MenuItem(_styleMenu, SWT.PUSH);
+        _styleMenuChangeFont.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { changeFont(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { changeFont(); }
+        });
         _styleMenuIncreaseFont = new MenuItem(_styleMenu, SWT.PUSH);
         _styleMenuIncreaseFont.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { increaseFont(); }
@@ -1878,16 +1886,43 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
     private void showTextUI() { view(URIHelper.instance().createTextUIURI()); }
     private void showLogs() { view(URIHelper.instance().createLogsURI()); }
     
+    /**
+     *  @since 1.102b-5
+     */
+    private void changeFont() {
+        FontDialog dialog = new FontDialog(_shell);
+        dialog.setText(_translation.getText("Select font"));
+        FontData data = dialog.open();
+        if (data == null)
+            return;
+        Font font;
+        try {
+            font = new Font(Display.getDefault(), data);
+        } catch (SWTError error) {
+            errorMessage("error loading " + data, new Exception(error));
+            return;
+        }
+        Theme theme = new Theme(font);
+        _shell.setRedraw(false);
+        _themes.loadTheme(theme);
+        _shell.setRedraw(true);
+        Properties prefs = _client.getNymPrefs();
+        theme.store(prefs);
+        _client.setNymPrefs(prefs);
+    }
+    
     private void increaseFont() {
         _shell.setRedraw(false);
         _themes.increaseFont();
         _shell.setRedraw(true);
     }
+
     private void decreaseFont() {
         _shell.setRedraw(false);
         _themes.decreaseFont();
         _shell.setRedraw(true);
     }
+
     private void resetStyle() {
         _shell.setRedraw(false);
         _themes.resetTheme();
@@ -2783,6 +2818,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
 
         _styleMenuRoot.setText(X + registry.getText("Style"));
         _styleMenuRoot.setImage(ImageUtil.ICON_VM_STYLE);
+        _styleMenuChangeFont.setText(X + registry.getText("Change font"));
         _styleMenuIncreaseFont.setText(X + registry.getText("Increase font"));
         _styleMenuDecreaseFont.setText(X + registry.getText("Decrease font"));
         _styleMenuReset.setText(X + registry.getText("Reset style"));

@@ -15,11 +15,11 @@ import syndie.db.UI;
  *
  */
 public class ThemeRegistry {
-    private ArrayList _listeners;
+    private final ArrayList<Themeable> _listeners;
     private Theme _cur;
     private boolean _themeLoaded;
-    private DBClient _client;
-    private UI _ui;
+    private final DBClient _client;
+    private final UI _ui;
     private Themeable _toThemeLast;
     
     public ThemeRegistry(DBClient client, UI ui, Themeable toThemeLast) {
@@ -130,6 +130,7 @@ public class ThemeRegistry {
         _cur.store(prefs);
         _client.setNymPrefs(_client.getLoggedInNymId(), prefs);
     }
+
     public void loadTheme() {
         Properties prefs = null;
         if (_client == null) {
@@ -146,7 +147,21 @@ public class ThemeRegistry {
         notifyAll(_cur);
         _themeLoaded = true;
     }
+
+    /** @since 1.102b-5 */
+    public void loadTheme(Theme newTheme) {
+        if (_cur != null) {
+            if (_ui != null)
+                _ui.debugMessage("disposing old theme");
+            _cur.dispose();
+        }
+        _cur = newTheme;
+        notifyAll(_cur);
+        _themeLoaded = true;
+    }
+
     public boolean themeLoaded() { return _themeLoaded; }
+
     public void resetTheme() {
         Properties prefs = null;
         if (_client == null) {
