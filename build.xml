@@ -295,7 +295,7 @@
         <typefound name="depend" />
     </condition>
 
-    <target name="depend" if="depend.available">
+    <target name="-depend" if="depend.available">
         <depend
             cache="builddep"
             srcdir="src"
@@ -306,7 +306,7 @@
         </depend>
     </target>
 
-    <target name="compile" depends="init, depend" description="compile the source">
+    <target name="compile" depends="init, -depend" description="compile the source">
         <javac srcdir="${src.dir}" destdir="${build.dir}/obj" debug="true" source="1.5" target="1.5"
                deprecation="on" includeAntRuntime="false">
             <classpath>
@@ -426,9 +426,11 @@
         <condition property="can.create.exe">
             <and>
                 <or>
-                    <os arch="amd64" />
                     <os arch="x86" />
                     <os arch="i386" />
+                    <os arch="i586" />
+                    <os arch="i686" />
+                    <os arch="amd64" />
                     <os arch="x86_64" />
                 </or>
                 <or>
@@ -439,7 +441,7 @@
         </condition>
     </target>
 
-    <target name="-jars2exe" if="can.create.exe" unless="no.exe" depends="-check-launch4j, -stub-jars" description="Wrap jar files into EXEs">
+    <target name="jars2exe" if="can.create.exe" unless="no.exe" depends="-check-launch4j, stub-jars" description="Wrap jar files into EXEs">
         <wrap-to-exe type="-desktop" />
         <wrap-to-exe />
     </target>
@@ -542,21 +544,21 @@
         <available property="mtn.available" file="_MTN" type="dir" />
     </target>
 
-    <target name="getMtnRev" depends="-checkForMtn" if="mtn.available">
+    <target name="-getMtnRev" depends="-checkForMtn" if="mtn.available">
         <exec executable="mtn" outputproperty="workspace.version" errorproperty="mtn.error1" failifexecutionfails="false">
             <arg value="automate" />
             <arg value="get_base_revision_id" />
         </exec>
     </target>
 
-    <target name="buildProperties" depends="getMtnRev, getReleaseNumber, getBuildNumber">
+    <target name="buildProperties" depends="-getMtnRev, getReleaseNumber, getBuildNumber">
         <!-- default if not set above -->
         <property name="workspace.version" value="unknown" />
         <property name="full.version" value="${release.number}-${syndie.build.number}" />
         <echo message="Building version ${full.version} (mtn rev ${workspace.version})" />
     </target>
 
-    <target name="getExtendedVersion" depends="buildProperties, trimMtnRev" description="Include trimmed MTN rev ID (if available) in the version number">
+    <target name="getExtendedVersion" depends="buildProperties, -trimMtnRev" description="Include trimmed MTN rev ID (if available or requested) in the version number">
         <property name="MtnShortHash" value="unknown" />
         <condition property="Extended.Version" value="${full.version}-${MtnShortHash}">
             <not>
@@ -570,7 +572,7 @@
         <property name="Extended.Version" value="${full.version}" />
     </target>
 
-    <target name="trimMtnRev" depends="getMtnRev" unless="withoutRev" description="Output a shortend MTN rev ID">
+    <target name="-trimMtnRev" depends="-getMtnRev" if="with.revision" description="Shorten MTN rev ID">
         <script language="javascript">
             <![CDATA[
             var MtnRev = project.getProperty("workspace.version");
@@ -623,7 +625,7 @@
         <echo message="Build number is ${syndie.build.number}" />
     </target>
 
-    <target name="-stub-jars" depends="jar, preppkg" description="Create manifest-only jars for Syndie">
+    <target name="stub-jars" depends="jar, preppkg" description="Create manifest-only jars for Syndie">
         <make-stub-jar name="-desktop" additional="../lib/swt.jar" type-class="${desktop.class}" />
         <make-stub-jar additional="../lib/swt.jar" type-class="${tabs.class}" />
         <make-stub-jar name="-cli" type-class="${cli.class}" />
@@ -681,13 +683,13 @@
         <copy file="${launch4j.dir}/LICENSE.txt" tofile="${pkgtemp.dir}/doc/licenses/License-Launch4j.txt" />
     </target>
 
-    <target name="pkg" depends="clean, prep-launch4j-license, prep-swt-licenses, -stub-jars, jar, preppkg">
+    <target name="pkg" depends="clean, prep-launch4j-license, prep-swt-licenses, stub-jars, jar, preppkg">
         <move todir="${dist.dir}">
             <fileset dir="${pkgtemp.dir}" />
         </move>
     </target>
 
-    <target name="pkg-exe" depends="clean, -jars2exe, pkg"/>
+    <target name="pkg-exe" depends="clean, jars2exe, pkg"/>
 
     <target name="source-tarball" depends="getExtendedVersion" description="Generate source tarball">
         <!-- will this use the monotonerc file in the current workspace? -->
@@ -698,7 +700,7 @@
                 </not>
             </condition>
         </fail>
-        <property name="tarball.name" value="${ant.project.name}_${Extended.Version}.orig.tar.bz2" />
+        <property name="source.tarball.name" value="${ant.project.name}-${Extended.Version}.tar.bz2" />
         <echo message="Checking out fresh copy into ../${ant.project.name}-${Extended.Version} for tarballing:" />
         <delete dir="../${ant.project.name}-${Extended.Version}" />
         <exec executable="mtn" failonerror="true">
@@ -713,7 +715,7 @@
         <delete includeemptydirs="true" quiet="false">
             <fileset dir="../${ant.project.name}-${Extended.Version}/_MTN" />
         </delete>
-        <tar longfile="gnu" destfile="../${tarball.name}" compression="bzip2">
+        <tar longfile="gnu" destfile="${source.tarball.name}" compression="bzip2">
             <tarfileset dir="../${ant.project.name}-${Extended.Version}" prefix="${ant.project.name}-${Extended.Version}">
                 <include name="**/**" />
                 <exclude name="debian/**"/>
@@ -724,6 +726,11 @@
                 <include name="**/*.sh" />
             </tarfileset>
         </tar>
+    </target>
+
+    <target name="debian-tarball" depends="source-tarball">
+        <copy verbose="true" file="${source.tarball.name}"
+            tofile="../${ant.project.name}_${Extended.Version}.orig.tar.bz2" />
     </target>
 
     <target name="sloccount.report" description="Generate 'sloccount' report">
@@ -832,20 +839,20 @@
         <echoproperties/>
     </target>
 
-    <target name="-delete-windows-files">
+    <target name="delete-windows-files">
         <delete failonerror="false" quiet="true">
             <fileset dir="${pkgtemp.dir}" includes="*.exe" />
         </delete>
     </target>
 
-    <target name="installer-linux" depends="installer-linux32, installer-linux64, -delete-windows-files" description="Create Linux installers (i386 and x86_64)"/>
+    <target name="installer-linux" depends="installer-linux32, installer-linux64, delete-windows-files" description="Create Linux installers (i386 and x86_64)"/>
 
-    <target name="installer-linux32" depends="-check-for-izpack, -stub-jars, preppkg, -delete-windows-files" description="Create i386 installer for Linux">
+    <target name="installer-linux32" depends="-check-for-izpack, stub-jars, preppkg, delete-windows-files" description="Create i386 installer for Linux">
         <ant dir="swt" target="ensure-lin32-swt" />
         <build-installer os="linux" arch="32" swt="${swt.lin32}" />
     </target>
 
-    <target name="installer-linux64" depends="-check-for-izpack, -stub-jars, preppkg, -delete-windows-files" description="Create x86_64 installer for Linux">
+    <target name="installer-linux64" depends="-check-for-izpack, stub-jars, preppkg, delete-windows-files" description="Create x86_64 installer for Linux">
         <ant dir="swt" target="ensure-lin64-swt" />
         <build-installer os="linux" arch="64" swt="${swt.lin64}" />
     </target>
@@ -860,12 +867,12 @@
         <wrap-installer bits="64" />
     </target>
 
-    <target name="installer-windows32" depends="-check-for-izpack, -jars2exe, -stub-jars, preppkg" description="Create i386 installer for Windows">
+    <target name="installer-windows32" depends="-check-for-izpack, jars2exe, stub-jars, preppkg" description="Create i386 installer for Windows">
         <ant dir="swt" target="ensure-win32-swt" />
         <build-installer os="win" arch="32" swt="swt/lib/swt-win32.jar" />
     </target>
 
-    <target name="installer-windows64" depends="-check-for-izpack, -jars2exe, -stub-jars, preppkg" description="Create x86_64 installer for Windows">
+    <target name="installer-windows64" depends="-check-for-izpack, jars2exe, stub-jars, preppkg" description="Create x86_64 installer for Windows">
         <ant dir="swt" target="ensure-win64-swt" />
         <build-installer os="win" arch="64" swt="swt/lib/swt-win64.jar" />
     </target>
@@ -970,7 +977,7 @@ java -cp path/to/hsqldb.jar:path/to/i2p.jar:path/to/syndie-cli.jar syndie.db.Tex
         </tar>
     </target>
 
-    <target name="pkg-all" depends="pkg-cli, installer-linux, installer-windows, pkg-osx" description="Create packags/installers for all supported systems." />
+    <target name="pkg-all" depends="distclean, pkg-cli, installer-linux, installer-windows, pkg-osx" description="Create packags/installers for all supported systems." />
 
 
 </project>
