@@ -12,7 +12,7 @@ import syndie.db.DBClient;
 import syndie.db.UI;
 
 /**
- *
+ *  All changes save to database.
  */
 public class ThemeRegistry {
     private final ArrayList<Themeable> _listeners;
@@ -52,6 +52,7 @@ public class ThemeRegistry {
         }
         lsnr.applyTheme(_cur); 
     }
+
     public void unregister(Themeable lsnr) { 
         //if (_ui != null)
         //    _ui.debugMessage("unregister " + lsnr.getClass().getName() + "/" + System.identityHashCode(lsnr));
@@ -126,9 +127,9 @@ public class ThemeRegistry {
     
     private void saveTheme() {
         if (_client == null) return;
-        Properties prefs = _client.getNymPrefs(_client.getLoggedInNymId());
+        Properties prefs = _client.getNymPrefs();
         _cur.store(prefs);
-        _client.setNymPrefs(_client.getLoggedInNymId(), prefs);
+        _client.setNymPrefs(prefs);
     }
 
     public void loadTheme() {
@@ -136,7 +137,7 @@ public class ThemeRegistry {
         if (_client == null) {
             prefs = new Properties();
         } else {
-            prefs = _client.getNymPrefs(_client.getLoggedInNymId());
+            prefs = _client.getNymPrefs();
         }
         if (_cur != null) {
             if (_ui != null)
@@ -157,6 +158,7 @@ public class ThemeRegistry {
         }
         _cur = newTheme;
         notifyAll(_cur);
+        saveTheme();
         _themeLoaded = true;
     }
 
@@ -175,7 +177,7 @@ public class ThemeRegistry {
                 iter.remove();
         }
         if (_client != null)
-            _client.setNymPrefs(_client.getLoggedInNymId(), prefs);
+            _client.setNymPrefs(prefs);
         if (_cur != null) {
             if (_ui != null)
                 _ui.debugMessage("disposing old theme");

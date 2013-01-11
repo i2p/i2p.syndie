@@ -1892,6 +1892,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
     private void changeFont() {
         FontDialog dialog = new FontDialog(_shell);
         dialog.setText(_translation.getText("Select font"));
+        dialog.setFontList(_themes.getTheme().getFontData());
         FontData data = dialog.open();
         if (data == null)
             return;
@@ -1906,9 +1907,6 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         _shell.setRedraw(false);
         _themes.loadTheme(theme);
         _shell.setRedraw(true);
-        Properties prefs = _client.getNymPrefs();
-        theme.store(prefs);
-        _client.setNymPrefs(prefs);
     }
     
     private void increaseFont() {

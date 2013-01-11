@@ -1,6 +1,7 @@
 package syndie.gui;
 
 import java.util.Properties;
+import org.eclipse.swt.SWTError;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.widgets.Display;
@@ -11,16 +12,31 @@ import org.eclipse.swt.SWT;
  */
 public class Theme {
     private static final Font SYSFONT = Display.getDefault().getSystemFont();
+    private static final String _baselineFace = getFace(SYSFONT);
+    private static final int _baselineSize = getSize(SYSFONT);
+
+    private static final String LOG_FACE = "Courier";
+    private static final String MONO_FACE = "Monospace";
+
     private static final Theme _default = new Theme();
     
-    private final String _face;
-    private final int _size;
+    private final FontData[] _fontData;
 
     private Theme() {
         // SYSFONT, on GTK, is the font used to display the window title (aka pretty big)
         // swt only promises that its a valid font.  there doesn't seem to be a way to get
         // the default font for particular components
         this(SYSFONT, -4);
+    }
+
+    /**
+     *  @param props null OK
+     *  @since 1.102b-5
+     */
+    public Theme(Properties props) {
+        load(props);
+        _fontData = DEFAULT_FONT.getFontData();
+        //System.out.println("New theme " + getFace() + ' ' + getSize());
     }
 
     /**
@@ -31,12 +47,11 @@ public class Theme {
     }
 
     /**
-     *  @param sz size adjustment
+     *  @param sz size adjustment from font arg (NOT from system)
      *  @since 1.102b-5
      */
     public Theme(Font font, int sz) {
-        _face = getFace(font);
-        _size = getSize(font);
+        _fontData = font.getFontData();
         TAB_FONT = adjustHeight(font, sz, null, null, null, false);
         MENU_FONT = adjustHeight(font, sz + 2, null, null, null, false);
         SHELL_FONT = adjustHeight(font, sz + 4, null, null, null, false);
@@ -45,23 +60,23 @@ public class Theme {
         BUTTON_FONT = adjustHeight(font, sz, null, null, null, false);
         CONTENT_FONT = adjustHeight(font, sz, null, null, null, false);
         LINK_FONT = adjustHeight(font, sz, true, null, null, false);
-        LOG_FONT = adjustHeight(font, sz, null, null, "Courier", false);
+        LOG_FONT = adjustHeight(font, sz, null, null, LOG_FACE, false);
         MSG_OLD_FONT = adjustHeight(font, sz, null, null, null, false); // same as msg_new_read
-        MSG_UNKNOWN_FONT = adjustHeight(font, sz, null, true, "Courier", false);
+        MSG_UNKNOWN_FONT = adjustHeight(font, sz, null, true, LOG_FACE, false);
         MSG_NEW_READ_FONT = adjustHeight(font, sz, null, null, null, false);
         MSG_UNREAD_CHILD_FONT = adjustHeight(font, sz, null, true, null, false);
         MSG_NEW_UNREAD_FONT = adjustHeight(font, sz, true, null, null, false);
         HIGHLIGHT_INACTIVE_FONT = adjustHeight(font, sz, null, true, null, false);
         HIGHLIGHT_ACTIVE_FONT = adjustHeight(font, sz, null, null, null, false);
         FINEPRINT_FONT = adjustHeight(font, sz, null, null, null, false);
+        MONOSPACE_FONT = adjustHeight(font, sz, null, null, MONO_FACE, false);
         if (sz != 0) {
             DEFAULT_FONT = adjustHeight(font, sz, null, null, null, false);
             dispose(font);
         } else {
             DEFAULT_FONT = font;
         }
-        // TODO we need a monospaced font too
-        // http://stackoverflow.com/questions/221568/swt-os-agnostic-way-to-get-monospaced-font
+        //System.out.println("New theme " + getFace() + ' ' + getSize());
     }
     
     /** used as the tab headers */
@@ -98,17 +113,17 @@ public class Theme {
     public Font HIGHLIGHT_ACTIVE_FONT;
     /** the fine print is small */
     public Font FINEPRINT_FONT;
+    /**  @since 1.102b-5 */
+    public Font MONOSPACE_FONT;
     /** used for anything else */
     public Font DEFAULT_FONT;
     
     /** SYSFONT */
     public static Theme getDefault() { return _default; }
 
-    /** SYSFONT */
+    /** theme as specified in the properties */
     public static Theme getTheme(Properties props) {
-        Theme rv = new Theme();
-        rv.load(props);
-        return rv;
+        return new Theme(props);
     }
     
     public void dispose() {
@@ -129,6 +144,7 @@ public class Theme {
         dispose(HIGHLIGHT_INACTIVE_FONT);
         dispose(HIGHLIGHT_ACTIVE_FONT);
         dispose(FINEPRINT_FONT);
+        dispose(MONOSPACE_FONT);
         dispose(DEFAULT_FONT);
     }
     
@@ -176,6 +192,11 @@ public class Theme {
         else if (CONTENT_FONT.isDisposed())
             rv.append("contentFont is disposed ");
         
+        if (MONOSPACE_FONT == null)
+            rv.append("monospaceFont is null ");
+        else if (MONOSPACE_FONT.isDisposed())
+            rv.append("monospaceFont is disposed ");
+        
         if (DEFAULT_FONT == null)
             rv.append("defaultFont is null ");
         else if (DEFAULT_FONT.isDisposed())
@@ -202,6 +223,7 @@ public class Theme {
         HIGHLIGHT_ACTIVE_FONT = increaseFont("highlightactive", HIGHLIGHT_ACTIVE_FONT);
         HIGHLIGHT_INACTIVE_FONT = increaseFont("highlightinactive", HIGHLIGHT_INACTIVE_FONT);
         FINEPRINT_FONT = increaseFont("fineprint", FINEPRINT_FONT);
+        MONOSPACE_FONT = increaseFont("monospace", MONOSPACE_FONT);
     }
 
     public void decreaseFont() {
@@ -223,13 +245,14 @@ public class Theme {
         HIGHLIGHT_ACTIVE_FONT = decreaseFont("highlightactive", HIGHLIGHT_ACTIVE_FONT);
         HIGHLIGHT_INACTIVE_FONT = decreaseFont("highlightinactive", HIGHLIGHT_INACTIVE_FONT);
         FINEPRINT_FONT = decreaseFont("fineprint", FINEPRINT_FONT);
+        MONOSPACE_FONT = decreaseFont("monospace", MONOSPACE_FONT);
     }
     
     /** sets properties */
     public void store(Properties props) {
         //Font sys = Display.getDefault().getSystemFont();
-        String face = _face;
-        int size = _size;
+        String face = _baselineFace;
+        int size = _baselineSize;
         store(props, TAB_FONT, face, size, "theme.tabfont");
         store(props, MENU_FONT, face, size, "theme.menufont");
         store(props, SHELL_FONT, face, size, "theme.shellfont");
@@ -247,26 +270,26 @@ public class Theme {
         store(props, HIGHLIGHT_INACTIVE_FONT, face, size, "theme.highlightinactive");
         store(props, HIGHLIGHT_ACTIVE_FONT, face, size, "theme.highlightactive");
         store(props, FINEPRINT_FONT, face, size, "theme.fineprint");
+        store(props, MONOSPACE_FONT, face, size, "theme.monospacefont");
         store(props, DEFAULT_FONT, face, size, "theme.defaultfont");
     }
 
     private void store(Properties props, Font font, String defaultFace, int baselineSize, String prefPrefix) {
         if (props == null) return;
         String face = getFace(font);
+        if (face == null)
+            face = defaultFace;
         int size = getSize(font);
-        if (defaultFace.equals(face))
-            face = null;
         int sizeMod = size - baselineSize;
-        if (face != null)
+        if (!face.equals(defaultFace))
             props.setProperty(prefPrefix + ".face", face);
         else
             props.remove(prefPrefix + ".face");
-        if (sizeMod != 0)
-            props.setProperty(prefPrefix + ".size", ""+sizeMod);
-        else
-            props.remove(prefPrefix + ".size");
+        // this is always the delta from the SYSFONT size
+        props.setProperty(prefPrefix + ".size", ""+sizeMod);
         props.setProperty(prefPrefix + ".bold", ""+isBold(font));
         props.setProperty(prefPrefix + ".italic", ""+isItalic(font));
+        //System.out.println("storing " + face + ' ' + sizeMod + " for " + prefPrefix);
     }
 
     private void load(Properties props) {
@@ -287,17 +310,25 @@ public class Theme {
         HIGHLIGHT_INACTIVE_FONT = load(props, HIGHLIGHT_INACTIVE_FONT, "theme.highlightinactive");
         HIGHLIGHT_ACTIVE_FONT = load(props, HIGHLIGHT_ACTIVE_FONT, "theme.highlightactive");
         FINEPRINT_FONT = load(props, FINEPRINT_FONT, "theme.fineprint");
+        MONOSPACE_FONT = load(props, MONOSPACE_FONT, "theme.monospacefont");
         DEFAULT_FONT = load(props, DEFAULT_FONT, "theme.defaultfont");
     }
 
+    /**
+     *  @param props if null returns old
+     *  @param old should always be null now
+     */
     private Font load(Properties props, Font old, String prefPrefix) {
+        if (old == null)
+            old = SYSFONT;
+        if (props == null) return old;
         try {
-            if (props == null) return old;
 
             String defaultFace = getFace(old);
-            int baselineSize = _size; //getSize(old);
+            int baselineSize = getSize(old);
             
             String face = props.getProperty(prefPrefix + ".face");
+            // this is always the delta from the SYSFONT size
             String szModStr = props.getProperty(prefPrefix + ".size");
             int szMod = 0; //baselineSize;
             if (szModStr != null) {
@@ -311,6 +342,8 @@ public class Theme {
             str = props.getProperty(prefPrefix + ".italic");
             Boolean italic = str != null ? Boolean.valueOf(str) : null;
             
+            //System.out.println("loading " + face + ' ' + szMod + " for " + prefPrefix);
+            // 7th arg true = mod from system height
             return adjustHeight(prefPrefix, old, szMod, bold, italic, face, true);
         } catch (Exception e) {
             e.printStackTrace();
@@ -337,6 +370,7 @@ public class Theme {
     private Font adjustHeight(String src, Font old, int mod, Boolean bold, Boolean italic, String newFace, boolean modFromSys) {
         Font rv = adjustHeight(old, mod, bold, italic, newFace, modFromSys);
         dispose(old);
+        //System.out.println("creating [" + src + "]: " + rv + " (bold? " + isBold(rv) + " italic? " + isItalic(rv) + " face: " + getFace(rv) + " size: " + getSize(rv) + ")");
         return rv;
     }
 
@@ -348,13 +382,12 @@ public class Theme {
      */
     private Font adjustHeight(Font old, int mod, Boolean bold, Boolean italic, String newFace, boolean modFromSys) {
         FontData oldData[] = old.getFontData();
-        int sysHeight = _size;
         FontData newData[] = new FontData[oldData.length];
         for (int i = 0; i < newData.length; i++) {
             newData[i] = new FontData(oldData[i].toString());
             int height = -1;
             if (modFromSys)
-                height = sysHeight + mod;
+                height = _baselineSize + mod;
             else
                 height = oldData[i].getHeight() + mod;
             if (height < 2)
@@ -376,8 +409,15 @@ public class Theme {
             if (newFace != null)
                 newData[i].setName(newFace);
         }
-        Font rv = new Font(Display.getDefault(), newData);
-        //System.out.println("creating [" + src + "]: " + rv + " (bold? " + isBold(rv) + " italic? " + isItalic(rv) + " face: " + getFace(rv) + " size: " + getSize(rv) + ")");
+        Font rv;
+        try {
+            rv = new Font(Display.getDefault(), newData);
+        } catch (SWTError error) {
+            System.out.println("error loading font " + newData);
+            error.printStackTrace();
+            return SYSFONT;
+        }
+        //System.out.println("creating " + rv + " (bold? " + isBold(rv) + " italic? " + isItalic(rv) + " face: " + getFace(rv) + " size: " + getSize(rv) + ")");
         return rv;
     }
 
@@ -388,10 +428,25 @@ public class Theme {
         }
     }
     
+    /**  @since 1.102b-5 */
+    public FontData[] getFontData() {
+        return _fontData;
+    }
+
     public static String getFace(Font font) {
         if ( (font == null) || (font.isDisposed()) )
             return getFace(Display.getDefault().getSystemFont());
         FontData fd[] = font.getFontData();
+        return getFace(fd);
+    }
+
+    /**  @since 1.102b-5 */
+    private String getFace() {
+        return getFace(_fontData);
+    }
+
+    /**  @since 1.102b-5 */
+    private static String getFace(FontData[] fd) {
         for (int i = 0; i < fd.length; i++) {
             String name = fd[i].getName();
             if (name != null)
@@ -400,10 +455,29 @@ public class Theme {
         return null;
     }
 
+    /**
+     *  Actual size
+     */
     public static int getSize(Font font) {
         if ( (font == null) || (font.isDisposed()) )
             return getSize(Display.getDefault().getSystemFont());
         FontData fd[] = font.getFontData();
+        return getSize(fd);
+    }
+
+    /**
+     *  Actual size
+     *  @since 1.102b-5
+     */
+    private int getSize() {
+        return getSize(_fontData);
+    }
+
+    /**
+     *  Actual size
+     *  @since 1.102b-5
+     */
+    private static int getSize(FontData[] fd) {
         for (int i = 0; i < fd.length; i++) {
             int height = fd[i].getHeight();
             if (height > 0)

@@ -4294,12 +4294,19 @@ public class DBClient {
     }
 
     private Properties _nymPrefsCached;
+
     private static final String SQL_GET_NYMPREFS = "SELECT prefName, prefValue FROM nymPref WHERE nymId = ?";
+
     public Properties getNymPrefs() { 
         if (_nymPrefsCached == null) 
             _nymPrefsCached = getNymPrefs(_nymId);
         return _nymPrefsCached;
     }
+
+    /**
+     *  NOT cached.
+     *  You probably want the no-arg version.
+     */
     public Properties getNymPrefs(long nymId) {
         ensureLoggedIn();
         Properties rv = new Properties();
@@ -4323,12 +4330,20 @@ public class DBClient {
         }
         return rv;
     }
+
     private static final String SQL_SET_NYMPREFS = "INSERT INTO nymPref (nymId, prefName, prefValue) VALUES (?, ?, ?)";
     private static final String SQL_DELETE_NYMPREFS = "DELETE FROM nymPref WHERE nymId = ?";
+
     public void setNymPrefs(Properties prefs) { 
         _nymPrefsCached = (Properties)prefs.clone();
         setNymPrefs(_nymId, prefs);
     }
+
+    /**
+     *  NOT cached.
+     *  You probably want the no-arg version.
+     *  Your changes will be lost if somebody else does p = getNymPrefs() / mod / setNymPrefs(p);
+     */
     public void setNymPrefs(long nymId, Properties prefs) {
         ensureLoggedIn();
         PreparedStatement stmt = null;
