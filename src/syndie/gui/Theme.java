@@ -59,17 +59,17 @@ public class Theme {
         TABLE_FONT = adjustHeight(font, sz, null, null, null, false);
         BUTTON_FONT = adjustHeight(font, sz, null, null, null, false);
         CONTENT_FONT = adjustHeight(font, sz, null, null, null, false);
-        LINK_FONT = adjustHeight(font, sz, true, null, null, false);
+        LINK_FONT = adjustHeight(font, sz, Boolean.TRUE, null, null, false);
         LOG_FONT = adjustHeight(font, sz, null, null, LOG_FACE, false);
         MSG_OLD_FONT = adjustHeight(font, sz, null, null, null, false); // same as msg_new_read
-        MSG_UNKNOWN_FONT = adjustHeight(font, sz, null, true, LOG_FACE, false);
+        MSG_UNKNOWN_FONT = adjustHeight(font, sz, null, Boolean.TRUE, LOG_FACE, false);
         MSG_NEW_READ_FONT = adjustHeight(font, sz, null, null, null, false);
         MSG_UNREAD_CHILD_FONT = adjustHeight(font, sz, null, true, null, false);
-        MSG_NEW_UNREAD_FONT = adjustHeight(font, sz, true, null, null, false);
+        MSG_NEW_UNREAD_FONT = adjustHeight(font, sz, Boolean.TRUE, null, null, false);
         HIGHLIGHT_INACTIVE_FONT = adjustHeight(font, sz, null, true, null, false);
         HIGHLIGHT_ACTIVE_FONT = adjustHeight(font, sz, null, null, null, false);
         FINEPRINT_FONT = adjustHeight(font, sz, null, null, null, false);
-        MONOSPACE_FONT = adjustHeight(font, sz, null, null, MONO_FACE, false);
+        MONOSPACE_FONT = adjustHeight(font, sz, Boolean.FALSE, Boolean.FALSE, MONO_FACE, false);
         if (sz != 0) {
             DEFAULT_FONT = adjustHeight(font, sz, null, null, null, false);
             dispose(font);
@@ -328,6 +328,16 @@ public class Theme {
             int baselineSize = getSize(old);
             
             String face = props.getProperty(prefPrefix + ".face");
+            if (face == null) {
+                // ThemeRegistry.resetTheme() wipes everything out
+                if (prefPrefix.equals("theme.monospaceFont")) {
+                    face = MONO_FACE;
+                } else if (prefPrefix.equals("theme.logFont") ||
+                           prefPrefix.equals("theme.msgunknownFont")) {
+                    face = LOG_FACE;
+                }
+            }
+
             // this is always the delta from the SYSFONT size
             String szModStr = props.getProperty(prefPrefix + ".size");
             int szMod = 0; //baselineSize;

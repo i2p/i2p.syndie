@@ -111,6 +111,7 @@ public class ThemeRegistry {
         if (_ui != null)
             _ui.debugMessage("font adjust time: " + (t1-before) + ", notify: " + (t2-t1) + ", save: " + (t3-t2));
     }
+
     public void decreaseFont() {
         if (_ui != null)
             _ui.debugMessage("decreasing font size");
@@ -169,7 +170,7 @@ public class ThemeRegistry {
         if (_client == null) {
             prefs = new Properties();
         } else {
-            prefs = _client.getNymPrefs(_client.getLoggedInNymId());
+            prefs = _client.getNymPrefs();
         }
         for (Iterator iter = prefs.keySet().iterator(); iter.hasNext(); ) {
             String key = (String)iter.next();

@@ -1154,6 +1154,6 @@ public class PageEditor extends BaseComponent implements Themeable {
     }
     
     public void applyTheme(Theme theme) {
-        _text.setFont(theme.DEFAULT_FONT);
+        _text.setFont(theme.MONOSPACE_FONT);
     }
 }

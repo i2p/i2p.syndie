@@ -4,10 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+
 import net.i2p.data.Hash;
 import net.i2p.data.PrivateKey;
 import net.i2p.data.SessionKey;
 import net.i2p.data.SigningPrivateKey;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabItem;
@@ -16,6 +18,7 @@ import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
+
 import syndie.Constants;
 import syndie.data.MessageInfo;
 import syndie.data.ReferenceNode;
@@ -30,12 +33,12 @@ import syndie.db.ThreadReferenceNode;
 import syndie.db.UI;
 
 public class MessageViewBody extends BaseComponent implements Themeable, Translatable {
-    private Composite _root;
-    private NavigationControl _navControl;
-    private URIControl _uriControl;
-    private BookmarkControl _bookmarkControl;
-    private BanControl _banControl;
-    private DataCallback _dataCallback;
+    private final Composite _root;
+    private final NavigationControl _navControl;
+    private final URIControl _uriControl;
+    private final BookmarkControl _bookmarkControl;
+    private final BanControl _banControl;
+    private final DataCallback _dataCallback;
     
     /** the tabFolder exists if there are multiple pages, refs, attachments, or threads */
     private CTabFolder _tabFolder;
@@ -69,7 +72,9 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
         public void threadLoaded(List threadReferenceNodes, ThreadMsgId curMsg, int threadSize);
     }
     
-    public MessageViewBody(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, BanControl ban, Composite root, DataCallback dataCallback) {
+    public MessageViewBody(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans,
+                           NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl,
+                           BanControl ban, Composite root, DataCallback dataCallback) {
         super(client, ui, themes, trans);
         _dataCallback = dataCallback;
         _navControl = navControl;
@@ -169,6 +174,8 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
         List refs = msg.getReferences();
         timer.addEvent("initBody pages and references loaded");
 
+        // FIXME displays thread tab all the time, and a reply goes in a new top-level tab,
+        // so why?
         int threadSize = 2; // assume a reply so we build the tabs
 
         int attachments = msg.getAttachmentCount();

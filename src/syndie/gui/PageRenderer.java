@@ -10,10 +10,12 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
+
 import net.i2p.data.Hash;
 import net.i2p.data.PrivateKey;
 import net.i2p.data.SessionKey;
 import net.i2p.data.SigningPrivateKey;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.*;
 import org.eclipse.swt.events.ControlEvent;
@@ -43,6 +45,7 @@ import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.*;
+
 import syndie.Constants;
 import syndie.data.HTMLStateBuilder;
 import syndie.data.HTMLTag;
@@ -60,9 +63,9 @@ import syndie.db.UI;
  *
  */
 public class PageRenderer extends BaseComponent implements Themeable {
-    private DataCallback _dataCallback;
-    private Composite _parent;
-    private StyledText _text;
+    private final DataCallback _dataCallback;
+    private final Composite _parent;
+    private final StyledText _text;
     private PageRendererSource _source;
     private MessageInfo _msg;
     private int _page;
@@ -138,6 +141,7 @@ public class PageRenderer extends BaseComponent implements Themeable {
     private boolean _enableImages;
     private boolean _enableRender;
     private boolean _viewAsText;
+    private boolean _canViewAsHTML;
     
     private boolean _styled;
     
@@ -173,8 +177,6 @@ public class PageRenderer extends BaseComponent implements Themeable {
         _defaultCaret = new Caret(_text, SWT.NONE);
         _text.setCaret(_defaultCaret);
         //_defaultCaret.setVisible(false);
-        _fonts = null;
-        _colors = null;
         _imageTags = new ArrayList();
         _linkTags = new ArrayList();
         
@@ -182,9 +184,6 @@ public class PageRenderer extends BaseComponent implements Themeable {
         
         _enableImages = true;
         _enableRender = true;
-        _viewAsText = false;
-        _viewSizeModifier = 0;
-        _disposed = false;
     
         buildMenus();
         ////pickBodyMenu();
@@ -488,7 +487,8 @@ public class PageRenderer extends BaseComponent implements Themeable {
         Properties props = new Properties();
         CommandImpl.parseProps(cfg, props);
         String mimeType = props.getProperty(Constants.MSG_PAGE_CONTENT_TYPE, "text/plain");
-        if (!_viewAsText && ("text/html".equalsIgnoreCase(mimeType) || "text/xhtml".equalsIgnoreCase(mimeType))) {
+        _canViewAsHTML = "text/html".equalsIgnoreCase(mimeType) || "text/xhtml".equalsIgnoreCase(mimeType);
+        if (_canViewAsHTML && !_viewAsText) {
             renderHTML(body);
         } else {
             renderText(body);
@@ -515,7 +515,7 @@ public class PageRenderer extends BaseComponent implements Themeable {
                 if (body != null) {
                     _text.setText(body);
                     StyleRange range = new StyleRange(0, body.length(), null, null);
-                    range.font = _themeRegistry.getTheme().CONTENT_FONT;
+                    range.font = _themeRegistry.getTheme().MONOSPACE_FONT;
                     _text.setStyleRange(range);
                 } else {
                     _text.setText("");
@@ -1158,9 +1158,10 @@ public class PageRenderer extends BaseComponent implements Themeable {
             _bodyDisable.setEnabled(_enableImages);
             _bodyEnable.setEnabled(!_enableImages);
             _bodySaveAll.setEnabled(true);
-            _bodyViewAsText.setSelection(_viewAsText);
-            _bodyViewUnstyled.setEnabled(true);
-            _bodyViewStyled.setEnabled(true);
+            _bodyViewAsText.setSelection(_viewAsText || !_canViewAsHTML);
+            _bodyViewAsText.setEnabled(true);
+            _bodyViewUnstyled.setEnabled(_canViewAsHTML);
+            _bodyViewStyled.setEnabled(_canViewAsHTML);
             
             long targetId = _msg.getTargetChannelId();
             long authorId = _msg.getAuthorChannelId();
@@ -1331,19 +1332,27 @@ public class PageRenderer extends BaseComponent implements Themeable {
         rerender();
     }
     
+    /** take care that only one of these 3 calls rerender() */
     private void toggleViewAsText() {
-        _viewAsText = !_viewAsText;
-        rerender();
+        if (_bodyViewAsText.getSelection()) {
+            _viewAsText = true;
+            rerender();
+        }
     }
+
     private void toggleViewStyled() {
-        if (_bodyViewStyled.getSelection())
+        if (_bodyViewStyled.getSelection()) {
             _viewAsText = false;
-        rerender();
+            rerender();
+        }
     }
+
+    /** same as styled */
     private void toggleViewUnstyled() { 
-        if (_bodyViewUnstyled.getSelection())
+        if (_bodyViewUnstyled.getSelection()) {
             _viewAsText = false;
-        rerender();
+            rerender();
+        }
     }
     
     private abstract class FireEventListener implements SelectionListener {
