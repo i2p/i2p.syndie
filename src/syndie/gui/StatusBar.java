@@ -28,6 +28,7 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
@@ -178,9 +179,16 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         
         _postponeMenu = new Menu(_postpone);
         _postpone.setMenu(_postponeMenu);
-        _postpone.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _postponeMenu.setVisible(true); }
-            public void widgetSelected(SelectionEvent selectionEvent) { _postponeMenu.setVisible(true); }
+        _postpone.addSelectionListener(new FireSelectionListener() {
+            public void fire() {
+                // go straight to the draft if only one
+                if (_postponeMenu.getItemCount() == 1) {
+                    MenuItem draft = _postponeMenu.getItem(0);
+                    draft.notifyListeners(SWT.Selection, new Event());
+                } else {
+                    _postponeMenu.setVisible(true);
+                }
+            }
         });
         
         _version = new Label(_root, SWT.NONE);
@@ -304,7 +312,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         _ui.debugMessage("statusbar dorefreshdisplay all refreshes done");
         
         if (pbe > 0) {
-            _pbe.setText(_translationRegistry.getText("Pass. req: ") + pbe);
+            _pbe.setText(_translationRegistry.getText("Pass. reqd") + ": " + pbe);
             ((GridData)_pbe.getLayoutData()).exclude = false;
             _pbe.setVisible(true);
         } else {
@@ -313,7 +321,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         }
         
         if (priv != null) {
-            _priv.setText(_translationRegistry.getText("Private msgs: ") + priv);
+            _priv.setText(_translationRegistry.getText("Private msgs") + ": " + priv);
             ((GridData)_priv.getLayoutData()).exclude = false;
             _priv.setVisible(true);
         } else {
@@ -322,7 +330,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         }
         
         if (postpone > 0) {
-            _postpone.setText(_translationRegistry.getText("Drafts: ") + postpone);
+            _postpone.setText(_translationRegistry.getText("Drafts") + ": " + postpone);
             ((GridData)_postpone.getLayoutData()).exclude = false;
             _postpone.setVisible(true);
         } else {
@@ -634,6 +642,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         return uris.size();
     }
 
+    /** @return number of draft messages */
     private int refreshPostponed() {
         MenuItem items[] = _postponeMenu.getItems();
         for (int i = 0; i < items.length; i++)
@@ -645,7 +654,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
             final Long postponeId = (Long)entry.getKey();
             final Integer rev = (Integer)entry.getValue();
             
-            String str = _translationRegistry.getText("Postponed on: ") + Constants.getDateTime(postponeId.longValue());
+            String str = _translationRegistry.getText("Saved") + ' ' + Constants.getDateTime(postponeId.longValue());
             MenuItem item = new MenuItem(_postponeMenu, SWT.PUSH);
             item.setText(str);
             item.addSelectionListener(new SelectionListener() {

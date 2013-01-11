@@ -1464,22 +1464,22 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _preview = new Button(c, SWT.PUSH);
         _preview.setEnabled(TYPE_HTML.equals(getDefaultPageType()));
         _preview.addSelectionListener(new FireSelectionListener() {
-            public void fire(SelectionEvent selectionEvent) {
+            public void fire() {
                 getPageEditor().toggleFullPreview();
                 updateToolbar();
             }
         });
         _post = new Button(c, SWT.PUSH);
         _post.addSelectionListener(new FireSelectionListener() {
-            public void fire(SelectionEvent selectionEvent) { postMessage(); }
+            public void fire() { postMessage(); }
         });
         _postpone = new Button(c, SWT.PUSH);
         _postpone.addSelectionListener(new FireSelectionListener() {
-            public void fire(SelectionEvent selectionEvent) { postponeMessage(); }
+            public void fire() { postponeMessage(); }
         });
         _cancel = new Button(c, SWT.PUSH);
         _cancel.addSelectionListener(new FireSelectionListener() {
-            public void fire(SelectionEvent selectionEvent) { cancelMessage(); }
+            public void fire() { cancelMessage(); }
         });
         
         _post.setText(_translationRegistry.getText("Post the message"));

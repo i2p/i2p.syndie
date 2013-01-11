@@ -265,7 +265,12 @@ public class ArchiveManager extends BaseComponent implements Translatable, Theme
         for (int i = 0; i < scopes.size(); i++) {
             Hash scope = scopes.get(i);
             String name = _client.getChannelName(scope);
-            String displayName = UIUtil.displayName(name, scope);
+            String displayName = UIUtil.displayName(name, scope) +
+                                 " (" +
+                                 _translationRegistry.getText("Full hash") +
+                                 ": " +
+                                 scope.toBase64() +
+                                 ')';
             TableItem item = new TableItem(banned, SWT.NONE);
             item.setText(displayName);
         }

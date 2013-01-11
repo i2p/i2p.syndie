@@ -78,8 +78,8 @@ public class MessageEditorTab extends BrowserTab implements LocalMessageCallback
     protected boolean allowClose() {
         if (!_editor.isModifiedSinceOpen()) return true;
         MessageBox confirm = new MessageBox(getRoot().getShell(), SWT.ICON_QUESTION | SWT.YES | SWT.NO | SWT.CANCEL);
-        confirm.setText(getBrowser().getTranslationRegistry().getText("Postpone message?"));
-        confirm.setMessage(getBrowser().getTranslationRegistry().getText("Do you want to postpone this message to resume it later?"));
+        confirm.setText(getBrowser().getTranslationRegistry().getText("Save message?"));
+        confirm.setMessage(getBrowser().getTranslationRegistry().getText("Message has not been sent. Do you want to save the message as a draft?"));
         int rc = confirm.open();
         if (rc == SWT.YES) {
             _editor.postponeMessage();

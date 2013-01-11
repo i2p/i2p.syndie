@@ -217,9 +217,9 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
             _bottom.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
 
             _syncRecurring = new Button(_bottom, SWT.PUSH);
-            _syncRecurring.addSelectionListener(new FireSelectionListener() { public void fire(SelectionEvent selectionEvent) { syncNowRecurring(); } });
+            _syncRecurring.addSelectionListener(new FireSelectionListener() { public void fire() { syncNowRecurring(); } });
             _syncOnce = new Button(_bottom, SWT.PUSH);
-            _syncOnce.addSelectionListener(new FireSelectionListener() { public void fire(SelectionEvent selectionEvent) { syncNowOneTime(); } });
+            _syncOnce.addSelectionListener(new FireSelectionListener() { public void fire() { syncNowOneTime(); } });
         }
         
         _translationRegistry.register(this);
