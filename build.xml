@@ -276,6 +276,23 @@
 </macrodef>
 
     <target name="init" depends="buildProperties">
+        <!-- abort the build right away in case deps cannot be found -->
+        <available property="have.i2p" file="${i2p.jar}" type="file" />
+        <fail message="Cannot find ${i2p.jar}. Please read INSTALL and build.properties for advice.">
+            <condition>
+                <not>
+                    <istrue value="${have.i2p}" />
+                </not>
+            </condition>
+        </fail>
+        <available property="have.hsqldb" file="${hsqldb.jar}" type="file" />
+        <fail message="Cannot find ${hsqldb.jar}. Please read INSTALL and build.properties for advice.">
+            <condition>
+                <not>
+                    <istrue value="${have.hsqldb}" />
+                </not>
+            </condition>
+        </fail>
         <available property="have.swt" file="${swt.jar}" type="file" />
         <fail message="Cannot find ${swt.jar}. Please read INSTALL and build.properties for advice.">
             <condition>
