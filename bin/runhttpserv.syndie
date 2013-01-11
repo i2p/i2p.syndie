@@ -1,16 +1,16 @@
 # this launches the integrated HTTP server, rebuilding the local shared
 # archive index every hour.  To run this standalone:
-#   syndie.exe --cli --nostdin @bin/runhttpserv.syndie
+#   syndie.jar --cli --nostdin @bin/runhttpserv.syndie
 # that tells Syndie not to open the GUI (instead run the CLI), and not
 # to read from the standard input - instead, it runs the given script
 # (this file), blocking indefinitely.
 #
 # You can also specify a Syndie data directory under which Syndie will
 # store its data and archive - just include it at the end, like:
-#   syndie.exe --cli --nostdin @bin/runhttpserv.syndie /tmp/data
+#   syndie.jar --cli --nostdin @bin/runhttpserv.syndie /tmp/data
 #
 # With the --nostdin option, Syndie can safely run under "nohup":
-#   nohup java -jar bin/syndie.exe --cli --nostdin @bin/runhttpserv.syndie &
-#   echo !! > httpserv.pid
+#   nohup java -jar bin/syndie.jar --cli --nostdin @bin/runhttpserv.syndie &
+#   echo $! > httpserv.pid
 #
 httpserv --port 8080 --writable true
