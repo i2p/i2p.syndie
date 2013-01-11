@@ -468,6 +468,10 @@
         <buildnumber file="scripts/build.number" />
 
         <!-- make the update linux xpi2p, this is for both 32 and 64 bit -->
+        <ant dir="swt" target="ensure-lin32-swt" />
+        <ant dir="swt" target="ensure-lin64-swt" />
+        <ant dir="swt" target="ensure-win32-swt" />
+
         <delete file="plugin/lib/hsqldb.jar.pack" />
         <delete file="plugin/lib/swt.jar.pack" />
         <copy file="LICENSE" todir="plugin" />
@@ -481,7 +485,7 @@
         <exec executable="echo" osfamily="unix" failonerror="true" output="plugin/plugin.config" append="true">
             <arg value="update-only=true" />
         </exec>
-        <exec executable="pack200" failonerror="true">
+        <exec executable="${java.home}/bin/pack200" failonerror="true">
             <arg value="-g" />
             <arg value="plugin/lib/syndie.jar.pack" />
             <arg value="${build.dir}/syndie.jar" />
@@ -513,15 +517,15 @@
         <exec executable="echo" osfamily="unix" failonerror="true" output="plugin/plugin.config" append="true">
             <arg value="version=${release.number}-b${build.number}" />
         </exec>
-        <exec executable="pack200" failonerror="true">
+        <exec executable="${java.home}/bin/pack200" failonerror="true">
             <arg value="-g" />
             <arg value="plugin/lib/hsqldb.jar.pack" />
-            <arg value="${lib.dir}/hsqldb.jar" />
+            <arg value="${hsqldb.jar}" />
         </exec>
-        <exec executable="pack200" failonerror="true">
+        <exec executable="${java.home}/bin/pack200" failonerror="true">
             <arg value="-g" />
             <arg value="plugin/lib/swt.jar.pack" />
-            <arg value="${lib.dir}/swt.jar" />
+            <arg value="${swt.lin32}" />
         </exec>
         <exec executable="scripts/makeplugin.sh" failonerror="true">
             <arg value="plugin" />
@@ -529,10 +533,10 @@
         <move file="syndie.xpi2p" tofile="syndie-linux-i386.xpi2p" />
 
         <!-- make the 64 bit linux install xpi2p -->
-        <exec executable="pack200" failonerror="true">
+        <exec executable="${java.home}/bin/pack200" failonerror="true">
             <arg value="-g" />
             <arg value="plugin/lib/swt.jar.pack" />
-            <arg value="${lib.dir}/swt-linux-x86-64.jar" />
+            <arg value="${swt.lin64}" />
         </exec>
         <exec executable="scripts/makeplugin.sh" failonerror="true">
             <arg value="plugin" />
@@ -545,10 +549,10 @@
         <exec executable="echo" osfamily="unix" failonerror="true" output="plugin/plugin.config" append="true">
             <arg value="version=${release.number}-b${build.number}" />
         </exec>
-        <exec executable="pack200" failonerror="true">
+        <exec executable="${java.home}/bin/pack200" failonerror="true">
             <arg value="-g" />
             <arg value="plugin/lib/swt.jar.pack" />
-            <arg value="${lib.dir}/swt-win32.jar" />
+            <arg value="${swt.win32}" />
         </exec>
         <exec executable="scripts/makeplugin.sh" failonerror="true">
             <arg value="plugin" />
