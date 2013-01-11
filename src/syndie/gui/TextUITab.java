@@ -6,6 +6,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.custom.StyledText;
@@ -22,6 +23,7 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Text;
+
 import syndie.db.DBClient;
 import syndie.db.Opts;
 import syndie.db.TextEngine;
@@ -37,8 +39,9 @@ class TextUITab extends BrowserTab implements UI {
     private Button _exec;
     private boolean _debug;
     
-    private boolean _closed;
-    private List _pendingMessages;
+    private volatile boolean _showedHelp;
+    private volatile boolean _closed;
+    private final List<Record> _pendingMessages;
     
     public TextUITab(BrowserControl browser, SyndieURI uri) {
         super(browser, uri);
@@ -100,6 +103,23 @@ class TextUITab extends BrowserTab implements UI {
         _ui.addUI(this);
     }
 
+    @Override
+    public void show(SyndieURI uri) {
+        super.show(uri);
+        if (_showedHelp)
+            return;
+        _showedHelp = true;
+        statusMessage("Enter commands in the box below.");
+        statusMessage("Type 'help' for help.");
+        statusMessage("Type 'exit' or 'quit' to close the tab.");
+    }
+
+    @Override
+    public void tabShown() {
+        super.tabShown();
+        _in.forceFocus();
+    }
+
     protected void disposeDetails() { 
         _ui.removeUI(this);
         _closed = true; 
@@ -111,6 +131,14 @@ class TextUITab extends BrowserTab implements UI {
     private void runCommand() {
         _out.setRedraw(false);
         String cmd = _in.getText().trim();
+        // parse it here too, just to catch exit/quit
+        Opts opts = new Opts(cmd);
+        String cmdStr = opts.getCommand();
+        if (cmdStr != null &&
+           ("exit".equalsIgnoreCase(cmd) || "quit".equalsIgnoreCase(cmd))) {
+           dispose();
+           return;
+        }
         if (cmd.length() > 0)
             getBrowser().getUI().insertCommand(cmd);
         _in.setText("");
