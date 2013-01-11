@@ -1,5 +1,24 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
+* 2013-01-11 1.102b-5 (kytv, zab, zzz)
+  GUI improvements:
+   - New font selector
+   - Use monospace font for text messages
+   - UI Tab improvements
+   - More consistency in display of forum and author identies
+   - Fix save and restore of font changes
+   - Fixes for banned channel display and management
+   - Fix NPE in desktop message editor
+   - Don't maximize desktop on startup
+  Build:
+   - More work on installers and packages
+   - Add support for translations
+  Other:
+   - Redesign translation infrastructure to use I2P's library,
+     in preparation for translations via po files
+   - Fix NPEs in CLI
+   - Fix argument processing in CLI main
+
 * 2013-01-09 1.102b-4 (kytv, zzz)
   GUI improvements:
    - Display localized dates
@@ -21,7 +40,6 @@
   Other:
    - Fix disposed SWT exceptions on cancel
    - Restrict permissions on all files and directories
-
 
 * 2013-01-08 1.102b-3 (kytv, zab, zzz)
   GUI improvements:
