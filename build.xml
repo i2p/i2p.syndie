@@ -900,37 +900,38 @@
         <mkdir dir="pkg-osx/Syndie.app/Contents/MacOS" />
         <mkdir dir="pkg-osx/Syndie.app/Contents/Resources" />
         <copy file="${hsqldb.jar}" todir="pkg-osx/Syndie.app/Contents/MacOS" />
+        <copy file="${i2p.jar}" todir="pkg-osx/Syndie.app/Contents/MacOS" />
         <copy file="${build.dir}/syndie.jar" todir="pkg-osx/Syndie.app/Contents/MacOS" />
         <copy file="resources/osx.icns" tofile="pkg-osx/Syndie.app/Contents/syndie.icns" />
         <echo file="pkg-osx//Syndie.app/Contents/Info.plist"><![CDATA[
-            <?xml version="1.0" encoding="UTF-8"?>
-            <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-            <plist version="1.0">
-                <dict>
-                    <key>CFBundleExecutable</key>
-                    <string>startsyndie.sh</string>
-                    <key>CFBundleGetInfoString</key>
-                    <string>Syndie ${full.version} for Mac OS X</string>
-                    <key>CFBundleIconFile</key>
-                    <string>syndie.icns</string>
-                    <key>CFBundleIdentifier</key>
-                    <string>syndie.gui.SWTUI</string>
-                    <key>CFBundleInfoDictionaryVersion</key>
-                    <string>6.0</string>
-                    <key>CFBundleName</key>
-                    <string>Syndie</string>
-                    <key>CFBundlePackageType</key>
-                    <string>APPL</string>
-                    <key>CFBundleShortVersionString</key>
-                    <string>1.102.${syndie.build.number}</string>
-                    <key>CFBundleSignature</key>
-                    <string>synd</string>
-                    <key>CFBundleVersion</key>
-                    <string>1.0</string>
-                    <key>NSPrincipalClass</key>
-                    <string>NSApplication</string>
-                </dict>
-            </plist>
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+    <dict>
+        <key>CFBundleExecutable</key>
+        <string>startsyndie.sh</string>
+        <key>CFBundleGetInfoString</key>
+        <string>Syndie ${full.version} for Mac OS X</string>
+        <key>CFBundleIconFile</key>
+        <string>syndie.icns</string>
+        <key>CFBundleIdentifier</key>
+        <string>syndie.gui.SWTUI</string>
+        <key>CFBundleInfoDictionaryVersion</key>
+        <string>6.0</string>
+        <key>CFBundleName</key>
+        <string>Syndie</string>
+        <key>CFBundlePackageType</key>
+        <string>APPL</string>
+        <key>CFBundleShortVersionString</key>
+        <string>1.102.${syndie.build.number}</string>
+        <key>CFBundleSignature</key>
+        <string>synd</string>
+        <key>CFBundleVersion</key>
+        <string>1.0</string>
+        <key>NSPrincipalClass</key>
+        <string>NSApplication</string>
+    </dict>
+</plist>
             ]]></echo>
         <copy todir="pkg-osx/doc">
             <fileset dir="pkg-temp/doc" />
@@ -964,9 +965,9 @@ java -cp path/to/hsqldb.jar:path/to/i2p.jar:path/to/syndie-cli.jar syndie.db.Tex
         <delete file="pkg-osx/Syndie.app/Contents/MacOS/swt.jar" />
         <copy file="${swt.mac32}" tofile="pkg-osx/Syndie.app/Contents/MacOS/swt.jar" />
         <echo file="pkg-osx/Syndie.app/Contents/MacOS/startsyndie.sh"><![CDATA[#!/bin/sh
-            DIR=`dirname $0`
-            CP=$DIR/swt.jar:$DIR/hsqldb.jar:$DIR/syndie.jar
-            exec java -d32 -XstartOnFirstThread -cp $CP syndie.gui.SWTUI
+DIR=`dirname $0`
+CP=$DIR/swt.jar:$DIR/hsqldb.jar:$DIR/syndie.jar:$DIR/i2p.jar
+exec java -d32 -XstartOnFirstThread -cp $CP syndie.gui.SWTUI
             ]]></echo>
         <tar destfile="syndie-${full.version}.bin.osx32.tar.bz2" compression="bzip2">
             <tarfileset dir="pkg-osx" prefix="syndie-${full.version}" filemode="644">
@@ -984,10 +985,10 @@ java -cp path/to/hsqldb.jar:path/to/i2p.jar:path/to/syndie-cli.jar syndie.db.Tex
         <delete file="pkg-osx/Syndie.app/Contents/MacOS/swt.jar" />
         <copy file="${swt.mac64}" tofile="pkg-osx/Syndie.app/Contents/MacOS/swt.jar" />
         <echo file="pkg-osx/Syndie.app/Contents/MacOS/startsyndie.sh"><![CDATA[#!/bin/sh
-            DIR=`dirname $0`
-            CP=$DIR/swt.jar:$DIR/hsqldb.jar:$DIR/syndie.jar
-            exec java -d64 -XstartOnFirstThread -cp $CP syndie.gui.SWTUI
-            ]]></echo>
+DIR=`dirname $0`
+CP=$DIR/swt.jar:$DIR/hsqldb.jar:$DIR/syndie.jar:$DIR/i2p.jar
+exec java -d64 -XstartOnFirstThread -cp $CP syndie.gui.SWTUI
+]]></echo>
         <tar destfile="syndie-${full.version}.bin.osx64.tar.bz2" compression="bzip2">
             <tarfileset dir="pkg-osx" prefix="syndie-${full.version}" filemode="644">
                 <include name="**/**" />
