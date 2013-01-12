@@ -92,12 +92,15 @@ public class SyncManager {
         }
         _archives.remove(archive);
     }
+
     void added(SyncArchive archive) {
-        if (!_archives.contains(archive))
+        if (!_archives.contains(archive)) {
+            _ui.debugMessage("Adding new archive " + archive, new Exception());
             _archives.add(archive);
-        for (int i = 0; i < _listeners.size(); i++) {
-            SyncListener lsnr = (SyncListener)_listeners.get(i);
-            lsnr.archiveAdded(archive);
+            for (int i = 0; i < _listeners.size(); i++) {
+                SyncListener lsnr = (SyncListener)_listeners.get(i);
+                lsnr.archiveAdded(archive);
+            }
         }
     }
     

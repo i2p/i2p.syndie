@@ -27,6 +27,7 @@ import syndie.data.SyndieURI;
  * serialize(About)+numChannels+serialize(Channel[])+numMessages+serialize(Message[])
  */
 public class SharedArchive {
+    // FIXME need better data structures to look up messages by ID, or channel, or something
     private Channel _channels[];
     private Message _messages[];
     private About _about;
@@ -83,6 +84,7 @@ public class SharedArchive {
             return _channels[index];
         return null;
     }
+
     private int getTargetIndex(Hash chan) {
         for (int i = 0; i < _channels.length; i++) {
             if (DataHelper.eq(_channels[i].getScope(), chan.getData()))
@@ -90,7 +92,11 @@ public class SharedArchive {
         }
         return -1;
     }
-    /** very inefficient, O(N) search */
+
+    /**
+     * FIXME O(n**2) in SharedArchiveEngine.scheduleNew()
+     * very inefficient, O(N) search
+     */
     boolean isKnown(Hash chan, long messageId) {
         for (int i = 0; i < _messages.length; i++) {
             if (messageId == _messages[i].getMessageId()) {
@@ -294,7 +300,12 @@ public class SharedArchive {
     static final int ABOUT_NO_ADMIN_CHANNEL = (1 << 31)-1;
     
     /**
-     *  This is the shared-index.dat header
+     *  This is the shared-index.dat header.
+     *  TODO this file format provides no mechanism for expansion, and
+     *  all bits are used.
+     *  There's no file format version number, no properties for additional fields, no edition number.
+     *  Any expansion will have to be at the end of the file, after the messages.
+     *  Unless we stuff the expanded info in as a pseudo-URI.
      */
     public static class About {
         /** 2 bytes */
@@ -507,15 +518,18 @@ public class SharedArchive {
     }
     
     public static void main(String args[]) {
-        // ok yeah, its a hardcoded constant.  just use the cli if you're not jrandom ;)
-        String filename = "/home/jrandom/.syndie/archive/shared-index.dat";
-        if (args.length > 0) filename = args[0];
+        String filename;
+        if (args.length > 0)
+            filename = args[0];
+        else
+            filename = TextEngine.getRootPath() + File.separator + "web" + File.separator + LocalArchiveManager.SHARED_INDEX_FILE;
         try {
             FileInputStream fin = new FileInputStream(filename);
             SharedArchive archive = new SharedArchive();
             archive.read(fin);
             fin.close();
-            System.out.println("archive: \n" + archive.toString());
+            System.out.println("archive: " + filename);
+            System.out.println(archive.toString());
         } catch (IOException ioe) { ioe.printStackTrace(); }
     }
 }

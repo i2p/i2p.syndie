@@ -290,6 +290,7 @@ public class SharedArchiveEngine {
         List<SyndieURI> uris = new ArrayList();
         if (strategy.pullNothing)
             return uris;
+        long begin = System.currentTimeMillis();
         
         List banned = client.getBannedChannels();
         
@@ -384,26 +385,32 @@ public class SharedArchiveEngine {
                 uris.add(SyndieURI.createMessage(scope, messages[i].getMessageId()));
             }
         }
-        ui.debugMessage("Pull: strategy=" + strategy + " Total allocated KB: " + totalAllocatedKB + " URIs: " + uris.size());
-        Collections.shuffle(uris);
+        ui.debugMessage("Selected to Pull: strategy=" + strategy + " Total allocated KB: " + totalAllocatedKB +
+                        " URIs: " + uris.size() +
+                        " total time = " + (System.currentTimeMillis() - begin));
+        // makes debugging harder and the UI messier
+        //Collections.shuffle(uris);
         return uris;
     }
     
     public List<SyndieURI> selectURIsToPush(DBClient client, UI ui, SharedArchive archive, PushStrategy strategy) {
-        /** SyndieURI of a message to the SyndieURI of a scope it depends on */
-        Map dependencies = new HashMap();
         List<SyndieURI> rv = new ArrayList();
         if (strategy.sendNothing)
             return rv;
+        long begin = System.currentTimeMillis();
         
+        /** SyndieURI of a message to the SyndieURI of a scope it depends on */
+        Map dependencies = new HashMap();
         if (strategy.sendLocalNewOnly) // local new == messages in our ./outbound/*/ directories
             scheduleNew(client, ui, archive, rv, dependencies, client.getOutboundDir(), strategy);
         else // otherwise, push new (etc) from our ./archive/*/ directories
             scheduleNew(client, ui, archive, rv, dependencies, client.getArchiveDir(), strategy);
         resolveDependencies(client, ui, archive, rv, dependencies);
         
-        ui.debugMessage("Push: strategy=" + strategy + " URIs: " + rv.size());
-        Collections.shuffle(rv);
+        ui.debugMessage("Selected to Push: strategy=" + strategy + " URIs: " + rv.size() +
+                        " total time = " + (System.currentTimeMillis() - begin));
+        // makes debugging harder and the UI messier
+        //Collections.shuffle(rv);
         return rv;
     }
     
@@ -451,7 +458,8 @@ public class SharedArchiveEngine {
         });
         
         // rather than sort to hide OS type, we shuffle later
-        //SharedArchiveBuilder.sortFiles(dirs);
+        // no dont shuffle
+        SharedArchiveBuilder.sortFiles(dirs);
         
         for (int i = 0; i < dirs.length; i++) {
             Hash scope = new Hash(Base64.decode(dirs[i].getName()));
@@ -494,7 +502,8 @@ public class SharedArchiveEngine {
             });
 
             // rather than sort to hide OS type, we shuffle later
-            //SharedArchiveBuilder.sortFiles(files);
+            // no dont shuffle
+            SharedArchiveBuilder.sortFiles(files);
             
             boolean added = false;
             for (int j = 0; j < files.length; j++) {
@@ -503,6 +512,7 @@ public class SharedArchiveEngine {
                     ui.debugMessage("File is not relevant for a message: " + files[j].getName());
                     continue;
                 }
+                // FIXME O(n**2)
                 boolean known = archive.isKnown(scope, messageId);
                 if (known)
                     continue;

@@ -3,13 +3,16 @@ package syndie.db;
 import java.net.URISyntaxException;
 import java.sql.*;
 import java.util.*;
+
 import syndie.data.SyndieURI;
 import syndie.Constants;
+
 import net.i2p.util.Log;
 
 public class SyndieURIDAO {
-    private Log _log;
-    private DBClient _client;
+    private final Log _log;
+    private final DBClient _client;
+
     public SyndieURIDAO(DBClient client) {
         _client = client;
         _log = client.ctx().logManager().getLog(SyndieURIDAO.class);
@@ -18,6 +21,7 @@ public class SyndieURIDAO {
     private static final String KEY_TYPE = "__TYPE";
     
     private static final String SQL_FETCH = "SELECT attribKey, attribValString, attribValLong, attribValBool, attribValStrings FROM uriAttribute WHERE uriId = ?";
+
     public SyndieURI fetch(long uriId) {
         if (uriId < 0) return null;
         PreparedStatement stmt = null;
@@ -71,6 +75,7 @@ public class SyndieURIDAO {
     }
     
     private static final String SQL_NEXTID = "SELECT NEXT VALUE FOR uriIdSequence FROM information_schema.system_sequences WHERE SEQUENCE_NAME = 'URIIDSEQUENCE'";
+
     private long nextId() {
         PreparedStatement stmt = null;
         try {
@@ -96,6 +101,7 @@ public class SyndieURIDAO {
     
     
     private static final String SQL_INSERT = "INSERT INTO uriAttribute (attribKey, attribValString, attribValLong, attribValBool, attribValStrings, uriId, isDescriptive) VALUES (?, ?, ?, ?, ?, ?, ?)";
+
     public long add(SyndieURI uri) {
         long id = nextId();
         if (id < 0)
@@ -137,6 +143,7 @@ public class SyndieURIDAO {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
     }
+
     private void insertAttrib(PreparedStatement stmt, String key, String valString, Long valLong, Boolean valBool, String valStrings[], long id, boolean isDescriptive) throws SQLException {
         //"INSERT INTO uriAttribute
         // (attribKey, attribValString, attribValLong, attribValBool, attribValStrings, uriId, isDescriptive)

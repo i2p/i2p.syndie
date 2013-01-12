@@ -270,6 +270,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
         SyncManager mgr = SyncManager.getInstance(_client, _ui);
         viewDetailArchive(new SyncArchive(mgr, _client), false);
     }
+
     private void cancel() {
         SyncManager mgr = SyncManager.getInstance(_client, _ui);
         for (int i = 0; i < mgr.getArchiveCount(); i++) {
@@ -730,7 +731,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
             indexItem.setText(1, Constants.getDateTime(archive.getLastSyncTime()));
             if (archive.getLastIndexFetchErrorMsg() != null) {
                 indexItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
-                indexItem.setText(3, _translationRegistry.getText("Fetch error: ") + archive.getLastIndexFetchErrorMsg());
+                indexItem.setText(3, _translationRegistry.getText("Fetch error") + ": " + archive.getLastIndexFetchErrorMsg());
             } else {
                 indexItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_OK);
                 StringBuilder buf = new StringBuilder();
@@ -739,6 +740,16 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                 if (t > 0)
                     buf.append(":  ").append(DataHelper.formatSize(t)).append('B');
                 indexItem.setText(3, buf.toString());
+            }
+        } else {
+            // never successfully fetched
+            indexItem.setText(1, _translationRegistry.getText("Never"));
+            if (archive.getLastIndexFetchErrorMsg() != null) {
+                indexItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
+                indexItem.setText(3, _translationRegistry.getText("Fetch error") + ": " + archive.getLastIndexFetchErrorMsg());
+            } else {
+                indexItem.setImage(2, null);
+                indexItem.setText(3, "");
             }
         }
         resizeCols(indexItem);

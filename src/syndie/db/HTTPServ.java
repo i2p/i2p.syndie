@@ -32,6 +32,7 @@ import syndie.util.RFC822Date;
 
 /**
  * CLI parameters: ([--port $num] [--listeners $num] [--writable true] | [--kill true])
+ *
  */
 public class HTTPServ implements CLI.Command {
     private static ServerSocket _ssocket;
@@ -366,6 +367,9 @@ public class HTTPServ implements CLI.Command {
         }
     }
     
+    /**
+     *  TODO implement NCSA-style server log
+     */
     private void handle(Socket socket) throws IOException {
         _ui.debugMessage("handling a client");
         String methodLine = null;
@@ -476,8 +480,10 @@ public class HTTPServ implements CLI.Command {
             if (file.exists()) {
                 String lm = headers.get("IF-MODIFIED-SINCE");
                 if (lm != null) {
+
                     long lastMod = RFC822Date.parse822Date(lm);
                     if (file.lastModified() <= lastMod) {
+                        _ui.debugMessage("sending 304 for " + path);
                         send304(socket, in, out, timeout);
                         return;
                     }

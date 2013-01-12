@@ -140,6 +140,7 @@ public class Constants {
     private static final long EARLIEST_DATE = 946700000 * 1000l;
     // todo translate
     private static final String INVALID_DATE = "Invalid date";
+    private static final String UNSET_DATE = "Date not set";
 
     /** split on the given character, with the resulting tokens not including that character */
     public static final String[] split(char elem, String orig) { return split(""+elem, orig); }
@@ -206,6 +207,8 @@ public class Constants {
      *  Returns error string if too old or too far in future.
      */
     public static final String getDate(long when) { 
+        if (when <= 0)
+            return UNSET_DATE;
         if (when < EARLIEST_DATE || when > System.currentTimeMillis() + LATEST_DATE)
             return INVALID_DATE;
         synchronized (_dayFmt) { 
@@ -222,6 +225,8 @@ public class Constants {
      *  Returns error string if too old or too far in future.
      */
     public static final String getDateTime(long when) {
+        if (when <= 0)
+            return UNSET_DATE;
         long now = System.currentTimeMillis();
         if (when < EARLIEST_DATE || when > now + LATEST_DATE)
             return INVALID_DATE;

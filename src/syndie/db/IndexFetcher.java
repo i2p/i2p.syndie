@@ -377,6 +377,7 @@ class IndexFetcher {
                 }
                 FileInputStream fin = null;
                 try {
+                    _manager.getUI().debugMessage("Not modified [" + url + "], processing saved " + old);
                     SharedArchive index = new SharedArchive();
                     fin = new FileInputStream(old);
                     index.read(fin);
@@ -388,7 +389,7 @@ class IndexFetcher {
                     if (fin != null) try { fin.close(); } catch (IOException ioe) {}
                 }
             } else if (status == 403) {
-                _archive.indexFetchFail("Permission denied", null, false);
+                _archive.indexFetchFail("Permission denied " + url, null, false);
             } else {
                 _archive.indexFetchFail("Response code " + status, null, true);
                 _manager.getUI().errorMessage("index file does not exist??" + _indexFile.getAbsolutePath());

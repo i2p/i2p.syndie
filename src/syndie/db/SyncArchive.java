@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import net.i2p.data.Base64;
@@ -16,6 +17,7 @@ import syndie.Constants;
 import syndie.data.SyndieURI;
 
 /**
+ *  The state of a single remote archive
  *
  */
 public class SyncArchive {
@@ -60,6 +62,8 @@ public class SyncArchive {
      */
     private static final int DEFAULT_DELAY_HOURS = 4;
 
+    // TODO proper state transitions and tracking with an enum
+
     public SyncArchive(SyncManager mgr, DBClient client) { this(mgr, client, null); }
 
     public SyncArchive(SyncManager mgr, DBClient client, String name) {
@@ -84,9 +88,10 @@ public class SyncArchive {
      */
     public void indexNotModified(UI ui, SharedArchive old) {
         if (old != null) {
-            indexFetched(ui, old);
+            indexFetched(ui, old, false);
         } else {
             setIndexFetchInProgress(false);
+            _indexFetchComplete = false;
             setConsecutiveFailures(0);
             setLastIndexFetchErrorMsg(null);
             setLastIndexFetchError(null);
@@ -100,6 +105,16 @@ public class SyncArchive {
      * @param archive non-null
      */
     public void indexFetched(UI ui, SharedArchive archive) {
+        indexFetched(ui, archive, true);
+    }
+
+    /**
+     * this creates the actions to be run as a result of fetching the specified archive index
+     * @param archive non-null
+     * @param isNew false for notModofied
+     * @since 1.102b-6
+     */
+    private void indexFetched(UI ui, SharedArchive archive, boolean isNew) {
         // TODO: set a "processing" indication
 
         if (_nextSyncTime <= 0) {
@@ -117,12 +132,21 @@ public class SyncArchive {
         List pullURIs = new SharedArchiveEngine().selectURIsToPull(_client, ui, archive, pullStrategy, _whitelistGroupId);
         ui.debugMessage("index fetched, uris to pull: " + pullURIs.size());
         
-        SharedArchiveEngine.PushStrategy pushStrategy = getPushStrategy();
-        if (pushStrategy == null)
-            pushStrategy = SyncManager.getInstance(_client, ui).getDefaultPushStrategy();
-        ui.debugMessage("index fetched, push strategy: " + pushStrategy);
-        List pushURIs = new SharedArchiveEngine().selectURIsToPush(_client, ui, archive, pushStrategy);
-        ui.debugMessage("index fetched, uris to push: " + pushURIs.size());
+        List pushURIs;
+        if (isNew) {
+            SharedArchiveEngine.PushStrategy pushStrategy = getPushStrategy();
+            if (pushStrategy == null)
+                pushStrategy = SyncManager.getInstance(_client, ui).getDefaultPushStrategy();
+            ui.debugMessage("index fetched, push strategy: " + pushStrategy);
+            pushURIs = new SharedArchiveEngine().selectURIsToPush(_client, ui, archive, pushStrategy);
+            ui.debugMessage("index fetched, uris to push: " + pushURIs.size());
+        } else {
+            // It doesn't appear that we remember what we pushed last time,
+            // so if we're rescanning the old index, don't push anything.
+            // TODO keep track of pushes per-archive
+            pushURIs = Collections.EMPTY_LIST;
+            ui.debugMessage("index not modified, not pushing");
+        }
         
         SharedArchive.Message msgs[] = archive.getMessages();
         SharedArchive.Channel scopes[] = archive.getChannels();
@@ -181,6 +205,7 @@ public class SyncArchive {
     }
     
     void fireUpdated() { fireUpdated(true); }
+
     void fireUpdated(boolean notifyActions) {
         for (int i = 0; i < _listeners.size(); i++) {
             SyncArchiveListener lsnr = (SyncArchiveListener)_listeners.get(i);
@@ -447,6 +472,7 @@ public class SyncArchive {
     }
     
     public void addListener(SyncArchiveListener lsnr) { if (!_listeners.contains(lsnr)) _listeners.add(lsnr); }
+
     public void removeListener(SyncArchiveListener lsnr) { _listeners.remove(lsnr); }
     
     public void clearCompletedActions(boolean incoming, boolean outgoing) {
@@ -495,6 +521,8 @@ public class SyncArchive {
         }
         setNextSyncOneOff(false);
         setNextSyncTime(-1);
+        // TODO this is really hard on the UI, can take several minutes,
+        // have a bulk cancel call to the UI?
         for (int i = 0; i < _incomingActions.size(); i++) {
             IncomingAction action = (IncomingAction)_incomingActions.get(i);
             if (!action.isComplete())
@@ -780,13 +808,25 @@ public class SyncArchive {
     public void setConsecutiveFailures(int num) { _consecutiveFailures = num; }
     public long getNextSyncTime() { return _nextSyncTime; }
     public long getLastSyncTime() { return _lastSyncTime; }
+
+    /** must be called to complete fetch/push/pull cycle (success) */
     public void setNextSyncTime() { setNextSyncTime(true); }
+
+    /** must be called to complete fetch/push/pull cycle */
     private void setNextSyncTime(boolean success) { setNextSyncTime(System.currentTimeMillis() + getDelay(success)); }
+
+    /** does NOT clear fetch/push/pull cycle */
     public void setNextSyncTime(long when) { _nextSyncTime = when; }
+
     public void setLastSyncTime(long when) { _lastSyncTime = when; }
+
+    /** if true, only sync once */
     public boolean getNextSyncOneOff() { return _nextSyncOneOff; }
     public void setNextSyncOneOff(boolean oneOff) { _nextSyncOneOff = oneOff; }
+
+    /** TODO proper state tracking */
     public boolean getSyncInProgress() { return getIndexFetchInProgress() || _incomingActionsInProgress > 0 || _outgoingActionsInProgress > 0; }
+
     public SharedArchiveEngine.PullStrategy getPullStrategy() { return _pullStrategy; }
     public void setPullStrategy(SharedArchiveEngine.PullStrategy strategy) { _pullStrategy = strategy; }
     public SharedArchiveEngine.PushStrategy getPushStrategy() { return _pushStrategy; }
@@ -796,12 +836,16 @@ public class SyncArchive {
     public long getWhitelistGroupId() { return _whitelistGroupId; }
     public void setWhitelistGroupId(long id) { _whitelistGroupId = id; }
 
+    /**
+     *  True if during index fetch only.
+     *  False during pushes/pulls.
+     */
     public boolean getIndexFetchInProgress() { return _indexFetching; }
 
     public void setIndexFetchInProgress(boolean now) {
         _indexFetching = now;
         if (!now) {
-            _manager.getUI().debugMessage("SyncArchive: index complete for " + _name);
+            _manager.getUI().debugMessage("SyncArchive: index fetch complete for " + _name);
             _indexFetchComplete = true;
         } else {
             _manager.getUI().debugMessage("SyncArchive: index fetch beginning for " + _name);
@@ -822,6 +866,10 @@ public class SyncArchive {
     /** @return -1 if unknown */
     public long getIndexFetchSize() { return _indexFetchSize; }
 
+    /**
+     *  True if fetch was successful and pushes/pulls are in progress.
+     *  False during fetch. False after fetch failure, and after pushes/pulls are complete.
+     */
     public boolean getIndexFetchComplete() { return _indexFetchComplete; }
     
     public String getLastIndexFetchErrorMsg() { 
@@ -840,6 +888,7 @@ public class SyncArchive {
     public IncomingAction getIncomingAction(int num) { return (IncomingAction)_incomingActions.get(num); }
     
     IncomingAction createIncomingAction(SyndieURI uri) { 
+        // FIXME O(n**2)
         for (int i = 0; i < _incomingActions.size(); i++) {
             IncomingAction cur = (IncomingAction)_incomingActions.get(i);
             // hmm, what if it was already complete?  etc
@@ -856,7 +905,9 @@ public class SyncArchive {
     }
     
     public int getOutgoingActionCount() { return _outgoingActions.size(); }
+
     public OutgoingAction getOutgoingAction(int num) { return (OutgoingAction)_outgoingActions.get(num); }
+
     public int getIncompleteOutgoingActionCount() {
         int rv = 0;
         for (int i = 0; i < _outgoingActions.size(); i++) {
@@ -868,6 +919,7 @@ public class SyncArchive {
     }
     
     OutgoingAction createOutgoingAction(SyndieURI uri) { 
+        // FIXME O(n**2)
         for (int i = 0; i < _outgoingActions.size(); i++) {
             OutgoingAction cur = (OutgoingAction)_outgoingActions.get(i);
             // hmm, what if it was already complete?  etc
@@ -889,6 +941,7 @@ public class SyncArchive {
         setLastIndexFetchError(cause);
         setConsecutiveFailures(1 + getConsecutiveFailures());
         setIndexFetchInProgress(false);
+        _indexFetchComplete = false;
         
         if (allowReschedule) {
             // which index fetch are we failing here?
@@ -925,11 +978,21 @@ public class SyncArchive {
         }
         fireUpdated();
     }
+
+    /**
+     *  Call after pushes are complete.
+     *  Clears the index fetching and index fetch complete flags.
+     *  Pushes must be after pulls.
+     */
     public void pushActionComplete() {
         updateSchedule(true);
         fireUpdated();
     }
     
+    /**
+     *  Call after index fetch fails or pushes and pulls are complete.
+     *  Clears the index fetching and index fetch complete flags.
+     */
     private long getDelay(boolean success) {
         long delay = 0;
         int hours = 1;
@@ -946,10 +1009,16 @@ public class SyncArchive {
         return hours*60*60*1000L + _client.ctx().random().nextInt(60*60*1000);
     }
     
+    /**
+     *  Call after index fetch fails or pushes and pulls are complete.
+     *  Clears the index fetching and index fetch complete flags.
+     */
     private void updateSchedule(boolean success) {
-        if (getNextSyncOneOff())
+        if (getNextSyncOneOff()) {
             setNextSyncTime(-1);
-        else
+            _indexFetchComplete = false;
+            _indexFetching = false;
+        } else
             setNextSyncTime(success);
         
         if (success)
@@ -957,5 +1026,9 @@ public class SyncArchive {
         
         _manager.getUI().debugMessage("updateSchedule(" + success + "): next sync: " + Constants.getDateTime(getNextSyncTime()));
         store();
+    }
+
+    public String toString() {
+        return "Archive " + _archiveURL;
     }
 }

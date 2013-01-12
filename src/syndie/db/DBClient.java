@@ -4422,7 +4422,7 @@ public class DBClient {
                 
                 SyndieURI uri = getURI(uriId);
                 NymReferenceNode ref = new NymReferenceNode(name, uri, desc, uriId, groupId, parentGroupId, order, false, false, false);
-                _ui.debugMessage("fetch ref: " + groupId + "/" + parentGroupId + ": " + name + "/" + desc + ": " + uri);
+                //_ui.debugMessage("DB fetch ref: " + groupId + "/" + parentGroupId + ": " + name + "/" + desc + ": " + uri);
                 groupIdToNode.put(new Long(groupId), ref);
             }
         } catch (SQLException se) {
@@ -4466,7 +4466,7 @@ public class DBClient {
         roots.clear();
         roots.addAll(sorted.values());
         
-        _ui.debugMessage("fetched nym refs: " + roots);
+        _ui.debugMessage("DB fetched nym refs: " + roots.size());
         return roots;
     }
     
@@ -6628,6 +6628,14 @@ public class DBClient {
             _log.error(msg);
     }
     
+    /**
+     *  Generate a new number, greater than lastValue,
+     *  and randomly between previous midnight UTC and
+     *  next midnight UTC, but maybe up to 24 hours after
+     *  the next midnight UTC if lastValue after the last midnight UTC.
+     *  Oh yeah, lets ignore leap seconds too.
+     *  SHEESH
+     */
     public long createEdition(long lastValue) {
         long now = System.currentTimeMillis();
         now -= (now % 24*60*60*1000);

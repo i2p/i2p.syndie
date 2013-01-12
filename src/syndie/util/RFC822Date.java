@@ -14,7 +14,7 @@ public class RFC822Date {
 
     // SimpleDateFormat is not thread-safe, methods must be synchronized
 
-    private static final SimpleDateFormat OUTPUT_FORMAT = new SimpleDateFormat("d MMM yyyy HH:mm:ss Z", Locale.US);
+    private static final SimpleDateFormat OUTPUT_FORMAT = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss z", Locale.US);
 
     /**
      * http://jimyjoshi.com/blog/2007/08/rfc822dateparsinginjava.html
@@ -23,13 +23,13 @@ public class RFC822Date {
      */
     private static final SimpleDateFormat rfc822DateFormats[] = new SimpleDateFormat[] {
                  OUTPUT_FORMAT,
-                 new SimpleDateFormat("EEE, d MMM yy HH:mm:ss Z", Locale.US),
-                 new SimpleDateFormat("EEE, d MMM yy HH:mm Z", Locale.US),
-                 new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z", Locale.US),
-                 new SimpleDateFormat("EEE, d MMM yyyy HH:mm Z", Locale.US),
-                 new SimpleDateFormat("d MMM yy HH:mm Z", Locale.US),
-                 new SimpleDateFormat("d MMM yy HH:mm:ss Z", Locale.US),
-                 new SimpleDateFormat("d MMM yyyy HH:mm Z", Locale.US)
+                 new SimpleDateFormat("d MMM yy HH:mm:ss z", Locale.US),
+                 new SimpleDateFormat("EEE, d MMM yy HH:mm z", Locale.US),
+                 new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss z", Locale.US),
+                 new SimpleDateFormat("EEE, d MMM yyyy HH:mm z", Locale.US),
+                 new SimpleDateFormat("d MMM yy HH:mm z", Locale.US),
+                 new SimpleDateFormat("d MMM yy HH:mm:ss z", Locale.US),
+                 new SimpleDateFormat("d MMM yyyy HH:mm z", Locale.US)
     };
 
     //
@@ -60,7 +60,7 @@ public class RFC822Date {
     }
 
     /**
-     * Format is "d MMM yyyy HH:mm:ss Z"
+     * Format is "d MMM yyyy HH:mm:ss z"
      *
      * @since 0.8.2
      */
