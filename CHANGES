@@ -1,5 +1,19 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
+* 2013-01-12 1.102b-6 (kytv, zzz)
+  GUI improvements:
+  - Revert shuffling of push/pull order with a single archive,
+    as it made the UI messier, debugging harder, and may have
+    other side effects
+  - Fix display for fetch index that has never succeeded
+  - Don't call SyncListeners for added unless really added
+  Syndication:
+  - Fix multiple pushes of the same data after a not-modified index fetch
+  - Fix sync-completed tracking which could prevent future pushes
+  - Fix format of last-modified header to use strictest RFC 822
+  Build:
+  - OSX fixes
+
 * 2013-01-11 1.102b-5 (kytv, zab, zzz)
   GUI improvements:
    - New font selector
