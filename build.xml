@@ -819,6 +819,11 @@
                 <pathelement location="${i2p.jar}" />
                 <pathelement location="${hsqldb.jar}" />
             </classpath>
+            <!-- These variables are stored in build.properties. 
+                 End-users can override by creating the file override.properties -->
+            <link offline="true" href="${javasedocs.url}" packagelistLoc="resources/package-lists/java/" />
+            <link offline="true" href="${swtdocs.url}" packagelistLoc="resources/package-lists/swt/" />
+            <link offline="true" href="${i2pdocs.url}" packagelistLoc="resources/package-lists/i2p/" />
         </javadoc>
         <echo message="Warning, javadoc embeds timestamps in the output, run with 'TZ=UTC ant javadoc' if you plan to distribute" />
     </target>
