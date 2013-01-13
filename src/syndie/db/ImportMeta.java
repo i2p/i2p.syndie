@@ -140,6 +140,7 @@ class ImportMeta {
         long knownEdition = client.getKnownEdition(ident);
         if (knownEdition > edition.longValue()) {
             ui.statusMessage("already known edition " + knownEdition);
+            saveToArchiveIfAbsent(client, ui, ident, enc);
             return true;
         }
 
@@ -919,10 +920,24 @@ class ImportMeta {
         }
     }
     
+    /** @since 1.102b-7 */
+    private static void saveToArchiveIfAbsent(DBClient client, UI ui, Hash ident, Enclosure enc) {
+        File outDir = new SecureFile(client.getArchiveDir(), ident.toBase64());
+        File outMeta = new File(outDir, "meta" + Constants.FILENAME_SUFFIX);
+        if (!outMeta.exists()) {
+            outDir.mkdirs();
+            saveToArchive(ui, enc, outMeta);
+        }
+    }
+
     private static void saveToArchive(DBClient client, UI ui, Hash ident, Enclosure enc) {
         File outDir = new SecureFile(client.getArchiveDir(), ident.toBase64());
         outDir.mkdirs();
         File outMeta = new File(outDir, "meta" + Constants.FILENAME_SUFFIX);
+        saveToArchive(ui, enc, outMeta);
+    }
+
+    private static void saveToArchive(UI ui, Enclosure enc, File outMeta) {
         try {
             enc.store(outMeta.getPath());
             ui.debugMessage("Metadata saved to the archive at " + outMeta.getPath());
