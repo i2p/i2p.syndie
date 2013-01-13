@@ -418,7 +418,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         private Hash _forumScopeOther[];
         private PreviewControlListener _listener;
         
-        private static final int DEFAULT_AGE_DAYS = 183;
+        private static final int DEFAULT_AGE_DAYS = 3653;
 
         public FilterBar(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, URIControl uriControl, MessageTree msgTree, Composite bar, PreviewControlListener lsnr) {
             super(client, ui, themes, trans);
@@ -451,7 +451,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
                         case AGE_YESTERDAY: _age = 2; break;
                         case AGE_TODAY: _age = 1; break;
                         default:
-                            _age = 183;
+                            _age = DEFAULT_AGE_DAYS;
                             break;
                     }
                     
@@ -1475,7 +1475,9 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         }
         applyFilter(filter);
     }
+
     private transient boolean _filtering;
+
     public void applyFilter(String filter) {
         //_ui.debugMessage("\n\n\n\napplying filter: " + filter + " (old: " + _appliedFilter + ")");
         if (!_filterable) return;
