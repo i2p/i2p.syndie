@@ -423,9 +423,10 @@ public class SharedArchiveEngine {
             if (rv.contains(chanURI))
                 continue; // ok, already scheduled
             
-            if (archive.getChannel(chanURI.getScope()) == null)
+            // FIXME O(n**2)
+            if (archive.getChannel(chanURI.getScope()) != null)
                 continue; // ok, they already have it (or at least some version of it)
-            
+
             if (archive.getAbout().wantKnownChannelsOnly()) {
                 // boo.  dependency failed because they are no fun.
                 //ui.debugMessage("not sending " + msgURI.toString() + " because it depends on " + chanURI.toString() + ", which they don't know, and they don't want new channels");
@@ -435,6 +436,7 @@ public class SharedArchiveEngine {
             
             File meta = new File(new File(client.getArchiveDir(), chanURI.getScope().toBase64()), "meta" + Constants.FILENAME_SUFFIX);
             if (meta.exists()) {
+                ui.debugMessage("Adding metadata for " + chanURI.getScope().toBase64() + " as dependency");
                 rv.add(chanURI);
             } else {
                 // dependency failed because we don't keep full archives
@@ -466,6 +468,7 @@ public class SharedArchiveEngine {
             long version = client.getChannelVersion(scope);
             //ui.debugMessage("Scheduling push from " + scope.toBase64());
 
+            // FIXME O(n**2)
             SharedArchive.Channel remChan = archive.getChannel(scope);
             if (archive.getAbout().wantKnownChannelsOnly() && (remChan == null)) {
                 ui.debugMessage("Remote archive doesn't know " + scope.toBase64().substring(0,6) + " and doesn't want any new chans.  skipping");
