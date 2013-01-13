@@ -15,6 +15,7 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+
 import syndie.db.DBClient;
 import syndie.db.UI;
 
@@ -22,9 +23,9 @@ import syndie.db.UI;
  *
  */
 public class PassphrasePrompt extends BaseComponent implements Translatable, Themeable {
-    private Shell _parent;
+    private final Shell _parent;
     private Shell _shell;
-    private boolean _creatingNewPassphrase;
+    private final boolean _creatingNewPassphrase;
     private PassphraseListener _listener;
     
     private Label _passphraseLabel;
@@ -34,7 +35,8 @@ public class PassphrasePrompt extends BaseComponent implements Translatable, The
     private Button _ok;
     private Button _cancel;
     
-    public PassphrasePrompt(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Shell parent, boolean creatingNewPassphrase) {
+    public PassphrasePrompt(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans,
+                            Shell parent, boolean creatingNewPassphrase) {
         super(client, ui, themes, trans);
         _parent = parent;
         _creatingNewPassphrase = creatingNewPassphrase;
@@ -57,10 +59,12 @@ public class PassphrasePrompt extends BaseComponent implements Translatable, The
         if (passphrase == null) passphrase = "";
         _passphrase.setText(passphrase);
     }
+
     public void setPassphrasePrompt(String passphrasePrompt) { 
         if (passphrasePrompt == null) passphrasePrompt = "";
         _passphrasePrompt.setText(passphrasePrompt);
     }
+
     public void setPassphraseListener(PassphraseListener lsnr) { _listener = lsnr; }
     
     public static interface PassphraseListener {

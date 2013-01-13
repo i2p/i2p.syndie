@@ -35,11 +35,11 @@ import syndie.data.SyndieURI;
  *
  */
 public class ImportPost {
-    private DBClient _client;
-    private UI _ui;
-    private long _nymId;
-    private String _pass;
-    private Enclosure _enc;
+    private final DBClient _client;
+    private final UI _ui;
+    private final long _nymId;
+    private final String _pass;
+    private final Enclosure _enc;
     private EnclosureBody _body;
     private SyndieURI _uri;
     private Hash _channel;
@@ -49,22 +49,21 @@ public class ImportPost {
     private boolean _authenticated;
     private boolean _authorized;
     private boolean _pseudoauthorized;
-    private String _bodyPassphrase;
-    private boolean _forceReimport;
+    private final String _bodyPassphrase;
+    private final boolean _forceReimport;
     private boolean _alreadyImported;
-    private SessionKey _replySessionKey;
-    private byte _replyIV[];
+    private final SessionKey _replySessionKey;
+    private final byte _replyIV[];
     
-    public ImportPost(DBClient client, UI ui, Enclosure enc, long nymId, String pass, String bodyPassphrase, boolean forceReimport, byte replyIV[], SessionKey replySessionKey) {
+    public ImportPost(DBClient client, UI ui, Enclosure enc, long nymId, String pass, String bodyPassphrase,
+                      boolean forceReimport, byte replyIV[], SessionKey replySessionKey) {
         _client = client;
         _ui = ui;
         _enc = enc;
         _nymId = nymId;
         _pass = pass;
-        _privateMessage = false;
         _bodyPassphrase = bodyPassphrase;
         _forceReimport = forceReimport;
-        _alreadyImported = false;
         _replySessionKey = replySessionKey;
         _replyIV = replyIV;
     }
@@ -78,11 +77,22 @@ public class ImportPost {
      * identity itself, one of the manager keys, one of the authorized keys,
      * or the post's authentication key.  the exit code in ui.commandComplete is
      * -1 if unimportable, 0 if imported fully, or 1 if imported but not decryptable
+     *
+     * @return success
      */
     public static boolean process(DBClient client, UI ui, Enclosure enc, long nymId, String pass, String bodyPassphrase, boolean forceReimport, byte replyIV[], SessionKey replySessionKey) {
         ImportPost imp = new ImportPost(client, ui, enc, nymId, pass, bodyPassphrase, forceReimport, replyIV, replySessionKey);
         return imp.process();
     }
+
+    /*
+     * The post message is ok if it is either signed by the channel's
+     * identity itself, one of the manager keys, one of the authorized keys,
+     * or the post's authentication key.  the exit code in ui.commandComplete is
+     * -1 if unimportable, 0 if imported fully, or 1 if imported but not decryptable
+     *
+     * @return success
+     */
     public boolean process() {
         _uri = _enc.getHeaderURI(Constants.MSG_HEADER_POST_URI);
         if (_uri == null) {
@@ -99,11 +109,24 @@ public class ImportPost {
         
         long msgId = _client.getMessageId(_uri.getScope(), _uri.getMessageId());
         if (msgId >= 0) {
-            if (_client.getMessageDecrypted(msgId) || _client.getMessageDeleted(msgId)) {
-                _ui.debugMessage("post is already decrypted fully or has been locally deleted, no need to import it again");
+            if (_client.getMessageDecrypted(msgId)) {
+                _ui.debugMessage("post is already decrypted fully, no need to import it again");
                 return true; // already decrypted
             }
+            if (_client.getMessageDeleted(msgId)) {
+                if (_forceReimport) {
+                    _ui.debugMessage("Forcing reimport of a deleted message");
+                } else {
+                    _ui.debugMessage("post has been locally deleted, no need to import it again");
+                    return true; // already decrypted
+                }
+            } else if (!_forceReimport) {
+                // catch this here, it will fail the insert later
+                _ui.debugMessage("Message already exists and no force reimport");
+                return true;
+            }
         }
+        // either msgId == 0 || _forceReimport == true
         
         // first we check to ban posts by ANY author in a banned channel
         if (_client.getBannedChannels().contains(_channel)) {
@@ -436,7 +459,17 @@ public class ImportPost {
         }
         
         if (_authenticated || _authorized || _pseudoauthorized) {
-            boolean ok = importMessage();
+            boolean ok;
+            if (msgId < 0) {
+                // new
+                ok = importMessage();
+            } else {
+                // _forceReimport
+                if (_body instanceof UnreadableEnclosureBody)
+                    ok = false;
+                else
+                    ok = reimportMessage(msgId);
+            }
             if (ok) {
                 if (_body instanceof UnreadableEnclosureBody)
                     _ui.commandComplete(1, null);
@@ -469,6 +502,17 @@ public class ImportPost {
                 _ui.statusMessage("Already imported");
                 return false;
             }
+            if (!importMessageBody(msgId))
+                return false;
+            saveToArchive(_client, _ui, _channel, _enc);
+            return true;
+        } catch (SQLException se) {
+            _ui.errorMessage("Error importing the message", se);
+            return false;
+        }
+    }
+
+    private boolean importMessageBody(long msgId) throws SQLException {
             setMessageHierarchy(msgId);
             setMessageTags(msgId);
             setMessageAttachments(msgId);
@@ -478,11 +522,30 @@ public class ImportPost {
         
             processControlActivity(msgId);
             
-            saveToArchive(_client, _ui, _channel, _enc);
             return true;
+    }
+
+    private static final String SQL_UNDELETE_MESSAGE = "UPDATE channelMessage SET deletionCause = NULL, pbePrompt = NULL WHERE msgId = ?";
+    
+    /**
+     *  Clear the delete cause and passphrase prompt fields and then add all the body stuff
+     *  @since 1.102b-7
+     */
+    private boolean reimportMessage(long msgId) {
+        _ui.debugMessage("reimporting message id " + msgId);
+        
+        PreparedStatement stmt = null;
+        try {
+            stmt = _client.con().prepareStatement(SQL_UNDELETE_MESSAGE);
+            stmt.setLong(1, msgId);
+            stmt.executeUpdate();
+            _ui.debugMessage("undelete successful id " + msgId);
+            return importMessageBody(msgId);
         } catch (SQLException se) {
-            _ui.errorMessage("Error importing the message", se);
+            _ui.errorMessage("Error reimporting the message", se);
             return false;
+        } finally {
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
     }
     
@@ -503,7 +566,7 @@ public class ImportPost {
         }
         
         // check to see if this new message was cancelled by an earlier received message
-        long cancelledBy = _client.getCancelledBy(_uri);
+        long cancelledBy = cancelledBy = _client.getCancelledBy(_uri);
         if (cancelledBy >= 0) {
             // ok, this will check to see if the one who sent us the cancel request was
             // authorized, and if it was, it'll delete the newly created message
@@ -650,7 +713,10 @@ public class ImportPost {
         MessageInfo msg = _client.getMessage(channelId, _uri.getMessageId());
         if (msg != null) {
             if (_forceReimport) {
-                _ui.debugMessage("Message exists (" + msg.getInternalId() + ") but we want to force reimport, so drop it");
+                // This doesn't work because the message is still there but marked as deleted
+                // see reimportMessage() above
+                _ui.errorMessage("DOESNT WORK SHOULDNT GET HERE Message exists (" + msg.getInternalId() +
+                                 ") but we want to force reimport, so drop it", new Exception());
                 _client.deleteFromDB(_uri, _ui);
                 msg = null;
             } else if ( (msg.getPassphrasePrompt() == null) && (!msg.getReadKeyUnknown()) && (!msg.getReplyKeyUnknown()) ) {
@@ -663,10 +729,11 @@ public class ImportPost {
                 _alreadyImported = true;
                 return false;
             } else {
+                // see reimportMessage() above
                 _ui.debugMessage("Existing message: " + msg.getInternalId());
                 // we have the post, but don't have the passphrase or keys.  So...
                 // delete it, then import it again clean
-                _ui.debugMessage("Known message was not decrypted, so lets drop it and try again...");
+                _ui.debugMessage("DOESNT WORK SHOULDNT GET HERE Known message was not decrypted, so lets drop it and try again...", new Exception());
                 _client.deleteFromDB(_uri, _ui);
                 msg = null;
             }
@@ -864,6 +931,7 @@ public class ImportPost {
     
     static final String SQL_DELETE_MESSAGE_HIERARCHY = "DELETE FROM messageHierarchy WHERE msgId = ?";
     private static final String SQL_INSERT_MESSAGE_PARENT = "INSERT INTO messageHierarchy (msgId, referencedChannelHash, referencedMessageId, referencedCloseness) VALUES (?, ?, ?, ?)";
+
     private void setMessageHierarchy(long msgId) throws SQLException {
         SyndieURI refs[] = _body.getHeaderURIs(Constants.MSG_HEADER_REFERENCES);
         if (refs == null)
@@ -895,6 +963,7 @@ public class ImportPost {
 
     static final String SQL_DELETE_MESSAGE_TAGS = "DELETE FROM messageTag WHERE msgId = ?";
     private static final String SQL_INSERT_MESSAGE_TAG = "INSERT INTO messageTag (msgId, tag, isPublic) VALUES (?, ?, ?)";
+
     private void setMessageTags(long msgId) throws SQLException {
         String privTags[] = _body.getHeaderStrings(Constants.MSG_HEADER_TAGS);
         String pubTags [] = _enc.getHeaderStrings(Constants.MSG_HEADER_TAGS);
@@ -925,6 +994,7 @@ public class ImportPost {
     static final String SQL_DELETE_MESSAGE_ATTACHMENTS = "DELETE FROM messageAttachment WHERE msgId = ?";
     static final String SQL_DELETE_MESSAGE_ATTACHMENT_DATA = "DELETE FROM messageAttachmentData WHERE msgId = ?";
     static final String SQL_DELETE_MESSAGE_ATTACHMENT_CONFIG = "DELETE FROM messageAttachmentConfig WHERE msgId = ?";
+
     private void setMessageAttachments(long msgId) throws SQLException {
         _client.exec(SQL_DELETE_MESSAGE_ATTACHMENTS, msgId);
         _client.exec(SQL_DELETE_MESSAGE_ATTACHMENT_DATA, msgId);
@@ -935,6 +1005,7 @@ public class ImportPost {
     private static final String SQL_INSERT_MESSAGE_ATTACHMENT = "INSERT INTO messageAttachment (msgId, attachmentNum, attachmentSize, contentType, name, description) VALUES (?, ?, ?, ?, ?, ?)";
     private static final String SQL_INSERT_MESSAGE_ATTACHMENT_DATA = "INSERT INTO messageAttachmentData (msgId, attachmentNum, dataBinary) VALUES (?, ?, ?)";
     private static final String SQL_INSERT_MESSAGE_ATTACHMENT_CONFIG = "INSERT INTO messageAttachmentConfig (msgId, attachmentNum, dataString) VALUES (?, ?, ?)";
+
     private void insertAttachment(long msgId, int attachmentId) throws SQLException {
         byte data[] = _body.getAttachment(attachmentId);
         Properties attachConfig = _body.getAttachmentConfig(attachmentId);
@@ -996,7 +1067,8 @@ public class ImportPost {
         _ui.debugMessage("Post had a .syndie file attached to it, attempting to import that file");
         Importer imp = new Importer(_client);
         try {
-            boolean ok = imp.processMessage(_ui, new ByteArrayInputStream(data), _client.getLoggedInNymId(), _client.getPass(), null, false, null, null);
+            boolean ok = imp.processMessage(_ui, new ByteArrayInputStream(data), _client.getLoggedInNymId(),
+                                            _client.getPass(), null, false, null, null);
             _ui.debugMessage("Attachment import complete.  success? " + ok);
         } catch (IOException ioe) {
             _ui.debugMessage("Attachment was corrupt", ioe);
@@ -1006,6 +1078,7 @@ public class ImportPost {
     static final String SQL_DELETE_MESSAGE_PAGES = "DELETE FROM messagePage WHERE msgId = ?";
     static final String SQL_DELETE_MESSAGE_PAGE_DATA = "DELETE FROM messagePageData WHERE msgId = ?";
     static final String SQL_DELETE_MESSAGE_PAGE_CONFIG = "DELETE FROM messagePageConfig WHERE msgId = ?";
+
     private void setMessagePages(long msgId) throws SQLException {
         _client.exec(SQL_DELETE_MESSAGE_PAGES, msgId);
         _client.exec(SQL_DELETE_MESSAGE_PAGE_DATA, msgId);
@@ -1013,9 +1086,11 @@ public class ImportPost {
         for (int i = 0; i < _body.getPages(); i++)
             insertPage(msgId, i);
     }
+
     private static final String SQL_INSERT_MESSAGE_PAGE = "INSERT INTO messagePage (msgId, pageNum, contentType) VALUES (?, ?, ?)";
     private static final String SQL_INSERT_MESSAGE_PAGE_DATA = "INSERT INTO messagePageData (msgId, pageNum, dataString) VALUES (?, ?, ?)";
     private static final String SQL_INSERT_MESSAGE_PAGE_CONFIG = "INSERT INTO messagePageConfig (msgId, pageNum, dataString) VALUES (?, ?, ?)";
+
     private void insertPage(long msgId, int pageId) throws SQLException {
         PreparedStatement stmt = null;
         try {
@@ -1089,6 +1164,7 @@ public class ImportPost {
     
     static final String SQL_DELETE_MESSAGE_REF_URIS = "DELETE FROM uriAttribute WHERE uriId IN (SELECT uriId FROM messageReference WHERE msgId = ?)";
     static final String SQL_DELETE_MESSAGE_REFS = "DELETE FROM messageReference WHERE msgId = ?";
+
     private void setMessageReferences(long msgId) throws SQLException {
         _client.exec(SQL_DELETE_MESSAGE_REF_URIS, msgId);
         _client.exec(SQL_DELETE_MESSAGE_REFS, msgId);
@@ -1111,6 +1187,7 @@ public class ImportPost {
     private static final String SQL_INSERT_MESSAGE_REF = "INSERT INTO messageReference " +
             "(msgId, referenceId, parentReferenceId, siblingOrder, name, description, uriId, refType)" +
             " VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
     private class InsertRefVisitor implements ReferenceNode.Visitor {
         private long _msgId;
         private int _node;

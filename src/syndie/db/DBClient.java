@@ -4172,6 +4172,7 @@ public class DBClient {
     public void deleteMessage(SyndieURI uri, UI ui, boolean deleteDB) {
         deleteMessage(uri, ui, deleteDB, true);
     }
+
     public void deleteMessage(SyndieURI uri, UI ui, boolean deleteDB, boolean deleteFromArchive) {
         deleteFromArchive(uri, ui);
         if (deleteDB)
@@ -4179,6 +4180,7 @@ public class DBClient {
     }
     
     void deleteFromDB(SyndieURI uri, UI ui) { deleteFromDB(uri, ui, DELETION_CAUSE_OTHER); }
+
     void deleteFromDB(SyndieURI uri, UI ui, int deletionCause) {
         if (uri.getMessageId() == null) {
             // delete the whole channel, though all of the posts
@@ -4197,7 +4199,8 @@ public class DBClient {
                 exec(ImportMeta.SQL_DELETE_CHANNEL_REFERENCES, scopeId);
                 exec(SQL_DELETE_CHANNEL, scopeId);
                 exec(SQL_DELETE_UNREAD_CHANNELS, scopeId);
-                ui.statusMessage("Deleted the channel " + uri.getScope().toBase64() + " from the database");
+                ui.debugMessage("Deleted the channel " + uri.getScope().toBase64() + " from the database" +
+                                " cause = " + deletionCause, new Exception("I did it"));
             } catch (SQLException se) {
                 ui.errorMessage("Unable to delete the channel " + uri.getScope().toBase64(), se);
             }
@@ -4207,13 +4210,15 @@ public class DBClient {
             long internalId = getMessageId(scopeId, uri.getMessageId().longValue());
             Exception exception = deleteMessageFromDB(internalId, deletionCause);
             if (exception == null)
-                ui.statusMessage("Deleted the post " + uri.getScope().toBase64() + ":" + uri.getMessageId() + " from the database");
+                ui.debugMessage("Deleted the post " + uri.getScope().toBase64() + ":" + uri.getMessageId() + " from the database" +
+                                 " cause = " + deletionCause, new Exception("I did it"));
             else
                 ui.errorMessage("Error deleting the post " + uri, exception);
         }
     }
     
     public Exception expireMessageFromDB(long msgId) { return deleteMessageFromDB(msgId, DELETION_CAUSE_EXPIRE); }
+
     Exception deleteMessageFromDB(long msgId, int deletionCause) {
         try {
             exec(ImportPost.SQL_DELETE_MESSAGE_HIERARCHY, msgId);
@@ -5019,17 +5024,21 @@ public class DBClient {
      *);
      */
     private static final String SQL_WATCH_CHANNEL = "INSERT INTO nymWatchedChannel (nymId, channelId, importKeys, importBookmarks, importBans, importArchives, highlightUnread) VALUES (?, ?, ?, ?, ?, ?, ?)";
+
     public void watchChannel(Hash scope, boolean highlight, boolean impArchives, boolean impBookmarks, boolean impBans, boolean impKeys) {
         watchChannel(_nymId, scope, highlight, impArchives, impBookmarks, impBans, impKeys);
     }
+
     public void watchChannel(long nymId, Hash scope, boolean highlight, boolean impArchives, boolean impBookmarks, boolean impBans, boolean impKeys) {
         ensureLoggedIn();
         long channelId = getChannelId(scope);
         watchChannel(nymId, channelId, highlight, impArchives, impBookmarks, impBans, impKeys);
     }
+
     public void watchChannel(long channelId, boolean highlight, boolean impArchives, boolean impBookmarks, boolean impBans, boolean impKeys) {
         watchChannel(_nymId, channelId, highlight, impArchives, impBookmarks, impBans, impKeys);
     }
+
     public void watchChannel(long nymId, long channelId, boolean highlight, boolean impArchives, boolean impBookmarks, boolean impBans, boolean impKeys) {
         ensureLoggedIn();
         if (channelId < 0) return;
@@ -5059,9 +5068,13 @@ public class DBClient {
     }
     
     private static final String SQL_UNWATCH_CHANNEL = "DELETE FROM nymWatchedChannel WHERE nymId = ? AND channelId = ?";
+
     public void unwatchChannel(Hash scope) { unwatchChannel(_nymId, scope, true); }
+
     public void unwatchChannel(long nymId, Hash scope) { unwatchChannel(nymId, scope, true); }
+
     public void unwatchChannel(WatchedChannel channel) { unwatchChannel(_nymId, channel.getChannelId(), true); }
+
     public void unwatchChannels(WatchedChannel channels[]) {
         if ( (channels != null) && (channels.length > 0) ) {
             for (int i = 0; i < channels.length; i++)
@@ -5074,6 +5087,7 @@ public class DBClient {
         if (channelId < 0) return;
         unwatchChannel(nymId, channelId, notifyListeners);
     }
+
     private void unwatchChannel(long nymId, long channelId, boolean notifyListeners) { 
         PreparedStatement stmt = null;
         try {
@@ -5091,6 +5105,7 @@ public class DBClient {
         if (notifyListeners)
             notifyWatchListeners();
     }
+
     private void notifyWatchListeners() {
         List toNotify = new ArrayList();
         synchronized (_watchListeners) { toNotify.addAll(_watchListeners); }
@@ -5101,10 +5116,13 @@ public class DBClient {
     public interface WatchEventListener {
         public void watchesUpdated();
     }
+
     private List _watchListeners = new ArrayList();
+
     public void addWatchEventListener(WatchEventListener lsnr) { 
         synchronized (_watchListeners) { _watchListeners.add(lsnr); }
     }
+
     public void removeWatchEventListener(WatchEventListener lsnr) {
         synchronized (_watchListeners) { _watchListeners.remove(lsnr); }
     }
@@ -5112,13 +5130,17 @@ public class DBClient {
     public interface MessageStatusListener {
         public void messageStatusUpdated(long msgId, int newStatus);
     }
+
     private List _msgStatusListeners = new ArrayList();
+
     public void addMessageStatusListener(MessageStatusListener lsnr) { 
         synchronized (_msgStatusListeners) { _msgStatusListeners.add(lsnr); }
     }
+
     public void removeMessageStatusListener(MessageStatusListener lsnr) {
         synchronized (_msgStatusListeners) { _msgStatusListeners.remove(lsnr); }
     }
+
     private void notifyMessageStatusListeners(long msgId, int newStatus) {
         List toNotify = new ArrayList();
         synchronized (_msgStatusListeners) { toNotify.addAll(_msgStatusListeners); }
@@ -5531,6 +5553,7 @@ public class DBClient {
     }
     
     private static final String SQL_GET_MESSAGE_DECRYPTED = "SELECT true FROM channelMessage WHERE msgId = ? AND readKeyMissing = FALSE AND replyKeyMissing = FALSE AND pbePrompt IS NULL";
+
     public boolean getMessageDecrypted(long msgId) {
         PreparedStatement stmt = null;
         ResultSet rs = null;
@@ -5558,6 +5581,7 @@ public class DBClient {
     }
     
     private static final String SQL_GET_MESSAGE_DELETED = "SELECT true FROM channelMessage WHERE msgId = ? AND deletionCause IS NOT NULL";
+
     public boolean getMessageDeleted(long msgId) {
         PreparedStatement stmt = null;
         ResultSet rs = null;
@@ -5906,7 +5930,7 @@ public class DBClient {
             boolean ok = imp.processMessage(_ui, this, fin, passphrase, true, null, null);
             fin.close();
             fin = null;
-            log("reimport ok? " + ok + "/" + imp.wasPBE() + "/" + imp.wasMissingKey() +": " + uri);
+            log("reimport ok? " + ok + " wasPBE " + imp.wasPBE() + " wasmissingKey " + imp.wasMissingKey() +": " + uri);
             // wasPBE is still true if the post *was* pbe'd but the passphrase was correct.
             // wasMissingKey is true if the post was valid and imported successfully, but we don't know how to read it
             boolean rv = ok && !imp.wasMissingKey();
@@ -6294,6 +6318,7 @@ public class DBClient {
     }
 
     private static final String SQL_GET_CANCELLED_BY = "SELECT cancelRequestedBy FROM cancelHistory WHERE cancelledURI = ?";
+
     public long getCancelledBy(SyndieURI uri) {
         if (uri == null) return -1;
         PreparedStatement stmt = null;
@@ -6305,6 +6330,8 @@ public class DBClient {
             if (rs.next())
                 return rs.getLong(1);
         } catch (SQLException se) {
+            // FIXME
+            // Table not found in statement [SELECT cancelRequestedBy FROM cancelHistory WHERE cancelledURI = ?]
             if (_log.shouldLog(Log.WARN))
                 _log.warn("Error determining if it was cancelled", se);
         } finally {

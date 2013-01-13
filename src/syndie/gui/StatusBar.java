@@ -54,12 +54,12 @@ import syndie.db.UI;
  *  The bottom strip
  */
 public class StatusBar extends BaseComponent implements Translatable, Themeable, DBClient.WatchEventListener {
-    private BookmarkControl _bookmarkControl;
-    private NavigationControl _navControl;
-    private URIControl _uriControl;
-    private DataCallback _dataCallback;
-    private Browser _browser;
-    private Composite _parent;
+    private final BookmarkControl _bookmarkControl;
+    private final NavigationControl _navControl;
+    private final URIControl _uriControl;
+    private final DataCallback _dataCallback;
+    private final Browser _browser;
+    private final Composite _parent;
     private Composite _root;
     private Button _bookmark;
     private Label _onlineState;
@@ -139,9 +139,16 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         
         _newForumMenu = new Menu(_newForum);
         _newForum.setMenu(_newForumMenu);
-        _newForum.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _newForumMenu.setVisible(true); }
-            public void widgetSelected(SelectionEvent selectionEvent) { _newForumMenu.setVisible(true); }
+        _newForum.addSelectionListener(new FireSelectionListener() {
+            public void fire() {
+                // go straight to the item if only one
+                if (_newForumMenu.getItemCount() == 1) {
+                    MenuItem nf = _newForumMenu.getItem(0);
+                    nf.notifyListeners(SWT.Selection, new Event());
+                } else {
+                    _newForumMenu.setVisible(true);
+                }
+            }
         });
         
         _unread = new Button(_root, SWT.PUSH);
@@ -149,9 +156,17 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         
         _unreadMenu = new Menu(_unread);
         _unread.setMenu(_unreadMenu);
-        _unread.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _unreadMenu.setVisible(true); }
-            public void widgetSelected(SelectionEvent selectionEvent) { _unreadMenu.setVisible(true); }
+        _unread.addSelectionListener(new FireSelectionListener() {
+            public void fire() {
+                // go straight to the item if only one
+                // first 3 are msgs and a separator?
+                if (_unreadMenu.getItemCount() == 4) {
+                    MenuItem unr = _unreadMenu.getItem(3);
+                    unr.notifyListeners(SWT.Selection, new Event());
+                } else {
+                    _unreadMenu.setVisible(true);
+                }
+            }
         });
         
         _pbe = new Button(_root, SWT.PUSH);
@@ -159,9 +174,16 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         
         _pbeMenu = new Menu(_pbe);
         _pbe.setMenu(_pbeMenu);
-        _pbe.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _pbeMenu.setVisible(true); }
-            public void widgetSelected(SelectionEvent selectionEvent) { _pbeMenu.setVisible(true); }
+        _pbe.addSelectionListener(new FireSelectionListener() {
+            public void fire() {
+                // go straight to the item if only one
+                if (_pbeMenu.getItemCount() == 1) {
+                    MenuItem pbe = _pbeMenu.getItem(0);
+                    pbe.notifyListeners(SWT.Selection, new Event());
+                } else {
+                    _pbeMenu.setVisible(true);
+                }
+            }
         });
         
         _priv = new Button(_root, SWT.PUSH);
@@ -169,9 +191,16 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         
         _privMenu = new Menu(_priv);
         _priv.setMenu(_privMenu);
-        _priv.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _privMenu.setVisible(true); }
-            public void widgetSelected(SelectionEvent selectionEvent) { _privMenu.setVisible(true); }
+        _priv.addSelectionListener(new FireSelectionListener() {
+            public void fire() {
+                // go straight to the item if only one
+                if (_privMenu.getItemCount() == 1) {
+                    MenuItem priv = _privMenu.getItem(0);
+                    priv.notifyListeners(SWT.Selection, new Event());
+                } else {
+                    _privMenu.setVisible(true);
+                }
+            }
         });
         
         _postpone = new Button(_root, SWT.PUSH);
@@ -630,6 +659,8 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
                     public void widgetSelected(SelectionEvent selectionEvent) { _navControl.view(uri); }
                 });
             } else {
+                // TODO we shouldn't show if deleted, but previous bug deleted the
+                // message when attempting to reimport it, so we have to show it
                 MenuItem item = new MenuItem(_pbeMenu, SWT.PUSH);
                 item.setText(displayName);
                 item.setImage(ImageUtil.ICON_MSG_TYPE_NORMAL);

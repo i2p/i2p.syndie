@@ -49,34 +49,17 @@ public class MessageInfo {
     /** Creates a new instance of MessageInfo */
     public MessageInfo() {
         _internalId = -1;
-        _uri = null;
         _authorChannelId = -1;
         _messageId = -1;
         _scopeChannelId = -1;
         _targetChannelId = -1;
-        _targetChannel = null;
-        _subject = null;
-        _overwriteChannel = null;
         _overwriteMessage = -1;
-        _forceNewThread = false;
-        _refuseReplies = false;
-        _wasEncrypted = false;
-        _wasPBEncrypted = false;
-        _wasPrivate = false;
-        _wasAuthorized = false;
-        _wasAuthenticated = false;
-        _passphrasePrompt = null;
-        _readKeyUnknown = false;
-        _replyKeyUnknown = false;
-        _isCancelled = false;
         _expiration = -1;
         _receiveDate = -1;
         _hierarchy = Collections.EMPTY_LIST;
         _privateTags = Collections.EMPTY_SET;
         _publicTags = Collections.EMPTY_SET;
         _references = Collections.EMPTY_LIST;
-        _attachmentCount = 0;
-        _pageCount = 0;
     }
 
     public long getInternalId() { return _internalId; }
@@ -111,6 +94,7 @@ public class MessageInfo {
      */
     public boolean getWasEncrypted() { return _wasEncrypted; }
     public void setWasEncrypted(boolean wasEncrypted) { _wasEncrypted = wasEncrypted; }
+
     public boolean getWasPassphraseProtected() { return _wasPBEncrypted; }
     public void setWasPassphraseProtected(boolean pbe) { _wasPBEncrypted = pbe; }
     /**
@@ -149,11 +133,15 @@ public class MessageInfo {
     /** list of ReferenceNode roots attached to the message (does not include parsed data from pages or attachments) */
     public List getReferences() { return _references; }
     public void setReferences(List refs) { _references = refs; }
+
     /** if specified, the post was imported, but we didn't have the passphrase */
     public String getPassphrasePrompt() { return _passphrasePrompt; }
     public void setPassphrasePrompt(String prompt) { _passphrasePrompt = prompt; }
+
+    /** readKeyUnknown is only set if the message could not be decrypted and no prompt was specified */
     public boolean getReadKeyUnknown() { return _readKeyUnknown; }
     public void setReadKeyUnknown(boolean isUnknown) { _readKeyUnknown = isUnknown; }
+
     public boolean getReplyKeyUnknown() { return _replyKeyUnknown; }
     public void setReplyKeyUnknown(boolean isUnknown) { _replyKeyUnknown = isUnknown; }
     

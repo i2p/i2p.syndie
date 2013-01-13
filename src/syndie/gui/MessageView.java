@@ -226,6 +226,7 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
             _target = null;
         } else {
             if (msg.getPassphrasePrompt() != null) {
+                _ui.debugMessage("Password Required");
                 _root.setVisible(false);
                 PassphrasePrompt prompt = new PassphrasePrompt(_client, _ui, _themeRegistry, _translationRegistry, _root.getShell(), false);
                 prompt.setPassphrasePrompt(msg.getPassphrasePrompt());
@@ -488,6 +489,7 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
         JobRunner.instance().enqueue(new Runnable() {
             public void run() {
                 final boolean ok = _client.reimport(_uri, passphrase);
+                _ui.debugMessage("Reimport done, success? " + ok);
                 Display.getDefault().asyncExec(new Runnable() { 
                    public void run() {
                        MessageBox box = null;
@@ -506,6 +508,7 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
                        } else {
                            _navControl.unview(_uri);
                            _navControl.view(_uri);
+                           // FIXME call back to StatusBar.refreshPBE() somehow to update the button
                            //showPage();
                        }
                    }
