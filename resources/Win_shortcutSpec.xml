@@ -32,7 +32,8 @@
            desktop="no"
            applications="no"
            target="$INSTALL_PATH\uninstaller\uninstaller.jar"
-           description="No more Syndie">
+           description="No more Syndie"
+           iconFile="$INSTALL_PATH\doc\Uninstaller\uninstall.ico">
      <createForPack name="Base" />
  </shortcut>
 </shortcuts>

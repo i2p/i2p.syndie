@@ -4,7 +4,7 @@
  <programGroup defaultName="Syndie" location="applications" />
  <shortcut name="Syndie"
            target="java"
-           commandLine="-jar $INSTALL_PATH/bin/Syndie.jar"
+           commandLine="-jar &quot;$INSTALL_PATH/bin/syndie.jar&quot;"
            workingDirectory="$INSTALL_PATH"
            initialState="normal"
            programGroup="yes"
@@ -17,7 +17,7 @@
            type="Application" />
  <shortcut name="Syndie (alternate UI)"
            target="java"
-           commandLine="-jar $INSTALL_PATH/bin/Syndie-Desktop.jar"
+           commandLine="-jar &quot;$INSTALL_PATH/bin/syndie-desktop.jar&quot;"
            workingDirectory="$INSTALL_PATH"
            initialState="normal"
            programGroup="yes"
@@ -52,5 +52,5 @@
            encoding="UTF-8"
            terminal="false"
            type="Application"
-           iconFile="$INSTALL_PATH/Uninstaller//uninstall.ico" />
+           iconFile="$INSTALL_PATH/doc/Uninstaller/uninstall.ico" />
 </shortcuts>

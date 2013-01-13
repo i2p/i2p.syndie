@@ -78,11 +78,13 @@
         <ant target="verify-lin64-swt" />
     </target>
 
+    <target name="ensure-osx32-swt" depends="ensure-mac64-swt" />
     <target name="ensure-mac32-swt">
         <ant target="fetch-mac32-swt" />
         <ant target="verify-mac32-swt" />
     </target>
 
+    <target name="ensure-osx64-swt" depends="ensure-mac64-swt" />
     <target name="ensure-mac64-swt">
         <ant target="fetch-mac64-swt" />
         <ant target="verify-mac64-swt" />
@@ -120,10 +122,12 @@
         <fetch url="${swt.lin64.url}" dest="${swt.lin64}" hash="${swt.lin64.sha1}" />
     </target>
 
+    <target name="verify-osx32-swt" depends="verify-mac32-swt" />
     <target name="verify-mac32-swt" if="swt.mac32.available" unless="swt.mac32.verified">
         <checksha1 file="${swt.mac32}" hash="${swt.mac32.sha1}" />
     </target>
 
+    <target name="fetch-osx32-swt" depends="fetch-mac32-swt" />
     <target name="fetch-mac32-swt" unless="swt.mac32.available">
         <fetch url="${swt.mac32.url}" dest="${swt.mac32}" hash="${swt.mac32.sha1}" />
     </target>
@@ -132,6 +136,7 @@
         <checksha1 file="${swt.mac64}" hash="${swt.mac64.sha1}" />
     </target>
 
+    <target name="fetch-osx64-swt" depends="fetch-mac64-swt" />
     <target name="fetch-mac64-swt" unless="swt.mac64.available">
         <fetch url="${swt.mac64.url}" dest="${swt.mac64}" hash="${swt.mac64.sha1}" />
     </target>

@@ -134,8 +134,8 @@
             <echo file="${launch4j.config}"><![CDATA[
                 <launch4jConfig>
                     <headerType>0</headerType>
-                    <jar>syndie-installer-${full.version}.bin.win@{bits}.jar</jar>
-                    <outfile>syndie-installer-${full.version}.bin.win@{bits}.exe</outfile>
+                    <jar>syndie-installer-${extended.version}.bin.win@{bits}.jar</jar>
+                    <outfile>syndie-installer-${extended.version}.bin.win@{bits}.exe</outfile>
                     <errTitle>Syndie ${full.version} installer</errTitle>
                     <chdir>.</chdir>
                     <icon>doc/web/favicon.ico</icon>
@@ -155,7 +155,7 @@
                 ]]></echo>
 
             <launch4j configFile="${launch4j.config}" />
-            <delete file="syndie-installer-${full.version}.bin.win@{bits}.jar" />
+            <delete file="syndie-installer-${extended.version}.bin.win@{bits}.jar" />
         </sequential>
     </macrodef>
 
@@ -170,9 +170,9 @@
              <jar destfile="build/izpackpatch.jar"
                  basedir="resources/izpack/patches" />
         <delete file="${pkgtemp.dir}/lib/swt.jar" />
-        <copy file="resources/uninstall.ico" todir="${pkgtemp.dir}/Uninstaller" />
+        <copy file="resources/uninstall.ico" todir="${pkgtemp.dir}/doc/Uninstaller" />
         <copy tofile="${pkgtemp.dir}/lib/swt.jar" file="@{swt}" />
-        <izpack output="syndie-installer-${full.version}.bin.@{os}@{arch}.jar"
+        <izpack output="syndie-installer-${extended.version}.bin.@{os}@{arch}.jar"
                 installerType="standard"
                 basedir="."
                 izPackDir="${izpack.dir}/">
@@ -251,20 +251,38 @@
         <pack name="Base" required="yes">
             <description>Base installation files</description>
             <fileset dir="pkg-temp" includes="**/*" targetdir="$INSTALL_PATH"/>
+            <!-- Windows stub EXEs -->
             <executable targetfile="$INSTALL_PATH/bin/syndie.exe" type="bin" stage="never" keep="true" failure="warn">
                 <os family="windows" />
             </executable>
             <executable targetfile="$INSTALL_PATH/bin/syndie-desktop.exe" type="bin" stage="never" keep="true" failure="warn">
                 <os family="windows" />
             </executable>
+            <!-- Linux stub jars -->
             <executable targetfile="$INSTALL_PATH/bin/syndie.jar" type="jar" stage="never" keep="true" failure="warn">
-                <os family="unix"/>
+                <os name ="Linux"/>
             </executable>
             <executable targetfile="$INSTALL_PATH/bin/syndie-cli.jar" type="jar" stage="never" keep="true" failure="warn">
-                <os family="unix"/>
+                <os name ="Linux"/>
             </executable>
             <executable targetfile="$INSTALL_PATH/bin/syndie-desktop.jar" type="jar" stage="never" keep="true" failure="warn">
-                <os family="unix"/>
+                <os name ="Linux "/>
+            </executable>
+
+            <!-- subtitute variables in the OSX scripts -->
+            <parsable targetfile="$INSTALL_PATH/bin/syndie.command" type="shell" failure="warn" os="mac">
+            </parsable>
+            <parsable targetfile="$INSTALL_PATH/bin/syndie-cli.sh" type="shell" failure="warn" os="mac">
+            </parsable>
+            <parsable targetfile="$INSTALL_PATH/bin/syndie-desktop.command" type="shell" failure="warn" os="mac">
+            </parsable >
+
+            <!-- set OSX scripts to be executable -->
+            <executable targetfile="$INSTALL_PATH/bin/syndie.command" type="shell" stage="never" keep="true" failure="warn" os="mac">
+            </executable>
+            <executable targetfile="$INSTALL_PATH/bin/syndie-cli.sh" type="shell" stage="never" keep="true" failure="warn" os="mac">
+            </executable>
+            <executable targetfile="$INSTALL_PATH/bin/syndie-desktop.command" type="shell" stage="never" keep="true" failure="warn" os="mac">
             </executable>
         </pack>
     </packs>
@@ -572,16 +590,13 @@
         </exec>
     </target>
 
-    <target name="buildProperties" depends="-getMtnRev, getReleaseNumber, getBuildNumber">
+    <target name="buildProperties" depends="-getMtnRev, -trimMtnRev, getReleaseNumber, getBuildNumber">
         <!-- default if not set above -->
         <property name="workspace.version" value="unknown" />
         <property name="full.version" value="${release.number}-${syndie.build.number}" />
         <echo message="Building version ${full.version} (mtn rev ${workspace.version})" />
-    </target>
-
-    <target name="getExtendedVersion" depends="buildProperties, -trimMtnRev" description="Include trimmed MTN rev ID (if available or requested) in the version number">
         <property name="MtnShortHash" value="unknown" />
-        <condition property="Extended.Version" value="${full.version}-${MtnShortHash}">
+        <condition property="extended.version" value="${full.version}-${MtnShortHash}">
             <not>
                 <or>
                     <equals arg1="${MtnShortHash}" arg2="" />
@@ -590,10 +605,10 @@
             </not>
         </condition>
         <!-- if not set above we'll set it here -->
-        <property name="Extended.Version" value="${full.version}" />
+        <property name="extended.version" value="${full.version}" />
     </target>
 
-    <target name="-trimMtnRev" depends="-getMtnRev" if="with.revision" description="Shorten MTN rev ID">
+    <target name="-trimMtnRev" if="with.revision" description="Shorten MTN rev ID">
         <script language="javascript">
             <![CDATA[
             var MtnRev = project.getProperty("workspace.version");
@@ -712,7 +727,7 @@
 
     <target name="pkg-exe" depends="clean, jars2exe, pkg"/>
 
-    <target name="source-tarball" depends="getExtendedVersion" description="Generate source tarball">
+    <target name="source-tarball" depends="buildProperties" description="Generate source tarball">
         <!-- will this use the monotonerc file in the current workspace? -->
         <fail message="This target cannot be used without Monotone!">
             <condition>
@@ -721,9 +736,9 @@
                 </not>
             </condition>
         </fail>
-        <property name="source.tarball.name" value="${ant.project.name}-${Extended.Version}.tar.bz2" />
-        <echo message="Checking out fresh copy into ../${ant.project.name}-${Extended.Version} for tarballing:" />
-        <delete dir="../${ant.project.name}-${Extended.Version}" />
+        <property name="source.tarball.name" value="${ant.project.name}-${extended.version}.tar.bz2" />
+        <echo message="Checking out fresh copy into ../${ant.project.name}-${extended.version} for tarballing:" />
+        <delete dir="../${ant.project.name}-${extended.version}" />
         <exec executable="mtn" failonerror="true">
             <arg value="co" />
             <arg value="-b" />
@@ -731,18 +746,18 @@
             <!-- w: is the revision of the current workspace -->
             <arg value="-r" />
             <arg value="w:" />
-            <arg value="../${ant.project.name}-${Extended.Version}" />
+            <arg value="../${ant.project.name}-${extended.version}" />
         </exec>
         <delete includeemptydirs="true" quiet="false">
-            <fileset dir="../${ant.project.name}-${Extended.Version}/_MTN" />
+            <fileset dir="../${ant.project.name}-${extended.version}/_MTN" />
         </delete>
         <tar longfile="gnu" destfile="${source.tarball.name}" compression="bzip2">
-            <tarfileset dir="../${ant.project.name}-${Extended.Version}" prefix="${ant.project.name}-${Extended.Version}">
+            <tarfileset dir="../${ant.project.name}-${extended.version}" prefix="${ant.project.name}-${extended.version}">
                 <include name="**/**" />
                 <exclude name="debian/**"/>
                 <exclude name="**/*.sh"/>
             </tarfileset>
-            <tarfileset dir="../${ant.project.name}-${Extended.Version}" prefix="${ant.project.name}-${Extended.Version}" filemode="755">
+            <tarfileset dir="../${ant.project.name}-${extended.version}" prefix="${ant.project.name}-${extended.version}" filemode="755">
                 <exclude name="debian/**" />
                 <include name="**/*.sh" />
             </tarfileset>
@@ -751,7 +766,7 @@
 
     <target name="debian-tarball" depends="source-tarball">
         <copy verbose="true" file="${source.tarball.name}"
-            tofile="../${ant.project.name}_${Extended.Version}.orig.tar.bz2" />
+            tofile="../${ant.project.name}_${extended.version}.orig.tar.bz2" />
     </target>
 
     <target name="sloccount.report" description="Generate 'sloccount' report">
@@ -819,7 +834,7 @@
                 <pathelement location="${i2p.jar}" />
                 <pathelement location="${hsqldb.jar}" />
             </classpath>
-            <!-- These variables are stored in build.properties. 
+            <!-- These variables are stored in build.properties.
                  End-users can override by creating the file override.properties -->
             <link offline="true" href="${javasedocs.url}" packagelistLoc="resources/package-lists/java/" />
             <link offline="true" href="${swtdocs.url}" packagelistLoc="resources/package-lists/swt/" />
@@ -867,23 +882,43 @@
 
     <target name="delete-windows-files">
         <delete failonerror="false" quiet="true">
-            <fileset dir="${pkgtemp.dir}" includes="*.exe" />
+            <fileset dir="${pkgtemp.dir}" includes="**/*.exe" />
         </delete>
     </target>
 
-    <target name="installer-linux" depends="installer-linux32, installer-linux64, delete-windows-files" description="Create Linux installers (i386 and x86_64)"/>
+    <target name="delete-stub-jars">
+        <delete failonerror="false" quiet="true">
+            <fileset dir="${pkgtemp.dir}/bin" includes="*.jar" />
+        </delete>
+    </target>
 
-    <target name="installer-linux32" depends="-check-for-izpack, stub-jars, preppkg, delete-windows-files" description="Create i386 installer for Linux">
+    <target name="delete-osx-files">
+        <delete failonerror="false" quiet="true">
+            <fileset dir="${pkgtemp.dir}/bin" includes="*.command *.sh" />
+        </delete>
+    </target>
+
+    <target name="installer-linux" depends="installer-linux32, installer-linux64, delete-windows-files, delete-osx-files" description="Create Linux installers (i386 and x86_64)"/>
+
+    <!-- Aliases -->
+    <target name="installer-lin32" depends="installer-linux32" />
+    <target name="installer-lin64" depends="installer-linux64" />
+    <target name="installer-win32" depends="installer-windows32" />
+    <target name="installer-win64" depends="installer-windows64" />
+    <target name="installer-mac32" depends="installer-osx32" />
+    <target name="installer-mac64" depends="installer-osx64" />
+
+    <target name="installer-linux32" depends="-check-for-izpack, stub-jars, preppkg, delete-windows-files, delete-osx-files" description="Create i386 installer for Linux">
         <ant dir="swt" target="ensure-lin32-swt" />
         <build-installer os="linux" arch="32" swt="${swt.lin32}" />
     </target>
 
-    <target name="installer-linux64" depends="-check-for-izpack, stub-jars, preppkg, delete-windows-files" description="Create x86_64 installer for Linux">
+    <target name="installer-linux64" depends="-check-for-izpack, stub-jars, preppkg, delete-windows-files, delete-osx-files" description="Create x86_64 installer for Linux">
         <ant dir="swt" target="ensure-lin64-swt" />
         <build-installer os="linux" arch="64" swt="${swt.lin64}" />
     </target>
 
-    <target name="installer-windows" depends="installer-windows64-exe, installer-windows32-exe" description="Create i386 and x86_64 installers for Windows" />
+    <target name="installer-windows" depends="installer-windows64-exe, installer-windows32-exe, delete-osx-files" description="Create i386 and x86_64 installers for Windows" />
 
     <target name="installer-windows32-exe" if="can.create.exe" unless="no.exe" depends="-check-launch4j, installer-windows32" description="Create i386 installer for Windows and wrap it into an EXE">
         <wrap-installer bits="32" />
@@ -893,17 +928,57 @@
         <wrap-installer bits="64" />
     </target>
 
-    <target name="installer-windows32" depends="-check-for-izpack, jars2exe, stub-jars, preppkg" description="Create i386 installer for Windows">
+    <target name="installer-windows32" depends="-check-for-izpack, jars2exe, stub-jars, preppkg, delete-osx-files" description="Create i386 installer for Windows">
         <ant dir="swt" target="ensure-win32-swt" />
-        <build-installer os="win" arch="32" swt="swt/lib/swt-win32.jar" />
+        <build-installer os="win" arch="32" swt="${swt.win32}" />
     </target>
 
-    <target name="installer-windows64" depends="-check-for-izpack, jars2exe, stub-jars, preppkg" description="Create x86_64 installer for Windows">
+    <target name="installer-windows64" depends="-check-for-izpack, jars2exe, stub-jars, preppkg, delete-osx-files" description="Create x86_64 installer for Windows">
         <ant dir="swt" target="ensure-win64-swt" />
-        <build-installer os="win" arch="64" swt="swt/lib/swt-win64.jar" />
+        <build-installer os="win" arch="64" swt="${swt.win64}" />
     </target>
 
-    <target name="installer-all" depends="installer-linux, installer-windows" description="Create Windows and Linux installers" />
+    <!--
+         The installer-osx* targets create Izpack installers. Also available are the pkg-osx* targets
+         which create OSX-style .app bundles.
+         -->
+    <target name="installer-osx" depends="installer-osx32, installer-osx64" />
+
+    <target name="installer-osx32" depends="-check-for-izpack, preppkg, delete-windows-files, delete-stub-jars" description="Create i386 installer for OSX">
+        <echo file="${pkgtemp.dir}/bin/syndie.command"><![CDATA[#!/bin/sh
+CP=$INSTALL_PATH/lib/i2p.jar:$INSTALL_PATH/lib/hsqldb.jar:$INSTALL_PATH/lib/swt.jar:$INSTALL_PATH/syndie.jar
+java -d32 -XstartOnFirstThread -cp $CP syndie.gui.SWTUI
+]]></echo>
+        <echo file="${pkgtemp.dir}/bin/syndie-cli.sh"><![CDATA[#!/bin/sh
+CP=$INSTALL_PATH/lib/i2p.jar:$INSTALL_PATH/lib/hsqldb.jar:$INSTALL_PATH/syndie.jar
+java -d32 -XstartOnFirstThread -cp $CP syndie.db.TextUI
+]]></echo>
+        <echo file="${pkgtemp.dir}/bin/syndie-desktop.command"><![CDATA[#!/bin/sh
+CP=$INSTALL_PATH/lib/i2p.jar:$INSTALL_PATH/lib/hsqldb.jar:$INSTALL_PATH/syndie.jar
+java -d32 -XstartOnFirstThread -cp $CP syndie.db.TextUI
+]]></echo>
+        <ant dir="swt" target="ensure-mac32-swt" />
+        <build-installer os="osx" arch="32" swt="${swt.mac32}" />
+    </target>
+
+    <target name="installer-osx64" depends="-check-for-izpack, preppkg, delete-windows-files, delete-stub-jars" description="Create x86_64 installer for OSX">
+        <echo file="${pkgtemp.dir}/bin/syndie.command"><![CDATA[#!/bin/sh
+CP=$INSTALL_PATH/lib/i2p.jar:$INSTALL_PATH/lib/hsqldb.jar:$INSTALL_PATH/lib/swt.jar:$INSTALL_PATH/syndie.jar
+java -d64 -XstartOnFirstThread -cp $CP syndie.gui.SWTUI
+]]></echo>
+        <echo file="${pkgtemp.dir}/bin/syndie-cli.sh"><![CDATA[#!/bin/sh
+CP=$INSTALL_PATH/lib/i2p.jar:$INSTALL_PATH/lib/hsqldb.jar:$INSTALL_PATH/syndie.jar
+java -d64 -XstartOnFirstThread -cp $CP syndie.db.TextUI
+]]></echo>
+        <echo file="${pkgtemp.dir}/bin/syndie-desktop.command"><![CDATA[#!/bin/sh
+CP=$INSTALL_PATH/lib/i2p.jar:$INSTALL_PATH/lib/hsqldb.jar:$INSTALL_PATH/syndie.jar
+java -d64 -XstartOnFirstThread -cp $CP syndie.db.TextUI
+]]></echo>
+        <ant dir="swt" target="ensure-mac64-swt" />
+        <build-installer os="osx" arch="64" swt="${swt.mac64}" />
+    </target>
+
+    <target name="installer-all" depends="installer-linux, installer-windows, installer-osx" description="Create Windows, Linux and OSX installers" />
 
     <target name="prep-osx" depends="jar, prep-docs, prep-mac-licenses">
         <mkdir dir="pkg-osx/Syndie.app/Contents/MacOS" />
@@ -912,7 +987,7 @@
         <copy file="${i2p.jar}" todir="pkg-osx/Syndie.app/Contents/MacOS" />
         <copy file="${build.dir}/syndie.jar" todir="pkg-osx/Syndie.app/Contents/MacOS" />
         <copy file="resources/osx.icns" tofile="pkg-osx/Syndie.app/Contents/syndie.icns" />
-        <echo file="pkg-osx//Syndie.app/Contents/Info.plist"><![CDATA[
+        <echo file="pkg-osx/Syndie.app/Contents/Info.plist"><![CDATA[
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -957,8 +1032,8 @@ run "syndie-cli.jar".
 Alternatively, you can run a command like the following:
 java -cp path/to/hsqldb.jar:path/to/i2p.jar:path/to/syndie-cli.jar syndie.db.TextUI
 </echo>
-        <tar destfile="syndie-cli-${full.version}.tar.bz2" compression="bzip2">
-            <tarfileset dir="${pkgtemp.dir}" prefix="syndie-cli-${full.version}" filemode="644">
+        <tar destfile="syndie-cli-${extended.version}.tar.bz2" compression="bzip2">
+            <tarfileset dir="${pkgtemp.dir}" prefix="syndie-cli-${extended.version}" filemode="644">
                 <include name="bin/*" />
                 <include name="lib/hsqldb.jar" />
                 <include name="doc/*" />
@@ -968,8 +1043,9 @@ java -cp path/to/hsqldb.jar:path/to/i2p.jar:path/to/syndie-cli.jar syndie.db.Tex
         </tar>
     </target>
 
-    <target name="pkg-osx" depends="pkg-osx32, pkg-osx64" description="Create both i386 and x86_64 packages for OSX" />
-    <target name="pkg-osx32" depends="prep-osx" description="Create an i386 package for OSX">
+    <!-- The pkg-osx* targets create OSX .app bundles that run Syndie with the tabs interface -->
+    <target name="pkg-osx" depends="pkg-osx32, pkg-osx64" description="Create both i386 and x86_64 '.app' bundles for OSX" />
+    <target name="pkg-osx32" depends="prep-osx" description="Create an i386 '.app' bundle for OSX">
         <ant dir="swt" target="ensure-mac32-swt" />
         <delete file="pkg-osx/Syndie.app/Contents/MacOS/swt.jar" />
         <copy file="${swt.mac32}" tofile="pkg-osx/Syndie.app/Contents/MacOS/swt.jar" />
@@ -978,18 +1054,18 @@ DIR=`dirname $0`
 CP=$DIR/swt.jar:$DIR/hsqldb.jar:$DIR/syndie.jar:$DIR/i2p.jar
 exec java -d32 -XstartOnFirstThread -cp $CP syndie.gui.SWTUI
             ]]></echo>
-        <tar destfile="syndie-${full.version}.bin.osx32.tar.bz2" compression="bzip2">
-            <tarfileset dir="pkg-osx" prefix="syndie-${full.version}" filemode="644">
+        <tar destfile="syndie-${extended.version}.bin.osx32.tar.bz2" compression="bzip2">
+            <tarfileset dir="pkg-osx" prefix="syndie-${extended.version}" filemode="644">
                 <include name="**/**" />
                 <exclude name="**/*.sh" />
             </tarfileset>
-            <tarfileset dir="pkg-osx" prefix="syndie-${full.version}" filemode="755">
+            <tarfileset dir="pkg-osx" prefix="syndie-${extended.version}" filemode="755">
                 <include name="**/*.sh" />
             </tarfileset>
         </tar>
     </target>
 
-    <target name="pkg-osx64" depends="prep-osx" description="Create an x86_64 package for OSX">
+    <target name="pkg-osx64" depends="prep-osx" description="Create an x86_64 '.app' bundle for OSX">
         <ant dir="swt" target="ensure-mac64-swt" />
         <delete file="pkg-osx/Syndie.app/Contents/MacOS/swt.jar" />
         <copy file="${swt.mac64}" tofile="pkg-osx/Syndie.app/Contents/MacOS/swt.jar" />
@@ -998,19 +1074,18 @@ DIR=`dirname $0`
 CP=$DIR/swt.jar:$DIR/hsqldb.jar:$DIR/syndie.jar:$DIR/i2p.jar
 exec java -d64 -XstartOnFirstThread -cp $CP syndie.gui.SWTUI
 ]]></echo>
-        <tar destfile="syndie-${full.version}.bin.osx64.tar.bz2" compression="bzip2">
-            <tarfileset dir="pkg-osx" prefix="syndie-${full.version}" filemode="644">
+        <tar destfile="syndie-${extended.version}.bin.osx64.tar.bz2" compression="bzip2">
+            <tarfileset dir="pkg-osx" prefix="syndie-${extended.version}" filemode="644">
                 <include name="**/**" />
                 <exclude name="**/*.sh" />
             </tarfileset>
-            <tarfileset dir="pkg-osx" prefix="syndie-${full.version}" filemode="755">
+            <tarfileset dir="pkg-osx" prefix="syndie-${extended.version}" filemode="755">
                 <include name="**/*.sh" />
             </tarfileset>
         </tar>
     </target>
 
-    <target name="pkg-all" depends="distclean, pkg-cli, installer-linux, installer-windows, pkg-osx" description="Create packags/installers for all supported systems." />
-
+    <target name="pkg-all" depends="distclean, pkg-cli, installer-all, pkg-osx, source-tarball" description="Create packages/installers for all supported systems." />
 
 </project>
 <!-- vim: set ft=xml ts=4 sw=4 et: -->
