@@ -469,7 +469,7 @@ public class BrowseForum extends BaseComponent implements MessageTree.MessageTre
             _metaAvatar.setVisible(img != null);
             
             String desc = info.getDescription();
-            if (desc == null) desc = scope.toBase64();
+            if (desc == null) desc = "";
             _metaDesc.setText(desc);
             boolean manage = false;
             boolean post = info.getAllowPublicPosts();
