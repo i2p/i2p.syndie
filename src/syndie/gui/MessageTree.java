@@ -83,7 +83,7 @@ import syndie.db.ThreadReferenceNode;
 import syndie.db.UI;
 
 /**
- * 
+ *  Includes page nav buttons at the top, the Tree in the middle, and the message/thread buttons at the bottom.
  */
 public class MessageTree extends BaseComponent implements Translatable, Themeable, DBClient.MessageStatusListener {
     private NavigationControl _navControl;
@@ -223,7 +223,6 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         _tags = new HashSet();
         _bars = new ArrayList();
         _filterable = true;
-        _currentPage = 0;
         _avgCharWidth = -1;
         initComponents();
     }
@@ -1885,15 +1884,10 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
                     String authorName = node.getAuthorName(); // _client.getChannelName(authorId);
                     Hash authorHash = node.getAuthorHash(); //_client.getChannelHash(authorId);
                     //ChannelInfo authInfo = _client.getChannel(authorId);
-                    if (authorName != null) {
-                        auth = authorName + " [" + authorHash.toBase64().substring(0,6) + "]";
-                    } else {
-                        auth = "";
-                    }
                     //System.out.println("author is NOT the scope chan for " + uri.toString() + ": " + auth);
                 } else {
                     //System.out.println("author is the scope chan for " + uri.toString());
-                    auth = scopeName + " [" + uri.getScope().toBase64().substring(0,6) + "]";
+                    auth = UIUtil.displayName(scopeName, uri.getScope());
                 }
                 //ChannelInfo chanInfo = scopeInfo;
                 long targetChanId = node.getTargetId(); // _client.getMessageTarget(msgId);
@@ -1903,7 +1897,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
                     String targetName = node.getTargetName(); //_client.getChannelName(targetChanId);
                     Hash targetHash = node.getTargetHash(); //_client.getChannelHash(targetChanId);
                     //chanInfo = _client.getChannel(msg.getTargetChannelId());
-                    chan = targetName + " [" + targetHash.toBase64().substring(0,6) + "]";
+                    chan = UIUtil.displayName(targetName, targetHash);
                     //if (chanInfo == null) {
                     //    chan = "[" + msg.getTargetChannel().toBase64().substring(0,6) + "]";
                     //} else {
@@ -1912,7 +1906,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
                 } else {
                     //System.out.println("target chan == scope chan: " + msg.getTargetChannel().toBase64() + "/" + msg.getTargetChannelId() + "/" + msg.getInternalId() + "/" + msg.getScopeChannelId() + "/" + msg.getAuthorChannelId());
                     //System.out.println("msg: " + uri.toString());
-                    chan = scopeName  + " [" + uri.getScope().toBase64().substring(0,6) + "]";
+                    chan = UIUtil.displayName(scopeName, uri.getScope());
                 }
 
                 if (auth.length() <= 0) {
@@ -1948,10 +1942,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             } else {
                 // message is not locally known
                 subj = _translationRegistry.getText("Message is not known locally");
-                if (scopeName != null)
-                    auth = scopeName + " [" + uri.getScope().toBase64().substring(0,6) + "]";
-                else
-                    auth = "[" + uri.getScope().toBase64().substring(0,6) + "]";
+                auth = UIUtil.displayName(scopeName, uri.getScope());
                 chan = "";
                 if (messageId >= 0)
                     date = Constants.getDateTime(uri.getMessageId().longValue());

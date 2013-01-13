@@ -24,6 +24,8 @@ public class SyndieURI {
     private String _type;
     private transient String _stringified;
 
+    public static final String PREFIX = "urn:syndie:";
+
     /**
      *  This appears to be only for the display filter, and is not used for
      *  push/pull strategies. So make it a long time.
@@ -505,8 +507,9 @@ public class SyndieURI {
     
     public void fromString(String bencodedURI) throws URISyntaxException {
         if (bencodedURI == null) throw new URISyntaxException("null URI", "no uri");
-        if (bencodedURI.startsWith("urn:syndie:"))
-            bencodedURI = bencodedURI.substring("urn:syndie:".length());
+        if (bencodedURI.length() == 0) throw new URISyntaxException("", "no uri");
+        if (bencodedURI.startsWith(PREFIX))
+            bencodedURI = bencodedURI.substring(PREFIX.length());
         int endType = bencodedURI.indexOf(':');
         if (endType <= 0)
             throw new URISyntaxException(bencodedURI, "Missing type");
@@ -525,9 +528,10 @@ public class SyndieURI {
             throw new URISyntaxException(bencodedURI, "Invalid bencoded attributes");
         }
     }
+
     public String toString() {
         if (_stringified == null)
-            _stringified = "urn:syndie:" + _type + ":" + bencode(_attributes);
+            _stringified = PREFIX + _type + ":" + bencode(_attributes);
         return _stringified;
     }
     

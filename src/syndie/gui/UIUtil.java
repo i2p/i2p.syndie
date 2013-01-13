@@ -12,13 +12,18 @@ public class UIUtil {
      *  Consistent display of forums and authors
      *
      *  @param name may be null
-     *  @param hash non-null
+     *  @param hash may be null
      */
     public static String displayName(String name, Hash hash) {
         StringBuilder buf = new StringBuilder(64);
         if (name != null)
             buf.append(name).append(' ');
-        buf.append('[').append(hash.toBase64().substring(0, 6)).append(']');
+        buf.append('[');
+        if (hash != null)
+            buf.append(hash.toBase64().substring(0, 6));
+        else
+            buf.append("??????");
+        buf.append(']');
         return buf.toString();
     }
 }

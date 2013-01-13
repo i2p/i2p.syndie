@@ -50,7 +50,7 @@ import syndie.db.UI;
 
 
 /**
- *
+ *  Includes the header at the top, the MessageTree in the middle, and the FilterBar at the bottom.
  */
 public class BrowseForum extends BaseComponent implements MessageTree.MessageTreeListener, Translatable, Themeable {
     private final NavigationControl _navControl;
@@ -436,14 +436,12 @@ public class BrowseForum extends BaseComponent implements MessageTree.MessageTre
             }
         }
         
-        StringBuilder buf = new StringBuilder();
-        if (info != null) {
-            String name = info.getName();
-            if (name != null)
-                buf.append(name).append(' ');
-         }
-        buf.append('[').append(scope.toBase64().substring(0,6)).append(']');
-        _metaName.setText(buf.toString());
+        String name = null;
+        if (info != null)
+            name = info.getName();
+        String txt = UIUtil.displayName(name, scope);
+        _ui.debugMessage("Update name for " + scope + " to \"" + txt + "\"");
+        _metaName.setText(txt);
 
         if (info != null) {
             GridData gd = (GridData)_meta.getLayoutData();

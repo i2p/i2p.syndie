@@ -611,6 +611,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { openPrompt(); }
             public void widgetSelected(SelectionEvent selectionEvent) { openPrompt(); }
         });
+        _fileMenuOpen.setAccelerator(SWT.MOD1 + 'o');
         _fileMenuMinimize = new MenuItem(fileMenu, SWT.PUSH);
         _fileMenuMinimize.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { _shell.setVisible(false); }
@@ -638,6 +639,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { exit(); }
             public void widgetSelected(SelectionEvent selectionEvent) { exit(); }
         });
+        _fileMenuExit.setAccelerator(SWT.MOD1 + 'q');
         
         timer.addEvent("file menu constructed");
         
@@ -767,6 +769,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { postNew(); }
             public void widgetSelected(SelectionEvent selectionEvent) { postNew(); }
         });
+        _postMenuNew.setAccelerator(SWT.MOD1 + 'n');
         _postMenuWebRip = new MenuItem(postMenu, SWT.PUSH);
         _postMenuWebRip.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { postWebRip(); }
@@ -1522,7 +1525,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             errorMessage("Internal error viewing " + uri, e);
             MessageBox box = new MessageBox(_shell, SWT.ICON_ERROR);
             box.setText(getTranslationRegistry().getText("Internal error"));
-            box.setMessage(getTranslationRegistry().getText("There was an internal error viewing the given location: ") + uri.toString());
+            box.setMessage(getTranslationRegistry().getText("There was an internal error viewing the given location") + ": " + uri.toString());
             box.open();
         }
         showWaitCursor(false);
@@ -1627,7 +1630,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         } else {
             MessageBox box = new MessageBox(_shell, SWT.ICON_ERROR | SWT.OK);
             box.setText(getTranslationRegistry().getText("Invalid URI"));
-            box.setMessage(getTranslationRegistry().getText("The URI visited is not understood by Syndie: ") + uri.toString());
+            box.setMessage(getTranslationRegistry().getText("The URI visited is not understood by Syndie") + ": " + uri.toString());
             box.open();
         }
     }
@@ -2086,39 +2089,44 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         shell.setText(getTranslationRegistry().getText("Open Syndie URI"));
         Label label = new Label(shell, SWT.NONE);
         label.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        label.setText(getTranslationRegistry().getText("Location: "));
+        label.setText(getTranslationRegistry().getText("Location") + ": ");
         final Text field = new Text(shell, SWT.BORDER | SWT.SINGLE);
         GridData gd = new GridData(GridData.FILL, GridData.FILL, true, false);
-        gd.widthHint = ImageUtil.getWidth("abcdefghijklmnopqrstuvwxyz", field);
+        gd.widthHint = ImageUtil.getWidth("abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz", field);
         field.setLayoutData(gd);
         final Button ok = new Button(shell, SWT.PUSH);
         ok.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         ok.setText(getTranslationRegistry().getText("Open"));
         
-        ok.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) {
+        ok.addSelectionListener(new FireSelectionListener() {
+            public void fire() {
                 try {
-                    SyndieURI uri = new SyndieURI(field.getText());
+                    String txt = field.getText();
+                    String ttxt = txt.trim();
+                    if (!txt.equals(ttxt))
+                        field.setText(ttxt);
+                    SyndieURI uri = new SyndieURI(ttxt);
                     shell.dispose();
                     view(uri);
-                } catch (URISyntaxException use) {}
-            }
-            public void widgetSelected(SelectionEvent selectionEvent) {
-                try {
-                    SyndieURI uri = new SyndieURI(field.getText());
-                    shell.dispose();
-                    view(uri);
-                } catch (URISyntaxException use) {}
+                } catch (URISyntaxException use) {
+                    shell.setText(use.getReason());
+                }
             }
         });
         field.addTraverseListener(new TraverseListener() {
             public void keyTraversed(TraverseEvent evt) {
                 if (evt.detail == SWT.TRAVERSE_RETURN) {
                     try {
-                        SyndieURI uri = new SyndieURI(field.getText());
+                        String txt = field.getText();
+                        String ttxt = txt.trim();
+                        if (!txt.equals(ttxt))
+                            field.setText(ttxt);
+                        SyndieURI uri = new SyndieURI(ttxt);
                         shell.dispose();
                         view(uri);
-                    } catch (URISyntaxException use) {}
+                    } catch (URISyntaxException use) {
+                        shell.setText(use.getReason());
+                    }
                 }
             }
         });
@@ -2213,7 +2221,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
                         public void run() {
                             MessageBox box = new MessageBox(_shell, SWT.ICON_INFORMATION | SWT.OK);
                             box.setText(_translation.getText("Import complete"));
-                            box.setMessage(_translation.getText("Messages imported successfully/total: ") + successful + "/" + total);
+                            box.setMessage(_translation.getText("Messages imported successfully/total") + ": " + successful + "/" + total);
                             box.open();
                             _statusBar.setEnableRefresh(true);
                         }
@@ -2233,7 +2241,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             JobRunner.instance().enqueue(new Runnable() {
                 public void run() {
                     int imported = 0;
-                    List files = new ArrayList();
+                    List<File> files = new ArrayList();
                     getFiles(new File(dir), files);
                     sortFiles(files);
                     _statusBar.setEnableRefresh(false);
@@ -2248,7 +2256,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
                         public void run() {
                             MessageBox box = new MessageBox(_shell, SWT.ICON_INFORMATION | SWT.OK);
                             box.setText(_translation.getText("Import complete"));
-                            box.setMessage(_translation.getText("Messages imported successfully/total: ") + successful + "/" + total);
+                            box.setMessage(_translation.getText("Messages imported successfully/total") + ": " + successful + "/" + total);
                             box.open();
                             _statusBar.setEnableRefresh(true);
                         }
@@ -2257,15 +2265,15 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             });
         }
     }
-    private List getFiles(String names[], String path) {
-        List rv = new ArrayList();
+    private List<File> getFiles(String names[], String path) {
+        List<File> rv = new ArrayList();
         for (int i = 0; i < names.length; i++) {
             File f = new File(path, names[i]);
             getFiles(f, rv);
         }
         return rv;
     }
-    private void getFiles(File f, List rv) {
+    private void getFiles(File f, List<File> rv) {
         if (f.exists()) {
             if (f.isFile() && f.getName().endsWith(Constants.FILENAME_SUFFIX)) {
                 rv.add(f);
@@ -2276,11 +2284,11 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             }
         }
     }
-    private void sortFiles(List orig) {
-        List meta = new ArrayList();
-        List post = new ArrayList();
+    private void sortFiles(List<File> orig) {
+        List<File> meta = new ArrayList();
+        List<File> post = new ArrayList();
         for (int i = 0; i < orig.size(); i++) {
-            File f = (File)orig.get(i);
+            File f = orig.get(i);
             if (f.getName().startsWith("meta"))
                 meta.add(f);
             else
@@ -2769,7 +2777,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         _fileMenuImport.setText(X + registry.getText("Import"));
         _fileMenuImportBulk.setText(X + registry.getText("Import bulk"));
         _fileMenuExport.setText(X + registry.getText("Export"));
-        _fileMenuExit.setText(X + registry.getText("Exit"));
+        _fileMenuExit.setText(X + registry.getText("Quit"));
         
         _fileMenuExit.setImage(ImageUtil.ICON_FM_EXIT);
         _fileMenuImport.setImage(ImageUtil.ICON_FM_IMPORT);
@@ -2793,7 +2801,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         
         _forumMenuSearch.setImage(ImageUtil.ICON_VIEWFORUM);
         _postMenuRoot.setText(X + registry.getText("Post"));
-        _postMenuNew.setText(X + registry.getText("Post new"));
+        _postMenuNew.setText(X + registry.getText("New post"));
         _postMenuNew.setImage(ImageUtil.ICON_PM_NEWPOST);
         _postMenuWebRip.setText(X + registry.getText("Post web rip"));
         _postMenuResumeRoot.setText(X + registry.getText("Resume draft"));
