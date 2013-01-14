@@ -12,15 +12,11 @@ public class ExpirationPolicy {
     private boolean _isNew;
 
     public ExpirationPolicy() {
-        _isDataFilePolicy = false;
-        _isWatched = false;
         _isDefault = true;
         _channelId = -1;
         _maxNumMessages = -1;
         _maxSizeKB = -1;
         _maxAgeDays = -1;
-        _mimicDefault = false;
-        _isNew = false;
     }
     
     public ExpirationPolicy(ExpirationPolicy src) {

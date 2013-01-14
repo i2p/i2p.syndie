@@ -30,7 +30,6 @@ public class BugConfig {
     
     public BugConfig() {
         _componentNodes = new ArrayList();
-        _componentDefault = null;
         
         _typeIds = new ArrayList();
         _typeNames = new ArrayList();
@@ -39,8 +38,6 @@ public class BugConfig {
         _severityIds = new ArrayList();
         _severityNames = new ArrayList();
         _severityDefault = -1;
-        
-        _targetScope = null;
     }
     
     public int getComponentCount() { return _componentNodes.size(); }

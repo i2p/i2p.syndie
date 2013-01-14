@@ -11,10 +11,8 @@ public class ArchiveInfo {
     
     public ArchiveInfo() {
         _archiveId = -1;
-        _postAllowed = false;
-        _readAllowed = false;
-        _uri = null;
     }
+
     public ArchiveInfo(SyndieURI uri) {
         this();
         _uri = uri;

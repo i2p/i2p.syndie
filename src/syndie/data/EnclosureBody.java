@@ -23,7 +23,9 @@ import net.i2p.util.Log;
 import syndie.db.CommandImpl;
 
 /**
+ *  An EnclosureBody is the zipped and encrypted part of an Enclosure.
  *
+ *  See spec.html for specification.
  */
 public class EnclosureBody {
     private I2PAppContext _context;
@@ -58,8 +60,6 @@ public class EnclosureBody {
         _attachConfig = new ArrayList();
         _references = new ArrayList();
         _headers = new Properties();
-        _pages = 0;
-        _attachments = 0;
     }
     
     /**

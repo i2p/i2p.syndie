@@ -126,9 +126,7 @@ public class WebRipRunner implements EepGet.StatusListener {
         _totalSize = 0;
         _maxAttachKB = 64;
         _maxTotalKB = 4*1024;
-        _pendingAttachments = 0;
         _state = STATE_INIT;
-        _existingAttachments = 0;
         _attachmentFiles = new ArrayList();
         _attachmentURLRefs = new ArrayList();
         _attachmentURLs = new ArrayList();

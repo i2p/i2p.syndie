@@ -36,7 +36,6 @@ public class Timer {
             _events = new String[8];
         }
         Arrays.fill(_times, -1);
-        _nextEventIndex = 0;
     }
     
     public void addEvent(String eventName) {

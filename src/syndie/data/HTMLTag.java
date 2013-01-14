@@ -27,7 +27,6 @@ public class HTMLTag {
         endIndex = -1;
         this.parent = parent;
         this.srcLine = srcLine;
-        consumed = false;
         attributes = new Properties();
         int attribNameStart = -1;
         int attribNameEnd = -1;

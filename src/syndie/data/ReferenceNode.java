@@ -34,7 +34,6 @@ public class ReferenceNode {
         _description = description;
         _refType = type;
         _children = new ArrayList();
-        _parent = null;
         _treeIndex = "1";
         _treeIndexNum = -1;
         _uniqueId = -1;

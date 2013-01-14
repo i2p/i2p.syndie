@@ -16,16 +16,10 @@ public class CancelPolicy {
     private boolean _isNew;
     
     private CancelPolicy() {
-        _scopeAll = false;
-        _scopeLocallyManaged = false;
         _scopeChannelId = -1;
         
         _honorFromAuthor = true;
         _honorFromForumOwner = true;
-        _honorFromForumManager = false;
-        _honorFromForumAuthorizedPoster = false;
-        
-        _isNew = false;
     }
     
     public CancelPolicy(CancelPolicy src) {

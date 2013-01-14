@@ -19,8 +19,16 @@ import net.i2p.data.SigningPublicKey;
 import net.i2p.util.SecureFileOutputStream;
 
 /**
- * Handle the parsing of a raw message
+ *  Handle the parsing of a raw message, i.e. a meta.syndie or xxx.syndie file.
+ *  Somewhat misnamed, but perhaps because it's one element in a POST message.
  *
+ *  An Enclosure contains:
+ *   - unencrypted headerrs
+ *   - optionally a zipped and encrypted EnclosureBody
+ *   - an authorization Signature
+ *   - an authentication Signature
+ *
+ *  See spec.html for specification.
  */
 public class Enclosure {
     /** full enclosure formatting version */
@@ -51,16 +59,7 @@ public class Enclosure {
     private int _rawSize;
     
     public Enclosure(InputStream raw) throws IOException {
-        _enclosureType = null;
         _publicHeaders = new Properties();
-        _publicHeaderData = null;
-        _data = null;
-        _authorizationHash = null;
-        _authorizationSig = null;
-        _authenticationHash = null;
-        _authenticationSig = null;
-        _authenticationSigOrig = null;
-        _rawSize = 0;
         if (raw instanceof FileInputStream)
             raw = new BufferedInputStream(raw);
         load(raw);
@@ -317,15 +316,22 @@ public class Enclosure {
     
     public String toString() {
         StringBuilder rv = new StringBuilder();
-        rv.append("Enclosure ").append(_enclosureType).append(" with headers {");
-        for (Iterator iter = _publicHeaders.keySet().iterator(); iter.hasNext(); ) {
+        rv.append("Enclosure: ").append(_enclosureType).append(" with headers:\n");
+        List keys = new ArrayList(_publicHeaders.keySet());
+        Collections.sort(keys);
+        for (Iterator iter = keys.iterator(); iter.hasNext(); ) {
             String key = (String)iter.next();
             String val = _publicHeaders.getProperty(key);
-            rv.append('\'').append(key).append("' => '").append(val).append("\'");
-            if (iter.hasNext())
-                rv.append(", ");
+            rv.append("  '").append(key).append("' => '").append(val).append("\'");
+            rv.append("\n");
         }
-        rv.append("}");
+        if (_data != null)
+            rv.append("Enclosure body: ").append(_data.length).append(" bytes");
+        else
+            rv.append("Without enclosure body");
+        rv.append("\nAuthorization Sig: ").append(_authorizationSig.toBase64());
+        rv.append("\nAuthentication Sig: ").append(_authenticationSig.toBase64());
+        rv.append("\nTotal size: ").append(_rawSize).append(" bytes");
         return rv.toString();
     }
     
@@ -461,5 +467,23 @@ public class Enclosure {
         if ( (val == null) || (val.length != Signature.SIGNATURE_BYTES) )
             throw new IOException("Not enough data for the signature (" + rem + "/" + (val != null ? val.length : 0) + ")");
         return new Signature(val);
+    }
+
+    /** @since 1.102b-7 */
+    public static void main(String[] args) {
+        if (args.length == 0) {
+            System.out.println("Usage: Enclosure files....]");
+            System.exit(1);
+        }
+        for (int i = 0; i < args.length; i++) {
+            try {
+                System.out.println("File: " + args[i]);
+                InputStream in = new BufferedInputStream(new FileInputStream(args[i]));
+                Enclosure enc = new Enclosure(in);
+                System.out.println(enc.toString());
+            } catch (IOException ioe) {
+                ioe.printStackTrace();
+            }
+        }
     }
 }

@@ -54,16 +54,7 @@ public class ChannelInfo {
     
     public ChannelInfo() {
         _channelId = -1;
-        _channelHash = null;
-        _identKey = null;
-        _encryptKey = null;
         _edition = -1;
-        _name = null;
-        _description = null;
-        _allowPublicPosts = false;
-        _allowPublicReplies = false;
-        _readKeyUnknown = false;
-        _passphrasePrompt = null;
         _expiration = -1;
         _receiveDate = -1;
         _publicTags = Collections.EMPTY_SET;
