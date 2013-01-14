@@ -1,0 +1,7 @@
+for i in ~/.syndie/web/shared-index.dat ~/.syndie/indexes/*
+do
+	echo $i
+	echo ------------
+	java -cp build/syndie.jar:lib/i2p.jar syndie.db.SharedArchive $i
+	echo; echo
+done
