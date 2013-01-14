@@ -61,6 +61,7 @@ class SQLTab extends BrowserTab implements Translatable, Themeable {
     private String _description;
     private Image _icon;
     private Color _nullBG;
+    private volatile boolean _showedHelp;
     
     private static final int HISTORY = 20;
     
@@ -91,6 +92,22 @@ class SQLTab extends BrowserTab implements Translatable, Themeable {
         });
         getBrowser().getTranslationRegistry().register(this);
         getBrowser().getThemeRegistry().register(this);
+    }
+
+    @Override
+    public void show(SyndieURI uri) {
+        super.show(uri);
+        if (_showedHelp)
+            return;
+        _showedHelp = true;
+        _msgs.setText("Enter SQL commands in the box below. " +
+                      "Type 'exit' or 'quit' to close the tab.");
+    }
+
+    @Override
+    public void tabShown() {
+        super.tabShown();
+        _in.forceFocus();
     }
 
     private static final SimpleDateFormat _dateFmt = new SimpleDateFormat("yyyy/MM/dd");
@@ -130,6 +147,10 @@ class SQLTab extends BrowserTab implements Translatable, Themeable {
             _in.add(sql, 0);
             while (_in.getItemCount() > HISTORY)
                 _in.remove(HISTORY);
+            if (sql.equalsIgnoreCase("exit") || sql.equalsIgnoreCase("quit")) {
+               dispose();
+               return;
+            }
             Connection con = getBrowser().getClient().con();
             Statement stmt = null;
             ResultSet rs = null;
