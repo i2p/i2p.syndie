@@ -14,9 +14,13 @@ CREATE CACHED TABLE channelCancel (
 -- records the last N days worth of cancels (limiting how many can come
 -- from each channelRequestedBy).  this way we can apply a cancel even if the
 -- cancel is received before the message being cancelled
-CREATE CACHED TABLE cancelHistory (
-    cancelRequestedBy BIGINT
-    , cancelRequestedOn DATE
-    , cancelledURI VARCHAR(100)
-    , PRIMARY KEY (cancelledURI)
-)
+
+-- This stanza commented out in 2013 because of a missing
+- semi-colon. Fixed in version 24
+--
+-- CREATE CACHED TABLE cancelHistory (
+--    cancelRequestedBy BIGINT
+--    , cancelRequestedOn DATE
+--    , cancelledURI VARCHAR(100)
+--    , PRIMARY KEY (cancelledURI)
+--)
