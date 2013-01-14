@@ -420,6 +420,7 @@ public class SharedArchiveEngine {
             Map.Entry entry = (Map.Entry)iter.next();
             SyndieURI msgURI = (SyndieURI)entry.getKey();
             SyndieURI chanURI = (SyndieURI)entry.getValue();
+            // FIXME O(n**2)
             if (rv.contains(chanURI))
                 continue; // ok, already scheduled
             
@@ -440,9 +441,8 @@ public class SharedArchiveEngine {
                 rv.add(chanURI);
             } else {
                 // dependency failed because we don't keep full archives
-                //ui.debugMessage("not sending " + msgURI.toString() + " because it depends on " + chanURI.toString() + ", which they don't know, and we don't have that channel's signed metadata anymore");
+                ui.debugMessage("not sending " + msgURI.toString() + " because it depends on " + chanURI.toString() + ", which they don't know, and we don't have that channel's signed metadata anymore");
                 rv.remove(msgURI);
-                continue;
             }
         }
     }

@@ -1098,7 +1098,7 @@ public class NymChannelTree implements Themeable, Translatable {
         _colAvatar.setText(registry.getText("Avatar"));
         _colName.setText(registry.getText("Name"));
         _colDesc.setText(registry.getText("Description"));
-        _colMsgs.setText(registry.getText("Msgs"));
+        _colMsgs.setText(registry.getText("Messages"));
         _colMsgs.setToolTipText(registry.getText("Unread / Private / Total messages"));
         _colLastPost.setText(registry.getText("Last post"));
         _colAttributes.setToolTipText(registry.getText("Profile published references?"));

@@ -50,6 +50,8 @@ import syndie.db.UI;
 
 
 /**
+ *  Parent is a BrowseForumTab.
+ *
  *  Includes the header at the top, the MessageTree in the middle, and the FilterBar at the bottom.
  */
 public class BrowseForum extends BaseComponent implements MessageTree.MessageTreeListener, Translatable, Themeable {
@@ -94,10 +96,15 @@ public class BrowseForum extends BaseComponent implements MessageTree.MessageTre
     
     private final boolean _byForum;
     
-    public BrowseForum(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Composite parent, NavigationControl navControl, BookmarkControl bookmarkControl, URIControl uriControl, DataCallback callback, BanControl ban, MessageTree.MessageTreeListener lsnr, boolean byForum) {
+    public BrowseForum(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Composite parent,
+                       NavigationControl navControl, BookmarkControl bookmarkControl, URIControl uriControl, DataCallback callback,
+                       BanControl ban, MessageTree.MessageTreeListener lsnr, boolean byForum) {
         this(client, ui, themes, trans, parent, navControl, bookmarkControl, uriControl, callback, ban, lsnr, false, byForum);
     }
-    public BrowseForum(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Composite parent, NavigationControl navControl, BookmarkControl bookmarkControl, URIControl uriControl, DataCallback callback, BanControl ban, MessageTree.MessageTreeListener lsnr, boolean viewOnly, boolean byForum) {
+
+    public BrowseForum(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Composite parent,
+                       NavigationControl navControl, BookmarkControl bookmarkControl, URIControl uriControl, DataCallback callback,
+                       BanControl ban, MessageTree.MessageTreeListener lsnr, boolean viewOnly, boolean byForum) {
         super(client, ui, themes, trans);
         _navControl = navControl;
         _bookmarkControl = bookmarkControl;
@@ -442,6 +449,7 @@ public class BrowseForum extends BaseComponent implements MessageTree.MessageTre
         String txt = UIUtil.displayName(name, scope);
         _ui.debugMessage("Update name for " + scope + " to \"" + txt + "\"");
         _metaName.setText(txt);
+        // TODO change tab title too
 
         if (info != null) {
             GridData gd = (GridData)_meta.getLayoutData();

@@ -8,7 +8,7 @@ import syndie.data.ChannelInfo;
 import syndie.data.SyndieURI;
 
 /**
- *
+ *  Contains a BrowseForum
  */
 public class BrowseForumTab extends BrowserTab {
     private BrowseForum _browse;
@@ -39,7 +39,7 @@ public class BrowseForumTab extends BrowserTab {
                 }
             }
             if (_name == null) {
-                _name = scope.toBase64().substring(0,6);
+                _name = UIUtil.display(scope);
                 _description = "forum: " + scope.toBase64();
                 _icon = ImageUtil.ICON_TAB_BROWSE;
             }

@@ -32,9 +32,11 @@ import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 
 /**
- *
+ *  Calls KeyImport on any found keys in the meta file or directly encoded in the URI.
+ *  Copies to archive if not already there.
  */
 class ImportMeta {
+
     /**
      * The signature has been validated, so now import what we can
      */
@@ -220,6 +222,7 @@ class ImportMeta {
      * );
      */
     private static final String SQL_INSERT_CHANNEL = "INSERT INTO channel (channelId, channelHash, identKey, encryptKey, edition, name, description, allowPubPost, allowPubReply, importDate, readKeyMissing, pbePrompt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?)";
+
     private static long insertIntoChannel(DBClient client, UI ui, long nymId, String passphrase, Enclosure enc, 
                                           EnclosureBody body, SigningPublicKey identKey, Hash ident, 
                                           long edition) throws SQLException {
@@ -323,6 +326,7 @@ class ImportMeta {
      * );
      */
     private static final String SQL_GET_CHANNEL_ID = "SELECT channelId FROM channel WHERE channelHash = ?";
+
     private static long getChannelId(DBClient client, UI ui, Hash identHash) throws SQLException {
         Connection con = client.con();
         PreparedStatement stmt = null;
@@ -341,6 +345,7 @@ class ImportMeta {
         }
     }
     private static final String SQL_UPDATE_CHANNEL = "UPDATE channel SET encryptKey = ?, edition = ?, name = ?, description = ?, allowPubPost = ?, allowPubReply = ?, readKeyMissing = ?, pbePrompt = ?, importDate = NOW() WHERE channelId = ?";
+
     private static long updateChannel(DBClient client, UI ui, long nymId, String passphrase, Enclosure enc, 
                                       EnclosureBody body, Hash ident, long edition) throws SQLException {
         long channelId = getChannelId(client, ui, ident);
@@ -430,6 +435,7 @@ class ImportMeta {
      */
     static final String SQL_DELETE_TAGS = "DELETE FROM channelTag WHERE channelId = ?";
     private static final String SQL_INSERT_TAG = "INSERT INTO channelTag (channelId, tag, wasEncrypted) VALUES (?, ?, ?)";
+
     private static void setTags(DBClient client, UI ui, long channelId, Enclosure enc, EnclosureBody body) throws SQLException {
         Connection con = client.con();
         PreparedStatement stmt = null;
@@ -476,6 +482,7 @@ class ImportMeta {
      */
     static final String SQL_DELETE_POSTKEYS = "DELETE FROM channelPostKey WHERE channelId = ?";
     private static final String SQL_INSERT_POSTKEY = "INSERT INTO channelPostKey (channelId, authPubKey) VALUES (?, ?)";
+
     private static void setPostKeys(DBClient client, UI ui, long channelId, Enclosure enc, EnclosureBody body) throws SQLException {
         Connection con = client.con();
         PreparedStatement stmt = null;
@@ -520,6 +527,7 @@ class ImportMeta {
      */
     static final String SQL_DELETE_MANAGEKEYS = "DELETE FROM channelManageKey WHERE channelId = ?";
     private static final String SQL_INSERT_MANAGEKEY = "INSERT INTO channelManageKey (channelId, authPubKey) VALUES (?, ?)";
+
     private static void setManageKeys(DBClient client, UI ui, long channelId, Enclosure enc, EnclosureBody body) throws SQLException {
         Connection con = client.con();
         PreparedStatement stmt = null;
@@ -587,6 +595,7 @@ class ImportMeta {
         addArchives(client, channelId, body.getHeaderURIs(Constants.MSG_META_HEADER_ARCHIVES), true);
         addArchives(client, channelId, enc.getHeaderURIs(Constants.MSG_META_HEADER_ARCHIVES), false);
     }
+
     private static void addArchives(DBClient client, long channelId, SyndieURI archiveURIs[], boolean encrypted) throws SQLException {
         if (archiveURIs == null) return;
         Connection con = client.con();
@@ -620,7 +629,10 @@ class ImportMeta {
     }
     
     static final String SQL_DEPRECATE_READ_KEYS = "UPDATE channelReadKey SET keyEnd = CURDATE() WHERE channelId = ? AND keyEnd IS NULL";
-    private static void setChannelReadKeys(DBClient client, UI ui, long channelId, Enclosure enc, EnclosureBody body, boolean wasPublic, List newNymKeys) throws SQLException {
+
+    /** @param newNymKeys out parameter */
+    private static void setChannelReadKeys(DBClient client, UI ui, long channelId, Enclosure enc,
+                                           EnclosureBody body, boolean wasPublic, List newNymKeys) throws SQLException {
         SessionKey priv[] = body.getHeaderSessionKeys(Constants.MSG_META_HEADER_READKEYS);
         SessionKey pub[] = enc.getHeaderSessionKeys(Constants.MSG_META_HEADER_READKEYS);
         if ( ( (priv != null) && (priv.length > 0) ) || ( (pub != null) && (pub.length > 0) ) ) {
@@ -646,6 +658,7 @@ class ImportMeta {
     private static final String SQL_INSERT_CHANNEL_READ_KEY = "INSERT INTO channelReadKey (channelId, keyData, wasPublic, keyStart) VALUES (?, ?, ?, CURDATE())";
     private static final String SQL_ENABLE_CHANNEL_READ_KEY = "UPDATE channelReadKey SET keyEnd = NULL, wasPublic = ? WHERE channelId = ? AND keyData = ?";
     private static final String SQL_CHANNEL_READ_KEY_EXISTS = "SELECT COUNT(*), wasPublic FROM channelReadKey WHERE channelId = ? AND keyData = ? GROUP BY wasPublic";
+
     private static void addChannelReadKeys(DBClient client, UI ui, long channelId, SessionKey keys[], boolean wasPublic, List newNymKeys) throws SQLException {
         if (keys == null) return;
         int newKeys = 0;
@@ -703,6 +716,7 @@ class ImportMeta {
             if (existsStmt != null) existsStmt.close();
         }
     }
+
     /*
      * CREATE CACHED TABLE channelMetaHeader (
      *  channelId       BIGINT
@@ -711,14 +725,16 @@ class ImportMeta {
      *  , wasEncrypted  BOOLEAN
      * );
      */
-    
     static final String SQL_DELETE_CHANNEL_META_HEADER = "DELETE FROM channelMetaHeader WHERE channelId = ?";
+
     private static void setChannelMetaHeaders(DBClient client, long channelId, Enclosure enc, EnclosureBody body) throws SQLException {
         client.exec(SQL_DELETE_CHANNEL_META_HEADER, channelId);
         addChannelMetaHeaders(client, channelId, body.getHeaders(), true);
         addChannelMetaHeaders(client, channelId, enc.getHeaders(), false);
     }
+
     private static final String SQL_INSERT_CHANNEL_META_HEADER = "INSERT INTO channelMetaHeader (channelId, headerName, headerValue, wasEncrypted) VALUES (?, ?, ?, ?)";
+
     private static void addChannelMetaHeaders(DBClient client, long channelId, Properties headers, boolean encrypted) throws SQLException {
         if (headers == null) return;
         Connection con = client.con();
@@ -743,6 +759,7 @@ class ImportMeta {
     
     static final String SQL_DELETE_CHANNEL_REF_URIS = "DELETE FROM uriAttribute WHERE uriId IN (SELECT uriId FROM channelReferenceGroup WHERE channelId = ?)";
     static final String SQL_DELETE_CHANNEL_REFERENCES = "DELETE FROM channelReferenceGroup WHERE channelId = ?";
+
     private static void setChannelReferences(DBClient client, UI ui, long channelId, EnclosureBody body) throws SQLException {
         client.exec(SQL_DELETE_CHANNEL_REF_URIS, channelId);
         client.exec(SQL_DELETE_CHANNEL_REFERENCES, channelId);
@@ -801,6 +818,7 @@ class ImportMeta {
      * );
      */
     private static final String SQL_INSERT_CHANNEL_REFERENCE = "INSERT INTO channelReferenceGroup (channelId, groupId, parentGroupId, siblingOrder, name, description, uriId, referenceType, wasEncrypted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
     private static class RefWalker {
         private DBClient _client;
         private UI _ui;

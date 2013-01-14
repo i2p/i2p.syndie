@@ -229,8 +229,11 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
     
     /** currently applied filter */
     public SyndieURI getCurrentFilter() { return _appliedFilter; }
+
     public Control getControl() { return _root; } //return _tree; }
+
     Tree getTree() { return _tree; }
+
     /** uri to the currently selected message/item */
     public SyndieURI getSelected() {
         TreeItem items[] = _tree.getSelection();

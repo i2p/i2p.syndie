@@ -4,6 +4,7 @@ import java.io.*;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+
 import net.i2p.I2PAppContext;
 import net.i2p.crypto.KeyGenerator;
 import net.i2p.data.Base64;
@@ -15,6 +16,7 @@ import net.i2p.data.SigningPrivateKey;
 import net.i2p.data.SigningPublicKey;
 import net.i2p.data.Signature;
 import net.i2p.data.Hash;
+
 import syndie.Constants;
 import syndie.data.NymKey;
 import syndie.data.SyndieURI;
@@ -29,7 +31,9 @@ import syndie.data.SyndieURI;
  * [--expireExisting $boolean] // if true, expire all other existing keys of the same type for the scope
  */
 public class KeyImport extends CommandImpl {
+
     public KeyImport() {}
+
     public DBClient runCommand(Opts args, UI ui, DBClient client) {
         if ( (client == null) || (!client.isLoggedIn()) ) {
             List missing = args.requireOpts(new String[] { "db", "login", "pass", "keyfile" });
@@ -69,9 +73,11 @@ public class KeyImport extends CommandImpl {
             if (fin != null) try { fin.close(); } catch (IOException ioe) {}
         }
     }
+
     public static DBClient importKey(UI ui, DBClient client, InputStream fin, boolean authentic, boolean expireExisting) throws IOException {
         return importKey(ui, client, null, null, null, fin, authentic, expireExisting);
     }
+
     public static DBClient importKey(UI ui, DBClient client, String db, String login, String pass, InputStream fin, boolean authentic, boolean expireExisting) throws IOException {
         String line = DataHelper.readLine(fin);
         if (!line.startsWith("keytype: ") || (line.length() < ("keytype: ".length() + 1)))
@@ -104,9 +110,11 @@ public class KeyImport extends CommandImpl {
                                                  " VALUES " +
                                                  "(?, ?, ?, ?, ?, ?, ?, NULL, NULL)";
     private static final String SQL_EXPIRE = "UPDATE nymKey SET keyPeriodEnd = NOW() WHERE nymId = ? AND keyChannel = ? and keyFunction = ?";
+
     public static DBClient importKey(UI ui, DBClient client, String type, Hash scope, byte[] raw, boolean authenticated, boolean expireExisting) {
         return importKey(ui, client, null, null, null, type, scope, raw, authenticated, expireExisting);
     }
+
     public static DBClient importKey(UI ui, DBClient client, String db, String login, String pass, String type, Hash scope, byte[] raw, boolean authenticated, boolean expireExisting) {
         client.clearNymChannelCache();
         PreparedStatement stmt = null;
@@ -298,6 +306,7 @@ public class KeyImport extends CommandImpl {
     }
     
     private static final String SQL_GET_UNDECRYPTABLE_READ = "SELECT msgId, messageId, channelHash FROM channelMessage JOIN channel ON channelId = scopeChannelId WHERE readKeyMissing = TRUE AND scopeChannelId = ?";
+
     private static void resolveWithReadKey(UI ui, DBClient client, Hash channel, SessionKey key) {
         Connection con = client.con();
         PreparedStatement stmt = null;
@@ -391,6 +400,7 @@ public class KeyImport extends CommandImpl {
     }
     
     private static final String SQL_GET_UNDECRYPTABLE_REPLY = "SELECT msgId, messageId, channelHash FROM channelMessage JOIN channel ON channelId = scopeChannelId WHERE replyKeyMissing = TRUE AND (scopeChannelId = ? OR targetChannelId = ?)";
+
     private static void resolveWithReplyKey(UI ui, DBClient client, Hash channel, PrivateKey key) {
         Connection con = client.con();
         PreparedStatement stmt = null;

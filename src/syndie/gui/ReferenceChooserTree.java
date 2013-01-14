@@ -336,8 +336,7 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
             Hash hash = _client.getChannelHash(chan.getChannelId());
             if (hash == null) continue;
             
-            if (name == null) name = "";
-            name = name + " [" + hash.toBase64().substring(0,6) + "]";
+            name = UIUtil.displayName(name, hash);
             
             TreeItem item = new TreeItem(_watchedRoot, SWT.NONE);
             item.setText(name);
@@ -528,6 +527,7 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
     private void rebuildBookmarks() {
         JobRunner.instance().enqueue(new Rebuilder());
     }
+
     private class Rebuilder implements Runnable {
         public void run() {
             final long t1 = System.currentTimeMillis();
@@ -693,6 +693,9 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
         _nymChannels = _client.getNymChannels(); //_client.getChannels(true, true, true, true);
     }
 
+    /**
+     *  Our channels, then other managable channels
+     */
     private void redrawManageable() {
         _manageRoot.removeAll();
         _manageChannels.clear();
@@ -714,6 +717,10 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
         }
     }
 
+    /**
+     *  Our channels, then other managable channels,
+     *  then postable channels, then public postable channels
+     */
     private void redrawPostable() {
         _postRoot.removeAll();
         _postChannels.clear();
@@ -769,7 +776,7 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
             buf.append('[')
                .append(hash.toBase64().substring(0, 6))
                .append("] (")
-               .append(_translationRegistry.getText("Read key unknown"))
+               .append(_translationRegistry.getText("Forum key unknown"))
                .append(')');
             f = _themeRegistry.getTheme().MSG_UNKNOWN_FONT;
         } else {

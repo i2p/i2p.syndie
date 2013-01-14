@@ -8,11 +8,13 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
 import net.i2p.I2PAppContext;
 import net.i2p.data.Hash;
 import net.i2p.data.SessionKey;
 import net.i2p.data.Signature;
 import net.i2p.data.SigningPublicKey;
+
 import syndie.Constants;
 import syndie.data.Enclosure;
 import syndie.data.SyndieURI;
@@ -42,9 +44,10 @@ public class Importer extends CommandImpl {
     public Importer(DBClient client, String pass) {
         _client = client;
         _passphrase = pass;
-        _wasPBE = false;
     }
+
     public Importer() {}
+
     public DBClient runCommand(Opts args, UI ui, DBClient client) {
         if ( (client == null) || (!client.isLoggedIn()) ) {
             List missing = args.requireOpts(new String[] { "db", "login", "pass", "in" });

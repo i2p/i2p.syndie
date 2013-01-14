@@ -32,7 +32,7 @@ import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 
 /**
- *
+ *  Copies to archive
  */
 public class ImportPost {
     private final DBClient _client;

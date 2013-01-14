@@ -26,4 +26,20 @@ public class UIUtil {
         buf.append(']');
         return buf.toString();
     }
+
+    /**
+     *  Consistent display hashes
+     *
+     *  @param hash may be null
+     */
+    public static String display(Hash hash) {
+        StringBuilder buf = new StringBuilder(8);
+        buf.append('[');
+        if (hash != null)
+            buf.append(hash.toBase64().substring(0, 6));
+        else
+            buf.append("??????");
+        buf.append(']');
+        return buf.toString();
+    }
 }

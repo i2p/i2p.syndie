@@ -9,7 +9,7 @@ import syndie.Constants;
 import syndie.data.SyndieURI;
 
 /**
- *
+ *  Contains a ManageForum (RW) or ViewForum (RO)
  */
 public class ViewForumTab extends BrowserTab {
     private ViewForum _view;
