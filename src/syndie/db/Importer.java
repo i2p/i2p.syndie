@@ -210,9 +210,13 @@ public class Importer extends CommandImpl {
         }
         return rv;
     }
+
     /** was the last message processed encrypted with a passphrase? */
     public boolean wasPBE() { return _wasPBE; }
+
+    /** @deprecated unused */
     public boolean wasAlreadyImported() { return _wasAlreadyImported; }
+
     public boolean wasMissingKey() { return _noKey; }
     
     public String getPBEPrompt() { return _pbePrompt; }
@@ -223,6 +227,7 @@ public class Importer extends CommandImpl {
         // first check that the metadata is signed by an authorized key
         if (alreadyKnownMeta(ui, enc)) {
             _wasAlreadyImported = true;
+            ui.debugMessage("Already have meta");
             return true;
         } else if (verifyMeta(ui, enc)) {
             return ImportMeta.process(_client, ui, enc, nymId, _passphrase, bodyPassphrase);
@@ -231,7 +236,16 @@ public class Importer extends CommandImpl {
             return false;
         }
     }
+
+    /**
+     *  This checks only the DB, not if the file exists.
+     *  So always return false and let it pass to ImportMeta.process(),
+     *  which does the same checks, but saves the file if it does not exist.
+     *
+     *  @return false always, for now
+     */
     private boolean alreadyKnownMeta(UI ui, Enclosure enc) {
+     /****
         SigningPublicKey pubKey = enc.getHeaderSigningKey(Constants.MSG_META_HEADER_IDENTITY);
         Long edition = enc.getHeaderLong(Constants.MSG_META_HEADER_EDITION);
         if ( (pubKey != null) && (edition != null) ) {
@@ -242,8 +256,10 @@ public class Importer extends CommandImpl {
             if (known >= edition.longValue()) 
                 return true;
         }
+      ****/
         return false;
     }
+
     /**
      * The metadata message is ok if it is either signed by the channel's
      * identity itself or by one of the manager keys
