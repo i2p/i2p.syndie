@@ -789,7 +789,9 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
     private void populateAvatarMenu() {
         if (_avatarImgOrig != null) { // populated earlier in the initialization
             MenuItem origItem = new MenuItem(_avatarMenu, SWT.PUSH);
+            // image not displayed on all platforms
             origItem.setImage(_avatarImgOrig);
+            origItem.setText(_translationRegistry.getText("Current"));
             origItem.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickAvatar(_avatarImgOrig); }
                 public void widgetSelected(SelectionEvent selectionEvent) { pickAvatar(_avatarImgOrig); }
@@ -801,7 +803,9 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
             if (img != null) {
                 _avatarImgStandard.add(img);
                 MenuItem item = new MenuItem(_avatarMenu, SWT.PUSH);
+                // image not displayed on all platforms - TODO pupup?
                 item.setImage(img);
+                item.setText(_translationRegistry.getText("Default") + ' ' + (i+1));
                 item.addSelectionListener(new SelectionListener() {
                     public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickAvatar(img); }
                     public void widgetSelected(SelectionEvent selectionEvent) { pickAvatar(img); }
@@ -1157,6 +1161,7 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
         _banRemoveAll.setText(registry.getText("Remove all"));
         _banSelect.setText(registry.getText("Select") + "...");
     
-        _avatarOther.setText(registry.getText("Other") + "...");
+        _avatar.setText(registry.getText("Click to change avatar"));
+        _avatarOther.setText(registry.getText("Load from file"));
     }
 }

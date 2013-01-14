@@ -252,7 +252,9 @@ public class WelcomeScreen extends Wizard {
         for (i = 0; i < _avatarItems.length-1; i++) {
             final Image img = (Image)_avatarImages.get(i);
             _avatarItems[i] = new MenuItem(_avatarMenu, SWT.PUSH);
+            // image not displayed on all platforms - TODO pupup?
             _avatarItems[i].setImage(img);
+            _avatarItems[i].setText(_browser.getTranslationRegistry().getText("Default") + ' ' + (i+1));
             _avatarItems[i].addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) { 
                     _avatarImage = img;
@@ -265,14 +267,18 @@ public class WelcomeScreen extends Wizard {
             });
         }
         _avatarItems[_avatarItems.length-1] = new MenuItem(_avatarMenu, SWT.PUSH);
-        _avatarItems[_avatarItems.length-1].setText(_browser.getTranslationRegistry().getText("Other") + "...");
+        _avatarItems[_avatarItems.length-1].setText(_browser.getTranslationRegistry().getText("Load from file"));
         _avatarItems[_avatarItems.length-1].addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickAvatar(); }
             public void widgetSelected(SelectionEvent selectionEvent) { pickAvatar(); }
         });
         
-        _avatarImage = (Image)_avatarImages.get(0);
-        _avatar.setImage(_avatarImage);
+        // pick one for them
+        if (_avatarImages.size() > 0) {
+            int rand = RandomSource.getInstance().nextInt(_avatarImages.size());
+            _avatarImage = (Image)_avatarImages.get(rand);
+            _avatar.setImage(_avatarImage);
+        }
     }
     
     private void pickAvatar() {
@@ -336,11 +342,11 @@ public class WelcomeScreen extends Wizard {
         
         _description.setText(registry.getText(reflow(new String [] {
                 "Syndie will create a new identity for you to use with which to post messages in other forums and to run",
-                "your own blog/forum"})));
+                "your own blog/forum."})));
 
         _nameLabel.setText(registry.getText("What name would you like to use for your new identity?"));
         _name.setText(registry.getText("Syndie user") + ' ' + (1001 + RandomSource.getInstance().nextInt(98888)));
-        _avatarLabel.setText(registry.getText("What avatar would you like to use?"));
+        _avatarLabel.setText(registry.getText("Click the image to select the avatar would you like to use:"));
         _authenticationLabel.setText(registry.getText("In your new identity's blog/forum, would  you like to allow other people to post?"));
         _authenticatePublic.setText(registry.getText("Yes, let anyone reply to existing posts and post new topics"));
         _authenticateReplies.setText(registry.getText("Yes, let anyone reply to existing posts"));
