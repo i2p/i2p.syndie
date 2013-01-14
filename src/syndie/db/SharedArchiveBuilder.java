@@ -182,6 +182,7 @@ public class SharedArchiveBuilder {
         for (int i = 0; i < dirs.length; i++) {
             Hash scope = new Hash(Base64.decode(dirs[i].getName()));
             
+            // FIXME O(n**2)
             int scopeChannel = getChannelIndex(channels, scope);
             if (scopeChannel < 0) {
                 _ui.debugMessage("Could not share the metadata for " + scope.toBase64() + ", so we cannot share any of its messages");
@@ -218,6 +219,7 @@ public class SharedArchiveBuilder {
                     
                     byte target[] = enc.getHeaderBytes(Constants.MSG_HEADER_TARGET_CHANNEL);
                     if ( (target != null) && (target.length == Hash.HASH_LENGTH) ) {
+                        // FIXME O(n**2)
                         targetChannel = getChannelIndex(channels, new Hash(target));
                         if (targetChannel == -1) {
                             _ui.debugMessage("cannot include message " + messageId + " because it depends on a channel we can't share: " + Base64.encode(target));
@@ -299,6 +301,7 @@ public class SharedArchiveBuilder {
      * adding a new one if necessary and possible, or returning -1 if not possible.
      */
     private int getChannelIndex(List channels, Hash scope) {
+        // FIXME O(n**2)
         for (int i = 0; i < channels.size(); i++) {
             SharedArchive.Channel chan = (SharedArchive.Channel)channels.get(i);
             if (DataHelper.eq(scope.getData(), chan.getScope()))

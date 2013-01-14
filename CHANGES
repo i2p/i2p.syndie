@@ -1,5 +1,25 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
+* 2013-01-14 1.102b-7 (kytv, zzz)
+  GUI improvements:
+  - Fix avatar chooser menu if images are not displayed
+  - Add more menu accelerators
+  - 'Open Syndie URI' popup error handling
+  - Yet more standardization of forum/author, in MessageTree
+  - Change default display filter from 6 months to 10 years (i.e. all)
+  - More status bar improvements for buttons with only one item
+  Syndication:
+  - More fixes for repeated-push problem.
+  - Fix class cast error on cancel lists
+  - Change rebuild time back to 1 hour from 4
+  - Fix decoding of password-protected messages. ImportPost tried to delete
+  Build:
+  - Update bundled hsqldb to 1.8.1.3
+  - Add OSX installers (previously there were just app bundles)
+  - fix desktop launchers in Unix
+  Other:
+  - Add scripts for dumping index and syndie files
+
 * 2013-01-12 1.102b-6 (kytv, zzz)
   GUI improvements:
   - Revert shuffling of push/pull order with a single archive,
