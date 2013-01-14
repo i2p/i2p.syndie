@@ -9,6 +9,7 @@ import java.util.*;
 import gnu.crypto.hash.Sha256Standalone;
 import syndie.Constants;
 
+import net.i2p.I2PAppContext;
 import net.i2p.data.Base64;
 import net.i2p.data.DataHelper;
 import net.i2p.data.Hash;
@@ -324,14 +325,7 @@ public class Enclosure {
     public String toString() {
         StringBuilder rv = new StringBuilder();
         rv.append("Enclosure: ").append(_enclosureType).append(" with headers:\n");
-        List keys = new ArrayList(_publicHeaders.keySet());
-        Collections.sort(keys);
-        for (Iterator iter = keys.iterator(); iter.hasNext(); ) {
-            String key = (String)iter.next();
-            String val = _publicHeaders.getProperty(key);
-            rv.append("  '").append(key).append("' => '").append(val).append("\'");
-            rv.append("\n");
-        }
+        dumpProps(rv, _publicHeaders);
         if (_data != null)
             rv.append("Enclosure body: ").append(_data.length).append(" bytes");
         else
@@ -342,6 +336,21 @@ public class Enclosure {
         return rv.toString();
     }
     
+    /** for debug only */
+    static void dumpProps(StringBuilder buf, Properties props) {
+        if (props == null || props.isEmpty()) {
+            buf.append("  (none)\n");
+        }
+        List keys = new ArrayList(props.keySet());
+        Collections.sort(keys);
+        for (Iterator iter = keys.iterator(); iter.hasNext(); ) {
+            String key = (String)iter.next();
+            String val = props.getProperty(key);
+            buf.append("  '").append(key).append("' => '").append(val).append("\'");
+            buf.append("\n");
+        }
+    }
+
     private void load(InputStream raw) throws IOException {
         Sha256Standalone hash = new Sha256Standalone();
         hash.reset();
@@ -488,7 +497,27 @@ public class Enclosure {
                 InputStream in = new BufferedInputStream(new FileInputStream(args[i]));
                 Enclosure enc = new Enclosure(in);
                 System.out.println(enc.toString());
-            } catch (IOException ioe) {
+                if (enc.getDataSize() == 0)
+                    return;
+                SessionKey key = enc.getHeaderSessionKey(Constants.MSG_HEADER_BODYKEY);
+                if (key == null) {
+                    System.out.println("No body key for decryption");
+                    SessionKey[] keys = enc.getHeaderSessionKeys(Constants.MSG_META_HEADER_READKEYS);
+                    if (keys != null && keys.length > 0) {
+                        System.out.println("Trying first alt. read key");
+                        key = keys[0];
+                    } else {
+                        System.out.println("No alt. read keys for decryption");
+                    }
+                }
+                if (key == null) {
+                    System.out.println("Cannot decrypt body");
+                } else {
+                    EnclosureBody body = new EnclosureBody(I2PAppContext.getGlobalContext(),
+                                                           enc.getData(), enc.getDataSize(), key);
+                    System.out.println(body.toString());
+                }
+            } catch (Exception ioe) {
                 ioe.printStackTrace();
             }
         }

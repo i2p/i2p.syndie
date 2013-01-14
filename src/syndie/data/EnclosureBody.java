@@ -31,16 +31,16 @@ public class EnclosureBody {
     private I2PAppContext _context;
     private Log _log;
     /** filename to byte[] */
-    private Map _entries;
+    private Map<String, byte[]> _entries;
     /** key to value */
     private Properties _headers;
     /** list of config settings (Properties) for each page */
-    private List _pageConfig;
+    private List<Properties> _pageConfig;
     /** list of config settings (Properties) for each attachment */
-    private List _attachConfig;
+    private List<Properties> _attachConfig;
     private int _pages;
     private int _attachments;
-    private List _references;
+    private List<ReferenceNode> _references;
     
     public static final String ENTRY_AVATAR = "avatar32.png";
     public static final String ENTRY_HEADERS = "headers.dat";
@@ -312,17 +312,23 @@ public class EnclosureBody {
     public byte[] getAttachment(int attachment) { return (byte[])_entries.get(ENTRY_ATTACHMENT_PREFIX + attachment + ENTRY_ATTACHMENT_DATA_SUFFIX); }
 
     public String toString() {
-        StringBuilder rv = new StringBuilder();
-        rv.append("EnclosureBody with ").append(_pages).append(" pages, ").append(_attachments).append(" attachments, and private headers of {");
-        for (Iterator iter = _headers.keySet().iterator(); iter.hasNext(); ) {
-            String key = (String)iter.next();
-            String val = _headers.getProperty(key);
-            rv.append('\'').append(key).append("' => '").append(val).append("\'");
-            if (iter.hasNext())
-                rv.append(", ");
+        StringBuilder buf = new StringBuilder();
+        buf.append("EnclosureBody with private headers:\n");
+        Enclosure.dumpProps(buf, _headers);
+        buf.append("with " + _pages + " pages:\n");
+        for (int i = 0; i < _pages; i++) {
+            buf.append(" Page " + i + "\n");
+            buf.append(" " + getPage(i).length + " bytes\n");
+            Enclosure.dumpProps(buf, _pageConfig.get(i));
         }
-        rv.append("}");
-        return rv.toString();
+        buf.append("with " + _attachments + " attachments:\n");
+        for (int i = 0; i < _attachments; i++) {
+            buf.append(" Attachment " + i + "\n");
+            buf.append(" " + getAttachment(i).length + " bytes\n");
+            Enclosure.dumpProps(buf, _attachConfig.get(i));
+        }
+        buf.append("with " + _references.size() + " root references");
+        return buf.toString();
     }
     
     
