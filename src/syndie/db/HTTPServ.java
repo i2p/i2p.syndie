@@ -297,7 +297,7 @@ public class HTTPServ implements CLI.Command {
                 
                 try {
                     // we want to break from the accept() periodically so we can do the above rebuilding checks
-                    _ssocket.setSoTimeout(29*60*1000);
+                    _ssocket.setSoTimeout(5*60*1000);
                     Socket socket = _ssocket.accept();
                     _ui.debugMessage("Connection accepted");
                     boolean added = false;

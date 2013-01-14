@@ -140,7 +140,7 @@ class ImportMeta {
         // see if we have the info already (with the same or later edition),
         // since if we do, there's nothing to import.
         long knownEdition = client.getKnownEdition(ident);
-        if (knownEdition > edition.longValue()) {
+        if (knownEdition >= edition.longValue()) {
             ui.statusMessage("already known edition " + knownEdition);
             saveToArchiveIfAbsent(client, ui, ident, enc);
             return true;
@@ -777,7 +777,7 @@ class ImportMeta {
     
     private static void setChannelCancel(DBClient client, UI ui, long channelId, Enclosure enc, EnclosureBody body) throws SQLException {
         String cancel[] = body.getHeaderStrings(Constants.MSG_META_HEADER_CANCEL);
-        ArrayList cancelled = new ArrayList();
+        ArrayList<String> cancelled = new ArrayList();
         if (cancel != null) {
             for (int i = 0; i < cancel.length; i++)
                 cancelled.add(cancel[i]);
@@ -787,12 +787,14 @@ class ImportMeta {
             for (int i = 0; i < cancel.length; i++)
                 cancelled.add(cancel[i]);
             // only update the cancel URIs if there are more ones to set
+            // FIXME we set them before we validate below by turning them into SyndieURIs;
+            // can we validate first, and change 2nd param to List<SyndieURI> ?
             client.setChannelCancelURIs(channelId, cancelled);
         
             CancelEngine engine = new CancelEngine(client, ui);
-            ArrayList uris = new ArrayList(cancelled.size());
+            ArrayList<SyndieURI> uris = new ArrayList(cancelled.size());
             for (int i = 0; i < cancelled.size(); i++) {
-                String str = (String)cancelled.get(i);
+                String str = cancelled.get(i);
                 try {
                     SyndieURI uri = new SyndieURI(str);
                     uris.add(uri);

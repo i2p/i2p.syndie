@@ -1591,12 +1591,12 @@ public class DBClient {
         private ChannelInfo _postChannels[];
         private ChannelInfo _publicPostChannels[];
         
-        List<Long> _internalIds;
+        final List<Long> _internalIds;
 
-        List<Long> _identityChannelIds;
-        List<Long> _managedChannelIds;
-        List<Long> _postChannelIds;
-        List<Long> _publicPostChannelIds;
+        final List<Long> _identityChannelIds;
+        final List<Long> _managedChannelIds;
+        final List<Long> _postChannelIds;
+        final List<Long> _publicPostChannelIds;
         
         public ChannelCollector() {
             _identityChannels = new ChannelInfo[0];
@@ -1711,6 +1711,8 @@ public class DBClient {
                     _ui.errorMessage("Key is " + key + " Length is " + key.getData().length, iae);
                     continue;
                 }
+                // FIXME we don't store the pubkeys? We have to call to KeyGenerator
+                // and do BigInteger math every time?
                 SigningPublicKey pub = KeyGenerator.getSigningPublicKey(priv);
                 pubKeys.add(pub);
                 if (includeIdent) {
@@ -6252,7 +6254,10 @@ public class DBClient {
     private static final String SQL_ADD_CANCEL_URI = "INSERT INTO channelCancel (cancelledURI, channelId, cancelOrder) VALUES (?, ?, ?)";
     private static final String SQL_DELETE_CANCEL_URIS = "DELETE FROM channelCancel WHERE channelId = ?";
 
-    public void setChannelCancelURIs(long channelId, List<SyndieURI> uris) {
+    /**
+     *  TODO validate in ImportMeta and change uris to List<SyndieURI> ?
+     */
+    public void setChannelCancelURIs(long channelId, List<String> uris) {
         try {
             exec(SQL_DELETE_CANCEL_URIS, channelId);
         } catch (SQLException se) {
@@ -6266,7 +6271,7 @@ public class DBClient {
         try {
             stmt = _con.prepareStatement(SQL_ADD_CANCEL_URI);
             for (int i = 0; (i < uris.size()) && (i < Constants.MAX_CANCELLED_PER_META); i++) {
-                String uri = uris.get(i).toString();
+                String uri = uris.get(i);
                 stmt.setString(1, uri);
                 stmt.setLong(2, channelId);
                 stmt.setInt(3, i);
@@ -6477,6 +6482,7 @@ public class DBClient {
                                                     "(nymId, keyChannel, keyFunction, keyType, keyData, keySalt, authenticated, keyPeriodBegin, keyPeriodEnd)" +
                                                     " VALUES " +
                                                     "(?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
     private boolean reencryptKeys(String oldPass, String newPass) {
         ensureLoggedIn();
         List<NymKeyData> rv = new ArrayList(1);

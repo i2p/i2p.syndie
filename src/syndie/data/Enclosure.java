@@ -140,11 +140,18 @@ public class Enclosure {
         }
     }
     
+    /** split by tabs */
     public String[] getHeaderStrings(String key) { return getHeaderStrings(key, false); }
+
+    /** split by tabs and optionally commas too */
     public String[] getHeaderStrings(String key, boolean splitByCommaToo) { 
         return toStrings(_publicHeaders.getProperty(key), splitByCommaToo);
     }
+
+    /** split by tabs */
     public static String[] toStrings(String val) { return toStrings(val, false); }
+
+    /** split by tabs and optionally commas too */
     public static String[] toStrings(String val, boolean splitByCommaToo) {
         if (val == null)
             return null;

@@ -486,6 +486,8 @@ public class SharedArchiveEngine {
             File metaFile = new File(dirs[i], "meta" + Constants.FILENAME_SUFFIX);
             if (sendMeta && !refuseMeta) {
                 if (metaFile.exists()) {
+                    // we send meta if we have newer, regardless of how old it is
+                    // (there's no push policy for metadata age)
                     ui.debugMessage("sending metadata for " + scope.toBase64() + " (our version: " + version + " theirs: " + (remChan == null ? -1 : remChan.getVersion()) + ")");
                     rv.add(metaURI);
                 } else {

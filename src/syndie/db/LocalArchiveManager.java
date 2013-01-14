@@ -39,7 +39,7 @@ import syndie.data.SyndieURI;
  */
 public class LocalArchiveManager {
 
-    private static final int DEFAULT_REBUILD_DELAY_HOURS = 4;
+    private static final int DEFAULT_REBUILD_DELAY_HOURS = 1;
 
     public static SharedArchive.About getLocalAbout(DBClient client, SharedArchiveEngine.PullStrategy pullStrategy) {
         SharedArchive.About about = new SharedArchive.About();
@@ -62,7 +62,7 @@ public class LocalArchiveManager {
             } catch (URISyntaxException use) {}
         }
         
-        int republishFrequencyHours = getInt(prefs, "archive.republishFrequencyHours", 1);
+        int republishFrequencyHours = getInt(prefs, "archive.republishFrequencyHours", DEFAULT_REBUILD_DELAY_HOURS);
     
         about.setPublishRebuildFrequencyHours(republishFrequencyHours);
         about.setAlternativeArchives(archives);
@@ -142,5 +142,9 @@ public class LocalArchiveManager {
         return true;
     }
     
-    public static int getLocalRebuildDelayHours(DBClient client) { return DEFAULT_REBUILD_DELAY_HOURS; }
+    public static int getLocalRebuildDelayHours(DBClient client) {
+        Properties prefs = client.getNymPrefs();
+        int republishFrequencyHours = getInt(prefs, "archive.republishFrequencyHours", DEFAULT_REBUILD_DELAY_HOURS);
+        return republishFrequencyHours;
+    }
 }
