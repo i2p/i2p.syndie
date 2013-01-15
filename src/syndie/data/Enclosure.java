@@ -261,7 +261,7 @@ public class Enclosure {
         } else {
             byte val[] = Base64.decode(str);
             if ( (val != null) && (val.length == SigningPublicKey.KEYSIZE_BYTES) )
-                return new SigningPublicKey(val);
+                return SigningPublicKey.create(val, 0);
             else
                 return null;
         }
@@ -278,7 +278,7 @@ public class Enclosure {
             for (int i = 0; i < vals.length; i++) {
                     byte val[] = Base64.decode(vals[i]);
                     if ( (val != null) && (val.length == SigningPublicKey.KEYSIZE_BYTES) )
-                        keys[i] = new SigningPublicKey(val);
+                        keys[i] = SigningPublicKey.create(val, 0);
                     else
                         invalid++;
             }
@@ -306,7 +306,7 @@ public class Enclosure {
         } else {
             byte val[] = Base64.decode(str);
             if ( (val != null) && (val.length == PublicKey.KEYSIZE_BYTES) )
-                return new PublicKey(val);
+                return PublicKey.create(val, 0);
             else
                 return null;
         }

@@ -1262,7 +1262,7 @@ public class DBClient {
                 if (rs.wasNull())
                     return null;
                 else
-                    return new PublicKey(rv);
+                    return PublicKey.create(rv, 0);
             } else {
                 return null;
             }
@@ -1405,7 +1405,7 @@ public class DBClient {
                 if (rs.wasNull()) {
                     continue;
                 } else {
-                    SigningPublicKey pub = new SigningPublicKey(key);
+                    SigningPublicKey pub = SigningPublicKey.create(key, 0);
                     if (!rv.contains(pub))
                         rv.add(pub);
                 }
@@ -1435,7 +1435,7 @@ public class DBClient {
                 if (rs.wasNull())
                     return null;
                 else
-                    return new SigningPublicKey(rv);
+                    return SigningPublicKey.create(rv, 0);
             } else {
                 return null;
             }
@@ -2089,8 +2089,8 @@ public class DBClient {
                 
                 info.setChannelId(channelId);
                 info.setChannelHash(Hash.create(chanHash));
-                info.setIdentKey(new SigningPublicKey(identKey));
-                info.setEncryptKey(new PublicKey(encryptKey));
+                info.setIdentKey(SigningPublicKey.create(identKey, 0));
+                info.setEncryptKey(PublicKey.create(encryptKey, 0));
                 info.setEdition(edition);
                 info.setName(petname == null ? name : petname);
                 info.setDescription(petdesc == null ? desc : petdesc);
@@ -2395,7 +2395,7 @@ public class DBClient {
                 // authPub
                 byte key[] = rs.getBytes(1);
                 if (!rs.wasNull())
-                    keys.add(new SigningPublicKey(key));
+                    keys.add(SigningPublicKey.create(key, 0));
             }
             return keys;
         } catch (SQLException se) {
@@ -2420,7 +2420,7 @@ public class DBClient {
                 // authPub
                 byte key[] = rs.getBytes(1);
                 if (!rs.wasNull())
-                    keys.add(new SigningPublicKey(key));
+                    keys.add(SigningPublicKey.create(key, 0));
             }
             return keys;
         } catch (SQLException se) {
@@ -3129,7 +3129,7 @@ public class DBClient {
             if (rs.next()) {
                 byte data[] = rs.getBytes(1);
                 if ( (data != null) && (data.length == SigningPublicKey.KEYSIZE_BYTES) )
-                    return new SigningPublicKey(data);
+                    return SigningPublicKey.create(data, 0);
                 else
                     return null;
             } else {
@@ -3158,7 +3158,7 @@ public class DBClient {
             if (rs.next()) {
                 byte data[] = rs.getBytes(1);
                 if ( (data != null) && (data.length == PublicKey.KEYSIZE_BYTES) )
-                    return new PublicKey(data);
+                    return PublicKey.create(data, 0);
                 else
                     return null;
             } else {

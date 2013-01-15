@@ -484,7 +484,7 @@ class ManageMenu implements TextEngine.Menu {
                 String mkey = (String)manageKeys.get(i);
                 byte mkeyData[] = Base64.decode(mkey);
                 if ( (mkeyData != null) && (mkeyData.length == SigningPublicKey.KEYSIZE_BYTES) )
-                    mkeys.add(new SigningPublicKey(mkeyData));
+                    mkeys.add(SigningPublicKey.create(mkeyData, 0));
             }
             _currentChannel.setAuthorizedManagers(mkeys);
             ui.statusMessage("Updated channel manager keys");
@@ -497,7 +497,7 @@ class ManageMenu implements TextEngine.Menu {
                 String pkey = (String)postKeys.get(i);
                 byte pkeyData[] = Base64.decode(pkey);
                 if ( (pkeyData != null) && (pkeyData.length == SigningPublicKey.KEYSIZE_BYTES) )
-                    pkeys.add(new SigningPublicKey(pkeyData));
+                    pkeys.add(SigningPublicKey.create(pkeyData, 0));
             }
             _currentChannel.setAuthorizedPosters(pkeys);
             ui.statusMessage("Updated channel post keys");
@@ -596,7 +596,7 @@ class ManageMenu implements TextEngine.Menu {
                 byte pubKey[] = rs.getBytes(1);
                 String name = rs.getString(2);
                 if (pubKey != null) {
-                    SigningPublicKey pk = new SigningPublicKey(pubKey);
+                    SigningPublicKey pk = SigningPublicKey.create(pubKey, 0);
                     Hash chan = pk.calculateHash();
                     if (banned.contains(chan))
                         continue;
@@ -643,7 +643,7 @@ class ManageMenu implements TextEngine.Menu {
         } else {
             byte data[] = opts.getOptBytes("key");
             if ( (data != null) && (data.length == SigningPublicKey.KEYSIZE_BYTES) ) {
-                key = new SigningPublicKey(data);
+                key = SigningPublicKey.create(data, 0);
             }
         }
         
@@ -699,7 +699,7 @@ class ManageMenu implements TextEngine.Menu {
         } else {
             byte data[] = opts.getOptBytes("key");
             if ( (data != null) && (data.length == SigningPublicKey.KEYSIZE_BYTES) ) {
-                key = new SigningPublicKey(data);
+                key = SigningPublicKey.create(data, 0);
             }
         }
         
