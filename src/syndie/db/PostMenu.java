@@ -376,7 +376,7 @@ class PostMenu implements TextEngine.Menu {
                 // ok, not an integer, maybe its a full channel hash?
                 byte val[] = Base64.decode(chan);
                 if ( (val != null) && (val.length == Hash.HASH_LENGTH) ) {
-                    long id = client.getChannelId(new Hash(val));
+                    long id = client.getChannelId(Hash.create(val));
                     if (id >= 0) {
                         channel = client.getChannel(id);
                     } else {
@@ -584,7 +584,7 @@ class PostMenu implements TextEngine.Menu {
                 // ok, not an integer, maybe its a full channel hash?
                 byte val[] = Base64.decode(chan);
                 if ( (val != null) && (val.length == Hash.HASH_LENGTH) ) {
-                    channel = new Hash(val);
+                    channel = Hash.create(val);
                     ui.debugMessage("channel requested is a hash (" + channel.toBase64() + ")");
                 } else {
                     ui.errorMessage("Channel requested is not valid - either specify --channel $index or --channel $base64(channelHash)");
@@ -952,7 +952,7 @@ class PostMenu implements TextEngine.Menu {
         byte chan[] = opts.getOptBytes("scope");
         Hash scope = null;
         if (chan != null)
-            scope = new Hash(chan);
+            scope = Hash.create(chan);
         String type = opts.getOptValue("type");
         if (type != null) {
             if (!Constants.KEY_FUNCTION_MANAGE.equalsIgnoreCase(type) &&
@@ -1065,7 +1065,7 @@ class PostMenu implements TextEngine.Menu {
             type = "channel read key";
             byte channel[] = opts.getOptBytes("scope");
             byte keyHash[] = opts.getOptBytes("readkey");
-            List keys = client.getReadKeys(new Hash(channel), client.getLoggedInNymId(), client.getPass(), true);
+            List keys = client.getReadKeys(Hash.create(channel), client.getLoggedInNymId(), client.getPass(), true);
             ui.debugMessage("read keys for scope " + Base64.encode(channel) + ": " + keys.size()
                             + " (looking for " + Base64.encode(keyHash) + ")");
             for (int i = 0; i < keys.size(); i++) {
@@ -1073,7 +1073,7 @@ class PostMenu implements TextEngine.Menu {
                 Hash calcHash = key.calculateHash();
                 ui.debugMessage("key " + i + " has hash: " + calcHash.toBase64() + " (data: " + Base64.encode(key.getData()) + ")");
                 if (DataHelper.eq(calcHash.getData(), keyHash)) {
-                    SyndieURI uri = SyndieURI.createKey(new Hash(channel), key);
+                    SyndieURI uri = SyndieURI.createKey(Hash.create(channel), key);
                     uriStr = uri.toString();
                     break;
                 }
@@ -1082,7 +1082,7 @@ class PostMenu implements TextEngine.Menu {
             type = "channel post key";
             byte channel[] = opts.getOptBytes("scope");
             byte keyHash[] = opts.getOptBytes("postkey");
-            Hash chan = new Hash(channel);
+            Hash chan = Hash.create(channel);
             List keys = client.getNymKeys(client.getLoggedInNymId(), client.getPass(), chan, Constants.KEY_FUNCTION_POST);
             ui.debugMessage("post keys for scope " + Base64.encode(channel) + ": " + keys.size()
                             + " (looking for " + Base64.encode(keyHash) + ")");
@@ -1145,7 +1145,7 @@ class PostMenu implements TextEngine.Menu {
                 keyType = Constants.KEY_FUNCTION_MANAGE;
             }
             byte channel[] = opts.getOptBytes("scope");
-            Hash chan = new Hash(channel);
+            Hash chan = Hash.create(channel);
             List keys = client.getNymKeys(client.getLoggedInNymId(), client.getPass(), chan, Constants.KEY_FUNCTION_MANAGE);
             ui.debugMessage("manage keys for scope " + Base64.encode(channel) + ": " + keys.size()
                             + " (looking for " + Base64.encode(keyHash) + ")");
@@ -1196,7 +1196,7 @@ class PostMenu implements TextEngine.Menu {
             type = "channel reply key";
             byte channel[] = opts.getOptBytes("scope");
             byte keyHash[] = opts.getOptBytes("replykey");
-            Hash chan = new Hash(channel);
+            Hash chan = Hash.create(channel);
             List keys = client.getNymKeys(client.getLoggedInNymId(), client.getPass(), chan, Constants.KEY_FUNCTION_REPLY);
             for (int i = 0; i < keys.size(); i++) {
                 NymKey key = (NymKey)keys.get(i);

@@ -39,7 +39,7 @@ public class KeyGen extends CommandImpl {
         if (scopeStr != null) {
             byte b[] = Base64.decode(scopeStr);
             if ( (b != null) && (b.length == Hash.HASH_LENGTH) )
-                scope = new Hash(b);
+                scope = Hash.create(b);
         }
         
         if (Constants.KEY_FUNCTION_MANAGE.equals(type) || // DSA

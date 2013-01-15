@@ -160,7 +160,7 @@ public class ImportPost {
                 byte target[] = _enc.getHeaderBytes(Constants.MSG_HEADER_TARGET_CHANNEL);
                 Hash targetHash = null;
                 if (target != null) {
-                    targetHash = new Hash(target);
+                    targetHash = Hash.create(target);
                     List targetKeys = _client.getReplyKeys(targetHash, _nymId, _pass);
                     privKeys.addAll(targetKeys);
                     _ui.debugMessage("post is a reply targetting " + targetHash.toBase64() + " and we have " + targetKeys.size() + " keys");
@@ -272,7 +272,7 @@ public class ImportPost {
                     }
                     byte target[] = _enc.getHeaderBytes(Constants.MSG_HEADER_TARGET_CHANNEL);
                     if ( (target != null) && (target.length == Hash.HASH_LENGTH) ) {
-                        List targetKeys = _client.getReadKeys(new Hash(target), _nymId, _pass, false);
+                        List targetKeys = _client.getReadKeys(Hash.create(target), _nymId, _pass, false);
                         keys.addAll(targetKeys);
                     }
                     for (int i = 0; i < keys.size(); i++) {
@@ -361,7 +361,7 @@ public class ImportPost {
             }
         }
         if ( (authorVal != null) && (authorVal.length == Hash.HASH_LENGTH) ) {
-            Hash authorHash = new Hash(authorVal);
+            Hash authorHash = Hash.create(authorVal);
             SigningPublicKey pub = _client.getIdentKey(authorHash);
             if (pub != null) {
                 _authenticated = _client.ctx().dsa().verifySignature(authenticationSig, _enc.getAuthenticationHash(), pub);
@@ -385,7 +385,7 @@ public class ImportPost {
         Hash targetHash = null;
         if (target != null) {
             // may be separate from the author or scope
-            targetHash = new Hash(target);
+            targetHash = Hash.create(target);
             if (_client.getBannedChannels().contains(targetHash)) {
                 _ui.errorMessage("Not importing banned post in " + _channel.toBase64() + ": " + _uri);
                 _ui.commandComplete(-1, null);
@@ -649,7 +649,7 @@ public class ImportPost {
             if (authorVal == null) // we are authenticated, but implicitly, which means the channel's key was used
                 author = _channel;
             else
-                author = new Hash(authorVal);
+                author = Hash.create(authorVal);
         }
         
         Long messageId = _uri.getMessageId();
@@ -666,7 +666,7 @@ public class ImportPost {
         long targetChannelId = scopeChannelId;
         byte target[] = _body.getHeaderBytes(Constants.MSG_HEADER_TARGET_CHANNEL);
         if (target != null) {
-            Hash targetHash = new Hash(target);
+            Hash targetHash = Hash.create(target);
             long targetId = _client.getChannelId(targetHash);
             if (_authorized) {
                 targetChannelId = targetId;
@@ -679,7 +679,7 @@ public class ImportPost {
         }
         
         if ( (!_authorized) && (_enc.isReply()) ) {
-            Hash targetHash = new Hash(target);
+            Hash targetHash = Hash.create(target);
             long targetId = _client.getChannelId(targetHash);
             targetChannelId = targetId;
             _ui.debugMessage("Unauthorized post to " + targetHash.toBase64() + ", but it is a private reply, so put it in the chan (as unauthorized)");
@@ -1267,7 +1267,7 @@ public class ImportPost {
         if (scope == null) {
             byte target[] = _enc.getHeaderBytes(Constants.MSG_HEADER_TARGET_CHANNEL);
             if (target != null)
-                scope = new Hash(target);
+                scope = Hash.create(target);
         }
         if (scope == null)
             scope = _uri.getScope();

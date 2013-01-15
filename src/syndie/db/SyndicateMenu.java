@@ -687,7 +687,7 @@ class SyndicateMenu implements TextEngine.Menu {
         } else {
             byte chan[] = Base64.decode(scope);
             if ( (chan != null) && (chan.length == Hash.HASH_LENGTH) ) {
-                client.unban(new Hash(chan));
+                client.unban(Hash.create(chan));
                 ui.statusMessage("Channel " + scope + " unbanned");
                 ui.commandComplete(0, null);
             } else {

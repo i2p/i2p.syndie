@@ -55,7 +55,7 @@ public class KeyList extends CommandImpl {
             byte val[] = args.getOptBytes("channel");
             Hash channel = null;
             if ( (val != null) && (val.length == Hash.HASH_LENGTH) )
-                channel = new Hash(val);
+                channel = Hash.create(val);
             String fn = args.getOptValue("function");
             List keys = client.getNymKeys(nymId, client.getPass(), channel, fn);
             for (int i = 0; i < keys.size(); i++) {

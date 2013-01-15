@@ -100,7 +100,7 @@ public class KeyImport extends CommandImpl {
         byte rawData[] = Base64.decode(raw);
 
         //ui.debugMessage("importing from " + f.getPath() +": type=" + type + " scope=" + scope + " raw=" + raw);
-        client = importKey(ui, client, db, login, pass, type, new Hash(scopeData), rawData, authentic, expireExisting);
+        client = importKey(ui, client, db, login, pass, type, Hash.create(scopeData), rawData, authentic, expireExisting);
         fin = null;
         return client;
     }
@@ -324,7 +324,7 @@ public class KeyImport extends CommandImpl {
                 if (rs.wasNull()) continue;
                 byte chanHash[] = rs.getBytes(3);
                 if ( (chanHash == null) || (chanHash.length != Hash.HASH_LENGTH) ) continue;
-                SyndieURI uri = SyndieURI.createMessage(new Hash(chanHash), messageId);
+                SyndieURI uri = SyndieURI.createMessage(Hash.create(chanHash), messageId);
                 if (!uris.contains(uri))
                     uris.add(uri);
             }
@@ -419,7 +419,7 @@ public class KeyImport extends CommandImpl {
                 if (rs.wasNull()) continue;
                 byte chanHash[] = rs.getBytes(3);
                 if ( (chanHash == null) || (chanHash.length != Hash.HASH_LENGTH) ) continue;
-                SyndieURI uri = SyndieURI.createMessage(new Hash(chanHash), messageId);
+                SyndieURI uri = SyndieURI.createMessage(Hash.create(chanHash), messageId);
                 if (!uris.contains(uri))
                     uris.add(uri);
             }

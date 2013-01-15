@@ -540,7 +540,7 @@ public class BugReport extends BaseComponent implements Themeable, Translatable 
         // todo: enable this (need to modify MessageGen to create authorized unauthenticated posts)
         // _signAs.add(_browser.getTranslationRegistry().getText("Anonymous"));
         
-        int idx = _targetChans.indexOf(new Hash(Base64.decode(STANDARD_BUGREPORT_FORUM)));
+        int idx = _targetChans.indexOf(Hash.create(Base64.decode(STANDARD_BUGREPORT_FORUM)));
         if (idx >= 0)
             _target.select(idx);
         else
@@ -552,7 +552,7 @@ public class BugReport extends BaseComponent implements Themeable, Translatable 
         if (val != null) {
             byte hash[] = Base64.decode(val);
             if ( (hash != null) && (hash.length == Hash.HASH_LENGTH) ) {
-                idx = _signAsChans.indexOf(new Hash(hash));
+                idx = _signAsChans.indexOf(Hash.create(hash));
                 if (idx >= 0)
                     _signAs.select(idx);
                 else

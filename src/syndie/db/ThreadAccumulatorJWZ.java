@@ -109,7 +109,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             for (int i = 0; i < scope.length; i++) {
                 byte b[] = Base64.decode(scope[i]);
                 if ( (b != null) && (b.length == Hash.HASH_LENGTH) )
-                    chans.add(new Hash(b));
+                    chans.add(Hash.create(b));
             }
             _channelHashes = chans;
         }
@@ -122,7 +122,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             for (int i = 0; i < postBy.length; i++) {
                 byte b[] = Base64.decode(postBy[i]);
                 if ( (b != null) && (b.length == Hash.HASH_LENGTH) ) {
-                    long id = _client.getChannelId(new Hash(b));
+                    long id = _client.getChannelId(Hash.create(b));
                     if (id >= 0)
                         chanIds.add(new Long(id));
                 }
@@ -509,7 +509,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                         if (rs.wasNull()) author = -1;
                         
                         ThreadMsgId tmi = new ThreadMsgId(msgId);
-                        tmi.scope = new Hash(scope);
+                        tmi.scope = Hash.create(scope);
                         tmi.messageId = messageId;
                         tmi.authorized = wasAuth;
                         tmi.authorScopeId = author;
@@ -545,7 +545,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                     if (rs.wasNull()) author = -1;
 
                     ThreadMsgId tmi = new ThreadMsgId(msgId);
-                    tmi.scope = new Hash(scope);
+                    tmi.scope = Hash.create(scope);
                     tmi.messageId = messageId;
                     tmi.authorized = wasAuth;
                     tmi.authorScopeId = author;
@@ -680,7 +680,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                     ancestor.messageId = messageId;
                     ancestor.authorScopeId = author;
                     if ( (chanHash != null) && (chanHash.length == Hash.HASH_LENGTH) )
-                        ancestor.scope = new Hash(chanHash);
+                        ancestor.scope = Hash.create(chanHash);
                     
                     // if we don't have the actual data, just use a dummy
                     if ( (pbePrompt != null) || (replyKeyMissing) || (readKeyMissing) ) {
@@ -793,7 +793,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 ancestor.messageId = messageId;
                 ancestor.authorScopeId = author;
                 if ( (chanHash != null) && (chanHash.length == Hash.HASH_LENGTH) )
-                    ancestor.scope = new Hash(chanHash);
+                    ancestor.scope = Hash.create(chanHash);
 
                 // if we don't have the actual data, just use a dummy
                 if ( (pbePrompt != null) || (replyKeyMissing) || (readKeyMissing) ) {

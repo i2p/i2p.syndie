@@ -353,7 +353,7 @@ class ManageMenu implements TextEngine.Menu {
         } catch (NumberFormatException nfe) {
             byte h[] = Base64.decode(chan);
             if ( (h != null) && (h.length == Hash.HASH_LENGTH) ) {
-                long id = client.getChannelId(new Hash(h));
+                long id = client.getChannelId(Hash.create(h));
                 if (id >= 0) {
                     _currentChannel = client.getChannel(id);
                 } else {
@@ -769,7 +769,7 @@ class ManageMenu implements TextEngine.Menu {
                 // ok, not an integer, maybe its a full channel hash?
                 byte val[] = Base64.decode(chan);
                 if ( (val != null) && (val.length == Hash.HASH_LENGTH) ) {
-                    channel = new Hash(val);
+                    channel = Hash.create(val);
                     ui.debugMessage("channel requested is a hash (" + channel.toBase64() + ")");
                 } else {
                     ui.errorMessage("Channel requested is not valid - either specify --channel $index or --channel $base64(channelHash)");

@@ -231,13 +231,13 @@ public class ThreadBuilder {
                     
                     node.setAuthorId(authorId);
                     node.setAuthorName(authorName);
-                    node.setAuthorHash(new Hash(authorHash));
+                    node.setAuthorHash(Hash.create(authorHash));
                     node.setScopeId(scopeId);
                     node.setScopeName(scopeName);
-                    node.setScopeHash(new Hash(scopeHash));
+                    node.setScopeHash(Hash.create(scopeHash));
                     node.setTargetId(targetId);
                     node.setTargetName(targetName);
-                    node.setTargetHash(new Hash(targetHash));
+                    node.setTargetHash(Hash.create(targetHash));
                     if (when != null)
                         node.setImportDate(when.getTime());
                     
@@ -403,7 +403,7 @@ public class ThreadBuilder {
                     if (rs.wasNull()) author = -1;
                     ThreadMsgId child = new ThreadMsgId(msgId);
                     child.messageId = messageId;
-                    child.scope = new Hash(chan);
+                    child.scope = Hash.create(chan);
                     child.authorized = wasAuth;
                     child.authorScopeId = author;
                     if (!msgIds.contains(child)) {

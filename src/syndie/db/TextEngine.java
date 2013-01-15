@@ -308,9 +308,15 @@ public class TextEngine {
         return false;
     }
     
+    /** @return /path/to/.syndie/db/syndie (i.e. without the .data suffix) */
     public String getDBFile() { return _dbDir.getPath() + File.separator + "syndie"; }
-    // TODO: move this to a proper place on Windows & OSX --zab
+
+    /**
+     *  TODO: move this to a proper place on Windows & OSX --zab
+     *  @return /path/to/.syndie
+     */
     public static String getRootPath() { return System.getProperty("user.home") + File.separator + ".syndie"; }
+
     public DBClient getClient() { return _client; }
     
     public static final String DEFAULT_LOGIN = "user";
@@ -806,12 +812,12 @@ public class TextEngine {
                 if (msgId >= 0) {
                     long page = opts.getOptLong("page", -1);
                     if (page >= 0) {
-                        uri = SyndieURI.createMessage(new Hash(chan), msgId, (int)page);
+                        uri = SyndieURI.createMessage(Hash.create(chan), msgId, (int)page);
                     } else {
-                        uri = SyndieURI.createMessage(new Hash(chan), msgId);
+                        uri = SyndieURI.createMessage(Hash.create(chan), msgId);
                     }
                 } else {
-                    uri = SyndieURI.createScope(new Hash(chan));
+                    uri = SyndieURI.createScope(Hash.create(chan));
                 }
             } else {
                 String archive = opts.getOptValue("archive");

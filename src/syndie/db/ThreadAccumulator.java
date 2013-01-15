@@ -83,7 +83,7 @@ public class ThreadAccumulator {
             for (int i = 0; i < scope.length; i++) {
                 byte b[] = Base64.decode(scope[i]);
                 if ( (b != null) && (b.length == Hash.HASH_LENGTH) )
-                    chans.add(new Hash(b));
+                    chans.add(Hash.create(b));
             }
             _channelHashes = chans;
         }

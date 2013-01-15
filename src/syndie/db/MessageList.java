@@ -38,7 +38,7 @@ public class MessageList extends CommandImpl {
                     client.close();
                 client.connect(args.getOptValue("db"));
             }
-            Hash chan = new Hash(args.getOptBytes("channel"));
+            Hash chan = Hash.create(args.getOptBytes("channel"));
             ui.statusMessage("Channel " + chan.toBase64());
             List internalIds = client.getMessageIdsPrivate(chan);
             if (internalIds.size() > 0) {

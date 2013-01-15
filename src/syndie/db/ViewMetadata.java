@@ -54,7 +54,7 @@ public class ViewMetadata extends CommandImpl {
                     return client;
                 }
             }
-            Hash channel = new Hash(args.getOptBytes("channel"));
+            Hash channel = Hash.create(args.getOptBytes("channel"));
             long channelId = client.getChannelId(channel);
             if (channelId < 0) {
                 ui.errorMessage("Channel is not known");

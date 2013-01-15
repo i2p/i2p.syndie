@@ -361,7 +361,7 @@ class ReadMenu implements TextEngine.Menu {
                 // ok, not an integer, maybe its a full channel hash?
                 byte val[] = Base64.decode(chan);
                 if ( (val != null) && (val.length == Hash.HASH_LENGTH) ) {
-                    channel = new Hash(val);
+                    channel = Hash.create(val);
                     ui.debugMessage("channel requested is a hash (" + channel.toBase64() + ")");
                 } else {
                     ui.errorMessage("Channel requested is not valid - either specify --channel $index or --channel $base64(channelHash)");
@@ -415,7 +415,7 @@ class ReadMenu implements TextEngine.Menu {
             // ok, not an integer, maybe its a full channel hash?
             byte val[] = Base64.decode(chan);
             if ( (val != null) && (val.length == Hash.HASH_LENGTH) ) {
-                channel = new Hash(val);
+                channel = Hash.create(val);
                 ui.debugMessage("channel requested is a hash (" + channel.toBase64() + ")");
             } else {
                 ui.errorMessage("Channel requested is not valid - either specify --channel $index or --channel $base64(channelHash)");
@@ -604,7 +604,7 @@ class ReadMenu implements TextEngine.Menu {
             } else {
                 byte chanHash[] = opts.getOptBytes("channel");
                 if ( (chanHash != null) && (chanHash.length == Hash.HASH_LENGTH) ) {
-                    channelHashes.add(new Hash(chanHash));
+                    channelHashes.add(Hash.create(chanHash));
                 } else if ("all".equalsIgnoreCase(chan)) {
                     channelHashes = null;
                 } else {
@@ -1546,7 +1546,7 @@ class ReadMenu implements TextEngine.Menu {
             } else {
                 byte scopeBytes[] = Base64.decode(scope);
                 if ( (scopeBytes != null) && (scopeBytes.length == Hash.HASH_LENGTH) )
-                    bannedChannel = new Hash(scopeBytes);
+                    bannedChannel = Hash.create(scopeBytes);
             }
         }
         

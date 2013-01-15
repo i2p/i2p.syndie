@@ -990,7 +990,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
                             _ui.debugMessage("invalid uri: " + str, use);
                             byte val[] = Base64.decode(str);
                             if ( (val != null) && (val.length == Hash.HASH_LENGTH) ) {
-                                SyndieURI uri = SyndieURI.createScope(new Hash(val));
+                                SyndieURI uri = SyndieURI.createScope(Hash.create(val));
                                 if (isWatch)
                                     watch(uri, item);
                                 else if (isBookmark)

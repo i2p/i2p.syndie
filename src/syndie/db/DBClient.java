@@ -994,7 +994,7 @@ public class DBClient {
                     continue;
                 if (hash.length != Hash.HASH_LENGTH)
                     continue;
-                rv.put(new Long(id), new Hash(hash));
+                rv.put(new Long(id), Hash.create(hash));
             }
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
@@ -1019,7 +1019,7 @@ public class DBClient {
             if (rs.next()) {
                 byte chanHash[] = rs.getBytes(1);
                 if ( (chanHash != null) && (chanHash.length == Hash.HASH_LENGTH) )
-                    return new Hash(chanHash);
+                    return Hash.create(chanHash);
                 return null;
             } else {
                 return null;
@@ -1344,7 +1344,7 @@ public class DBClient {
                      */
                 }
                 
-                rv.add(new NymKey(type, data, _context.sha().calculateHash(data).toBase64(), auth, function, nymId, (chan != null ? new Hash(chan) : null)));
+                rv.add(new NymKey(type, data, _context.sha().calculateHash(data).toBase64(), auth, function, nymId, (chan != null ? Hash.create(chan) : null)));
             }
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
@@ -1466,7 +1466,7 @@ public class DBClient {
                 if (rs.wasNull()) chanId = -1;
                 boolean isExpired = (rs.getDate(4) == null);
                 if ( (chan != null) && (chan.length == Hash.HASH_LENGTH) && (key != null) && (key.length == SessionKey.KEYSIZE_BYTES) )
-                    rv.add(new NymKey(Constants.KEY_TYPE_AES256, key, true, Constants.KEY_FUNCTION_READ, _nymId, new Hash(chan), isExpired));
+                    rv.add(new NymKey(Constants.KEY_TYPE_AES256, key, true, Constants.KEY_FUNCTION_READ, _nymId, Hash.create(chan), isExpired));
             }
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
@@ -2088,7 +2088,7 @@ public class DBClient {
                 String petdesc = rs.getString(15);
                 
                 info.setChannelId(channelId);
-                info.setChannelHash(new Hash(chanHash));
+                info.setChannelHash(Hash.create(chanHash));
                 info.setIdentKey(new SigningPublicKey(identKey));
                 info.setEncryptKey(new PublicKey(encryptKey));
                 info.setEdition(edition);
@@ -2771,7 +2771,7 @@ public class DBClient {
             while (rs.next()) {
                 byte hash[] = rs.getBytes(1);
                 if ( (hash != null) && (hash.length == Hash.HASH_LENGTH) )
-                    rv.add(SyndieURI.createScope(new Hash(hash)));
+                    rv.add(SyndieURI.createScope(Hash.create(hash)));
             }
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
@@ -2797,7 +2797,7 @@ public class DBClient {
                 if (rs.wasNull())
                     continue;
                 if ( (hash != null) && (hash.length == Hash.HASH_LENGTH) )
-                    rv.add(SyndieURI.createMessage(new Hash(hash), messageId));
+                    rv.add(SyndieURI.createMessage(Hash.create(hash), messageId));
             }
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
@@ -3033,7 +3033,7 @@ public class DBClient {
             if (rs.next()) {
                 byte hash[] = rs.getBytes(1);
                 if ( (hash != null) && (hash.length == Hash.HASH_LENGTH) )
-                    return new Hash(hash);
+                    return Hash.create(hash);
                 else
                     return null;
             } else {
@@ -3283,7 +3283,7 @@ public class DBClient {
                 info.setPassphrasePrompt(pbePrompt);
                 
                 if (authorId >= 0) info.setAuthorChannelId(authorId);
-                //if (author != null) info.setAuthorChannel(new Hash(author));
+                //if (author != null) info.setAuthorChannel(Hash.create(author));
                 info.setMessageId(messageId);
                 info.setScopeChannelId(scopeChannelId);
                 Hash scope = getChannelHash(scopeChannelId);
@@ -3297,7 +3297,7 @@ public class DBClient {
                     info.setTargetChannel(chan);//chan.getChannelHash());
                 info.setSubject(subject);
                 if ( (overwriteChannel != null) && (overwriteMessage >= 0) ) {
-                    info.setOverwriteChannel(new Hash(overwriteChannel));
+                    info.setOverwriteChannel(Hash.create(overwriteChannel));
                     info.setOverwriteMessage(overwriteMessage);
                 }
                 info.setForceNewThread(forceNewThread);
@@ -3339,7 +3339,7 @@ public class DBClient {
                 byte chan[] = rs.getBytes(1);
                 long refId = rs.getLong(2);
                 if (!rs.wasNull() && (chan != null) )
-                    uris.add(SyndieURI.createMessage(new Hash(chan), refId));
+                    uris.add(SyndieURI.createMessage(Hash.create(chan), refId));
             }
             info.setHierarchy(uris);
         } catch (SQLException se) {
@@ -3879,7 +3879,7 @@ public class DBClient {
                 if ( (chan != null) && (chan.length == Hash.HASH_LENGTH) ) {
                     if (newOnly && (when != null) && (when.getTime() <= (System.currentTimeMillis()-SharedArchiveBuilder.PERIOD_NEW)) )
                         continue;
-                    rv.add(new Hash(chan));
+                    rv.add(Hash.create(chan));
                 }
             }
             return rv;
@@ -5239,8 +5239,11 @@ public class DBClient {
         ui.errorMessage("However, you can just, erm, tar cjvf the $data/archive/ dir");
     }
     
+    /** @return /path/to/.syndie/db/syndie (i.e. without the .data suffix) */
     private String getDBFileRoot() { return getDBFileRoot(_url); }
-    private String getDBFileRoot(String url) {
+
+    /** @return /path/to/.syndie/db/syndie (i.e. without the .data suffix) */
+    private static String getDBFileRoot(String url) {
         if (url.startsWith("jdbc:hsqldb:file:")) {
             String file = url.substring("jdbc:hsqldb:file:".length());
             int end = file.indexOf(";");
@@ -6504,7 +6507,7 @@ public class DBClient {
                 data.periodBegin = rs.getDate(5);
                 data.periodEnd = rs.getDate(6);
                 data.function = rs.getString(7);
-                data.channel = new Hash(rs.getBytes(8));
+                data.channel = Hash.create(rs.getBytes(8));
                 
                 if (data.keySalt != null) {
                     byte key[] = pbeDecrypt(data.keyData, oldPass, data.keySalt);

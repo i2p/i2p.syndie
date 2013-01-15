@@ -568,7 +568,7 @@ public class HTTPServ implements CLI.Command {
         if (("meta" + Constants.FILENAME_SUFFIX).equals(sub)) {
             byte hash[] = Base64.decode(chan);
             if ( (hash != null) && (hash.length == Hash.HASH_LENGTH) ) {
-                Hash chanHash = new Hash(hash);
+                Hash chanHash = Hash.create(hash);
                 if (archive.getChannel(chanHash) != null) {
                     // ok, metadata is published, allow the send
                     send(socket, in, out, new File(new File(_client.getArchiveDir(), chan), "meta" + Constants.FILENAME_SUFFIX), timeout);
@@ -584,7 +584,7 @@ public class HTTPServ implements CLI.Command {
         } else {
             byte hash[] = Base64.decode(chan);
             if ( (hash != null) && (hash.length == Hash.HASH_LENGTH) ) {
-                Hash chanHash = new Hash(hash);
+                Hash chanHash = Hash.create(hash);
                 long messageId = SharedArchiveBuilder.getMessageId(sub);
                 if (messageId < 0) {
                     fail404(socket, in, out, timeout);

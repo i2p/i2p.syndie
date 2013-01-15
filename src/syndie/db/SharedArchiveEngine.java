@@ -296,7 +296,7 @@ public class SharedArchiveEngine {
         
         SharedArchive.Channel channels[] = archive.getChannels();
         for (int i = 0; i < channels.length; i++) {
-            Hash scope = new Hash(channels[i].getScope());
+            Hash scope = Hash.create(channels[i].getScope());
             if (!channels[i].wantNewMsg() && !channels[i].wantNewMeta() && (channels[i].getVersion() == 0) ) {
                 // the remote side has banned it, so they won't be able to give it to us, obviously
             } else if (channels[i].isNew() && strategy.includeDupForPIR) {
@@ -320,8 +320,8 @@ public class SharedArchiveEngine {
         
         SharedArchive.Message messages[] = archive.getMessages();
         for (int i = 0; i < messages.length; i++) {
-            Hash scope = new Hash(channels[messages[i].getScopeIndex()].getScope());
-            Hash target = new Hash(channels[messages[i].getTargetIndex()].getScope());
+            Hash scope = Hash.create(channels[messages[i].getScopeIndex()].getScope());
+            Hash target = Hash.create(channels[messages[i].getTargetIndex()].getScope());
             if (messages[i].isNew() && strategy.includeDupForPIR) {
                 SyndieURI scopeURI = SyndieURI.createScope(scope);
                 SyndieURI targetURI = SyndieURI.createScope(target);
@@ -464,7 +464,7 @@ public class SharedArchiveEngine {
         SharedArchiveBuilder.sortFiles(dirs);
         
         for (int i = 0; i < dirs.length; i++) {
-            Hash scope = new Hash(Base64.decode(dirs[i].getName()));
+            Hash scope = Hash.create(Base64.decode(dirs[i].getName()));
             long version = client.getChannelVersion(scope);
             //ui.debugMessage("Scheduling push from " + scope.toBase64());
 

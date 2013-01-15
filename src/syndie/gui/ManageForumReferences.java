@@ -509,7 +509,7 @@ class ManageForumReferences extends BaseComponent implements Themeable, Translat
                 _ui.debugMessage("invalid uri: " + str, use);
                 byte val[] = Base64.decode(str);
                 if ( (val != null) && (val.length == Hash.HASH_LENGTH) ) {
-                    uri = SyndieURI.createScope(new Hash(val));
+                    uri = SyndieURI.createScope(Hash.create(val));
                 }
             }
         }

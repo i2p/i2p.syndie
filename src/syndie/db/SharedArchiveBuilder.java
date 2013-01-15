@@ -180,7 +180,7 @@ public class SharedArchiveBuilder {
         });
         sortFiles(dirs);
         for (int i = 0; i < dirs.length; i++) {
-            Hash scope = new Hash(Base64.decode(dirs[i].getName()));
+            Hash scope = Hash.create(Base64.decode(dirs[i].getName()));
             
             // FIXME O(n**2)
             int scopeChannel = getChannelIndex(channels, scope);
@@ -220,7 +220,7 @@ public class SharedArchiveBuilder {
                     byte target[] = enc.getHeaderBytes(Constants.MSG_HEADER_TARGET_CHANNEL);
                     if ( (target != null) && (target.length == Hash.HASH_LENGTH) ) {
                         // FIXME O(n**2)
-                        targetChannel = getChannelIndex(channels, new Hash(target));
+                        targetChannel = getChannelIndex(channels, Hash.create(target));
                         if (targetChannel == -1) {
                             _ui.debugMessage("cannot include message " + messageId + " because it depends on a channel we can't share: " + Base64.encode(target));
                             continue;
@@ -361,7 +361,7 @@ public class SharedArchiveBuilder {
             File metaFile = new File(dirs[i], "meta" + Constants.FILENAME_SUFFIX);
             if (!metaFile.exists())
                 continue;
-            Hash scope = new Hash(Base64.decode(dirs[i].getName()));
+            Hash scope = Hash.create(Base64.decode(dirs[i].getName()));
             boolean isNew = false;
             boolean isPBE = false;
             boolean isPublic = false;

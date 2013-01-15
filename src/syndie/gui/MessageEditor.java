@@ -242,7 +242,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         if (val != null) {
             byte hash[] = Base64.decode(val);
             if ( (hash != null) && (hash.length == Hash.HASH_LENGTH) ) {
-                _author = new Hash(hash);
+                _author = Hash.create(hash);
                 _forum = _author;
             }
         }
@@ -1007,7 +1007,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             ui.debugMessage("serialized prop (" + prop + ") [" + t + "] could not be decoded");
             return null;
         } else {
-            return new Hash(d);
+            return Hash.create(d);
         }
     }
     

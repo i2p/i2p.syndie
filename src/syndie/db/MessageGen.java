@@ -120,7 +120,7 @@ public class MessageGen extends CommandImpl {
                 ui.commandComplete(-1, null);
                 return client;
             } else {
-                scopeChannel = new Hash(val);
+                scopeChannel = Hash.create(val);
             }
             
             long chanId = client.getChannelId(scopeChannel);
@@ -135,7 +135,7 @@ public class MessageGen extends CommandImpl {
                 // ok, targetting the scope channel
                 targetChannel = scopeChannel;
             } else {
-                targetChannel = new Hash(val);
+                targetChannel = Hash.create(val);
             }
             
             long targetChanId = client.getChannelId(targetChannel);
@@ -147,7 +147,7 @@ public class MessageGen extends CommandImpl {
             
             boolean signAsHidden = args.getOptBoolean("signAsHidden", false);
             byte signAsB[] = args.getOptBytes("signAs");
-            Hash signAs = (signAsB != null ? new Hash(signAsB) : null);
+            Hash signAs = (signAsB != null ? Hash.create(signAsB) : null);
             
             byte sessKey[] = args.getOptBytes("replySessionKey");
             SessionKey replySessionKey = null;
@@ -203,7 +203,7 @@ public class MessageGen extends CommandImpl {
         
         byte key[] = args.getOptBytes("authorizationKey");
         if ( (key != null) && (key.length == Hash.HASH_LENGTH) ) {
-            authorizationPrivate = (SigningPrivateKey)signKeyHashes.get(new Hash(key));   
+            authorizationPrivate = (SigningPrivateKey)signKeyHashes.get(Hash.create(key));   
             if (authorizationPrivate == null) {
                 ui.errorMessage("Authorization key w/ H()=" + Base64.encode(key) + " was not known for scope channel " + scopeChannel.toBase64() + " / " + targetChannel.toBase64() + " / " + nymId);
                 ui.errorMessage("Known hashes: " + signKeyHashes.keySet());
@@ -215,7 +215,7 @@ public class MessageGen extends CommandImpl {
         byte authenticationMask[] = null;
         key = args.getOptBytes("authenticationKey");
         if ( (key != null) && (key.length == Hash.HASH_LENGTH) ) {
-            authenticationPrivate = (SigningPrivateKey)signKeyHashes.get(new Hash(key));
+            authenticationPrivate = (SigningPrivateKey)signKeyHashes.get(Hash.create(key));
             if (authenticationPrivate == null) {
                 List authOnly = client.getNymKeys(client.getLoggedInNymId(), client.getPass(), null, null);
                 for (int i = 0; i < authOnly.size(); i++) {
@@ -223,7 +223,7 @@ public class MessageGen extends CommandImpl {
                     if (Constants.KEY_FUNCTION_POST.equals(nymKey.getFunction()) ||
                         Constants.KEY_FUNCTION_MANAGE.equals(nymKey.getFunction())) {
                         SigningPrivateKey authPriv = new SigningPrivateKey(nymKey.getData());
-                        if (authPriv.calculateHash().equals(new Hash(key))) {
+                        if (authPriv.calculateHash().equals(Hash.create(key))) {
                             ui.debugMessage("Authenticating as a third party: " + KeyGenerator.getSigningPublicKey(authPriv).calculateHash().toBase64().substring(0,6));
                             authenticationPrivate = authPriv;
                             unauthorized = true;
@@ -642,7 +642,7 @@ public class MessageGen extends CommandImpl {
                 }
             }
         } else {
-            channel = new Hash(chan);
+            channel = Hash.create(chan);
         }
         
         if (channel == null) 

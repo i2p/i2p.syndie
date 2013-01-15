@@ -421,7 +421,7 @@ public class SyndieURI {
         if (val != null) {
             byte b[] = Base64.decode(val);
             if ( (b != null) && (b.length == Hash.HASH_LENGTH) )
-                return new Hash(b);
+                return Hash.create(b);
         }
         return null;
     }
@@ -487,7 +487,7 @@ public class SyndieURI {
         for (int i = 0; i < scopes.length; i++) {
             byte val[] = Base64.decode(scopes[i]);
             if ( (val != null) && (val.length == Hash.HASH_LENGTH) ) {
-                rv[i] = new Hash(val);
+                rv[i] = Hash.create(val);
                 valid++;
             }
         }
