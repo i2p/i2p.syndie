@@ -20,9 +20,9 @@
 	<a href="donate.html" title="Help Syndie">Donate</a><br />
 	<a href="about.html" title="About Syndie">About</a><br />
 	<hr />
-	<a href="https://trac.i2p.net/">Bugtracker</a>
-	<a href="http://trac.i2p/">(via I2P)</a><br />
-	<a href="http://forum.i2p.net/viewforum.php?f=29">Forum</a>
+	<a href="https://trac.i2p2.de/">Bugtracker</a>
+	<a href="http://trac.i2p2.i2p">(via I2P)</a><br />
+	<a href="http://forum.i2p/viewforum.php?f=29">Forum</a>
 </div>
 <div id="Content">
 <h1>Monotone howto</h1>
@@ -43,62 +43,54 @@ no setup required:</p>
  <li>Create a monotone nym:<br />
      <code>mtn genkey arbitrary@name</code></li>
  <li>Pull the latest code into your monotone database:<br />
-     <code>mtn --db=./syndie.mtn pull mtn.i2p.net "syndie"</code></li>
+     <code>mtn --db=./syndie.mtn pull mtn.i2p2.de "i2p.syndie"</code></li>
  <li>Check out the latest code from your monotone database into a new "workspace"<br />
-     <code>mtn --db=./syndie.mtn checkout --branch=syndie</code></li>
+     <code>mtn --db=./syndie.mtn checkout --branch="i2p.syndie" syndie</code></li>
  <li>You're good to go!  The code is now in <code>./syndie/</code></li>
 </ol>
 
 <p>Whenever you want to pull any more changes, run step 4 again, and then go into
 your monotone workspace (<code>./syndie/</code>) and run <code>mtn update</code></p>
 
-<p>If you have any changes you want to make to the main Syndie branch, you can bundle
-them up with <code>mtn diff</code> - mail that to a Syndie developer or the 
-<code>syndie-commit</code> mailing list at i2p.net.  The changes will be reviewed and
-applied and then pushed onto the <code>mtn.i2p.net</code> repository for everyone to
-access.  Over time, if you want commit priviledges on the <code>mtn.i2p.net</code>
-repository, that can be arranged - see below for more details.</p>
-
 <h2>Contributing to Syndie development</h2>
 
-<p>If you will be contributing to the codebase repeatedly, it may become simpler
-to just get commit priviledges on the <code>mtn.i2p.net</code> repository directly.
-If you feel you need this:</p>
+<p>If you will be contributing to the codebase repeatedly you'll want to get
+commit priviledges on the <code>mtn.i2p2.de</code> repository directly.
+</p>
 
 <ol>
  <li>Create a long lasting monotone nym for development, using a valid email address:<br />
-     <code>mtn genkey jrandom@i2p.net</code></li>
+     <code>mtn genkey yournick@mail.i2p</code></li>
  <li>Create a transient monotone nym for synchronizing with the repository:<br />
-     <code>mtn genkey jrandom-transport@i2p.net</code></li>
+     <code>mtn genkey yournick-transport@mail.i2p</code></li>
  <li>Make sure your commits will be signed by the long lasting nym:<br />
      <pre>cat &gt;&gt; ~/.monotone/monotonerc
 function get_branch_key (branchname)
-  return "jrandom@i2p.net"
+  return "yournick@mail.i2p"
 end
 ^D</pre></li>
  <li>You can have monotone remember the passphrases to those passwords as well:<br />
      <pre>cat &gt;&gt; ~/.monotone/monotonerc
 function get_passphrase (keypair_id)
-  if ("jrandom@i2p.net" == keypair_id) then
+  if ("yournick@mail.i2p" == keypair_id) then
     return "the_author_passphrase"
-  elseif ("jrandom-transport@i2p.net" == keypair_id) then
+  elseif ("yournick-transport@mail.i2p" == keypair_id) then
     return "the_transport_passphrase"
   else
     return false
   end
 end
 ^D</pre></li>
- <li>Send both public keys to <i>jrandom@i2p.net</i> so that they can be authorized<br />
-     <code>mtn pubkey jrandom@i2p.net > keys.txt ; mtn pubkey jrandom-transport@i2p.net >> keys.txt</code></li>
+ <li>Send both public keys to <i>zzz@mail.i2p</i> so that they can be authorized<br />
+     <code>mtn pubkey yournick@mail.i2p &gt; keys.txt ; mtn pubkey yournick-transport@mail.i2p &gt;&gt;keys.txt</code></li>
 </ol>
 
-<p>Once the keys are authorized, the long lasting nym will be added to the 
-<code>mtn-committers</code> file, and the transient nym will be granted write
-permission to the <code>mtn.i2p.net</code> repository.</p>
+<p>Once the keys are authorized the transient nym will be granted write
+permission to the <code>mtn.i2p2.de</code> repository.</p>
 
 <p>Monotone development cheatsheet:</p>
 <ul>
- <li><code>mtn sync mtn.i2p.net --branch=syndie</code><br />
+ <li><code>mtn sync mtn.i2p2.de --branch="i2p.syndie"</code><br />
      this pulls the latest changes from the repository into your database, and
      pushes your latest already-committed changes from your database into the
      repository.</li>
@@ -135,7 +127,7 @@ permission to the <code>mtn.i2p.net</code> repository.</p>
      "a8af872" instead of "a8af872ccdc00b5995dd1c05f15d8912804bba99"</li>
  <li><code>mtn db kill_tag_locally $tagname</code><br />
      if the tag has <b>not</b> been pushed out onto any other databases, this will
-     remove the cryptographic certificate that associates the given tag with a 
+     remove the cryptographic certificate that associates the given tag with a
      revision.  This effectively allows you to move a tag
      (circa <code>cvs tag -F</code>)</li>
 </ul>

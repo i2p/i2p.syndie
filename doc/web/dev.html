@@ -22,9 +22,9 @@
 	<a href="related.html" title="Related projects">Related projects</a><br />
 	<a href="about.html" title="About Syndie">About</a><br />
 	<hr />
-	<a href="https://trac.i2p.net/">Bugtracker</a>
-	<a href="http://trac.i2p/">(via I2P)</a><br />
-	<a href="http://forum.i2p.net/viewforum.php?f=29">Forum</a><br />
+	<a href="https://trac.i2p2.de/">Bugtracker</a>
+	<a href="http://trac.i2p2.i2p">(via I2P)</a><br />
+	<a href="http://forum.i2p/viewforum.php?f=29">Forum</a><br />
 	<hr />
 	<a href="dev.html" title="Code">Code</a><br />
 	<a href="spec.html" title="Specs">Specs</a><br />
@@ -37,70 +37,42 @@
 where <code>$major</code> indicates a substantial functional change,
 <code>$minor</code> indicates bugfixes and small improvements, and
 <code>$quality</code> values of <code>a,b,rc</code> indicate whether
-a release is <b>a</b>lpha quality (substantial changes still in progress, 
+a release is <b>a</b>lpha quality (substantial changes still in progress,
 liable to break, for geeks only), <b>b</b>eta quality (unstable, but
 changes are primarily bugfixes, for geeky testers),
 <b>r</b>elease <b>c</b>andidate quality (final testing before release),
 respectively.  Releases without <code>a,b,rc</code> are stable, production quality
 releases.</p>
 
-<p>Development discussions for Syndie go on within the
-<a href="http://www.i2p.net/">I2P</a> development team, on their
-<a href="http://dev.i2p.net/pipermail/i2p/">development list</a>,
-<a href="http://forum.i2p.net/forum.php?f=123">forum</a>,
-<a href="http://www.i2p.net/meetings">weekly meetings</a>, and
-<a href="irc://irc.freenode.net/#i2p">IRC channel</a>.  Announcements
-are made on the
-<a href="http://dev.i2p.net/pipermail/syndie-announce/">syndie-announce</a>
-mailing list, with source code changes posted to the
-<a href="http://dev.i2p.net/pipermail/syndie-commit/">syndie-commit</a>
-mailing list (though the primary resource for source code changes is of
-course the <a href="http://venge.net/monotone/">monotone</a> repository
-at <code>mtn.i2p.net</code>, as described on the
+<p>The primary resource for source code changes is
+the <a href="http://www.monotone.ca">Monotone</a> repository
+at <code>mtn.i2p2.de</code>, as described on the
 <a href="download.html">download</a> page).</p>
 
 <p>Installation packages for <a href="download.html">download</a> are
 built with various ant targets:<ul>
-<li><b><code>syndie-$version.bin.$platform.exe</code></b><br />
-    <i>(java installer, includes bin/syndie.exe java launcher)</i><br />
-    built with the "installer-exe" target, but requires
-    "-Dlaunch4jdir=/path/to/launch4j" and
-    "-Dizpackdir=/path/to/izpack_install" (e.g.
-    <code>ant -Dizpackdir=/home/jrandom/IzPack_install/ -Dlaunch4jdir=/home/jrandom/launch4j-3.0.0-pre1-linux/ installer-exe</code></li>
-<li><b><code>syndie-$version.bin.zip</code></b><br />
-    <i>(no java installer, includes bin/syndie.exe java launcher)</i><br />
-    built with the "java-package-exe" target, but requires
-    "-Dlaunch4jdir=/path/to/launch4j" (e.g.
-    <code>ant -Dlaunch4jdir=/home/jrandom/launch4j-3.0.0-pre1-linux/ installer-exe</code></li>
-    <!--
-<li><b><code>syndie-$version.bin-noexe.zip</code></b><br />
-    <i>(no java installer, without bin/syndie.exe java launcher)</i><br />
-    built with the "java-package" target</li>
-    -->
-<li><b><code>syndie-$version.src.nodeps.tar.bz2</code></b><br />
-    <i>(source package without hsqldb)</i><br />
-    built with the "source-nodeps-package" target</li>
-<li><b><code>syndie-$version.src.tar.bz2</code></b><br />
+<li><b><code>syndie-installer-$version.bin.win$bits.exe</code></b><br />
+    <i>(java installer, includes bin/syndie.exe, bin/syndie-desktop.exe, and bin/syndie-cli.jar java launchers)</i><br />
+    built with the "installer-windows" target but requires "-Di2p.src.dir=/path/to/i2p-source" (e.g.
+    <code>ant -Di2p.src.dir=../i2p.i2p installer-windows</code>)</li>
+<li><b><code>syndie-installer-$version.bin.linux$bits.jar</code></b><br />
+    <i>(java installer, includes bin/syndie.jar, bin/syndie-desktop.jar, and bin/syndie-cli.jar java launchers)</i><br />
+    built with the "installer-linux" target but requires "-Di2p.src.dir=/path/to/i2p-source" (e.g.
+    <code>ant -Di2p.src.dir=../i2p.i2p installer-windows</code>)</li>
+<li><b><code>syndie-installer-$version.bin.osx$bits.jar</code></b><br />
+    <i>(java installer, includes bin/syndie.command, bin/syndie-desktop.command, and bin/syndie-cli.jar java launchers)</i><br />
+    built with the "installer-osx" target but requires "-Di2p.src.dir=/path/to/i2p-source" (e.g.
+    <code>ant -Di2p.src.dir=../i2p.i2p installer-windows</code>)</li>
+<li><b><code>syndie-$version.bin.osx$bits.tar.bz2</code></b><br />
+    <i>(OSX Application Bundle)</i><br />
+    built with the "pkg-osx" target</li>
+<li><b><code>syndie-cli-$version.bin.tar.bz2</code></b><br />
+    <i>(cli only, needs <code>i2p.jar</code>)</i><br />
+    built with the "pkg-cli" target</li>
+<li><b><code>syndie-$version.tar.bz2</code></b><br />
     <i>(source package with hsqldb)</i><br />
-    built with the "source-package" target</li>
+    built with the "source-tarball" target</li>
 </ul></p>
-
-<p>All of the packages can be built into <code>doc/web/dist/</code> with
-"<code>ant dist</code>", though you need to include the settings required for
-<code>-Dlaunch4jdir</code> and <code>-Dizpackdir</code>.  Note that it bundles
-the swt.jar from several platforms - to run "ant dist", you will need to
-<a href="http://www.eclipse.org/swt/">download</a> those files and set the
-<code>swt.linux32</code>, <code>swt.win32</code>, <code>swt.osx</code> properties
-to point at the correct swt.jar files.  Additional targets will likely be added.</p>
-
-<p>With a modern GCC/GCJ (releases prior to 4.0 will fail when they try to
-write to the database), you can build native Syndie executables.  On *nix/osx, 
-"<code>make -f Makefile.nix syndie</code>" creates ./syndie, and
-"<code>make -f Makefile.nix package</code>" creates a
-<code>syndie-$version.nix.tar.bz2</code>, which is just like
-syndie-$version.bin.zip, except bin/syndie is the native executable instead
-of a shell script launching java.  Work is ongoing for GCJ/MinGW support, but
-the Makefile.mingw should work with a viable MinGW install of GCJ 4.x</p>
 
 <p>Coding conventions are fairly standard for java projects, though the guideline
 is to follow whatever standards are in use within the particular file you are
@@ -121,6 +93,7 @@ void foo() {
  <li>No tabs, ever - we do not all use the same IDE/editor, and the code should be
      readable to all of the coders.  Indent with 4 spaces.</li>
 </ul>
+</p>
 </div>
 </body>
 </html>
