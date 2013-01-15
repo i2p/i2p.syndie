@@ -181,6 +181,7 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
         //showPage();
         //_footerPage.select(_page-1);
     }
+
     public void viewAttachment(int attachment) {
         if (attachment <= 0) return; // 1-indexed
         _messageViewBody.switchAttachment(attachment);
@@ -189,6 +190,7 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
     public boolean isKnownLocally() { return _author != null; }
 
     private MessageInfo _msg;
+
     private MessageInfo getMessage() {
         if ( (_uri == null) || (_uri.getScope() == null) )
             return null;

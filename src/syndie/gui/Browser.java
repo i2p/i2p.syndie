@@ -1525,7 +1525,11 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             errorMessage("Internal error viewing " + uri, e);
             MessageBox box = new MessageBox(_shell, SWT.ICON_ERROR);
             box.setText(getTranslationRegistry().getText("Internal error"));
-            box.setMessage(getTranslationRegistry().getText("There was an internal error viewing the given location") + ": " + uri.toString());
+            StringBuilder buf = new StringBuilder(2048);
+            buf.append(getTranslationRegistry().getText("There was an internal error viewing"))
+               .append(": ").append(uri.toString()).append("\n\n");
+            UIUtil.display(buf, e);
+            box.setMessage(buf.toString());
             box.open();
         }
         showWaitCursor(false);

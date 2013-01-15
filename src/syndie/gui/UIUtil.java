@@ -1,5 +1,9 @@
 package syndie.gui;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintWriter;
+
 import net.i2p.data.Hash;
 
 /**
@@ -31,6 +35,7 @@ public class UIUtil {
      *  Consistent display hashes
      *
      *  @param hash may be null
+     *  @since 1.102b-7
      */
     public static String display(Hash hash) {
         StringBuilder buf = new StringBuilder(8);
@@ -41,5 +46,22 @@ public class UIUtil {
             buf.append("??????");
         buf.append(']');
         return buf.toString();
+    }
+
+    /**
+     *  From i2p LogRecordFormatter
+     *
+     *  @since 1.102b-8
+     */
+    public static void display(StringBuilder buf, Throwable t) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream(512);
+        PrintWriter pw = new PrintWriter(baos, true);
+        t.printStackTrace(pw);
+        try {
+            pw.flush();
+            baos.flush();
+        } catch (IOException ioe) {}
+        byte tb[] = baos.toByteArray();
+        buf.append(new String(tb));
     }
 }

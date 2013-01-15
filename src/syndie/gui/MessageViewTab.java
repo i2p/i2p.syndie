@@ -15,7 +15,7 @@ import syndie.data.MessageInfo;
 import syndie.data.SyndieURI;
 
 /**
- *
+ *  Contains a MessageView
  */
 public class MessageViewTab extends BrowserTab implements Translatable, Themeable {
     private MessageView _view;

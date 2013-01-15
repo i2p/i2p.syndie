@@ -114,6 +114,7 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
         if (_maxView != null)
             _maxView.dispose();
     }
+
     private void disposeDetails() {
         _viewState.disposed = true;
         //if (!_root.isDisposed()) _root.setRedraw(false);
@@ -147,9 +148,27 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
         }
     }
 
-    public void switchPage(int page) { _tabFolder.setSelection(_tabs[page-1]); }
+    /**
+     *  Will do nothing if message is not locally known
+     *
+     *  @param page 1-based
+     */
+    public void switchPage(int page) {
+        if (_tabFolder != null && _msg != null) {
+            int pageCount = _msg.getPageCount();
+            int tab = page - 1;
+            if (tab >= 0 && tab < pageCount)
+                _tabFolder.setSelection(_tabs[tab]);
+        }
+    }
+
+    /**
+     *  Will do nothing if message is not locally known
+     *
+     *  @param attachment 1-based
+     */
     public void switchAttachment(int attachment) {
-        if (_tabFolder != null) {
+        if (_tabFolder != null && _msg != null && _tabs != null) {
             int attachments = _msg.getAttachmentCount();
             int tabs = _tabs.length;
             // attachment tabs are at the end
@@ -162,6 +181,7 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
     private static final boolean DEFERRED_ATTACHMENT_PREVIEW = true;
     
     public void viewMessage(final MessageInfo msg, int startPage, Timer timer) { viewMessage(msg, startPage, timer, null); }
+
     public void viewMessage(final MessageInfo msg, int startPage, Timer timer, ThreadReferenceNode messageThread) {
         Theme theme = _themeRegistry.getTheme();
         _messageThread = messageThread;
