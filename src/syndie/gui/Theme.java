@@ -91,7 +91,7 @@ public class Theme {
     public Font TABLE_FONT;
     /** used for text buttons */
     public Font BUTTON_FONT;
-    /** used for text links */
+    /** used for text links - bold */
     public Font LINK_FONT;
     /** used for rendering messages */
     public Font CONTENT_FONT;
@@ -99,11 +99,11 @@ public class Theme {
     public Font LOG_FONT;
     /** messages in a message tree that were marked read in bulk */
     public Font MSG_OLD_FONT;
-    /** messages in a message tree that arent known locally */
+    /** messages in a message tree that arent known locally  - italic */
     public Font MSG_UNKNOWN_FONT;
     /** messages in a message tree that were read after the last mark read in bulk */
     public Font MSG_NEW_READ_FONT;
-    /** messages in a message tree that have not yet been read */
+    /** messages in a message tree that have not yet been read - bold */
     public Font MSG_NEW_UNREAD_FONT;
     /** messages that have an unread child (or grandchild, etc) but have otherwise been read already */
     public Font MSG_UNREAD_CHILD_FONT;

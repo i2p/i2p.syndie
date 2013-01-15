@@ -1323,8 +1323,10 @@ public class PageRenderer extends BaseComponent implements Themeable {
     private void toggleImages() {
         boolean old = _enableImages;
         _enableImages = !old;
-        _imgLinkDisable.setEnabled(_enableImages);
-        _imgLinkEnable.setEnabled(!_enableImages);
+        if (_imageLinkMenu != null) {
+            _imgLinkDisable.setEnabled(_enableImages);
+            _imgLinkEnable.setEnabled(!_enableImages);
+        }
         _imgDisable.setEnabled(_enableImages);
         _imgEnable.setEnabled(!_enableImages);
         _bodyDisable.setEnabled(_enableImages);

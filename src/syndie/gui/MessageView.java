@@ -69,7 +69,7 @@ import syndie.db.UI;
 
 
 /**
- *
+ *  Contains the top header section and a MessageViewBody.
  */
 public class MessageView extends BaseComponent implements Translatable, Themeable {
     private final NavigationControl _navControl;
@@ -269,14 +269,14 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
             
             ChannelInfo authorChan = _client.getChannel(msg.getAuthorChannelId());
             timer.addEvent("author determined");
+            Theme theme = _themeRegistry.getTheme();
             if (authorChan != null) {
                 String name = authorChan.getName();
-                if (name == null)
-                    _headerAuthor.setText('[' + authorChan.getChannelHash().toBase64().substring(0,6) + ']');
-                else
-                    _headerAuthor.setText(name + " [" + authorChan.getChannelHash().toBase64().substring(0,6) + ']');
+                _headerAuthor.setText(UIUtil.displayName(name, authorChan.getChannelHash()));
+                _headerAuthor.setFont(theme.DEFAULT_FONT);
             } else {
                 _headerAuthor.setText(_translationRegistry.getText("Unspecified"));
+                _headerAuthor.setFont(theme.MSG_UNKNOWN_FONT);
             }
             timer.addEvent("author set");
             
@@ -284,12 +284,11 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
             timer.addEvent("forum determined");
             if (forumChan != null) {
                 String name = forumChan.getName();
-                if (name == null)
-                    _headerForum.setText('[' + forumChan.getChannelHash().toBase64().substring(0,6) + ']');
-                else
-                    _headerForum.setText(name + " [" + forumChan.getChannelHash().toBase64().substring(0,6) + ']');
+                _headerForum.setText(UIUtil.displayName(name, forumChan.getChannelHash()));
+                _headerForum.setFont(theme.DEFAULT_FONT);
             } else {
                 _headerForum.setText(_translationRegistry.getText("Unspecified"));
+                _headerForum.setFont(theme.MSG_UNKNOWN_FONT);
             }
             timer.addEvent("forum set");
             
@@ -338,6 +337,7 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
     }
     
     private String calculateSubject(MessageInfo msg) { return calculateSubject(_client, _translationRegistry, msg); }
+
     public static String calculateSubject(DBClient client, TranslationRegistry trans, MessageInfo msg) {
         if (msg != null) {
             String subject = msg.getSubject();
@@ -353,21 +353,24 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
                     if ( (ancestorSubject != null) && (ancestorSubject.trim().length() > 0) ) {
                         if (Constants.lowercase(ancestorSubject).startsWith("re:"))
                             return ancestorSubject;
-                        else
+                        else // TODO translate "re" ?
                             return "re: " + ancestorSubject.trim();
                     }
                 }
             }
         }
         // no ancestors with a subject found
+        // TODO return null and have caller set italic font?
         return trans.getText("No subject");
     }
+
     static String calculateSubject(DBClient client, UI ui, TranslationRegistry trans, SyndieURI uri) {
         long msgId = -1;
         if (uri != null)
             msgId = client.getMessageId(uri.getScope(), uri.getMessageId());
         return calculateSubject(client, ui, trans, msgId, uri.getScope(), uri.getMessageId(), true);
     }
+
     static String calculateSubject(DBClient client, UI ui, TranslationRegistry trans, long msgId, Hash scope, Long messageId, boolean mayHaveSubject) {
         if (msgId >= 0) {
             String subject = null;
@@ -397,6 +400,7 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
             }
         }
         // no ancestors with a subject found
+        // TODO return null and have caller set italic font?
         return trans.getText("No subject");
     }
     

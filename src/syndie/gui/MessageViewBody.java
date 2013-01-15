@@ -32,6 +32,10 @@ import syndie.db.ThreadMsgId;
 import syndie.db.ThreadReferenceNode;
 import syndie.db.UI;
 
+/**
+ *  Contains a CTabFolder with pages, thread, and attachments CTabItems.
+ *  Parent is MessageView.
+ */
 public class MessageViewBody extends BaseComponent implements Themeable, Translatable {
     private final Composite _root;
     private final NavigationControl _navControl;
@@ -159,6 +163,7 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
     
     public void viewMessage(final MessageInfo msg, int startPage, Timer timer) { viewMessage(msg, startPage, timer, null); }
     public void viewMessage(final MessageInfo msg, int startPage, Timer timer, ThreadReferenceNode messageThread) {
+        Theme theme = _themeRegistry.getTheme();
         _messageThread = messageThread;
         _root.setVisible(false);
         disposeDetails();
@@ -176,6 +181,8 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
 
         // FIXME displays thread tab all the time, and a reply goes in a new top-level tab,
         // so why?
+        // _threadTreeMsgs is null here, not built until Thread tab is clicked on,
+        // then it's built. So we don't know here.
         int threadSize = 2; // assume a reply so we build the tabs
 
         int attachments = msg.getAttachmentCount();
@@ -203,6 +210,7 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
                 _tabs[i].setText(title);
             else
                 _tabs[i].setText(_translationRegistry.getText("Page ") + (i+1));
+            _tabs[i].setImage(ImageUtil.ICON_MSG_TYPE_NORMAL);
             
             _tabRoots[i].setLayout(new FillLayout());
             _body[i] = ComponentBuilder.instance().createPageRenderer(_tabRoots[i], true);
@@ -220,6 +228,7 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
             _tabRoots[off] = new Composite(_tabFolder, SWT.NONE);
             _tabs[off].setControl(_tabRoots[off]);
             _tabs[off].setText(_translationRegistry.getText("Thread"));
+            _tabs[off].setImage(ImageUtil.ICON_REF_FORUM);
             _tabRoots[off].setLayout(new FillLayout());
 
             // no preview on the thread tree
@@ -271,6 +280,7 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
             _tabRoots[off] = new Composite(_tabFolder, SWT.NONE);
             _tabs[off].setControl(_tabRoots[off]);
             _tabs[off].setText(_translationRegistry.getText("References"));
+            _tabs[off].setImage(ImageUtil.ICON_REF_ARCHIVE);
             _tabRoots[off].setLayout(new FillLayout());
             _refTree = ComponentBuilder.instance().createManageReferenceChooser(_tabRoots[off], false);
             _refTree.setReferences(refs);
@@ -288,7 +298,8 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
                 _tabs[off+i] = new CTabItem(_tabFolder, SWT.NONE);
                 _tabRoots[off+i] = new Composite(_tabFolder, SWT.NONE);
                 _tabs[off+i].setControl(_tabRoots[off+i]);
-                _tabs[off+i].setText(_translationRegistry.getText("Attachment ") + (i+1));
+                _tabs[off+i].setText(_translationRegistry.getText("Attachment") + ' ' + (i+1));
+                _tabs[off+i].setImage(ImageUtil.ICON_MSG_FLAG_HASATTACHMENTS);
                 _tabRoots[off+i].setLayout(new FillLayout());
     
                 final SyndieURI uri = SyndieURI.createAttachment(scope, messageId, i+1);

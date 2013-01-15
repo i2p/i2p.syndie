@@ -174,7 +174,10 @@ public class MessageFlagBar extends BaseComponent implements Translatable {
             boolean hasArchives = false;
             boolean hasRefs = refs.size() > 0;
             boolean hasAttachments = _msg.getAttachmentCount() > 0;
-            boolean isNew = _client.getMessageStatus(_msg.getInternalId(), _msg.getTargetChannelId()) == DBClient.MSG_STATUS_UNREAD;
+            // the flagbar is shown when you're looking at the message, so
+            // doesn't seem like we should ever display the unread icon
+            //boolean isNew = _client.getMessageStatus(_msg.getInternalId(), _msg.getTargetChannelId()) == DBClient.MSG_STATUS_UNREAD;
+            boolean isNew = false;
             
             for (int i = 0; i < refs.size(); i++) {
                 if (hasArchives((ReferenceNode)refs.get(i))) {

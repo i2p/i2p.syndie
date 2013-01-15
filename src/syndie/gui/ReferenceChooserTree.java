@@ -771,7 +771,7 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
                .append(_translationRegistry.getText("Requires password"))
                .append(')');
             f = _themeRegistry.getTheme().MSG_UNKNOWN_FONT;
-        } else if (info.getReadKeyUnknown()) {
+        } else if (info.getReadKeyUnknown()) {  // FIXME && we don't have key in DB
             Hash hash = info.getChannelHash();
             buf.append('[')
                .append(hash.toBase64().substring(0, 6))
