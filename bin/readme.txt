@@ -1,5 +1,11 @@
-You should launch Syndie with syndie.jar.  However, you can launch
-Syndie as a standard java application:
+Depending on your system, you should start Syndie with
+syndie.exe, syndie.sh, or syndie.command.
+
+There are also convenience jars in this directory which can be run
+with, for example
+   java -jar syndie.jar
+
+However, you can also launch Syndie as a standard java application:
  - specify the classpath to include:
   - lib/syndie.jar
   - lib/hsqldb.jar
@@ -23,7 +29,7 @@ So, on Windows:
    javaw -cp lib\syndie.jar;lib\hsqldb.jar;lib\swt.jar syndie.gui.SWT
 on Linux:
    java -cp lib/syndie.jar:lib/hsqldb.jar:${SWTDIR}/swt.jar \
-       syndie.gui.SWT /tmp/syndieroot
+       syndie.gui.SWT
 or on OSX:
     java -d32 -XstartOnFirstThread -cp lib/syndie.jar:lib/hsqldb.jar:lib/swt.jar \
        syndie.gui.SWT

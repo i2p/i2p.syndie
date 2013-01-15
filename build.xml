@@ -195,6 +195,7 @@
         <variable name="desktopshortcutcheckboxenabled" value="true" />
     </variables>
     <guiprefs width="590" height="356" resizable="yes">
+        <modifier key="labelFontSize" value="1.2" />
         <laf name="liquid">
             <os family="unix"/>
         </laf>
@@ -258,31 +259,49 @@
             <executable targetfile="$INSTALL_PATH/bin/syndie-desktop.exe" type="bin" stage="never" keep="true" failure="warn">
                 <os family="windows" />
             </executable>
-            <!-- Linux stub jars -->
-            <executable targetfile="$INSTALL_PATH/bin/syndie.jar" type="jar" stage="never" keep="true" failure="warn">
-                <os name ="Linux"/>
+
+            <!-- substitute variables in the Linux scripts -->
+            <parsable targetfile="$INSTALL_PATH/bin/syndie-cli.sh" type="shell" failure="warn">
+                <os name="Linux" />
+            </parsable>
+            <parsable targetfile="$INSTALL_PATH/bin/syndie.sh" type="shell" failure="warn">
+                <os name="Linux" />
+            </parsable>
+            <parsable targetfile="$INSTALL_PATH/bin/syndie-desktop.sh" type="shell" failure="warn">
+                <os name="Linux" />
+            </parsable>
+
+            <!-- set Linux scripts to be executable -->
+            <executable targetfile="$INSTALL_PATH/bin/syndie-desktop.sh" type="shell" stage="never" keep="true" failure="warn">
+                <os name="Linux" />
             </executable>
-            <executable targetfile="$INSTALL_PATH/bin/syndie-cli.jar" type="jar" stage="never" keep="true" failure="warn">
-                <os name ="Linux"/>
+            <executable targetfile="$INSTALL_PATH/bin/syndie-cli.sh" type="shell" stage="never" keep="true" failure="warn">
+                <os name="Linux" />
             </executable>
-            <executable targetfile="$INSTALL_PATH/bin/syndie-desktop.jar" type="jar" stage="never" keep="true" failure="warn">
-                <os name ="Linux "/>
+            <executable targetfile="$INSTALL_PATH/bin/syndie.sh" type="shell" stage="never" keep="true" failure="warn">
+                <os name="Linux" />
             </executable>
 
-            <!-- subtitute variables in the OSX scripts -->
-            <parsable targetfile="$INSTALL_PATH/bin/syndie.command" type="shell" failure="warn" os="mac">
+            <!-- substitute variables in the OSX scripts -->
+            <parsable targetfile="$INSTALL_PATH/bin/syndie.command" type="shell" failure="warn">
+                <os name="mac" />
             </parsable>
-            <parsable targetfile="$INSTALL_PATH/bin/syndie-cli.sh" type="shell" failure="warn" os="mac">
+            <parsable targetfile="$INSTALL_PATH/bin/syndie-cli.sh" type="shell" failure="warn">
+                <os name="mac" />
             </parsable>
-            <parsable targetfile="$INSTALL_PATH/bin/syndie-desktop.command" type="shell" failure="warn" os="mac">
-            </parsable >
+            <parsable targetfile="$INSTALL_PATH/bin/syndie-desktop.command" type="shell" failure="warn">
+                <os name="mac" />
+            </parsable>
 
             <!-- set OSX scripts to be executable -->
-            <executable targetfile="$INSTALL_PATH/bin/syndie.command" type="shell" stage="never" keep="true" failure="warn" os="mac">
+            <executable targetfile="$INSTALL_PATH/bin/syndie.command" type="shell" stage="never" keep="true" failure="warn">
+                <os name="mac" />
             </executable>
-            <executable targetfile="$INSTALL_PATH/bin/syndie-cli.sh" type="shell" stage="never" keep="true" failure="warn" os="mac">
+            <executable targetfile="$INSTALL_PATH/bin/syndie-cli.sh" type="shell" stage="never" keep="true" failure="warn">
+                <os name="mac" />
             </executable>
-            <executable targetfile="$INSTALL_PATH/bin/syndie-desktop.command" type="shell" stage="never" keep="true" failure="warn" os="mac">
+            <executable targetfile="$INSTALL_PATH/bin/syndie-desktop.command" type="shell" stage="never" keep="true" failure="warn">
+                <os name="mac" />
             </executable>
         </pack>
     </packs>
@@ -909,7 +928,13 @@
         </delete>
     </target>
 
-    <target name="installer-linux" depends="installer-linux32, installer-linux64, delete-windows-files, delete-osx-files" description="Create Linux installers (i386 and x86_64)"/>
+    <target name="delete-linux-files">
+        <delete failonerror="false" quiet="true">
+            <fileset dir="${pkgtemp.dir}/bin" includes="*.sh" />
+        </delete>
+    </target>
+
+    <target name="installer-linux" depends="installer-linux32, installer-linux64" description="Create Linux installers (i386 and x86_64)"/>
 
     <!-- Aliases -->
     <target name="installer-lin32" depends="installer-linux32" />
@@ -918,13 +943,24 @@
     <target name="installer-win64" depends="installer-windows64" />
     <target name="installer-mac32" depends="installer-osx32" />
     <target name="installer-mac64" depends="installer-osx64" />
+    <target name="linux-start-scripts">
+        <echo file="${pkgtemp.dir}/bin/syndie.sh"><![CDATA[#!/bin/sh
+java -jar %INSTALL_PATH/bin/syndie.jar -Dsyndie.dict=/usr/share/dict/words
+]]></echo>
+        <echo file="${pkgtemp.dir}/bin/syndie-desktop.sh"><![CDATA[#!/bin/sh
+java -jar %INSTALL_PATH/bin/syndie-desktop.jar -Dsyndie.dict=/usr/share/dict/words
+]]></echo>
+        <echo file="${pkgtemp.dir}/bin/syndie-cli.sh"><![CDATA[#!/bin/sh
+java -jar %INSTALL_PATH/bin/syndie-cli.jar
+]]></echo>
+    </target>
 
-    <target name="installer-linux32" depends="-check-for-izpack, stub-jars, preppkg, delete-windows-files, delete-osx-files" description="Create i386 installer for Linux">
+    <target name="installer-linux32" depends="-check-for-izpack, stub-jars, preppkg, delete-windows-files, delete-osx-files, linux-start-scripts" description="Create i386 installer for Linux">
         <ant dir="swt" target="ensure-lin32-swt" />
         <build-installer os="linux" arch="32" swt="${swt.lin32}" />
     </target>
 
-    <target name="installer-linux64" depends="-check-for-izpack, stub-jars, preppkg, delete-windows-files, delete-osx-files" description="Create x86_64 installer for Linux">
+    <target name="installer-linux64" depends="-check-for-izpack, stub-jars, preppkg, delete-windows-files, delete-osx-files, linux-start-scripts" description="Create x86_64 installer for Linux">
         <ant dir="swt" target="ensure-lin64-swt" />
         <build-installer os="linux" arch="64" swt="${swt.lin64}" />
     </target>
@@ -939,12 +975,12 @@
         <wrap-installer bits="64" />
     </target>
 
-    <target name="installer-windows32" depends="-check-for-izpack, jars2exe, stub-jars, preppkg, delete-osx-files" description="Create i386 installer for Windows">
+    <target name="installer-windows32" depends="-check-for-izpack, jars2exe, stub-jars, preppkg, delete-osx-files, delete-linux-files" description="Create i386 installer for Windows">
         <ant dir="swt" target="ensure-win32-swt" />
         <build-installer os="win" arch="32" swt="${swt.win32}" />
     </target>
 
-    <target name="installer-windows64" depends="-check-for-izpack, jars2exe, stub-jars, preppkg, delete-osx-files" description="Create x86_64 installer for Windows">
+    <target name="installer-windows64" depends="-check-for-izpack, jars2exe, stub-jars, preppkg, delete-osx-files, delete-linux-files" description="Create x86_64 installer for Windows">
         <ant dir="swt" target="ensure-win64-swt" />
         <build-installer os="win" arch="64" swt="${swt.win64}" />
     </target>
@@ -955,34 +991,34 @@
          -->
     <target name="installer-osx" depends="installer-osx32, installer-osx64" />
 
-    <target name="installer-osx32" depends="-check-for-izpack, preppkg, delete-windows-files, delete-stub-jars" description="Create i386 installer for OSX">
+    <target name="installer-osx32" depends="-check-for-izpack, preppkg, delete-windows-files, delete-linux-files, delete-stub-jars" description="Create i386 installer for OSX">
         <echo file="${pkgtemp.dir}/bin/syndie.command"><![CDATA[#!/bin/sh
-CP=$INSTALL_PATH/lib/i2p.jar:$INSTALL_PATH/lib/hsqldb.jar:$INSTALL_PATH/lib/swt.jar:$INSTALL_PATH/syndie.jar
+CP=%INSTALL_PATH/lib/i2p.jar:%INSTALL_PATH/lib/hsqldb.jar:%INSTALL_PATH/lib/swt.jar:%INSTALL_PATH/syndie.jar
 java -d32 -XstartOnFirstThread -cp $CP syndie.gui.SWTUI
 ]]></echo>
         <echo file="${pkgtemp.dir}/bin/syndie-cli.sh"><![CDATA[#!/bin/sh
-CP=$INSTALL_PATH/lib/i2p.jar:$INSTALL_PATH/lib/hsqldb.jar:$INSTALL_PATH/syndie.jar
+CP=%INSTALL_PATH/lib/i2p.jar:%INSTALL_PATH/lib/hsqldb.jar:%INSTALL_PATH/syndie.jar
 java -d32 -XstartOnFirstThread -cp $CP syndie.db.TextUI
 ]]></echo>
         <echo file="${pkgtemp.dir}/bin/syndie-desktop.command"><![CDATA[#!/bin/sh
-CP=$INSTALL_PATH/lib/i2p.jar:$INSTALL_PATH/lib/hsqldb.jar:$INSTALL_PATH/syndie.jar
+CP=%INSTALL_PATH/lib/i2p.jar:%INSTALL_PATH/lib/hsqldb.jar:%INSTALL_PATH/syndie.jar
 java -d32 -XstartOnFirstThread -cp $CP syndie.db.TextUI
 ]]></echo>
         <ant dir="swt" target="ensure-mac32-swt" />
         <build-installer os="osx" arch="32" swt="${swt.mac32}" />
     </target>
 
-    <target name="installer-osx64" depends="-check-for-izpack, preppkg, delete-windows-files, delete-stub-jars" description="Create x86_64 installer for OSX">
+    <target name="installer-osx64" depends="-check-for-izpack, preppkg, delete-windows-files, delete-linux-files, delete-stub-jars" description="Create x86_64 installer for OSX">
         <echo file="${pkgtemp.dir}/bin/syndie.command"><![CDATA[#!/bin/sh
-CP=$INSTALL_PATH/lib/i2p.jar:$INSTALL_PATH/lib/hsqldb.jar:$INSTALL_PATH/lib/swt.jar:$INSTALL_PATH/syndie.jar
+CP=%INSTALL_PATH/lib/i2p.jar:%INSTALL_PATH/lib/hsqldb.jar:%INSTALL_PATH/lib/swt.jar:%INSTALL_PATH/syndie.jar
 java -d64 -XstartOnFirstThread -cp $CP syndie.gui.SWTUI
 ]]></echo>
         <echo file="${pkgtemp.dir}/bin/syndie-cli.sh"><![CDATA[#!/bin/sh
-CP=$INSTALL_PATH/lib/i2p.jar:$INSTALL_PATH/lib/hsqldb.jar:$INSTALL_PATH/syndie.jar
+CP=%INSTALL_PATH/lib/i2p.jar:%INSTALL_PATH/lib/hsqldb.jar:%INSTALL_PATH/syndie.jar
 java -d64 -XstartOnFirstThread -cp $CP syndie.db.TextUI
 ]]></echo>
         <echo file="${pkgtemp.dir}/bin/syndie-desktop.command"><![CDATA[#!/bin/sh
-CP=$INSTALL_PATH/lib/i2p.jar:$INSTALL_PATH/lib/hsqldb.jar:$INSTALL_PATH/syndie.jar
+CP=%INSTALL_PATH/lib/i2p.jar:%INSTALL_PATH/lib/hsqldb.jar:%INSTALL_PATH/syndie.jar
 java -d64 -XstartOnFirstThread -cp $CP syndie.db.TextUI
 ]]></echo>
         <ant dir="swt" target="ensure-mac64-swt" />
@@ -1038,7 +1074,7 @@ java -d64 -XstartOnFirstThread -cp $CP syndie.db.TextUI
         <copy file="${hsqldb.jar}" todir="${pkgtemp.dir}/lib" />
         <echo file="${pkgtemp.dir}/bin/readme.txt">In order to use this headless version of Syndie,
 copy i2p.jar to the lib directory, then simply
-run "syndie-cli.jar".
+run "java -jar syndie-cli.jar".
 
 Alternatively, you can run a command like the following:
 java -cp path/to/hsqldb.jar:path/to/i2p.jar:path/to/syndie-cli.jar syndie.db.TextUI
@@ -1096,7 +1132,7 @@ exec java -d64 -XstartOnFirstThread -cp $CP syndie.gui.SWTUI
         </tar>
     </target>
 
-    <target name="pkg-all" depends="distclean, pkg-cli, installer-all, pkg-osx, source-tarball" description="Create packages/installers for all supported systems." />
+    <target name="pkg-all" depends="distclean, installer-all, pkg-osx, source-tarball, pkg-cli" description="Create packages/installers for all supported systems." />
 
 </project>
 <!-- vim: set ft=xml ts=4 sw=4 et: -->
