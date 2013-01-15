@@ -119,6 +119,8 @@ public abstract class CommandImpl implements CLI.Command {
     byte[] encryptBody(I2PAppContext ctx, byte raw[], SessionKey bodyKey) {
         return encryptBody(ctx, raw, bodyKey, getClass());
     }
+
+    @SuppressWarnings("deprecation")
     public static byte[] encryptBody(I2PAppContext ctx, byte raw[], SessionKey bodyKey, Class cls) {
         byte iv[] = new byte[16];
         byte hmac[] = new byte[Hash.HASH_LENGTH];
@@ -189,6 +191,7 @@ public abstract class CommandImpl implements CLI.Command {
      * ElGamal/2048 encrypted AES/256 key and IV block, followed by the 
      * AES/256/CBC encrypted raw data
      */
+    @SuppressWarnings("deprecation")
     public static byte[] encryptBody(I2PAppContext ctx, byte raw[], PublicKey encryptTo, byte ivOut[], SessionKey replySessionKey) {
         byte data[] = new byte[32+16];
         SessionKey key = null;

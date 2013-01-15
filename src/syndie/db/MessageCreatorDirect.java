@@ -459,6 +459,8 @@ public class MessageCreatorDirect extends MessageCreator {
         else
             return null;
     }
+
+    @SuppressWarnings("deprecation")
     private void writeMessage() {
         byte encryptedBody[] = null;
         

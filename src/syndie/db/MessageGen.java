@@ -299,6 +299,7 @@ public class MessageGen extends CommandImpl {
         }
     }
     
+    @SuppressWarnings("deprecation")
     private boolean writeMessage(DBClient client, UI ui, String out, SigningPrivateKey authorizationPrivate, SigningPrivateKey authenticationPrivate, byte[] authenticationMask, PublicKey to, SessionKey bodyKey, Map pubHeaders, byte[] avatar, byte[] zipped, SessionKey replySessionKey) throws IOException {
         FileOutputStream fos = null;
         try {

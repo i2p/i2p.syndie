@@ -400,6 +400,7 @@ public class ChanGen extends CommandImpl {
         return rv;
     }
 
+    @SuppressWarnings("deprecation")
     private boolean writeMeta(UI ui, String metaOut, String refStr, SigningPublicKey identPublic, SigningPrivateKey identPrivate, SessionKey bodyKey, Map pubHeaders, Map privHeaders, byte avatar[]) {
         FileOutputStream fos = null;
         try {

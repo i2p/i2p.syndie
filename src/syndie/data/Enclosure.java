@@ -351,6 +351,7 @@ public class Enclosure {
         }
     }
 
+    @SuppressWarnings("deprecation")
     private void load(InputStream raw) throws IOException {
         Sha256Standalone hash = new Sha256Standalone();
         hash.reset();
@@ -471,6 +472,7 @@ public class Enclosure {
         _data = baos.toByteArray();
     }
     
+    @SuppressWarnings("deprecation")
     private Signature readSig(InputStream raw, Sha256Standalone hash) throws IOException {
         String rem = DataHelper.readLine(raw, hash);
         if (rem != null) {

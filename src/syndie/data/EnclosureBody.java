@@ -67,6 +67,7 @@ public class EnclosureBody {
      * the decryption or parsing fails.
      * format: IV + E(rand(nonzero) padding + 0 + internalSize + totalSize + data + rand, IV, key)+HMAC(bodySection, H(bodyKey+IV))
      */
+    @SuppressWarnings("deprecation")
     public EnclosureBody(I2PAppContext ctx, InputStream data, int size, SessionKey key) throws IOException, DataFormatException {
         this(ctx);
         byte iv[] = new byte[16];
@@ -127,6 +128,7 @@ public class EnclosureBody {
      * Decrypt and parse up the enclosure body with the given reply key, throwing a DFE if
      * the decryption or parsing fails
      */
+    @SuppressWarnings("deprecation")
     public EnclosureBody(I2PAppContext ctx, InputStream data, int size, PrivateKey key) throws IOException, DataFormatException {
         this(ctx);
         //if (true) throw new RuntimeException("Not yet implemented");
@@ -185,6 +187,7 @@ public class EnclosureBody {
      * the IV and session key used but not necessarily the reply key.  Throw a DFE if
      * the decryption or parsing fails
      */
+    @SuppressWarnings("deprecation")
     public EnclosureBody(I2PAppContext ctx, InputStream data, int size, byte explicitIV[], SessionKey explicitSessionKey) throws IOException, DataFormatException {
         this(ctx);
         //if (true) throw new RuntimeException("Not yet implemented");
