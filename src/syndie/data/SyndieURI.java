@@ -1,8 +1,16 @@
 package syndie.data;
 
-import java.lang.reflect.Array;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+
 import net.i2p.data.Base64;
 import net.i2p.data.DataHelper;
 import net.i2p.data.Hash;
@@ -12,19 +20,22 @@ import net.i2p.data.SessionKey;
 import net.i2p.data.Signature;
 import net.i2p.data.SigningPublicKey;
 import net.i2p.data.SigningPrivateKey;
+
 import syndie.Constants;
 
 /**
  * Maintain a reference within syndie per the syndie URN spec, including canonical
  * encoding and decoding
  *
+ * Sadly, doesn't extend URI, which is final.
  */
 public class SyndieURI {
-    private TreeMap _attributes;
-    private String _type;
+    private final TreeMap _attributes;
+    private final String _type;
     private transient String _stringified;
 
     public static final String PREFIX = "urn:syndie:";
+    public static final String PREFIX_SHORT = "syndie:";
 
     /**
      *  This appears to be only for the display filter, and is not used for
@@ -33,33 +44,76 @@ public class SyndieURI {
      */
     private static final int DEFAULT_SEARCH_DAYS = 3653;
     
+    /*
+     *  Accepts urn:syndie:type:, syndie:type:, type:, http:, and https:
+     *
+     */
     public SyndieURI(String encoded) throws URISyntaxException {
-        fromString(encoded);
+        if (encoded == null) throw new URISyntaxException("null URI", "no uri");
+        if (encoded.length() == 0) throw new URISyntaxException("", "no uri");
+        if (encoded.startsWith(PREFIX))
+            encoded = encoded.substring(PREFIX.length());
+        else if (encoded.startsWith(PREFIX_SHORT))
+            encoded = encoded.substring(PREFIX_SHORT.length());
+        else if (encoded.startsWith("http://") ||
+                 encoded.startsWith("https://") ||
+                 encoded.startsWith("magnet:"))
+            encoded = TYPE_URL + ":d3:url" + encoded.length() + ':' + encoded + 'e';
+        int endType = encoded.indexOf(':');
+        if (endType <= 0)
+            throw new URISyntaxException(encoded, "Missing type");
+        if (endType >= encoded.length())
+            throw new URISyntaxException(encoded, "No bencoded attributes");
+        _type = encoded.substring(0, endType);
+        encoded = encoded.substring(endType+1);
+        try { 
+            _attributes = bdecode(encoded);
+        } catch (IllegalArgumentException iae) {
+            throw new URISyntaxException(encoded, "Error bencoding: " + iae.getMessage());
+        } catch (IndexOutOfBoundsException ioobe) {
+            throw new URISyntaxException(encoded, "Error bencoding: " + ioobe.getMessage());
+        }
+        if (_attributes == null) {
+            throw new URISyntaxException(encoded, "Invalid bencoded attributes");
+        }
     }
+
+    /**
+     *  @throws IllegalArgumentException
+     */
     public SyndieURI(String type, TreeMap attributes) {
         if ( (type == null) || (type.trim().length() <= 0) || (attributes == null) ) 
             throw new IllegalArgumentException("Invalid attributes or type");
         _type = type;
         _attributes = attributes;
     }
+
+    /**
+     *  @throws IllegalArgumentException
+     */
     public SyndieURI(String type, Map attributes) {
         this(type, new TreeMap(attributes));
     }
+
     /** 
      * populate the new URI with the given primary URI's settings, falling back on the given
      * default values for attriutes that aren't in the primary URI
      */
     public SyndieURI(SyndieURI primary, SyndieURI defaultValues) {
+        String type = null;
+        TreeMap attributes = null;
         if (defaultValues != null) {
-            _attributes = new TreeMap(defaultValues.getAttributes());
-            _type = defaultValues.getType();
+            attributes = new TreeMap(defaultValues.getAttributes());
+            type = defaultValues.getType();
         }
         if (primary != null) {
             if (primary.getType() != null)
-                _type = primary.getType();
+                type = primary.getType();
             if (primary.getAttributes() != null)
-                _attributes.putAll(primary.getAttributes());
+                attributes.putAll(primary.getAttributes());
         }
+        _type = type;
+        _attributes = attributes;
     }
 
     public static SyndieURI createRelativePage(int pageNum) {
@@ -102,22 +156,30 @@ public class SyndieURI {
         return createSearch(scopes, "authorized", null, Long.valueOf(DEFAULT_SEARCH_DAYS), null, null, null, false, 
                             null, null, null, null, null, null, null, null, false, true, false, true, false);
     }
+
     public static SyndieURI createSearch(Hash channel, boolean unreadOnly, boolean threaded, boolean useImportDate) {
-        List channels = new ArrayList();
+        List<Hash> channels;
         if (channel != null)
-            channels.add(channel);
+            channels = Collections.singletonList(channel);
+        else
+            channels = Collections.EMPTY_LIST;
         return createSearch(channels, unreadOnly, threaded, useImportDate);
     }
+
     public static SyndieURI createSearch(Hash channel, boolean unreadOnly, boolean privateOnly, boolean threaded, boolean useImportDate) {
-        List channels = new ArrayList();
+        List<Hash> channels;
         if (channel != null)
-            channels.add(channel);
+            channels = Collections.singletonList(channel);
+        else
+            channels = Collections.EMPTY_LIST;
         return createSearch(channels, unreadOnly, privateOnly, threaded, useImportDate);
     }
-    public static SyndieURI createSearch(List channels, boolean unreadOnly, boolean threaded, boolean useImportDate) {
+
+    public static SyndieURI createSearch(List<Hash> channels, boolean unreadOnly, boolean threaded, boolean useImportDate) {
         return createSearch(channels, unreadOnly, false, threaded, useImportDate);
     }
-    public static SyndieURI createSearch(List channels, boolean unreadOnly, boolean privateOnly, boolean threaded, boolean useImportDate) {
+
+    public static SyndieURI createSearch(List<Hash> channels, boolean unreadOnly, boolean privateOnly, boolean threaded, boolean useImportDate) {
         String scopes[] = null;
         if (channels != null) {
             scopes = new String[channels.size()];
@@ -135,10 +197,10 @@ public class SyndieURI {
                             null, null, null, null, null, null, null, null, false, true, privateOnly, threaded, unreadOnly);
     }
     
-    public static SyndieURI createBookmarked(List scopeHashes, boolean threaded, boolean unreadOnly, boolean useImportDate) {
+    public static SyndieURI createBookmarked(List<Hash> scopeHashes, boolean threaded, boolean unreadOnly, boolean useImportDate) {
         String scopes[] = new String[scopeHashes.size()];
         for (int i = 0; i < scopes.length; i++)
-            scopes[i] = ((Hash)scopeHashes.get(i)).toBase64();
+            scopes[i] = scopeHashes.get(i).toBase64();
         Long postDays = null;
         Long importDays = null;
         if (useImportDate)
@@ -392,8 +454,11 @@ public class SyndieURI {
         else
             return o.toString();
     }
+
     public Long getLong(String key) { return (Long)_attributes.get(key); }
+
     public String[] getStringArray(String key) { return (String[])_attributes.get(key); }
+
     public boolean getBoolean(String key, boolean defaultVal) {
         Object o = _attributes.get(key);
         if (o == null) return defaultVal;
@@ -476,6 +541,7 @@ public class SyndieURI {
         else
             return null;
     }
+
     public Long getMessageId() { return getLong("messageId"); }
     public Long getAttachment() { return getLong("attachment"); }
     public Long getPage() { return getLong("page"); }
@@ -504,30 +570,6 @@ public class SyndieURI {
         }
         return rv;
     }
-    
-    public void fromString(String bencodedURI) throws URISyntaxException {
-        if (bencodedURI == null) throw new URISyntaxException("null URI", "no uri");
-        if (bencodedURI.length() == 0) throw new URISyntaxException("", "no uri");
-        if (bencodedURI.startsWith(PREFIX))
-            bencodedURI = bencodedURI.substring(PREFIX.length());
-        int endType = bencodedURI.indexOf(':');
-        if (endType <= 0)
-            throw new URISyntaxException(bencodedURI, "Missing type");
-        if (endType >= bencodedURI.length())
-            throw new URISyntaxException(bencodedURI, "No bencoded attributes");
-        _type = bencodedURI.substring(0, endType);
-        bencodedURI = bencodedURI.substring(endType+1);
-        try { 
-            _attributes = bdecode(bencodedURI);
-        } catch (IllegalArgumentException iae) {
-            throw new URISyntaxException(bencodedURI, "Error bencoding: " + iae.getMessage());
-        } catch (IndexOutOfBoundsException ioobe) {
-            throw new URISyntaxException(bencodedURI, "Error bencoding: " + ioobe.getMessage());
-        }
-        if (_attributes == null) {
-            throw new URISyntaxException(bencodedURI, "Invalid bencoded attributes");
-        }
-    }
 
     public String toString() {
         if (_stringified == null)
@@ -536,6 +578,7 @@ public class SyndieURI {
     }
     
     private static final Set SENSITIVE_ATTRIBUTES = new HashSet();
+
     static {
         SENSITIVE_ATTRIBUTES.add("readKey");
         SENSITIVE_ATTRIBUTES.add("postKey");
@@ -543,6 +586,7 @@ public class SyndieURI {
         SENSITIVE_ATTRIBUTES.add("manageKey");
         SENSITIVE_ATTRIBUTES.add("identKey");
     }
+
     /** true if the given uri attribute is one carrying private key information */
     public static boolean isSensitiveAttribute(String name) {
         return (name != null) && SENSITIVE_ATTRIBUTES.contains(name);
@@ -590,7 +634,9 @@ public class SyndieURI {
         return rv;
     }
     
+/****
     public static void main(String args[]) { test(); }
+
     private static void test() {
         try {
             new SyndieURI("urn:syndie:channel:d7:channel40:12345678901234567890123456789012345678908:showRefs4:truee");
@@ -618,6 +664,7 @@ public class SyndieURI {
             throw new RuntimeException("failed on multimixed");
         System.out.println("Passed all tests");
     }
+
     private static TreeMap createStrings() {
         TreeMap m = new TreeMap();
         for (int i = 0; i < 64; i++)
@@ -701,12 +748,14 @@ public class SyndieURI {
             return false;
         }
     }
+****/
     
     /////
     // remaining is a trivial bencode/bdecode impl, capable only of handling
     // what the SyndieURI needs
     /////
     
+    /** */
     private static final String bencode(TreeMap attributes) {
         StringBuilder buf = new StringBuilder(64);
         buf.append('d');
