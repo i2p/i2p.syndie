@@ -460,8 +460,8 @@ An example script:
 <pre>    login
     menu post
     create --channel 0000000000000000000000000000000000000000
-    addpage --in /etc/motd --content-type text/plain
-    addattachment --in ~/public_html/webcam.png --content-type image/png --name cam.png
+    addpage --in /etc/motd --type text/plain
+    addattachment --in ~/public_html/webcam.png --type image/png --name cam.png
     listauthkeys --authorizedOnly true
     authenticate 0
     authorize 0

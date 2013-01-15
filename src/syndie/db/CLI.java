@@ -27,7 +27,8 @@ public class CLI {
         new Object[] { "viewmetadata", ViewMetadata.class },
         new Object[] { "messagelist", MessageList.class },
         new Object[] { "viewmessage", ViewMessage.class },
-        new Object[] { "httpserv", HTTPServ.class }
+        new Object[] { "httpserv", HTTPServ.class },
+        new Object[] { "ctrlserv", ControlServer.class }
     };
     
     public static void main(String args[]) {
