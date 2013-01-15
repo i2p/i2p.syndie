@@ -766,7 +766,7 @@
                 </not>
             </condition>
         </fail>
-        <property name="source.tarball.name" value="${ant.project.name}-${extended.version}.tar.bz2" />
+        <property name="source.tarball.name" value="${ant.project.name}-${extended.version}.src.tar.bz2" />
         <echo message="Checking out fresh copy into ../${ant.project.name}-${extended.version} for tarballing:" />
         <delete dir="../${ant.project.name}-${extended.version}" />
         <exec executable="mtn" failonerror="true">
@@ -1079,12 +1079,16 @@ run "java -jar syndie-cli.jar".
 Alternatively, you can run a command like the following:
 java -cp path/to/hsqldb.jar:path/to/i2p.jar:path/to/syndie-cli.jar syndie.db.TextUI
 </echo>
-        <tar destfile="syndie-cli-${extended.version}.tar.bz2" compression="bzip2">
+        <tar destfile="syndie-cli-${extended.version}.bin.tar.bz2" compression="bzip2">
             <tarfileset dir="${pkgtemp.dir}" prefix="syndie-cli-${extended.version}" filemode="644">
                 <include name="bin/*" />
+                <exclude name="bin/*.exe" />
+                <exclude name="bin/*.sh" />
+                <exclude name="bin/*.command" />
                 <include name="lib/hsqldb.jar" />
                 <include name="doc/*" />
-                <include name="doc/licenses/**" />
+                <exclude name="doc/Uninstaller/" />
+                <include name="doc/licenses/*.txt" />
                 <exclude name="doc/web" />
             </tarfileset>
         </tar>
