@@ -684,8 +684,19 @@
         <copy todir="${pkgtemp.dir}/doc/web">
             <fileset dir="doc/web" />
         </copy>
-        <copy file="LICENSE" todir="${pkgtemp.dir}/doc/licenses"/>
+        <copy file="LICENSE" todir="${pkgtemp.dir}/doc/"/>
         <copy file="lib/hsqldb_lic.txt" todir="${pkgtemp.dir}/doc/licenses" />
+        <copy todir="${pkgtemp.dir}/doc/licenses">
+            <fileset dir="doc/licenses/" excludes="SWT/**" />
+        </copy>
+        <replaceregexp file="${pkgtemp.dir}/doc/LICENSE" byline="true"
+            match="doc/licenses/"
+            replace="licenses/">
+        </replaceregexp>
+        <replaceregexp file="${pkgtemp.dir}/doc/LICENSE" byline="true"
+            match="lib/hsqldb_lic.txt"
+            replace="licenses/hsqldb_lic.txt">
+        </replaceregexp>
     </target>
 
 
