@@ -330,10 +330,10 @@ public class Theme {
             String face = props.getProperty(prefPrefix + ".face");
             if (face == null) {
                 // ThemeRegistry.resetTheme() wipes everything out
-                if (prefPrefix.equals("theme.monospaceFont")) {
+                if (prefPrefix.equals("theme.monospacefont")) {
                     face = MONO_FACE;
-                } else if (prefPrefix.equals("theme.logFont") ||
-                           prefPrefix.equals("theme.msgunknownFont")) {
+                } else if (prefPrefix.equals("theme.logfont") ||
+                           prefPrefix.equals("theme.msgunknownfont")) {
                     face = LOG_FACE;
                 }
             }
@@ -349,8 +349,18 @@ public class Theme {
 
             String str = props.getProperty(prefPrefix + ".bold");
             Boolean bold = str != null ? Boolean.valueOf(str) : null;
+            if (bold == null &&
+                (prefPrefix.equals("theme.linkfont") ||
+                 prefPrefix.equals("theme.msgnewunreadfont")))
+                bold = Boolean.TRUE;
+
             str = props.getProperty(prefPrefix + ".italic");
             Boolean italic = str != null ? Boolean.valueOf(str) : null;
+            if (italic == null &&
+                (prefPrefix.equals("theme.msgunknownfont") ||
+                 prefPrefix.equals("theme.highlightinactive") ||
+                 prefPrefix.equals("theme.msgunreadchildfont")))
+                italic = Boolean.TRUE;
             
             //System.out.println("loading " + face + ' ' + szMod + " for " + prefPrefix);
             // 7th arg true = mod from system height
@@ -380,7 +390,7 @@ public class Theme {
     private Font adjustHeight(String src, Font old, int mod, Boolean bold, Boolean italic, String newFace, boolean modFromSys) {
         Font rv = adjustHeight(old, mod, bold, italic, newFace, modFromSys);
         dispose(old);
-        //System.out.println("creating [" + src + "]: " + rv + " (bold? " + isBold(rv) + " italic? " + isItalic(rv) + " face: " + getFace(rv) + " size: " + getSize(rv) + ")");
+        //System.out.println("creating [" + src + "]: " + rv.getFontData()[0].toString() + " (bold? " + isBold(rv) + " italic? " + isItalic(rv) + " face: " + getFace(rv) + " size: " + getSize(rv) + ")");
         return rv;
     }
 
@@ -427,7 +437,7 @@ public class Theme {
             error.printStackTrace();
             return SYSFONT;
         }
-        //System.out.println("creating " + rv + " (bold? " + isBold(rv) + " italic? " + isItalic(rv) + " face: " + getFace(rv) + " size: " + getSize(rv) + ")");
+        //System.out.println("creating " + rv.getFontData()[0].toString() + " (bold? " + isBold(rv) + " italic? " + isItalic(rv) + " face: " + getFace(rv) + " size: " + getSize(rv) + ")");
         return rv;
     }
 
