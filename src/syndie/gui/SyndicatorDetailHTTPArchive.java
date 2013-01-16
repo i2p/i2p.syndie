@@ -1154,8 +1154,8 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         _pullNewAge.add(registry.getText("3 months"));
         _pullNewAge.add(registry.getText("6 months"));
         _pullNewAge.add(registry.getText("1 year"));
-        _pullNewAge.add(registry.getText("3 year"));
-        _pullNewAge.add(registry.getText("5 year"));
+        _pullNewAge.add(registry.getText("3 years"));
+        _pullNewAge.add(registry.getText("5 years"));
         _pullNewAge.add(registry.getText("10 years"));
         _pullNewAge.select(sel);
 

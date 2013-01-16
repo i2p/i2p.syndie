@@ -66,6 +66,8 @@ public class SyndieURI {
             throw new URISyntaxException(encoded, "No bencoded attributes");
         _type = encoded.substring(0, endType);
         encoded = encoded.substring(endType+1);
+        // TODO support standard URI query with % encoding,
+        // as UTF-8 encoding and '=' in hashes may break in browsers
         try { 
             _attributes = bdecode(encoded);
         } catch (IllegalArgumentException iae) {
@@ -853,12 +855,14 @@ public class SyndieURI {
             }
         }
     }
+
     private static final boolean bdecodeNext(StringBuilder remaining, List target) {
         String str = bdecodeNext(remaining);
         if (str == null) return false;
         target.add(str);
         return true;
     }
+
     private static final String bdecodeNext(StringBuilder remaining) {
         int br = remaining.indexOf(":");
         if (br <= 0)
@@ -878,6 +882,7 @@ public class SyndieURI {
             return null;
         }
     }
+
     /**
      * bdecode the subset of bencoded data we require.  The bencoded string must
      * be a single dictionary and contain either strings, integers, or lists of

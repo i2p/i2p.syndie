@@ -201,18 +201,18 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
     
     private StatusBar _statusBar;
     /** uri to BrowserTab */
-    private Map _openTabs;
+    private final Map<SyndieURI, BrowserTab> _openTabs;
     /** CTabItem to uri */
-    private Map _openTabURIs;
+    private final Map<CTabItem, SyndieURI> _openTabURIs;
     
     private List _bookmarkCache;
     
-    private UIListenerPusher _uiListenerPusher;
-    private List _uiListeners;
-    private List _commands;
+    private final UIListenerPusher _uiListenerPusher;
+    private final List<UI> _uiListeners;
+    private final List<String> _commands;
     private volatile boolean _initialized;
     
-    private List _runAfterStartup;
+    private final List<Runnable> _runAfterStartup;
     
     private NavigationControl _navControl;
     
@@ -2593,14 +2593,14 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
     private static final boolean LOG_TO_STDERR = false;
     
     private class UIListenerPusher implements Runnable {
-        private List _errMsgs;
-        private List _errCauses;
-        private List _statusMsgs;
-        private List _debugMsgs;
-        private List _debugCauses;
-        private List _completeStatus;
-        private List _completeLocations;
-        private List _typeOrder;
+        private final List<String> _errMsgs;
+        private final List<Exception> _errCauses;
+        private final List<String> _statusMsgs;
+        private final List<String> _debugMsgs;
+        private final List<Exception> _debugCauses;
+        private final List<Integer> _completeStatus;
+        private final List<List<String>> _completeLocations;
+        private final List<Integer> _typeOrder;
         
         public UIListenerPusher() {
             _errMsgs = new ArrayList(4);
