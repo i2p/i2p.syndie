@@ -2773,10 +2773,10 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
     
     public void translate(TranslationRegistry registry) {
         _shell.setText(registry.getText("Syndie"));
-        _closeAllTabs.setText(registry.getText("close all tabs"));
-        _closeOtherTabs.setText(registry.getText("close other tabs"));
-        _copyTabLocation.setText(registry.getText("copy tab location"));
-        _bookmarkTab.setText(registry.getText("bookmark tab"));
+        _closeAllTabs.setText(registry.getText("Close all tabs"));
+        _closeOtherTabs.setText(registry.getText("Close other tabs"));
+        _copyTabLocation.setText(registry.getText("Copy tab location"));
+        _bookmarkTab.setText(registry.getText("Bookmark tab"));
         
         _fileMenuRoot.setText(X + registry.getText("File"));
         _fileMenuOpen.setText(X + registry.getText("Open Syndie URI"));

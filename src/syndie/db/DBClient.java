@@ -331,6 +331,8 @@ public class DBClient {
     
     public File getRootDir() { return _rootDir; }
     public File getTempDir() { return new File(_rootDir, "tmp"); }
+
+    /** used for locally generated messages */
     public File getOutboundDir() { return new File(_rootDir, "outbound"); }
     public File getArchiveDir() { return new File(_rootDir, "archive"); }
     public File getWebDir() { return new File(_rootDir, "web"); }

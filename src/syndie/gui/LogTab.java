@@ -38,7 +38,9 @@ import syndie.db.UI;
 import syndie.data.SyndieURI;
 
 /**
+ *  Basic log output in a BrowserTab.
  *
+ *  No colors, no StyledText - TextUITab is fancier.
  */
 class LogTab extends BrowserTab implements UI, Themeable, Translatable {
     private Text _out;

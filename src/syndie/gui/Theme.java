@@ -64,9 +64,9 @@ public class Theme {
         MSG_OLD_FONT = adjustHeight(font, sz, null, null, null, false); // same as msg_new_read
         MSG_UNKNOWN_FONT = adjustHeight(font, sz, null, Boolean.TRUE, LOG_FACE, false);
         MSG_NEW_READ_FONT = adjustHeight(font, sz, null, null, null, false);
-        MSG_UNREAD_CHILD_FONT = adjustHeight(font, sz, null, true, null, false);
+        MSG_UNREAD_CHILD_FONT = adjustHeight(font, sz, null, Boolean.TRUE, null, false);
         MSG_NEW_UNREAD_FONT = adjustHeight(font, sz, Boolean.TRUE, null, null, false);
-        HIGHLIGHT_INACTIVE_FONT = adjustHeight(font, sz, null, true, null, false);
+        HIGHLIGHT_INACTIVE_FONT = adjustHeight(font, sz, null, Boolean.TRUE, null, false);
         HIGHLIGHT_ACTIVE_FONT = adjustHeight(font, sz, null, null, null, false);
         FINEPRINT_FONT = adjustHeight(font, sz, null, null, null, false);
         MONOSPACE_FONT = adjustHeight(font, sz, Boolean.FALSE, Boolean.FALSE, MONO_FACE, false);

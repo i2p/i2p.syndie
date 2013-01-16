@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
 import java.util.TreeMap;
 
 import net.i2p.data.Base64;
@@ -30,9 +31,11 @@ import syndie.Constants;
  * Sadly, doesn't extend URI, which is final.
  */
 public class SyndieURI {
-    private final Map _attributes;
+    private final SortedMap _attributes;
     private final String _type;
     private transient String _stringified;
+
+    private static final SortedMap EMPTY_MAP = Collections.unmodifiableSortedMap(new TreeMap());
 
     public static final String PREFIX = "urn:syndie:";
     public static final String PREFIX_SHORT = "syndie:";
@@ -64,14 +67,14 @@ public class SyndieURI {
             // allow "help"
             //throw new URISyntaxException(encoded, "Missing type");
             _type = encoded;
-            _attributes = Collections.EMPTY_MAP;
+            _attributes = EMPTY_MAP;
             return;
         }
         _type = encoded.substring(0, endType);
         if (endType >= encoded.length() - 1) {
             // allow "help:"
             //throw new URISyntaxException(encoded, "No bencoded attributes");
-            _attributes = Collections.EMPTY_MAP;
+            _attributes = EMPTY_MAP;
             return;
         }
         encoded = encoded.substring(endType+1);
@@ -92,7 +95,7 @@ public class SyndieURI {
     /**
      *  @throws IllegalArgumentException
      */
-    public SyndieURI(String type, TreeMap attributes) {
+    public SyndieURI(String type, SortedMap attributes) {
         if ( (type == null) || (type.trim().length() <= 0) || (attributes == null) ) 
             throw new IllegalArgumentException("Invalid attributes or type");
         _type = type;
@@ -456,7 +459,7 @@ public class SyndieURI {
     public boolean isSearch() { return TYPE_SEARCH.equals(_type); }
     
     public String getType() { return _type; }
-    public Map getAttributes() { return _attributes; }
+    public SortedMap getAttributes() { return _attributes; }
     
     public String getString(String key) { 
         Object o = _attributes.get(key);
@@ -767,7 +770,7 @@ public class SyndieURI {
     /////
     
     /** */
-    private static final String bencode(Map attributes) {
+    private static final String bencode(SortedMap attributes) {
         StringBuilder buf = new StringBuilder(64);
         buf.append('d');
         for (Iterator iter = attributes.entrySet().iterator(); iter.hasNext(); ) {
@@ -797,7 +800,7 @@ public class SyndieURI {
         }
     }
     
-    private static final boolean bdecodeNext(StringBuilder remaining, Map target) throws URISyntaxException {
+    private static final boolean bdecodeNext(StringBuilder remaining, SortedMap target) throws URISyntaxException {
         String key = null;
         while (true) {
             if (remaining.length() <= 0) return true;
@@ -897,7 +900,7 @@ public class SyndieURI {
      * be a single dictionary and contain either strings, integers, or lists of
      * strings.
      */
-    private static final Map bdecode(String bencoded) throws URISyntaxException {
+    private static final SortedMap bdecode(String bencoded) throws URISyntaxException {
         //if ( (bencoded.charAt(0) != 'd') || (bencoded.charAt(bencoded.length()-1) != 'e') )
         //    throw new URISyntaxException(bencoded, "Not bencoded properly");
         if (bencoded.charAt(0) != 'd')

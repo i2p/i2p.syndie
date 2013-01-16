@@ -31,7 +31,7 @@ import syndie.db.UI;
 import syndie.data.SyndieURI;
 
 /**
- *
+ *  A CLI session in a BrowserTab
  */
 class TextUITab extends BrowserTab implements UI {
     private StyledText _out;

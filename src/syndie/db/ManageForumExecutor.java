@@ -150,7 +150,7 @@ public class ManageForumExecutor {
         chanGenOpts.setOptValue("keyEncryptMetaOut", encMetaOut.getPath());
         
         ChanGen cmd = new ChanGen();
-        _ui.debugMessage("Generating new chan with options " + chanGenOpts);
+        _ui.debugMessage("Generating new stub channel with options " + chanGenOpts);
         NestedUI nestedUI = new NestedUI(_ui);
         cmd.runCommand(chanGenOpts, nestedUI, _client);
         
@@ -415,7 +415,7 @@ public class ManageForumExecutor {
         }
         
         ChanGen cmd = new ChanGen();
-        _ui.debugMessage("Generating with options " + chanGenOpts);
+        _ui.debugMessage("Generating new channel with options " + chanGenOpts);
         NestedUI nestedUI = new NestedUI(_ui);
         cmd.runCommand(chanGenOpts, nestedUI, _client);
         

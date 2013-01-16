@@ -911,7 +911,7 @@ class ManageMenu implements TextEngine.Menu {
         }
         
         ChanGen cmd = new ChanGen();
-        ui.debugMessage("Generating with options " + chanGenOpts);
+        ui.debugMessage("Creating/updating channel with options " + chanGenOpts);
         NestedUI nestedUI = new NestedUI(ui);
         cmd.runCommand(chanGenOpts, nestedUI, client);
         
