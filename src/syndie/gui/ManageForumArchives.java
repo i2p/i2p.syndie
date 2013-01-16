@@ -312,6 +312,8 @@ public class ManageForumArchives extends BaseComponent implements Themeable, Tra
     }
     
     private TableItem addArchive(String name, String url, boolean isPub, boolean selected) {
+        if (name == null)
+            name = url;
         TableItem item = _curItem;
         TableItem items[] = _table.getItems();
         if (item == null) {
