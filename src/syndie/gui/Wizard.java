@@ -16,7 +16,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 
 /**
- *
+ *  Used for WelcomeScreen
  */
 abstract public class Wizard implements Themeable, Translatable {
     private Display _display;
@@ -49,7 +49,7 @@ abstract public class Wizard implements Themeable, Translatable {
         _shell = new Shell(_display, SWT.DIALOG_TRIM | SWT.APPLICATION_MODAL | SWT.SHELL_TRIM);
         _shell.addShellListener(new ShellListener() {
             public void shellActivated(ShellEvent shellEvent) {}
-            public void shellClosed(ShellEvent evt) { evt.doit = false; close(); }
+            public void shellClosed(ShellEvent evt) { evt.doit = false; close(false); }
             public void shellDeactivated(ShellEvent shellEvent) {}
             public void shellDeiconified(ShellEvent shellEvent) {}
             public void shellIconified(ShellEvent shellEvent) {}
@@ -107,7 +107,7 @@ abstract public class Wizard implements Themeable, Translatable {
     
     abstract void save();
     
-    void close() {
+    void close(boolean success) {
         _shell.dispose();
     }
     
@@ -127,11 +127,11 @@ abstract public class Wizard implements Themeable, Translatable {
     
     void finish() {
         save();
-        close();
+        close(true);
     }
     
     void cancel() {
-        close();
+        close(false);
     }
     
     void update() {
@@ -141,7 +141,8 @@ abstract public class Wizard implements Themeable, Translatable {
         _back.setEnabled(!firstPageShown);
         _next.setEnabled(!lastPageShown);
         _finish.setEnabled(lastPageShown);
-        _cancel.setEnabled(false);
+        if (lastPageShown)
+            _finish.forceFocus();
         
         Page pp = (Page) _stackLayout.topControl;
         Page cp = (Page) _pages.get(currentPage);

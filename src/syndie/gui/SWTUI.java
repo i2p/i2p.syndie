@@ -196,8 +196,15 @@ public class SWTUI {
                     themes.loadTheme();
                 
                 WelcomeScreen screen = new WelcomeScreen(d, browser, new WelcomeScreen.CompleteListener() {
-                    public void complete() {
-                        browser.startup(timer);
+                    public void complete(boolean success) {
+                        if (success) {
+                            browser.startup(timer);
+                        } else {
+                            // doesn't work
+                            //browser.exit();
+                            // TODO something nicer
+                            System.exit(0);
+                        }
                     }
                 }, timer);
                 screen.open();

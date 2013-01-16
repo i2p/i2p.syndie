@@ -85,13 +85,14 @@ public class WelcomeScreen extends Wizard {
         Splash.dispose();
     }
     
-    void close() {
+    @Override
+    void close(boolean success) {
         _browser.getTranslationRegistry().unregister(this);
         _browser.getThemeRegistry().unregister(this);
         _archiveDefaults.dispose();
-        super.close();
+        super.close(success);
         
-        _lsnr.complete();
+        _lsnr.complete(success);
     }
     
     void save() {
@@ -385,5 +386,5 @@ public class WelcomeScreen extends Wizard {
         return r;
     }
     
-    public static interface CompleteListener { public void complete(); }
+    public static interface CompleteListener { public void complete(boolean success); }
 }
