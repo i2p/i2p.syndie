@@ -29,7 +29,7 @@ public class TextEngine {
     private UI _ui;
     private boolean _exit;
     private DBClient _client;
-    private List _menus;
+    private final List<Menu> _menus;
     private String _currentMenu;
     private String _rootFile;
     private File _rootDir;
@@ -39,14 +39,16 @@ public class TextEngine {
     private File _outboundDir;
     private File _logDir;
     private File _scriptDir;
-    private NestedGobbleUI _gobbleUI;
-    private UI _realUI;
-    private List _commandHistory;
-    private List _scriptListeners;
+    private final NestedGobbleUI _gobbleUI;
+    private final UI _realUI;
+    private final List<String> _commandHistory;
+    // no method to add a 2nd one
+    private final List<ScriptListener> _scriptListeners;
     private boolean _newNymCreated;
+    private boolean _newDatabaseScriptRan;
         
     /** install these if the scripts dir does not exist */
-    private static final String[] SCRIPTS = {"defaultprefs", "defaultaliases", "startup", "login" };
+    private static final String[] SCRIPTS = {"defaultprefs", "defaultaliases", "startup", "login", "newdatabase" };
 
     /**
      * CLI only, will instantiate DBClient
@@ -67,10 +69,9 @@ public class TextEngine {
         _realUI = new MenuUI(ui);
         _ui = _realUI;
         _gobbleUI = new NestedGobbleUI(_realUI);
-        _exit = false;
         _rootFile = rootDir;
-        _newNymCreated = false;
         _commandHistory = new ArrayList();
+        _menus = new ArrayList();
         rebuildMenus();
         // this instantiates DBClient in CLI-only mode
         buildInstallDir();
@@ -97,10 +98,10 @@ public class TextEngine {
         _realUI = new MenuUI(ui);
         _ui = _realUI;
         _gobbleUI = new NestedGobbleUI(_realUI);
-        _exit = false;
         _rootFile = client.getRootDir().getAbsolutePath();
         _commandHistory = new ArrayList();
         _ui.debugMessage("intantiating textengine");
+        _menus = new ArrayList();
         rebuildMenus();
         buildInstallDir();
         if ( (_client != null) && (_client.isLoggedIn()) ) {
@@ -123,7 +124,7 @@ public class TextEngine {
     
     /** clear all the old state in the various menus, and put us back at the not-logged-in menu */
     private void rebuildMenus() {
-        _menus = new ArrayList();
+        _menus.clear();
         _menus.add(new StartMenu());
         _menus.add(new LoggedInMenu());
         _menus.add(new ReadMenu(this));
@@ -153,6 +154,7 @@ public class TextEngine {
         }
     }
     
+    /** this really means "new database created" */
     public boolean newNymCreated() { return _newNymCreated; }
 
     private boolean doRunStep() {
@@ -347,6 +349,11 @@ public class TextEngine {
     
     private String getDefaultURL() { return "jdbc:hsqldb:file:" + getDBFile() + ";hsqldb.nio_data_file=false"; }
     
+    /**
+     *  This logs in.
+     *  If a new database was created, it runs the 'newdatabase' script.
+     *  Then it runs the 'login' script.
+     */
     private void processLogin(Opts opts) {
         String db = opts.getOptValue("db");
         String login = opts.getOptValue("login");
@@ -364,6 +371,10 @@ public class TextEngine {
         } else if (_client.isLoggedIn()) {
             if (_client.getLogin().equals(login)) {
                 _ui.statusMessage("Login successful (already logged in)");
+                if (_newNymCreated && !_newDatabaseScriptRan) {
+                    _client.runScript(_ui, "newdatabase");
+                    _newDatabaseScriptRan = true;
+                }
                 _client.runScript(_ui, "login");
                 return;
             }
@@ -381,6 +392,10 @@ public class TextEngine {
                 
                 Properties prefs = _client.getNymPrefs(nymId);
                 doSetPrefs(prefs);
+                if (_newNymCreated && !_newDatabaseScriptRan) {
+                    _client.runScript(_ui, "newdatabase");
+                    _newDatabaseScriptRan = true;
+                }
                 _client.runScript(_ui, "login");
             } else {
                 _ui.statusMessage("Login failed");
