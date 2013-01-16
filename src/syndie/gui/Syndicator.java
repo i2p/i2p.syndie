@@ -660,6 +660,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
             rootItem = new TreeItem(_tree, SWT.NONE);
             _archiveNameToRootItem.put(archive.getName(), rootItem);
             _items.put(rootItem, archive);
+            refreshHeaders();
         }
         rootItem.setText(0, archive.getName());
         if (archive.getSyncInProgress()) {
@@ -1114,29 +1115,36 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
             col.setWidth(width);
     }
     
-    
-    
-
-    
-    
-    
-    
-    
+    /** @since 1.102b-8 */
+    private void refreshHeaders() {
+        translate(_translationRegistry);
+    }
     
     public void translate(TranslationRegistry registry) {
-        _colName.setText("");
-        _colName.setImage(ImageUtil.ICON_REF_ARCHIVE);
-        _colTime.setText(registry.getText("Time"));
-        _colStatus.setText(registry.getText("Status"));
-        _colSummary.setText(registry.getText("Summary"));
-        
+        boolean haveItems = !_archiveNameToRootItem.isEmpty();
+        if (haveItems) {
+            _colName.setText("");
+            _colName.setImage(ImageUtil.ICON_REF_ARCHIVE);
+            _colTime.setText(registry.getText("Time"));
+            _colStatus.setText(registry.getText("Status"));
+            _colSummary.setText(registry.getText("Summary"));
+        } else {
+            _colName.setText(registry.getText("No archives defined - click 'Add archive' to add one"));
+            _colName.setImage(null);
+            _colTime.setText("");
+            _colStatus.setText("");
+            _colSummary.setText("");
+            setMinWidth(_colName, "No archives defined - click 'Add archive' to add one", 0, 300);
+        }
         if (_showActions) {
             _add.setText(registry.getText("Add archive"));
             _add.setImage(ImageUtil.ICON_ADDARCHIVE);
             _cancel.setText(registry.getText("Cancel syndications"));
             _cancel.setImage(ImageUtil.ICON_CANCELSYNDICATIONS);
+            _cancel.setEnabled(haveItems);
             _delete.setText(registry.getText("Delete archive"));
             _delete.setImage(ImageUtil.ICON_DELETEARCHIVE);
+            _delete.setEnabled(haveItems);
             
             _syncRecurring.setText(registry.getText("Sync Now"));
             _syncRecurring.setImage(ImageUtil.ICON_SYNC);
@@ -1170,7 +1178,12 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
         if (_disposed) return;
         _ui.debugMessage("archive added: " + archive);
         archive.addListener(this);
-        Display.getDefault().syncExec(new Runnable() { public void run() { loadData(archive); } });
+        Display.getDefault().syncExec(new Runnable() {
+            public void run() {
+                loadData(archive);
+                refreshHeaders();
+            }
+        });
     }
 
     public void archiveRemoved(final SyncArchive archive) {
@@ -1189,6 +1202,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                     rootItem.dispose(); 
                     _items.remove(rootItem);
                 }
+                refreshHeaders();
             } 
         });
     }
