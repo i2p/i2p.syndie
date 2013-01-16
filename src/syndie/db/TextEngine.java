@@ -45,6 +45,9 @@ public class TextEngine {
     private List _scriptListeners;
     private boolean _newNymCreated;
         
+    /** install these if the scripts dir does not exist */
+    private static final String[] SCRIPTS = {"defaultprefs", "defaultaliases", "startup", "login" };
+
     /**
      * CLI only, will instantiate DBClient
      *
@@ -233,10 +236,10 @@ public class TextEngine {
         if (!_scriptDir.exists()) {
             _scriptDir.mkdir();
             // bundle any scripts we ship with in the .jar
-            installResource("/defaultprefs", new File(_scriptDir, "defaultprefs"));
-            installResource("/defaultaliases", new File(_scriptDir, "defaultaliases"));
-            installResource("/onstartup", new File(_scriptDir, "startup"));
-            installResource("/onlogin", new File(_scriptDir, "login"));
+            for (int i = 0; i < SCRIPTS.length; i++) {
+                String s = SCRIPTS[i];
+                installResource("/scripts/" + s, new File(_scriptDir, s));
+            }
         }
         
         File f = new File(webDir, "index.html");
@@ -297,6 +300,7 @@ public class TextEngine {
             fos = null;
         } catch (IOException ioe) {
             // ignore... script wasn't a resource, or we couldn't write to the dir, etc
+            _ui.debugMessage("Can't install", ioe);
         } finally {
             if (in != null) try { in.close(); } catch (IOException ioe) {}
             if (fos != null) try { fos.close(); } catch (IOException ioe) {}
