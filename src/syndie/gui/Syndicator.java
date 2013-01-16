@@ -1135,6 +1135,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
             _colStatus.setText("");
             _colSummary.setText("");
             setMinWidth(_colName, "No archives defined - click 'Add archive' to add one", 0, 300);
+            _add.forceFocus();
         }
         if (_showActions) {
             _add.setText(registry.getText("Add archive"));
@@ -1150,6 +1151,8 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
             _syncRecurring.setImage(ImageUtil.ICON_SYNC);
             _syncOnce.setText(registry.getText("Sync Now (one time only)"));
             _syncOnce.setImage(ImageUtil.ICON_SYNC);
+            _syncRecurring.setEnabled(haveItems);
+            _syncOnce.setEnabled(haveItems);
         }
     }
     

@@ -135,7 +135,7 @@ class TextUITab extends BrowserTab implements UI {
         Opts opts = new Opts(cmd);
         String cmdStr = opts.getCommand();
         if (cmdStr != null &&
-           ("exit".equalsIgnoreCase(cmd) || "quit".equalsIgnoreCase(cmd))) {
+           ("exit".equalsIgnoreCase(cmd) || "quit".equalsIgnoreCase(cmd)) || "logout".equalsIgnoreCase(cmd)) {
            dispose();
            return;
         }
