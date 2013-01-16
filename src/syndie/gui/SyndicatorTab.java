@@ -25,5 +25,5 @@ public class SyndicatorTab extends BrowserTab {
     
     public Image getIcon() { return ImageUtil.ICON_TAB_SYNDICATE; }
     public String getName() { return "Syndicate"; }
-    public String getDescription() { return "Gather and share messages"; }
+    public String getDescription() { return _translationRegistry.getText("Gather and share messages"); }
 }

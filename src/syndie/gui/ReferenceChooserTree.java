@@ -648,11 +648,8 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
         
         SyndieURI prevTabs[] = getPrevTabs();
         // always give them something
-        if (prevTabs == null || prevTabs.length == 0) {
-            timer.addEvent("startup items: viewing default tab");
-            _navControl.view(_uriControl.createSyndicationArchiveURI());
-        } else {
-            int count = 0;
+        int count = 0;
+        if (prevTabs != null) {
             timer.addEvent("startup items: previous tabs identified");
             for (int i = 0; i < prevTabs.length; i++) {
                 if (prevTabs[i] != null) {
@@ -664,6 +661,10 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
             }
             timer.addEvent("startup items: all previous tabs loaded");
         }       
+        if (count == 0) {
+            timer.addEvent("startup items: viewing default tab");
+            _navControl.view(_uriControl.createSyndicationArchiveURI());
+        }
     }
 
     protected void viewStartupItem(SyndieURI uri) { _navControl.view(uri); }

@@ -95,7 +95,7 @@ public class SyncManager {
 
     void added(SyncArchive archive) {
         if (!_archives.contains(archive)) {
-            _ui.debugMessage("Adding new archive " + archive, new Exception());
+            _ui.debugMessage("Adding new archive " + archive  /*, new Exception() */ );
             _archives.add(archive);
             for (int i = 0; i < _listeners.size(); i++) {
                 SyncListener lsnr = (SyncListener)_listeners.get(i);

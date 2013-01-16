@@ -24,7 +24,7 @@ public class ArchiveManagerTab extends BrowserTab {
         
     public Image getIcon() { return ImageUtil.ICON_TAB_ARCHIVE; }
     public String getName() { return "Archive"; }
-    public String getDescription() { return "Manage archive configuration"; }
+    public String getDescription() { return _translationRegistry.getText("Manage archive configuration"); }
     
     protected void disposeDetails() { _manager.dispose(); }
 }

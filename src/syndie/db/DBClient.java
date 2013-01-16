@@ -258,6 +258,11 @@ public class DBClient {
         }
     }
     
+    /**
+     *  Initialize the DB, update to latest version if necessary, and connect
+     *  Called from TextEngine.processLogin()
+     *  @return the logged-in nym ID
+     */
     public long connect(String url, String login, String passphrase) throws SQLException {
         _login = login;
         _pass = passphrase;

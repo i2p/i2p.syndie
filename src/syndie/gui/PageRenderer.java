@@ -195,6 +195,7 @@ public class PageRenderer extends BaseComponent implements Themeable {
         });
         _text.addMouseListener(new MouseListener() {
             public void mouseDoubleClick(MouseEvent mouseEvent) {}
+            // TODO use single click to go direct to the link, not open the menu
             public void mouseDown(MouseEvent mouseEvent) { 
                 pickMenu(mouseEvent.x, mouseEvent.y, true, mouseEvent.button != 1); 
             }
@@ -1258,6 +1259,7 @@ public class PageRenderer extends BaseComponent implements Themeable {
             buf.append('(').append(CommandImpl.strip(href)).append(')');
         setTooltip(_text, buf.toString());
     }
+
     private static void setTooltip(StyledText text, String val) {
         if ( (val == null) || (val.length() == 0) ) {
             text.setToolTipText(null);
@@ -1269,6 +1271,7 @@ public class PageRenderer extends BaseComponent implements Themeable {
                 text.setToolTipText(null);
         }
     }
+
     private void hoverImage(StyleRange range, int offset, HTMLTag tag) {
         //System.out.println("Hover over image @ " + offset + ": " + tag);
         String alt = tag.getAttribValue("alt");
@@ -2009,21 +2012,22 @@ public class PageRenderer extends BaseComponent implements Themeable {
         _ui.debugMessage("applyTheme to pageRenderer: render took " + (after-before));
     }
     
+/****
     public static void main(String args[]) {
         //String content = "<html><b>hi</b><br />foo</html>";
         String content = "normal<quote>first level<quote>second level<quote>third level</quote>second level</quote>first level</quote>normal";
-        /*
-        try {
-            FileInputStream fis = new FileInputStream("/tmp/syndie-log-1.txt");
-            StringBuilder buf = new StringBuilder();
-            String line = null;
-            BufferedReader in = new BufferedReader(new InputStreamReader(fis));
-            while ( (line = in.readLine()) != null)
-                buf.append(line).append("\n");
-            fis.close();
-            content = buf.toString();
-        } catch (IOException ioe) {}
-         */
+
+        //try {
+        //    FileInputStream fis = new FileInputStream("/tmp/syndie-log-1.txt");
+        //    StringBuilder buf = new StringBuilder();
+        //    String line = null;
+        //    BufferedReader in = new BufferedReader(new InputStreamReader(fis));
+        //    while ( (line = in.readLine()) != null)
+        //        buf.append(line).append("\n");
+        //    fis.close();
+        //    content = buf.toString();
+        //} catch (IOException ioe) {}
+
         
         UI ui = new NullUI() { 
             public void debugMessage(String msg) { debugMessage(msg, null); }
@@ -2072,4 +2076,5 @@ public class PageRenderer extends BaseComponent implements Themeable {
             }
         }
     }
+****/
 }

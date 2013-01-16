@@ -29,6 +29,9 @@ import syndie.data.SyndieURI;
  * --in $filename
  * [--reimport $boolean]
  * [--passphrase $bodyPassphrase]
+ *
+ * A "message" could be a post or a meta.syndie file.
+ * Calls ImportPost or ImportMeta.
  */
 public class Importer extends CommandImpl {
     private DBClient _client;
@@ -41,6 +44,7 @@ public class Importer extends CommandImpl {
     private SyndieURI _uri;
     
     public Importer(DBClient client) { this(client, (client != null ? client.getPass(): null)); }
+
     public Importer(DBClient client, String pass) {
         _client = client;
         _passphrase = pass;
@@ -157,6 +161,9 @@ public class Importer extends CommandImpl {
         }
     }
     
+    /*
+     * A "message" could be a post or a meta.syndie file.
+     */
     public boolean processMessage(UI ui, DBClient client, InputStream source, String bodyPassphrase, boolean forceReimport, byte replyIV[], SessionKey replySessionKey) throws IOException {
         return processMessage(ui, source, client.getLoggedInNymId(), client.getPass(), bodyPassphrase, forceReimport, replyIV, replySessionKey);
     }
@@ -167,12 +174,14 @@ public class Importer extends CommandImpl {
      * it will fire ui.commandComplete with an exit value of 1.  if it was imported
      * and read, it will fire ui.commandComplete with an exit value of 0.  otherwise,
      * it will not fire an implicit ui.commandComplete.
+     *
+     * A "message" could be a post or a meta.syndie file.
      */
     public boolean processMessage(UI ui, InputStream source, long nymId, String pass, String bodyPassphrase, boolean forceReimport, byte replyIV[], SessionKey replySessionKey) throws IOException {
         if (bodyPassphrase != null)
-            ui.debugMessage("Processing message with body passphrase " + bodyPassphrase);
+            ui.debugMessage("Importing message with body passphrase " + bodyPassphrase);
         else
-            ui.debugMessage("Processing message with no body passphrase");
+            ui.debugMessage("Importing message with no body passphrase");
         
         // we may be importing something that gives us keys or something that has metadata
         // we'd consider in our cache

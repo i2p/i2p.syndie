@@ -28,6 +28,7 @@ public class LoginManager extends CommandImpl {
     public LoginManager(DBClient client) { _client = client; }
     
     LoginManager() {}
+
     public DBClient runCommand(Opts args, UI ui, DBClient client) {
         if ( (client == null) || (!client.isLoggedIn()) ) {
             List missing = args.requireOpts(new String[] { "db", "login", "pass", "name" });

@@ -44,7 +44,7 @@ public class CancelManagerTab extends BrowserTab {
         
     public Image getIcon() { return ImageUtil.ICON_TAB_ARCHIVE; }
     public String getName() { return "Cancel"; }
-    public String getDescription() { return "Control whose cancel messages to honor"; }
+    public String getDescription() { return _translationRegistry.getText("Control whose cancel messages to honor"); }
     
     protected void disposeDetails() { _manager.dispose(); }
 }

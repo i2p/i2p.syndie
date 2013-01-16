@@ -1,0 +1,4 @@
+#
+# This CLI script is run after a successful login to the database.
+# It is empty by default.
+#

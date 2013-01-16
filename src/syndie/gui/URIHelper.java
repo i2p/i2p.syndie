@@ -5,12 +5,17 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import net.i2p.data.Hash;
+
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.data.WatchedChannel;
 import syndie.db.DBClient;
 
+/**
+ *  Generate SyndieURIs for internal use in the Browser
+ */
 public class URIHelper implements URIControl {
     private static final URIHelper _instance = new URIHelper();
     public static URIHelper instance() { return _instance; }
@@ -77,6 +82,7 @@ public class URIHelper implements URIControl {
     public SyndieURI createSyndicationConfigURI() { return new SyndieURI(BrowserTab.TYPE_SYNDICATE_CONFIG, new HashMap()); }
     public SyndieURI createSyndicationDiffURI() { return createSyndicationConfigURI(); }
     public SyndieURI createSyndicationStatusURI() { return new SyndieURI(BrowserTab.TYPE_SYNDICATE_STATUS, new HashMap()); }
+
     public SyndieURI createBugReportURI() { 
         HashMap attr = new HashMap();
         // not really random, just (likely) different from other values, so multiple instances of the bug report

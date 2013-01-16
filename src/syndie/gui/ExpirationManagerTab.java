@@ -44,7 +44,7 @@ public class ExpirationManagerTab extends BrowserTab {
         
     public Image getIcon() { return ImageUtil.ICON_TAB_ARCHIVE; }
     public String getName() { return "Expiration"; }
-    public String getDescription() { return "Control the deletion of old messages"; }
+    public String getDescription() { return _translationRegistry.getText("Control the deletion of old messages"); }
     
     protected void disposeDetails() { _manager.dispose(); }
 }

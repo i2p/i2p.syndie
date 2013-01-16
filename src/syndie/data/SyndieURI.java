@@ -30,7 +30,7 @@ import syndie.Constants;
  * Sadly, doesn't extend URI, which is final.
  */
 public class SyndieURI {
-    private final TreeMap _attributes;
+    private final Map _attributes;
     private final String _type;
     private transient String _stringified;
 
@@ -60,11 +60,20 @@ public class SyndieURI {
                  encoded.startsWith("magnet:"))
             encoded = TYPE_URL + ":d3:url" + encoded.length() + ':' + encoded + 'e';
         int endType = encoded.indexOf(':');
-        if (endType <= 0)
-            throw new URISyntaxException(encoded, "Missing type");
-        if (endType >= encoded.length())
-            throw new URISyntaxException(encoded, "No bencoded attributes");
+        if (endType <= 0) {
+            // allow "help"
+            //throw new URISyntaxException(encoded, "Missing type");
+            _type = encoded;
+            _attributes = Collections.EMPTY_MAP;
+            return;
+        }
         _type = encoded.substring(0, endType);
+        if (endType >= encoded.length() - 1) {
+            // allow "help:"
+            //throw new URISyntaxException(encoded, "No bencoded attributes");
+            _attributes = Collections.EMPTY_MAP;
+            return;
+        }
         encoded = encoded.substring(endType+1);
         // TODO support standard URI query with % encoding,
         // as UTF-8 encoding and '=' in hashes may break in browsers

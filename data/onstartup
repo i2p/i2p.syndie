@@ -1,1 +1,5 @@
+#
+# This CLI script is run at startup.
+# It must contain "login"
+#
 login

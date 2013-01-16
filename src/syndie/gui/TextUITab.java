@@ -256,7 +256,7 @@ class TextUITab extends BrowserTab implements UI {
         
     public Image getIcon() { return ImageUtil.ICON_TAB_TEXTUI; }
     public String getName() { return "Text UI"; }
-    public String getDescription() { return "Advanced text interface"; }
+    public String getDescription() { return _translationRegistry.getText("Advanced text interface"); }
 
     // unused UI methods
     public Opts readCommand() { return null; }

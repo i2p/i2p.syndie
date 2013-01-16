@@ -24,15 +24,20 @@ import syndie.db.DBClient;
 import syndie.db.UI;
 
 /**
- *
+ *  Base for all tabs under Browser.
  */
 public abstract class BrowserTab extends BaseComponent implements Themeable {
-    private BrowserControl _browser;
-    private CTabItem _item;
-    private SyndieURI _uri;
-    private Composite _root;
+    private final BrowserControl _browser;
+    private final CTabItem _item;
+    private final SyndieURI _uri;
+    private final Composite _root;
     
     //private static final int TAB_ICON_SIZE = 16;
+
+    /**
+     * Note that these types are for internal use, in addition to the
+     * standard ones defined in SyndieURI.
+     */
     public static final String TYPE_POST = "post";
     public static final String TYPE_RESUMEABLE = "resumeable";
     static final String TYPE_TEXTUI = "textui";
@@ -51,6 +56,7 @@ public abstract class BrowserTab extends BaseComponent implements Themeable {
     public static final String TYPE_EXPIRATION = "expiration";
     public static final String TYPE_CANCEL = "cancel";
     static final String TYPE_SYNC = "sync";
+    static final String TYPE_HELP = "help";
     
     public static BrowserTab build(BrowserControl browser, SyndieURI uri, String suggestedName, String suggestedDescription) {
         // build a new browser tab based on the uri pointed to
@@ -125,6 +131,8 @@ public abstract class BrowserTab extends BaseComponent implements Themeable {
             return new ExpirationManagerTab(browser, uri);
         } else if (TYPE_CANCEL.equals(uri.getType())) {
             return new CancelManagerTab(browser, uri);
+        } else if (TYPE_HELP.equals(uri.getType())) {
+            return new HelpTab(browser, uri);
         }
         
         return null;
@@ -150,7 +158,10 @@ public abstract class BrowserTab extends BaseComponent implements Themeable {
     
     protected abstract void initComponents();
     protected boolean allowClose() { return true; }
+
+    /** may be called multiple times */
     public void tabShown() { _root.layout(true); }
+
     protected void configItem() {
         reconfigItem();
         _item.addDisposeListener(new DisposeListener() {
@@ -169,6 +180,7 @@ public abstract class BrowserTab extends BaseComponent implements Themeable {
             public void showList(CTabFolderEvent cTabFolderEvent) {}
         });
     }
+
     protected void reconfigItem() {
         debug("reconfiguring item: begin");
         Image old = _item.getImage();
@@ -198,9 +210,15 @@ public abstract class BrowserTab extends BaseComponent implements Themeable {
     
     public CTabItem getTabItem() { return _item; }
     public SyndieURI getURI() { return _uri; }
+
+    /** this is the tooltip for the tab, override with a translated string */
     public String getDescription() { return getURI().toString(); }
+
     public String getName() { return "tab"; }
+
+    /** this is the icon for the tab, default null, override with an icon */
     public Image getIcon() { return null; }
+
     /** 
      * vetoable close and dispose (including the associated tab item), returning true
      * if the tab was closed, false if it was left intact (aka the tab vetoed closure).
@@ -227,6 +245,7 @@ public abstract class BrowserTab extends BaseComponent implements Themeable {
     }
     public void resized() {}
     
+    /** should only be called once */
     public void show(SyndieURI uri) {}
     public void refresh() {}
     

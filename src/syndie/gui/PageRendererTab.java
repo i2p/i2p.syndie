@@ -13,10 +13,15 @@ import syndie.data.MessageInfo;
 import syndie.data.SyndieURI;
 
 /**
+ *  Simple display of HTML(?) text at the top level of the browser.
+ *  Only for "text" URIs.These are not the pages inside PageRenderer.
  *
+ *  The URI params "name" and "body" supply the title and text.
+ *
+ *  These are not the pages inside PageRenderer.
  */
 public class PageRendererTab extends BrowserTab implements Translatable, Themeable, PageRenderer.PageActionListener {
-    private PageRenderer _renderer;
+    protected PageRenderer _renderer;
     private String _name;
     private String _desc;
     
@@ -25,7 +30,8 @@ public class PageRendererTab extends BrowserTab implements Translatable, Themeab
     }
     
     static final SyndieURI DUMMY_URI = SyndieURI.createMessage(new Hash(new byte[Hash.HASH_LENGTH]), Long.MAX_VALUE, 0);
-    private void show(String htmlText, String title, String desc) {
+
+    protected void show(String htmlText, String title, String desc) {
         _name = title;
         _desc = desc;
         reconfigItem();

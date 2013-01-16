@@ -22,6 +22,9 @@ import syndie.Constants;
 import syndie.Version;
 import syndie.data.SyndieURI;
 
+/**
+ *  CLI and startup
+ */
 public class TextEngine {
     private UI _ui;
     private boolean _exit;
@@ -42,10 +45,18 @@ public class TextEngine {
     private List _scriptListeners;
     private boolean _newNymCreated;
         
-    /** CLI only, will instantiate DBClient */
+    /**
+     * CLI only, will instantiate DBClient
+     *
+     * This runs the script "startup", which hopefully contains "login"
+     */
     public TextEngine(String rootDir, UI ui) { this(rootDir, ui, null); }
 
-    /** CLI only, will instantiate DBClient */
+    /**
+     * CLI only, will instantiate DBClient
+     *
+     * This runs the script "startup", which hopefully contains "login"
+     */
     public TextEngine(String rootDir, UI ui, ScriptListener lsnr) {
         _scriptListeners = new ArrayList();
         if (lsnr != null)
@@ -63,10 +74,18 @@ public class TextEngine {
         _client.runScript(_ui, "startup");
     }
 
-    /** CLI helper under GUI */
+    /**
+     * CLI helper under GUI
+     *
+     * This runs the script "startup", which hopefully contains "login"
+     */
     public TextEngine(DBClient client, UI ui) { this(client, ui, null); }
 
-    /** CLI helper under GUI */
+    /**
+     * CLI helper under GUI
+     *
+     * This runs the script "startup", which hopefully contains "login"
+     */
     public TextEngine(DBClient client, UI ui, ScriptListener lsnr) {
         _scriptListeners = new ArrayList();
         if (lsnr != null)

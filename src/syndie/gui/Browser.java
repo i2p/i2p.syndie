@@ -496,6 +496,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
     }
     
     public void setEngine(TextEngine engine) { _engine = engine; }
+
     public void startup(final Timer timer) {
         timer.addEvent("startup: loggedIn? " + _client.isLoggedIn() + " initialized? " + _initialized);
         long beforeInit = System.currentTimeMillis();
@@ -1616,6 +1617,8 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             gd.widthHint = 400;
             url.setLayoutData(gd);
             
+            // TODO add button to view in browser, using systray URLLauncher
+
             Button b = new Button(shell, SWT.PUSH);
             b.setText(getTranslationRegistry().getText("Close"));
             gd = new GridData(GridData.FILL, GridData.FILL, true, false);

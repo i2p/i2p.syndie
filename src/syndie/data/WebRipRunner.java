@@ -297,7 +297,8 @@ public class WebRipRunner implements EepGet.StatusListener {
                 }
             }
             _pendingAttachments--;
-            _lsnr.statusUpdated(this);
+            if (_lsnr != null)
+                _lsnr.statusUpdated(this);
         }
     }
     
@@ -575,12 +576,10 @@ public class WebRipRunner implements EepGet.StatusListener {
     }
     
     public static void main(String args[]) {
-        /*
-        File f = reencodeHTML(new File("/tmp/index.html.ja"), "ISO-2022-JP", new NullUI() {
-            public void errorMessage(String msg, Exception e) { System.err.println(msg); if (e != null) e.printStackTrace(); }
-        });
-        System.out.println("reencoded into " + f.getAbsolutePath());
-        */
+        //File f = reencodeHTML(new File("/tmp/index.html.ja"), "ISO-2022-JP", new NullUI() {
+        //    public void errorMessage(String msg, Exception e) { System.err.println(msg); if (e != null) e.printStackTrace(); }
+        //});
+        //System.out.println("reencoded into " + f.getAbsolutePath());
         WebRipRunner runner = new WebRipRunner(new NullUI(), "file:///tmp/webrip/src/index.html", null, -1, new File("/tmp/webrip/tmp"));
         runner.configure(true, true, 16, 64, true, 0);
         runner.blockingRip();
