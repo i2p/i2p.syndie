@@ -40,6 +40,10 @@ public interface MessageCreatorSource {
     /** list of SyndieURIs for messages that should be cancelled by this post */
     public List getCancelURIs();
     public int getParentCount();
+    /**
+     * ordered list of earlier messages (SyndieURI) this follows in the thread 
+     * of (most recent parent first)
+     */
     public SyndieURI getParent(int depth);
     public String getExpiration();
     public boolean getForceNewThread();

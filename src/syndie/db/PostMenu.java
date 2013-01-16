@@ -477,12 +477,9 @@ class PostMenu implements TextEngine.Menu {
         }
     }
     
-    /** today's date, but with a randomized hhmmss.SSS component */
+    /** see DBClient.createEdition() */
     private long createEdition(DBClient client) {
-        long now = System.currentTimeMillis();
-        now -= (now % 24*60*60*1000);
-        now += client.ctx().random().nextLong(24*60*60*1000);
-        return now;
+        return client.createEdition(0);
     }
     
     private void processPreview(DBClient client, UI ui, Opts opts) {

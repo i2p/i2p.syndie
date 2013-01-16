@@ -30,14 +30,14 @@ import syndie.data.SyndieURI;
 import syndie.gui.*;
 
 /**
- 
+ *  See MessageCreatorDirect extension
  */
 public class MessageCreator {
     //private MessageEditor _editor;
-    protected MessageCreatorSource _source;
+    protected final MessageCreatorSource _source;
     private SyndieURI _createdURI;
-    private StringBuilder _errorBuf;
-    protected UI _ui;
+    private final StringBuilder _errorBuf;
+    protected final UI _ui;
     
     private List _tempFiles;
     private File _refFile;
@@ -101,6 +101,7 @@ public class MessageCreator {
     
     /**
      * a port of syndie.db.PostMenu.processExecute() to the GUI.
+     * Overridden in MessageCreatorDirect
      */
     public void execute() {
         _errorBuf.setLength(0);
@@ -113,7 +114,7 @@ public class MessageCreator {
         
         NestedUI ui = new NestedUI(_ui);
         
-        long messageId = MessageGen.createMessageId(client);
+        long messageId = MessageGen.createMessageId(client, 0);
         
         String out = null;
         if (out == null) {

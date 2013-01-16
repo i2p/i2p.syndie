@@ -179,7 +179,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
      * ordered list of earlier messages (SyndieURI) this follows in the thread 
      * of (most recent parent first)
      */
-    private List _parents;
+    private List<SyndieURI> _parents;
     /** if using PBE, this is the required passphrase */
     private String _passphrase;
     /** if using PBE, this is the prompt for the passphrase */
@@ -403,6 +403,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         public long postponeId;
         public int version;
     }
+
     public static MessageSummary loadSummary(DBClient client, UI ui, TranslationRegistry trans, long postponeId, int version) {
         MessageSummary summary = new MessageSummary();
         summary.postponeId = postponeId;
@@ -475,7 +476,9 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     }
     
     private static final String SQL_DROP = "DELETE FROM nymMsgPostpone WHERE nymId = ? AND postponeId = ?";
+
     void dropSavedState() { dropSavedState(_client, _ui, _postponeId); }
+
     public static void dropSavedState(DBClient client, UI ui, long postponeId) {
         ui.debugMessage("dropping saved state for postponeId " + postponeId);
         Connection con = client.con();
@@ -540,7 +543,9 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                 
                 void messageCreatedBox() {
                     Properties prefs = _client.getNymPrefs();
-                    if (Boolean.valueOf(prefs.getProperty("editor.showMessageCreatedBox")).booleanValue()) {
+                    // default true to help new users
+                    String show = prefs.getProperty("editor.showMessageCreatedBox");
+                    if (show == null || Boolean.parseBoolean(show)) {
                         final Shell shell = new Shell(_root.getShell(), SWT.APPLICATION_MODAL | SWT.DIALOG_TRIM);
                         shell.setFont(_themeRegistry.getTheme().SHELL_FONT);
                         shell.setText(_translationRegistry.getText("Message created!"));
@@ -549,12 +554,14 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                         shell.setLayout(gl);
                         
                         Label message = new Label(shell, SWT.WRAP);
-                        GridData messageLayoutData = new GridData(GridData.FILL, GridData.BEGINNING, false, false);
+                        GridData messageLayoutData = new GridData(GridData.FILL, GridData.BEGINNING, true, true);
                         messageLayoutData.horizontalSpan = 2;
                         messageLayoutData.heightHint = 75;
                         message.setLayoutData(messageLayoutData);
                         message.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
-                        message.setText(_translationRegistry.getText("Message created and imported successfully!  Please be sure to syndicate it to others so they can read it"));
+                        message.setText(_translationRegistry.getText("Message created successfully! \n" +
+                                                                     "Please be sure to syndicate it to the arcives so others may read it. \n" +
+                                                                     "The message timestamp has been randomized to protect your anonymity. \n"));
                         
                         final Button checkbox = new Button(shell, SWT.CHECK);
                         checkbox.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
@@ -656,7 +663,8 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         public boolean getForceNewThread() { return false; }
         public boolean getRefuseReplies() { return false; }
         public List getCancelURIs() { return new ArrayList(); }
-    }   
+    }
+
     
     public void postponeMessage() {
         saveState();

@@ -84,6 +84,13 @@ public class DBClient {
      */
     private static final boolean DEFRAG = false;
     
+    /** for createEdition() */
+    private static final long PAST_RANDOM_PERIOD = 6*60*60*1000l;
+
+    /** for createEdition() */
+    private static final long FUTURE_RANDOM_PERIOD = 60*60*1000l;
+
+
     private Connection _con;
     private SyndieURIDAO _uriDAO;
     private String _login;
@@ -124,8 +131,11 @@ public class DBClient {
         disconnect();
     }
     
-    private static final String SQL_CREATE_USER = "CREATE USER ? PASSWORD ? ADMIN";
+    //private static final String SQL_CREATE_USER = "CREATE USER ? PASSWORD ? ADMIN";
     
+    /**
+     *  Initialize the DB, update to latest version if necessary, and connect
+     */
     public void connect(String url) throws SQLException { 
         _login = TextEngine.DEFAULT_LOGIN;
         if (_pass == null) _pass = TextEngine.DEFAULT_PASS;
@@ -623,6 +633,9 @@ public class DBClient {
         }
     }
     
+    /**
+     *  Initialize the DB, update to latest version if necessary
+     */
     private void initDB() {
         int version = checkDBVersion();
         if (_log.shouldLog(Log.DEBUG))
@@ -664,6 +677,9 @@ public class DBClient {
         }
     }
 
+    /**
+     *  Create a new DB with the version 1 ddl.txt
+     */
     private void buildDB() {
         if (_log.shouldLog(Log.INFO))
             _log.info("Building the database...");
@@ -713,6 +729,9 @@ public class DBClient {
         }
     }
 
+    /**
+     *  Update from oldVersion to oldVersion + 1 using ddl_update{oldVersion}.txt
+     */
     private void updateDB(int oldVersion) {
         BufferedReader r = null;
         try {
@@ -6665,25 +6684,33 @@ public class DBClient {
     }
     
     /**
-     *  Generate a new number, greater than lastValue,
-     *  and randomly between previous midnight UTC and
-     *  next midnight UTC, but maybe up to 24 hours after
-     *  the next midnight UTC if lastValue after the last midnight UTC.
-     *  Oh yeah, lets ignore leap seconds too.
-     *  SHEESH
+     *  Generate a new number, greater than lastValue.
+     *  If lastValue < now, generate a value between (max(now - 6h, lastValue), now).
+     *  If lastValue >= now, generate a value between (lastValue, lastValue + 1h).
      */
     public long createEdition(long lastValue) {
         long now = System.currentTimeMillis();
-        now -= (now % 24*60*60*1000);
-        while (now < lastValue)
-            now += ctx().random().nextLong(24*60*60*1000);
-        return now;
+        long rv;
+        if (lastValue < now) {
+            rv = Math.max(lastValue, now - PAST_RANDOM_PERIOD);
+            rv += _context.random().nextLong(now - rv);
+        } else if (lastValue < Long.MAX_VALUE - FUTURE_RANDOM_PERIOD) {
+            rv = lastValue + _context.random().nextLong(FUTURE_RANDOM_PERIOD);
+        } else if (lastValue < Long.MAX_VALUE) {
+            // almost pinned
+            rv = lastValue + 1;
+        } else {
+            // pinned
+            rv = lastValue;
+        }
+        return rv;
     }
     
     public void logError(String msg, Exception cause) { 
         if (_log.shouldLog(Log.ERROR))
             _log.error(msg, cause);
     }
+
     public void logInfo(String msg) { 
         if (_log.shouldLog(Log.INFO)) 
             _log.info(msg); 

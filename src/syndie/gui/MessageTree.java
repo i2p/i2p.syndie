@@ -84,6 +84,8 @@ import syndie.db.UI;
 
 /**
  *  Includes page nav buttons at the top, the Tree in the middle, and the message/thread buttons at the bottom.
+ *
+ *  See also WatchedMessageTree extension
  */
 public class MessageTree extends BaseComponent implements Translatable, Themeable, DBClient.MessageStatusListener {
     private NavigationControl _navControl;
@@ -355,10 +357,14 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         prefs.setProperty("showPreview", shouldShow ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
         client.setNymPrefs(prefs);
     }
+
+    /** default false */
     public static boolean shouldUseImportDate(DBClient client) {
         Properties prefs = client.getNymPrefs();
-        return ( (prefs == null) || (!prefs.containsKey("browse.useImportDate")) || (Boolean.valueOf(prefs.getProperty("browse.useImportDate")).booleanValue()));
+        return (prefs != null &&  Boolean.parseBoolean(prefs.getProperty("browse.useImportDate")));
     }
+
+    /** default false */
     static void setShouldUseImportDate(DBClient client, boolean useImportDate) {
         Properties prefs = client.getNymPrefs();
         prefs.setProperty("browse.useImportDate", useImportDate ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
@@ -1554,10 +1560,13 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         s.open();
         return s;
     }
-    private class LivelinessIndicator implements Runnable {
-        private Label _label;
+
+    private static class LivelinessIndicator implements Runnable {
+        private final Label _label;
         private int _index;
-        public LivelinessIndicator(Label label) { _label = label; _index = 0; }
+
+        public LivelinessIndicator(Label label) { _label = label; }
+
         public void run() {
             char c = ' ';
             switch (_index % 4) {
@@ -1729,12 +1738,16 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
     }
     
     List getMessages() { return _threadReferenceNodes; }
+
+    /**
+     *  this method is overridden in WatchedMessageTree to rewrite allNodes, injecting parents.
+     *  on page traversals, we don't call this again though, but instead call w/ recalcTags param,
+     *  so it won't inject the (already injected) parents
+     */
     void setMessages(List allNodes) { 
-        // this method is overridden in WatchedMessageTree to rewrite allNodes, injecting parents.
-        // on page traversals, we don't call this again though, but instead call w/ recalcTags param,
-        // so it won't inject the (already injected) parents
         setMessages(allNodes, true); 
     }
+
     void setMessages(List allNodes, boolean recalcTags) {
         if (allNodes == null) return;
         if (_root.isDisposed()) return;

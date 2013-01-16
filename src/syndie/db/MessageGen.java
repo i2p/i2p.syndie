@@ -474,12 +474,12 @@ public class MessageGen extends CommandImpl {
         return raw;
     }
     
-    public static long createMessageId(DBClient client) {
-        long now = client.ctx().clock().now();
-        now = now - (now % 24*60*60*1000);
-        now += client.ctx().random().nextLong(24*60*60*1000);
-        return now;
+    /** see DBClient.createEdition() */
+    public static long createMessageId(DBClient client, long minID) {
+        return client.createEdition(minID);
+
     }
+
     private Map generatePublicHeaders(DBClient client, UI ui, Opts args, Hash channel, Hash targetChannel, SessionKey bodyKey, boolean bodyKeyIsPublic, byte salt[], boolean postAsUnauthorized) {
         Map rv = new HashMap();
         if (args.getOptBoolean("postAsReply", false)) {
@@ -506,7 +506,7 @@ public class MessageGen extends CommandImpl {
         
         long msgId = args.getOptLong("messageId", -1);
         if (msgId < 0) { // YYYYMMDD+rand
-            msgId = createMessageId(client);
+            msgId = createMessageId(client, 0);
         }
         rv.put(Constants.MSG_HEADER_POST_URI, strip(SyndieURI.createMessage(channel, msgId).toString()));
         

@@ -114,7 +114,11 @@ public class MessageCreatorDirect extends MessageCreator {
         
         prepareKeys();
         
-        long messageId = MessageGen.createMessageId(_source.getClient());
+        // generate an ID later than the closest parent
+        long minID = 0;
+        if (_source.getParentCount() > 0)
+            minID = _source.getParent(0).getMessageId().longValue();
+        long messageId = MessageGen.createMessageId(_source.getClient(), minID);
         _createdURI = SyndieURI.createMessage(_postScope, messageId);
     }
     

@@ -135,6 +135,7 @@ public class Constants {
     /** this refers to the (context-sensitive) help uri - this url is just there for testing until the help is written */
     public static final SyndieURI HELP_MSG = SyndieURI.createMessage(new Hash(Base64.decode("bF2lursCrXhSECJAEILhtXYqQ6o-TwjlEUNJLA5Nu8o=")), 1187210851042l);
 
+    /** one day in the future */
     private static final long LATEST_DATE = 24*60*60*1000l;
     /** 1/1/2000 */
     private static final long EARLIEST_DATE = 946700000 * 1000l;
