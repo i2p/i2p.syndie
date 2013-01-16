@@ -767,7 +767,7 @@ public class SyndieURI {
     /////
     
     /** */
-    private static final String bencode(TreeMap attributes) {
+    private static final String bencode(Map attributes) {
         StringBuilder buf = new StringBuilder(64);
         buf.append('d');
         for (Iterator iter = attributes.entrySet().iterator(); iter.hasNext(); ) {
@@ -797,7 +797,7 @@ public class SyndieURI {
         }
     }
     
-    private static final boolean bdecodeNext(StringBuilder remaining, TreeMap target) throws URISyntaxException {
+    private static final boolean bdecodeNext(StringBuilder remaining, Map target) throws URISyntaxException {
         String key = null;
         while (true) {
             if (remaining.length() <= 0) return true;
@@ -897,7 +897,7 @@ public class SyndieURI {
      * be a single dictionary and contain either strings, integers, or lists of
      * strings.
      */
-    private static final TreeMap bdecode(String bencoded) throws URISyntaxException {
+    private static final Map bdecode(String bencoded) throws URISyntaxException {
         //if ( (bencoded.charAt(0) != 'd') || (bencoded.charAt(bencoded.length()-1) != 'e') )
         //    throw new URISyntaxException(bencoded, "Not bencoded properly");
         if (bencoded.charAt(0) != 'd')

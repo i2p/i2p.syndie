@@ -602,6 +602,7 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
         client.setNymPrefs(props);
     }
     
+    /** @return may be null or have null elements */
     private SyndieURI[] getPrevTabs() {
         Properties props = _client.getNymPrefs();
         String numTabs = props.getProperty("browser.prevTabs");
@@ -623,7 +624,9 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
             if (val != null) {
                 try {
                     rv[i] = new SyndieURI(val);
-                } catch (URISyntaxException use) {}
+                } catch (URISyntaxException use) {
+                    _ui.debugMessage("startup items: invalid previous tab: " + i + ' ' + val);
+                }
             }
         }
         
@@ -650,13 +653,15 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
         // always give them something
         int count = 0;
         if (prevTabs != null) {
-            timer.addEvent("startup items: previous tabs identified");
+            timer.addEvent("startup items: " + prevTabs.length + " previous tabs identified");
             for (int i = 0; i < prevTabs.length; i++) {
                 if (prevTabs[i] != null) {
                     viewStartupItem(prevTabs[i]);
-                    timer.addEvent("startup items: previous tab opened: " + i + " " + prevTabs[i].toString());
+                    timer.addEvent("startup items: previous tab opened: " + i + ' ' + prevTabs[i].toString());
                     if (++count >= MAX_PREV_TABS)
                         break;
+                } else {
+                    timer.addEvent("startup items: prev tab " + i + " is null");
                 }
             }
             timer.addEvent("startup items: all previous tabs loaded");
