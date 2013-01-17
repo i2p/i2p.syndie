@@ -35,14 +35,24 @@ archive.4.url=http://syndie.echelon.i2p/?i2paddresshelper=4W79xrs~ZVo2nXynH8Dyl4
 archive.4.proxy=127.0.0.1:4444
 archive.4.syncbydefault=true
 ##########################################
-archive.5.name=syndie.welterde.i2p
-archive.5.url=http://syndie.welterde.i2p/?i2paddresshelper=tYPP3G3Ul1wXDxyotkqzT7wCHHm0c4e-JeKbWSU0dbPI3lGm1hxKEMHXRORk8VrxaGZz1UtnQp3ERMY-8zEd~D56v4Bw0PLu~KV~pTxE7RNld-ACKTBYGj6OBmWcNYHCqjzakJOLUzZKydJDphTa3Fozpp1UyoXtZU-u8p6VJeFMhBUT1AkvCxFThFyQUmQ~zFit-LSL3TG2Y564X4b7NeWBQ4HvrxsUBgga0IJhKiLO4rXeUk~DmjwyM~nyLT2puTEJqm8T44CoglVpnJiqG6hENPCTnZ0Qh5ecZjWrP8e5jo4Dr3bYV17pSxBzeYdqOSEU4LnWAqh1fAsLolkBOHaL9Qb2JjMV-1cXlwowx8XA0pHcgIFSi-sfpRHNs0eRWIqmJEerKJiV1oS1TKM3mUCDNXw0n1L6aXFroeY-zDo5RL4lNdXvXTaw6uKIbnVgZt9qflLPp871CfEfpK27fNRlvNvQp7B2xlGCqODACL5~SKZH~28BvuCiWVHgxuEJAAAA
+archive.5.name=syndie.killyourtv.i2p
+archive.5.url=http://syndie.welterde.i2p/?i2paddresshelper=4JTkFMNVkouHpKuzAqDaU0n0vkn9vko9BqrbkFR2Xza8u6gfHZCH6JPARwoumSEzs-Ri5MMEkuHpCQZ9Fv0IWnx18kqUQzL5GY1m5~NznohaHuKPIlwC0UNVSGF8Qm2F1W8O2XdrYjgqnaNqjH5JNM0xNUlAtIOsO4xJ0-5hQSBhp4vQiXLkVH0fDseij9-cq6IMH-~m6KrZfEpoTyrU6ov3I1ERifan8FNXjUFjQqMWNq-eyC4-TJNhHz9KoHgzqyhN2i38nOkAGPX9gjF9oWTG8SIBxTxXj07n28QUmASLlwBGarJzHF363NbIWGJGfHUtDKN0kIbsFMGdurDmnm~oIkzoJcSevSQKF082CRCXM1dC7kzBeJP9sCR02hDVlZOyUrt7y07gI86RkBmN4UC3U~pbazongBPuIjsSWhTQwPn-EJnYBCqODLj23YWtw2wiHetzxjjnMW3ODRF2T-gx1NC2VH3W1Scki1eka04So5OTHJIetG1CjPD3XrucAAAA
 archive.5.proxy=127.0.0.1:4444
-archive.5.pushpolicy=SendNothing
 archive.5.syncbydefault=true
 ##########################################
-archive.6.name=syndie.welterde.de (not anonymous)
-archive.6.url=http://syndie.welterde.de/
+archive.6.name=syndie.welterde.i2p
+archive.6.url=http://syndie.welterde.i2p/?i2paddresshelper=tYPP3G3Ul1wXDxyotkqzT7wCHHm0c4e-JeKbWSU0dbPI3lGm1hxKEMHXRORk8VrxaGZz1UtnQp3ERMY-8zEd~D56v4Bw0PLu~KV~pTxE7RNld-ACKTBYGj6OBmWcNYHCqjzakJOLUzZKydJDphTa3Fozpp1UyoXtZU-u8p6VJeFMhBUT1AkvCxFThFyQUmQ~zFit-LSL3TG2Y564X4b7NeWBQ4HvrxsUBgga0IJhKiLO4rXeUk~DmjwyM~nyLT2puTEJqm8T44CoglVpnJiqG6hENPCTnZ0Qh5ecZjWrP8e5jo4Dr3bYV17pSxBzeYdqOSEU4LnWAqh1fAsLolkBOHaL9Qb2JjMV-1cXlwowx8XA0pHcgIFSi-sfpRHNs0eRWIqmJEerKJiV1oS1TKM3mUCDNXw0n1L6aXFroeY-zDo5RL4lNdXvXTaw6uKIbnVgZt9qflLPp871CfEfpK27fNRlvNvQp7B2xlGCqODACL5~SKZH~28BvuCiWVHgxuEJAAAA
+archive.6.proxy=127.0.0.1:4444
 archive.6.pushpolicy=SendNothing
-archive.6.syncbydefault=false
+archive.6.syncbydefault=true
+##########################################
+archive.7.name=syndie.welterde.de (not anonymous)
+archive.7.url=http://syndie.welterde.de/
+archive.7.pushpolicy=SendNothing
+archive.7.syncbydefault=false
+##########################################
+archive.8.name=syndielzlvbxdsah.onion:8080 (Tor)
+archive.8.url=http://syndielzlvbxdsah.onion:8080
+archive.8.proxy=127.0.0.1:8118
+archive.8.syncbydefault=false
 ##########################################
