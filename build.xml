@@ -414,7 +414,7 @@
     <target name="jar-cli" depends="compile,jar" description="Build jar with only the cli in ./build">
         <property name="build.built-by" value="unknown" />
         <jar jarfile="${build.dir}/syndie-cli.jar">
-            <zipfileset src="${build.dir}/syndie.jar" excludes="**/syndie/gui/** **/syndie/trac/** **/com/**" />
+            <zipfileset src="${build.dir}/syndie.jar" excludes="syndie/gui/** syndie/trac/** com/** syndie/locale/** imports/Browser/** imports/DesktopUI/**" />
             <manifest>
                 <attribute name="Class-Path" value="../lib/i2p.jar ../lib/hsqldb.jar" />
                 <attribute name="Built-By" value="${build.built-by}" />

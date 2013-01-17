@@ -4,6 +4,7 @@ import java.util.*;
 import net.i2p.data.Base64;
 
 /**
+ *  Command line parsing
  */
 public class Opts {
     private String _command;
@@ -22,6 +23,7 @@ public class Opts {
         _command = cmd;
         _parseOk = parse(args);
     }
+
     public Opts(Opts old) {
         _command = old._command;
         _opts = new HashMap(old._opts);
@@ -29,6 +31,7 @@ public class Opts {
         _size = old._size;
         _parseOk = old._parseOk;
     }
+
     public Opts() {
         _command = null;
         _opts = new HashMap();
@@ -36,6 +39,7 @@ public class Opts {
         _size = 0;
         _parseOk = true;
     }
+
     /**
      * @param line unparsed command line (starting with the command to be run)
      */
@@ -54,6 +58,10 @@ public class Opts {
             }
         }
     }
+
+    /**
+     *  Does not support --foo=bar
+     */
     public boolean parse(String args[]) {
         _opts = new HashMap();
         _args = new ArrayList();
@@ -92,6 +100,7 @@ public class Opts {
             return false;
         }
     }
+
     public boolean getParseOk() { return _parseOk; }
     public String getCommand() { return _command; }
     public void setCommand(String cmd) { _command = cmd; }
@@ -105,6 +114,12 @@ public class Opts {
             return null;
     }
     public List getOptValues(String name) { return (List)_opts.get(name); }
+
+    /**
+     *  Warning, --foo returns defaultValue, not true.
+     *  Use --foo false or --foo true
+     *  To be fixed?
+     */
     public boolean getOptBoolean(String name, boolean defaultValue) {
         String val = getOptValue(name);
         if (val == null)
@@ -112,6 +127,7 @@ public class Opts {
         else
             return Boolean.valueOf(val).booleanValue();
     }
+
     public long getOptLong(String name, long defaultValue) {
         String val = getOptValue(name);
         if (val == null) {

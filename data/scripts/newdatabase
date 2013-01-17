@@ -3,6 +3,10 @@
 # but before the 'login' script.
 #
 menu start
+menu read
+channels
+backupSecrets --channel 0 --withmeta true
+menu start
 menu loggedin
 importDefaults
 menu start

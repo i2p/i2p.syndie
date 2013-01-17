@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.Serializable;
 import java.net.URISyntaxException;
 import java.sql.Connection;
@@ -12,6 +13,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import net.i2p.crypto.KeyGenerator;
 import net.i2p.data.Base64;
@@ -23,11 +26,13 @@ import net.i2p.data.SigningPrivateKey;
 import net.i2p.data.SigningPublicKey;
 import net.i2p.data.Signature;
 import net.i2p.data.Hash;
+import net.i2p.util.SecureFile;
 import net.i2p.util.SecureFileOutputStream;
 
 import syndie.Constants;
 import syndie.data.ChannelInfo;
 import syndie.data.MessageInfo;
+import syndie.data.NymKey;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 
@@ -127,6 +132,10 @@ class ReadMenu implements TextEngine.Menu {
             ui.statusMessage(" watch (--author $true|--channel $true) [--nickname $name]");
             ui.statusMessage("       [--category $nameInWatchedTree]");
         }
+        if (_currentChannel != null || !_channelKeys.isEmpty()) {
+            ui.statusMessage(" backupSecrets [--channel ($index|$hash)] [--withmeta] [--out $file]");
+            ui.statusMessage("          : backup the private keys and optionally meta.syndie to a zip file");
+        }
     }
     public boolean processCommands(DBClient client, UI ui, Opts opts) {
         String cmd = opts.getCommand();
@@ -160,6 +169,8 @@ class ReadMenu implements TextEngine.Menu {
             processBan(client, ui, opts);
         } else if ("decrypt".equalsIgnoreCase(cmd)) {
             processDecrypt(client, ui, opts);
+        } else if ("backupSecrets".equalsIgnoreCase(cmd)) {
+            processBackupSecrets(client, ui, opts);
         } else if ("watch".equalsIgnoreCase(cmd)) {
             notImplementedYet(ui);
         } else {
@@ -193,6 +204,7 @@ class ReadMenu implements TextEngine.Menu {
     
     private static final SimpleDateFormat _dayFmt = new SimpleDateFormat("yyyy/MM/dd");
     private static final String SQL_LIST_CHANNELS = "SELECT channelId, channelHash, name, description, COUNT(msgId), MAX(messageId) FROM channel LEFT OUTER JOIN channelMessage ON channelId = targetChannelId GROUP BY channelId, name, description, channelHash";
+
     /** channels [--unreadOnly $boolean] [--name $name] [--hash $hashPrefix] */
     private void processChannels(DBClient client, UI ui, Opts opts) {
         _channelIteratorIndex = 0;
@@ -296,7 +308,7 @@ class ReadMenu implements TextEngine.Menu {
                 ui.commandComplete(0, null);
             } else {
                 int end = Math.min(_messageIteratorIndex+num, _messageKeys.size());
-                ui.statusMessage("message " + _messageIteratorIndex + " through " + (end-1) + " of " + (_messageKeys.size()-1));
+                ui.statusMessage("message " + _messageIteratorIndex + " through " + (end-1) + " of " + _messageKeys.size());
                 while (_messageIteratorIndex < end) {
                     String desc = (String)_messageText.get(_messageIteratorIndex);
                     ui.statusMessage(_messageIteratorIndex + ": " + desc);
@@ -316,7 +328,7 @@ class ReadMenu implements TextEngine.Menu {
                 ui.commandComplete(0, null);
             } else {
                 int end = Math.min(_channelIteratorIndex+num, _channelKeys.size());
-                ui.statusMessage("channel " + _channelIteratorIndex + " through " + (end-1) + " of " + (_channelKeys.size()-1));
+                ui.statusMessage("channel " + _channelIteratorIndex + " through " + (end-1) + " of " + _channelKeys.size());
                 while (_channelIteratorIndex < end) {
                     String desc = (String)_channelText.get(_channelIteratorIndex);
                     ui.statusMessage(_channelIteratorIndex + ": " + desc);
@@ -349,6 +361,21 @@ class ReadMenu implements TextEngine.Menu {
     }
     
     private void processMeta(DBClient client, UI ui, Opts opts) {
+        ChannelInfo chinfo = getChannelInfo(client, ui, opts);
+        if (chinfo != null)
+            ui.statusMessage(chinfo.toString());
+        ui.commandComplete(chinfo != null ? 0 : -1, null);
+    }
+
+    /**
+     *  Return the ChannelInfo for an index or hash in a --channel argument,
+     *  or _currentChannel if not specified.
+     *  Sets _currentChannel.
+     *  Caller MUST call commandComplete.
+     *
+     *  @return channel info or null
+     */
+    private ChannelInfo getChannelInfo(DBClient client, UI ui, Opts opts) {
         long channelIndex = -1;
         Hash channel = null;
         String chan = opts.getOptValue("channel");
@@ -365,8 +392,7 @@ class ReadMenu implements TextEngine.Menu {
                     ui.debugMessage("channel requested is a hash (" + channel.toBase64() + ")");
                 } else {
                     ui.errorMessage("Channel requested is not valid - either specify --channel $index or --channel $base64(channelHash)");
-                    ui.commandComplete(-1, null);
-                    return;
+                    return null;
                 }
             }
         }
@@ -384,11 +410,8 @@ class ReadMenu implements TextEngine.Menu {
             ui.debugMessage("channelIndex=" + channelIndex + " channelKeySize: " + _channelKeys.size());
             ui.debugMessage("channel=" + channelIndex);
             ui.errorMessage("Invalid or unknown channel requested");
-            ui.commandComplete(-1, null);
-            return;
         }
-        
-        ui.statusMessage(_currentChannel.toString());
+        return _currentChannel;
     }
     
     // $index\t$date\t$subject\t$author
@@ -1560,6 +1583,7 @@ class ReadMenu implements TextEngine.Menu {
             ui.commandComplete(-1, null);
         }
     }
+
     private Hash getScopeToBan(DBClient client, MessageInfo message, boolean banAuthor) {
         if (message == null) return null;
         Hash bannedChannel = null;
@@ -1585,7 +1609,95 @@ class ReadMenu implements TextEngine.Menu {
             bannedChannel = message.getTargetChannel();
         return bannedChannel;
     }
+    
+    /**
+     * backupSecrets [--channel ($index|$hash)] [--withmeta] [--out $file]
+     *
+     * @since 1.102b-9 adapted from BackupSecrets
+     */
+    private void processBackupSecrets(DBClient client, UI ui, Opts opts) {
+        ChannelInfo channel = getChannelInfo(client, ui, opts);
+        if (channel == null) {
+            ui.commandComplete(-1, null);
+            return;
+        }
+        boolean withMeta = opts.getOptBoolean("withmeta", false);
+        String out = opts.getOptValue("out");
+        File outFile;
+        if (out != null) {
+            outFile = new File(out);
+        } else {
+            File dir = new SecureFile(client.getRootDir(), "keyBackup");
+            dir.mkdirs();
+            outFile = new File(dir, "nymkeys." + channel.getChannelHash().toBase64() + '.' + System.currentTimeMillis() + ".zip");
+        }
+        try {
+            backupSecrets(client, channel, withMeta, outFile);
+            ui.statusMessage("Backed up: " + channel.getChannelHash().toBase64() + " to " + outFile);
+            ui.commandComplete(0, null);
+        } catch (Exception e) {
+            ui.errorMessage("Failed to backup", e);
+            ui.commandComplete(-1, null);
+        }
+    }
 
+    /**
+     * @since 1.102b-9 adapted from BackupSecrets
+     */
+    private void backupSecrets(DBClient client, ChannelInfo channel, boolean withMeta, File outFile) throws IOException {
+        long chanId = channel.getChannelId();
+        Hash hash = channel.getChannelHash();
+        if (chanId < 0)
+            throw new IllegalArgumentException("no id");
+         List<NymKey> keys = new ArrayList();
+         String pw = null;
+         keys.addAll(client.getNymKeys(chanId, pw, hash, Constants.KEY_FUNCTION_MANAGE));
+         keys.addAll(client.getNymKeys(chanId, pw, hash, Constants.KEY_FUNCTION_REPLY));
+         keys.addAll(client.getNymKeys(chanId, pw, hash, Constants.KEY_FUNCTION_POST));
+         keys.addAll(client.getNymKeys(chanId, pw, hash, Constants.KEY_FUNCTION_READ));
+         if (keys.isEmpty())
+            throw new IllegalArgumentException("no keys");
+         backup(client, keys, hash, withMeta, new SecureFileOutputStream(outFile));
+    }
+
+    /**
+     * @since 1.102b-9 adapted from BackupSecrets
+     */
+    private void backup(DBClient client, List<NymKey> nymKeys, Hash channel, boolean withMeta, OutputStream out) throws IOException {
+        ZipOutputStream zos = new ZipOutputStream(out);
+        if (withMeta) {
+            File src = new File(new File(client.getArchiveDir(), channel.toBase64()), "meta" + Constants.FILENAME_SUFFIX);
+            if (!src.exists())
+                throw new IOException("no meta file");
+            ZipEntry entry = new ZipEntry("meta.syndie");
+            entry.setTime(src.lastModified());
+            entry.setSize((int)src.length());
+            zos.putNextEntry(entry);
+            byte buf[] = new byte[4096];
+            int read = -1;
+            FileInputStream fin = null;
+            try {
+                fin = new FileInputStream(src);
+                while ( (read = fin.read(buf)) != -1)
+                    zos.write(buf, 0, read);
+                fin.close();
+                fin = null;
+            } finally {
+                if (fin != null) fin.close();
+            }
+            zos.closeEntry();
+        }
+        for (int i = 0; i < nymKeys.size(); i++) {
+            ZipEntry entry = new ZipEntry("nymkey" + i + ".syndie");
+            entry.setTime(System.currentTimeMillis());  // channel.getReceivedDate() ?
+            zos.putNextEntry(entry);
+            NymKey key = nymKeys.get(i);
+            CommandImpl.writeKey(zos, key.getFunction(), key.getChannel(), Base64.encode(key.getData()));
+            zos.closeEntry();
+        }
+        zos.finish();
+    }
+    
     /**
      * decrypt [(--message $msgId|--channel $channelId)] [--passphrase pass]
      */
@@ -1593,7 +1705,7 @@ class ReadMenu implements TextEngine.Menu {
         int messageIndex = (int)opts.getOptLong("message", -1);
         int channelIndex = (int)opts.getOptLong("channel", -1);
         String passphrase = opts.getOptValue("passphrase");
-        
+
         File archivedFile = null;
         File archiveDir = client.getArchiveDir();
         if (messageIndex >= 0) {
