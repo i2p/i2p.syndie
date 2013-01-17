@@ -36,7 +36,7 @@ archive.4.proxy=127.0.0.1:4444
 archive.4.syncbydefault=true
 ##########################################
 archive.5.name=syndie.killyourtv.i2p
-archive.5.url=http://syndie.welterde.i2p/?i2paddresshelper=4JTkFMNVkouHpKuzAqDaU0n0vkn9vko9BqrbkFR2Xza8u6gfHZCH6JPARwoumSEzs-Ri5MMEkuHpCQZ9Fv0IWnx18kqUQzL5GY1m5~NznohaHuKPIlwC0UNVSGF8Qm2F1W8O2XdrYjgqnaNqjH5JNM0xNUlAtIOsO4xJ0-5hQSBhp4vQiXLkVH0fDseij9-cq6IMH-~m6KrZfEpoTyrU6ov3I1ERifan8FNXjUFjQqMWNq-eyC4-TJNhHz9KoHgzqyhN2i38nOkAGPX9gjF9oWTG8SIBxTxXj07n28QUmASLlwBGarJzHF363NbIWGJGfHUtDKN0kIbsFMGdurDmnm~oIkzoJcSevSQKF082CRCXM1dC7kzBeJP9sCR02hDVlZOyUrt7y07gI86RkBmN4UC3U~pbazongBPuIjsSWhTQwPn-EJnYBCqODLj23YWtw2wiHetzxjjnMW3ODRF2T-gx1NC2VH3W1Scki1eka04So5OTHJIetG1CjPD3XrucAAAA
+archive.5.url=http://syndie.killyourtv.i2p/?i2paddresshelper=4JTkFMNVkouHpKuzAqDaU0n0vkn9vko9BqrbkFR2Xza8u6gfHZCH6JPARwoumSEzs-Ri5MMEkuHpCQZ9Fv0IWnx18kqUQzL5GY1m5~NznohaHuKPIlwC0UNVSGF8Qm2F1W8O2XdrYjgqnaNqjH5JNM0xNUlAtIOsO4xJ0-5hQSBhp4vQiXLkVH0fDseij9-cq6IMH-~m6KrZfEpoTyrU6ov3I1ERifan8FNXjUFjQqMWNq-eyC4-TJNhHz9KoHgzqyhN2i38nOkAGPX9gjF9oWTG8SIBxTxXj07n28QUmASLlwBGarJzHF363NbIWGJGfHUtDKN0kIbsFMGdurDmnm~oIkzoJcSevSQKF082CRCXM1dC7kzBeJP9sCR02hDVlZOyUrt7y07gI86RkBmN4UC3U~pbazongBPuIjsSWhTQwPn-EJnYBCqODLj23YWtw2wiHetzxjjnMW3ODRF2T-gx1NC2VH3W1Scki1eka04So5OTHJIetG1CjPD3XrucAAAA
 archive.5.proxy=127.0.0.1:4444
 archive.5.syncbydefault=true
 ##########################################
