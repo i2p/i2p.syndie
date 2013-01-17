@@ -78,6 +78,10 @@ public class ComponentBuilder {
         return new MessagePreview(_client, _ui, _themes, _trans, _navControl, _bookmarkControl, _uriControl, parent);
     }
     
+    /**
+     * @param viewOnly if true, single message, disable filtering; normally false
+     * @param byForum if true, shows a message tree that organizes threads first by forum, then by thread; normally false
+     */
     public BrowseForum createBrowseForum(Composite parent, MessageTree.MessageTreeListener lsnr, boolean viewOnly, boolean byForum) {
         return new BrowseForum(_client, _ui, _themes, _trans, parent, _navControl, _bookmarkControl, _uriControl, _dataCallback, _banControl, lsnr, viewOnly, byForum);
     }

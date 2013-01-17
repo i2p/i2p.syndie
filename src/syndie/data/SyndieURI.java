@@ -330,8 +330,11 @@ public class SyndieURI {
             return null;
         }
     }
+
     public static SyndieURI createScope(Hash scope) { return createMessage(scope, -1, -1); }
+
     public static SyndieURI createMessage(Hash scope, long msgId) { return createMessage(scope, msgId, -1); }
+
     public static SyndieURI createMessage(Hash scope, long msgId, int pageNum) {
         String type = "channel";
         TreeMap attributes = new TreeMap();
@@ -343,6 +346,7 @@ public class SyndieURI {
             attributes.put("page", new Long(pageNum));
         return new SyndieURI(type, attributes);
     }
+
     public static SyndieURI createAttachment(Hash scope, long msgId, int attachmentNum) {
         StringBuilder buf = new StringBuilder();
         buf.append("urn:syndie:channel:d");

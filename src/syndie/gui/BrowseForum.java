@@ -96,12 +96,19 @@ public class BrowseForum extends BaseComponent implements MessageTree.MessageTre
     
     private final boolean _byForum;
     
+    /**
+     * @param byForum if true, shows a message tree that organizes threads first by forum, then by thread; normally false
+     */
     public BrowseForum(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Composite parent,
                        NavigationControl navControl, BookmarkControl bookmarkControl, URIControl uriControl, DataCallback callback,
                        BanControl ban, MessageTree.MessageTreeListener lsnr, boolean byForum) {
         this(client, ui, themes, trans, parent, navControl, bookmarkControl, uriControl, callback, ban, lsnr, false, byForum);
     }
 
+    /**
+     * @param viewOnly if true, single message, disable filtering; normally false
+     * @param byForum if true, shows a message tree that organizes threads first by forum, then by thread; normally false
+     */
     public BrowseForum(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Composite parent,
                        NavigationControl navControl, BookmarkControl bookmarkControl, URIControl uriControl, DataCallback callback,
                        BanControl ban, MessageTree.MessageTreeListener lsnr, boolean viewOnly, boolean byForum) {
@@ -250,9 +257,13 @@ public class BrowseForum extends BaseComponent implements MessageTree.MessageTre
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
             public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
             private void fire() {
-                if (_banControl.ban(_scope))
+                if (_banControl.ban(_scope)) {
+                    // If we have option to NOT delete msgs then we may not want to do this...
+                    // this probably won't work as it has filter info in it
                     _navControl.unview(getURI());
-                    
+                    // this probably will work
+                    _navControl.unview(SyndieURI.createScope(_scope));
+                }                    
             }
         });
         

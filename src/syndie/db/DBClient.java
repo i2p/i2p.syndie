@@ -4227,8 +4227,9 @@ public class DBClient {
                 exec(ImportMeta.SQL_DELETE_CHANNEL_REFERENCES, scopeId);
                 exec(SQL_DELETE_CHANNEL, scopeId);
                 exec(SQL_DELETE_UNREAD_CHANNELS, scopeId);
-                ui.debugMessage("Deleted the channel " + uri.getScope().toBase64() + " from the database" +
-                                " cause = " + deletionCause, new Exception("I did it"));
+                if (deletionCause < 0)
+                    ui.debugMessage("Deleted the channel " + uri.getScope().toBase64() + " from the database" +
+                                    " cause = " + deletionCause, new Exception("I did it"));
             } catch (SQLException se) {
                 ui.errorMessage("Unable to delete the channel " + uri.getScope().toBase64(), se);
             }
@@ -4237,11 +4238,13 @@ public class DBClient {
             long scopeId = getChannelId(uri.getScope());
             long internalId = getMessageId(scopeId, uri.getMessageId().longValue());
             Exception exception = deleteMessageFromDB(internalId, deletionCause);
-            if (exception == null)
-                ui.debugMessage("Deleted the post " + uri.getScope().toBase64() + ":" + uri.getMessageId() + " from the database" +
+            if (exception == null) {
+                if (deletionCause < 0)
+                    ui.debugMessage("Deleted the post " + uri.getScope().toBase64() + ":" + uri.getMessageId() + " from the database" +
                                  " cause = " + deletionCause, new Exception("I did it"));
-            else
+            } else {
                 ui.errorMessage("Error deleting the post " + uri, exception);
+            }
         }
     }
     

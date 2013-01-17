@@ -808,9 +808,17 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                 incomingItem = new TreeItem(rootItem, SWT.NONE);
                 _archiveNameToIncomingItem.put(action.getArchive().getName(), incomingItem);
                 _items.put(incomingItem, "incoming");
+                // text doesn't change
+                incomingItem.setText(0, _translationRegistry.getText("Fetches"));
             }
-            incomingItem.setText(0, _translationRegistry.getText("fetches"));
-            incomingItem.setText(3, action.getArchive().getIncomingActionCount()+"");
+            int rem = action.getArchive().getIncomingActionsInProgress();
+            if (rem > 0) {
+                int tot = action.getArchive().getIncomingActionCount();
+                int done = Math.max(0, Math.min(tot, tot - rem));
+                incomingItem.setText(3, done + " / " + tot);
+            } else {
+                incomingItem.setText(3, _translationRegistry.getText("Complete"));
+            }
     
             resizeCols(incomingItem);
             
@@ -991,9 +999,17 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                 outgoingItem = new TreeItem(rootItem, SWT.NONE);
                 _archiveNameToOutgoingItem.put(action.getArchive().getName(), outgoingItem);
                 _items.put(outgoingItem, "outgoing");
+                // text doesn't change
+                outgoingItem.setText(0, _translationRegistry.getText("Pushes"));
             }
-            outgoingItem.setText(0, _translationRegistry.getText("pushes"));
-            outgoingItem.setText(3, action.getArchive().getOutgoingActionCount()+"");
+            int rem = action.getArchive().getOutgoingActionsInProgress();
+            if (rem > 0) {
+                int tot = action.getArchive().getOutgoingActionCount();
+                int done = Math.max(0, Math.min(tot, tot - rem));
+                outgoingItem.setText(3, done + " / " + tot);
+            } else {
+                outgoingItem.setText(3, _translationRegistry.getText("Complete"));
+            }
 
             Map outgoingURIToItem = (Map)_archiveNameToOutgoing.get(action.getArchive().getName());
             if (outgoingURIToItem == null) {

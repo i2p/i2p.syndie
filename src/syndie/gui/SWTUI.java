@@ -211,6 +211,7 @@ public class SWTUI {
             } else {
                 browser.debugMessage("db login complete, starting browser...");
                 browser.startup(timer);
+                Splash.dispose();
                 browser.debugMessage("browser started");
             }
             timer.addEvent("swtUI startup complete");

@@ -99,7 +99,8 @@ class TextUITab extends BrowserTab implements UI {
         });
         
         //getRoot().setTabList(new Control[] { _in, _exec, _out });
-        
+
+        _themeRegistry.register(this);
         _ui.addUI(this);
     }
 
@@ -182,7 +183,7 @@ class TextUITab extends BrowserTab implements UI {
                     int start = _out.getCharCount();
                     int end = -1;
                     if (r.msg != null) {
-                        _out.append(now() + ":");
+                        _out.append(' ' + now() + ' ');
                         end = _out.getCharCount();
                         StyleRange range = new StyleRange(start, end-start, _tsFGColor, _tsBGColor);
                         _out.setStyleRange(range);
@@ -274,5 +275,11 @@ class TextUITab extends BrowserTab implements UI {
         Exception e;
         public Record(int stat, String newMsg) { type = stat; msg = newMsg; }
         public Record(int stat, String newMsg, Exception cause) { type = stat; msg = newMsg; e = cause; }
+    }
+
+    @Override
+    public void applyTheme(Theme theme) { 
+        _in.setFont(theme.MONOSPACE_FONT); 
+        _out.setFont(theme.MONOSPACE_FONT);
     }
 }

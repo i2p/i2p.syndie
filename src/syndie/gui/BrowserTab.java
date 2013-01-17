@@ -156,7 +156,16 @@ public abstract class BrowserTab extends BaseComponent implements Themeable {
         configItem();
     }
     
+    /**
+     *  If you have overridden applyTheme() or are Translatable, you must call
+     *  _translationRegistry.register(this) (i.e. Translatable)
+     *  and/or _themeRegistry.register(this) (i.e. Themable)
+     *  in this method.
+     *
+     *  Note that BrowserTab is Themable but not Translatable.
+     */
     protected abstract void initComponents();
+
     protected boolean allowClose() { return true; }
 
     /** may be called multiple times */
@@ -220,13 +229,22 @@ public abstract class BrowserTab extends BaseComponent implements Themeable {
     public Image getIcon() { return null; }
 
     /** 
-     * vetoable close and dispose (including the associated tab item), returning true
+     * veto-able close and dispose (including the associated tab item), returning true
      * if the tab was closed, false if it was left intact (aka the tab vetoed closure).
      * call this from the Browser - internally use closeTab(), which then asks the Browser
      * to call close() (after doing some bookkeeping)
+     *
+     * Note that this calls _themeRegistry.unregister(this) for you, but you must do
+     * _translationRegistry.unregister(this) yourself
      */
     public boolean close() { dispose(); return true; }
-    /** unvetoable close */
+
+    /** 
+     * un-veto-able close
+     *
+     * Note that this calls _themeRegistry.unregister(this) for you, but you must do
+     * _translationRegistry.unregister(this) yourself
+     */
     public void dispose() {
         _themeRegistry.unregister(this);
         if (!_item.isDisposed())
@@ -234,6 +252,7 @@ public abstract class BrowserTab extends BaseComponent implements Themeable {
         ImageUtil.dispose(getIcon());
         disposeDetails();
     }
+
     protected abstract void disposeDetails();
     
     public boolean canShow(SyndieURI uri) { 
@@ -251,12 +270,6 @@ public abstract class BrowserTab extends BaseComponent implements Themeable {
     
     public void toggleMaxView() {}
     public void toggleMaxEditor() {}
-    
-    protected void debug(String msg) { _ui.debugMessage(msg); }
-    protected void debug(String msg, Exception e) { _ui.debugMessage(msg, e); }
-    protected void status(String msg) { _ui.statusMessage(msg); }
-    protected void error(String msg) { _ui.errorMessage(msg); }
-    protected void error(String msg, Exception e) { _ui.errorMessage(msg, e); }
     
     //protected Image createAvatar(ChannelInfo chan) {
     //    return ImageUtil.resize(ImageUtil.ICON_QUESTION, ImageUtil.TAB_ICON_SIZE, ImageUtil.TAB_ICON_SIZE, false);

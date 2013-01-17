@@ -218,7 +218,7 @@ class LogTab extends BrowserTab implements UI, Themeable, Translatable {
             while (records.size() > 0) {
                 Record r = (Record)records.remove(0);
                 if (r.msg != null) {
-                    _outBuf.insert(0, ts(r.when) + ": " + r.msg + "\n");
+                    _outBuf.insert(0, ts(r.when) + "  " + r.msg + "\n");
                 }
                 if (r.e != null) {
                     StringWriter out = new StringWriter();
@@ -271,7 +271,7 @@ class LogTab extends BrowserTab implements UI, Themeable, Translatable {
     }
     
     public void applyTheme(Theme theme) {
-        _out.setFont(theme.LOG_FONT);
+        _out.setFont(theme.MONOSPACE_FONT);
     }
     
     

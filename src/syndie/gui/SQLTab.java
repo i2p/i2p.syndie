@@ -298,9 +298,10 @@ class SQLTab extends BrowserTab implements Translatable, Themeable {
         _icon = ImageUtil.ICON_TAB_SQL;
     }
     
+    @Override
     public void applyTheme(Theme theme) {
-        _results.setFont(theme.TABLE_FONT);
-        _in.setFont(theme.DEFAULT_FONT);
-        _msgs.setFont(theme.DEFAULT_FONT);
+        _results.setFont(theme.MONOSPACE_FONT);
+        _in.setFont(theme.MONOSPACE_FONT); 
+        _msgs.setFont(theme.MONOSPACE_FONT);
     }
 }

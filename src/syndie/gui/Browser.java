@@ -1645,9 +1645,13 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
     public void unview(SyndieURI uri) {
         BrowserTab tab = null;
         synchronized (_openTabs) {
-            tab = (BrowserTab)_openTabs.remove(uri);
-            if (tab != null)
+            tab = _openTabs.remove(uri);
+            if (tab != null) {
+                debugMessage("Unview " + uri);
                 _openTabURIs.remove(tab.getTabItem());
+            } else {
+                debugMessage("Unview " + uri + " not in " + _openTabs.keySet());
+            }
         }
         if (tab != null)
             tab.dispose();
@@ -1757,6 +1761,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         //editor.pickOrder(false);
         editor.open();
     }
+
     /** called by the bookmark editor, or other things that can populate the fields properly */
     public void bookmark(NymReferenceNode node, boolean doneBookmarking) {
         debugMessage("bookmarking node: parent=" + node.getParentGroupId() + " siblingOrder=" + node.getSiblingOrder());
@@ -1767,10 +1772,12 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         //    debugMessage("bookmarks refreshed");
         //}
     }
+
     public void deleteBookmark(long bookmarkGroupId) {
         _client.deleteNymReference(_client.getLoggedInNymId(), bookmarkGroupId);
         _bookmarks.refreshBookmarks();
     }
+
     public void deleteBookmarks(List bookmarkGroupIds) {
         for (int i = 0; i < bookmarkGroupIds.size(); i++) {
             Long groupId = (Long)bookmarkGroupIds.get(i);
@@ -1778,25 +1785,30 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         }
         _bookmarks.refreshBookmarks();
     }
+
     public void updateBookmark(NymReferenceNode bookmark) {
         debugMessage("updating bookmark: parent=" + bookmark.getParentGroupId() + " siblingOrder=" + bookmark.getSiblingOrder());
         _client.updateNymReference(_client.getLoggedInNymId(), bookmark);
         _bookmarks.refreshBookmarks();
     }
+
     public boolean isBookmarked(SyndieURI syndieURI) { return _bookmarks.isBookmarked(syndieURI); }
     
     public UI getUI() { return this; }
+
     public TranslationRegistry getTranslationRegistry() { return _translation; }
     
-    
-    
-    
+    /**
+     *  This always deletes the messages too.
+     *  TODO make it an option.
+     */
     public boolean ban(Hash scope) {
         String scopeName = _client.getChannelName(scope);
         if (scopeName == null)
             scopeName = "";
-        scopeName = scopeName + " [" + scope.toBase64().substring(0,6) + "]";
+        scopeName = UIUtil.displayName(scopeName, scope);
 
+        // TODO checkbox for delete messages or not
         MessageBox box = new MessageBox(_shell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
         box.setMessage(getTranslationRegistry().getText(
                 "All of the messages in it will be removed and you will never receive " +
@@ -1811,12 +1823,13 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             return false;
         }
     }
+
     private void doBan(Hash scope) {
         _client.ban(scope, getUI(), true);
         //_client.ban(scope, getUI(), true, false); 
         MessageBox box = new MessageBox(_shell, SWT.ICON_INFORMATION | SWT.OK);
         box.setText(getTranslationRegistry().getText("Banned"));
-        box.setMessage(getTranslationRegistry().getText("Selected forum/author banned"));
+        box.setMessage(getTranslationRegistry().getText("Banned") + ' ' + UIUtil.display(scope));
         box.open();
     }
     

@@ -56,7 +56,7 @@ public class SpellUtil {
     private static void buildDictionary() {
         try {
             _dictionary = new SpellDictionaryHashMap(getDictionaryReader());
-            System.out.println("Dictionary loaded");
+            //System.out.println("Dictionary loaded");
         } catch (IOException ioe) {
             // use an empty one
             try { _dictionary = new SpellDictionaryHashMap(); } catch (IOException ioe2) {}

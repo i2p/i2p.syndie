@@ -885,6 +885,10 @@ public class SyncArchive {
     public SyndieURI getArchiveURI() { return SyndieURI.createArchive(getURL(), null); }
     
     public int getIncomingActionCount() { return _incomingActions.size(); }
+
+    /** @since 1.102b-9 */
+    public int getIncomingActionsInProgress() { return _incomingActionsInProgress; }
+
     public IncomingAction getIncomingAction(int num) { return (IncomingAction)_incomingActions.get(num); }
     
     IncomingAction createIncomingAction(SyndieURI uri) { 
@@ -905,6 +909,9 @@ public class SyncArchive {
     }
     
     public int getOutgoingActionCount() { return _outgoingActions.size(); }
+
+    /** @since 1.102b-9 */
+    public int getOutgoingActionsInProgress() { return _outgoingActionsInProgress; }
 
     public OutgoingAction getOutgoingAction(int num) { return (OutgoingAction)_outgoingActions.get(num); }
 
