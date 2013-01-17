@@ -1,9 +1,11 @@
 package syndie.db;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
+import java.io.InputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
@@ -576,9 +578,11 @@ class SyndicateMenu implements TextEngine.Menu {
         Importer imp = new Importer(client, client.getPass());
         ui.debugMessage("Importing from " + f.getPath());
         boolean ok;
+        InputStream in = null;
         try {
             NestedUI nested = new NestedUI(ui);
-            ok = imp.processMessage(nested, new FileInputStream(f), client.getLoggedInNymId(), client.getPass(), null, forceReimport, null, null);
+            in = new BufferedInputStream(new FileInputStream(f));
+            ok = imp.processMessage(nested, in, client.getLoggedInNymId(), client.getPass(), null, forceReimport, null, null);
             if (ok && (nested.getExitCode() >= 0) ) {
                 if (nested.getExitCode() == 1) {
                     ui.errorMessage("Imported but could not decrypt " + f.getPath());
@@ -590,6 +594,8 @@ class SyndicateMenu implements TextEngine.Menu {
             }
         } catch (IOException ioe) {
             ui.errorMessage("Error importing the message from " + f.getPath(), ioe);
+        } finally {
+            if (in != null) try { in.close(); } catch (IOException ioe) {}
         }
     }
     

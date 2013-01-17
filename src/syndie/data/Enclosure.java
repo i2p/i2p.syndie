@@ -33,38 +33,33 @@ import net.i2p.util.SecureFileOutputStream;
  */
 public class Enclosure {
     /** full enclosure formatting version */
-    private String _enclosureType;
+    private final String _enclosureType;
     /** headers visible to all */
-    private Properties _publicHeaders;
-    /** cached unparsed public headers */
-    private byte _publicHeaderData[];
+    private final Properties _publicHeaders;
+    /** cached unparsed public headers, as they must go out in the same order */
+    private final byte _publicHeaderData[];
     /** encrypted/padded/zipped/etc data */
     private byte[] _data;
     /** hash from the beginning of the enclosure through the data */
-    private Hash _authorizationHash;
+    private final Hash _authorizationHash;
     /**
      * signature of the enclosure up through the data by an authorized key
      * (or just random junk if unauthorized)
      */
-    private Signature _authorizationSig;
+    private final Signature _authorizationSig;
     /** hash from the beginning of the enclosure through the authorization signature */
-    private Hash _authenticationHash;
+    private final Hash _authenticationHash;
     /**
      * signature of the enclosure up through the authorization signature
      * by the nym.  the nym may not be known prior to unencrypting the data
      */
-    private Signature _authenticationSig;
+    private final Signature _authenticationSig;
     /** original signature data as stored in the enclosure, while the authenticationSig itself
      * may be adjusted as controlled by a private header value */
-    private byte _authenticationSigOrig[];
-    private int _rawSize;
+    private final byte _authenticationSigOrig[];
+    private final int _rawSize;
     
-    public Enclosure(InputStream raw) throws IOException {
-        _publicHeaders = new Properties();
-        if (raw instanceof FileInputStream)
-            raw = new BufferedInputStream(raw);
-        load(raw);
-    }
+    // see below for constructor
     
     public boolean getLoaded() { return _authorizationSig != null; }
     public String getEnclosureType() { return _enclosureType; }
@@ -354,13 +349,20 @@ public class Enclosure {
         }
     }
 
+    /**
+     * Caller must close the InputStream
+     */
     @SuppressWarnings("deprecation")
-    private void load(InputStream raw) throws IOException {
+    public Enclosure(InputStream raw) throws IOException {
+        _publicHeaders = new Properties();
+        if (raw instanceof FileInputStream)
+            raw = new BufferedInputStream(raw);
+
         Sha256Standalone hash = new Sha256Standalone();
         hash.reset();
         _enclosureType = DataHelper.readLine(raw, hash);
         if (_enclosureType == null) throw new IOException("Corrupt enclosure, no type line");
-        _rawSize += _enclosureType.length();
+        int rawSize = _enclosureType.length();
         
         // read the headers
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -368,7 +370,7 @@ public class Enclosure {
         while (DataHelper.readLine(raw, buf, hash)) {
             int len = buf.length();
             if (len <= 0) break;
-            _rawSize += len;
+            rawSize += len;
             baos.write(DataHelper.getUTF8(buf.toString()+"\n"));
             int split = buf.indexOf("=");
             if (split <= 0) throw new IOException("Invalid header: " + buf.toString());
@@ -387,7 +389,7 @@ public class Enclosure {
         // now comes the size header
         String sz = DataHelper.readLine(raw, hash);
         if (sz == null) throw new IOException("Missing size header");
-        _rawSize += sz.length();
+        rawSize += sz.length();
         int split = sz.indexOf('=');
         if ( (split <= 0) || (split + 1 >= sz.length()) ) throw new IOException("Invalid size header: " + sz);
         String key = sz.substring(0, split);
@@ -400,7 +402,7 @@ public class Enclosure {
             throw new IOException("Invalid size header: " + bytes);
         }
         if (bytes < 0) throw new IOException("Invalid size header: " + bytes);
-        _rawSize += bytes;
+        rawSize += bytes;
         
         // load the data into _data
         loadData(raw, bytes, hash);
@@ -411,15 +413,23 @@ public class Enclosure {
         _authenticationHash = new Hash(hash.digest());
         _authenticationSig = readSig(raw, hash);
         _authenticationSigOrig = _authenticationSig.getData();
-        _rawSize += Signature.SIGNATURE_BYTES*2;
+        _rawSize = rawSize + Signature.SIGNATURE_BYTES*2;
     }
     
+    /**
+     *  This must be an exact inverse of load(), as the ImportMeta and ImportPost tasks
+     *  load() and then store() to the archive rather than copying the file.
+     *  That's why we save the raw _publicHeaderData, so it doesn't get reordered.
+     *
+     *  Changing those classes to just copy the file may be safer.
+     */
     public void store(String filename) throws IOException {
         File out = new File(filename);
         //if (out.exists()) throw new IOException("File already exists");
-        OutputStream raw = new BufferedOutputStream(new SecureFileOutputStream(out));
+        OutputStream raw = null;
         boolean good = false;
         try {
+            raw = new BufferedOutputStream(new SecureFileOutputStream(out));
             raw.write(DataHelper.getUTF8(_enclosureType+"\n"));
             raw.write(_publicHeaderData);
             raw.write(DataHelper.getUTF8("\n"));
@@ -427,7 +437,6 @@ public class Enclosure {
             raw.write(_data);
             raw.write(DataHelper.getUTF8("AuthorizationSig=" + Base64.encode(_authorizationSig.getData())+"\n"));
             raw.write(DataHelper.getUTF8("AuthenticationSig=" + Base64.encode(_authenticationSigOrig)+"\n"));
-            raw.flush();
             good = true;
         } finally {
             if (!good)
@@ -496,6 +505,10 @@ public class Enclosure {
             System.out.println("Usage: Enclosure files....]");
             System.exit(1);
         }
+        if (args[0].equals("copytest") && args.length == 3) {
+            copytest(args);
+            return;
+        }
         for (int i = 0; i < args.length; i++) {
             try {
                 System.out.println("File: " + args[i]);
@@ -525,6 +538,19 @@ public class Enclosure {
             } catch (Exception ioe) {
                 ioe.printStackTrace();
             }
+        }
+    }
+
+    private static void copytest(String[] args) {
+        InputStream in = null;
+        try {
+            in = new BufferedInputStream(new FileInputStream(args[1]));
+            Enclosure enc = new Enclosure(in);
+            enc.store(args[2]);
+        } catch (Exception ioe) {
+            ioe.printStackTrace();
+        } finally {
+            if (in != null) try { in.close(); } catch (IOException ioe) {}
         }
     }
 }

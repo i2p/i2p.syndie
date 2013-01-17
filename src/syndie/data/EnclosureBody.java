@@ -28,19 +28,19 @@ import syndie.db.CommandImpl;
  *  See spec.html for specification.
  */
 public class EnclosureBody {
-    private I2PAppContext _context;
-    private Log _log;
+    private final I2PAppContext _context;
+    private final Log _log;
     /** filename to byte[] */
-    private Map<String, byte[]> _entries;
+    private final Map<String, byte[]> _entries;
     /** key to value */
     private Properties _headers;
     /** list of config settings (Properties) for each page */
-    private List<Properties> _pageConfig;
+    private final List<Properties> _pageConfig;
     /** list of config settings (Properties) for each attachment */
-    private List<Properties> _attachConfig;
+    private final List<Properties> _attachConfig;
     private int _pages;
     private int _attachments;
-    private List<ReferenceNode> _references;
+    private final List<ReferenceNode> _references;
     
     public static final String ENTRY_AVATAR = "avatar32.png";
     public static final String ENTRY_HEADERS = "headers.dat";
@@ -66,6 +66,8 @@ public class EnclosureBody {
      * Decrypt and parse up the enclosure body with the given read key, throwing a DFE if
      * the decryption or parsing fails.
      * format: IV + E(rand(nonzero) padding + 0 + internalSize + totalSize + data + rand, IV, key)+HMAC(bodySection, H(bodyKey+IV))
+     *
+     * Caller must close the InputStream
      */
     @SuppressWarnings("deprecation")
     public EnclosureBody(I2PAppContext ctx, InputStream data, int size, SessionKey key) throws IOException, DataFormatException {
@@ -127,6 +129,8 @@ public class EnclosureBody {
     /**
      * Decrypt and parse up the enclosure body with the given reply key, throwing a DFE if
      * the decryption or parsing fails
+     *
+     * Caller must close the InputStream
      */
     @SuppressWarnings("deprecation")
     public EnclosureBody(I2PAppContext ctx, InputStream data, int size, PrivateKey key) throws IOException, DataFormatException {
@@ -186,6 +190,8 @@ public class EnclosureBody {
      * Decrypt and parse up the enclosure body that was encrypted with a reply key, but we know
      * the IV and session key used but not necessarily the reply key.  Throw a DFE if
      * the decryption or parsing fails
+     *
+     * Caller must close the InputStream
      */
     @SuppressWarnings("deprecation")
     public EnclosureBody(I2PAppContext ctx, InputStream data, int size, byte explicitIV[], SessionKey explicitSessionKey) throws IOException, DataFormatException {

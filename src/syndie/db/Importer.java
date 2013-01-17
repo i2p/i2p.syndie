@@ -1,5 +1,6 @@
 package syndie.db;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -68,6 +69,7 @@ public class Importer extends CommandImpl {
                 return client;
             }
         }
+        InputStream in = null;
         try {
             long nymId = -1;
             if (args.dbOptsSpecified()) {
@@ -109,7 +111,8 @@ public class Importer extends CommandImpl {
             if (sk != null)
                 replySessionKey = new SessionKey(sk);
             byte replyIV[] = args.getOptBytes("replyIV");
-            boolean ok = processMessage(ui, new FileInputStream(file), nymId, client.getPass(), args.getOptValue("passphrase"), args.getOptBoolean("reimport", false), replyIV, replySessionKey);
+            in = new BufferedInputStream(new FileInputStream(file));
+            boolean ok = processMessage(ui, in, nymId, client.getPass(), args.getOptValue("passphrase"), args.getOptBoolean("reimport", false), replyIV, replySessionKey);
             ui.debugMessage("Metadata processed");
             if (!ok) // successful imports specify whether they were decrypted (exit code of 0) or undecryptable (exit code of 1)
                 ui.commandComplete(-1, null);
@@ -119,8 +122,9 @@ public class Importer extends CommandImpl {
         } catch (IOException ioe) {
             ui.errorMessage("Error importing the message", ioe);
             ui.commandComplete(-1, null);
-        //} finally {
-        //    if (client != null) client.close();
+        } finally {
+            if (in != null) try { in.close(); } catch (IOException ioe) {}
+            //if (client != null) client.close();
         }
         return client;
     }
@@ -163,8 +167,11 @@ public class Importer extends CommandImpl {
     
     /*
      * A "message" could be a post or a meta.syndie file.
+     *
+     * Caller must close the InputStream
      */
-    public boolean processMessage(UI ui, DBClient client, InputStream source, String bodyPassphrase, boolean forceReimport, byte replyIV[], SessionKey replySessionKey) throws IOException {
+    public boolean processMessage(UI ui, DBClient client, InputStream source, String bodyPassphrase,
+                                  boolean forceReimport, byte replyIV[], SessionKey replySessionKey) throws IOException {
         return processMessage(ui, source, client.getLoggedInNymId(), client.getPass(), bodyPassphrase, forceReimport, replyIV, replySessionKey);
     }
 
@@ -176,8 +183,11 @@ public class Importer extends CommandImpl {
      * it will not fire an implicit ui.commandComplete.
      *
      * A "message" could be a post or a meta.syndie file.
+     *
+     * Caller must close the InputStream
      */
-    public boolean processMessage(UI ui, InputStream source, long nymId, String pass, String bodyPassphrase, boolean forceReimport, byte replyIV[], SessionKey replySessionKey) throws IOException {
+    public boolean processMessage(UI ui, InputStream source, long nymId, String pass, String bodyPassphrase,
+                                  boolean forceReimport, byte replyIV[], SessionKey replySessionKey) throws IOException {
         if (bodyPassphrase != null)
             ui.debugMessage("Importing message with body passphrase " + bodyPassphrase);
         else

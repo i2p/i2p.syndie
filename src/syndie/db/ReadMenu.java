@@ -1,8 +1,10 @@
 package syndie.db;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
@@ -1767,10 +1769,12 @@ class ReadMenu implements TextEngine.Menu {
         
         Importer imp = new Importer(client, client.getPass());
         NestedUI nestedUI = new NestedUI(ui);
+        InputStream in = null;
         try {
             ui.debugMessage("Importing from " + archivedFile.getPath());
             // true -> forceReimport
-            boolean ok = imp.processMessage(nestedUI, new FileInputStream(archivedFile), client.getLoggedInNymId(),
+            in = new BufferedInputStream(new FileInputStream(archivedFile));
+            boolean ok = imp.processMessage(nestedUI, in, client.getLoggedInNymId(),
                                             client.getPass(), passphrase, true, null, null);
             if (ok) {
                 if (nestedUI.getExitCode() == 0) {
@@ -1787,6 +1791,8 @@ class ReadMenu implements TextEngine.Menu {
         } catch (IOException ioe) {
             ui.errorMessage("Decryption failed");
             ui.commandComplete(-1, null);
+        } finally {
+            if (in != null) try { in.close(); } catch (IOException ioe) {}
         }
     }
 }
