@@ -1,5 +1,45 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
+* 2013-01-17 1.102b-8 (kytv, MOSFET, zzz)
+  GUI improvements:
+  - Fixes in syndicator tab when there are no archives defined
+  - Fix bold and italic in default font
+  - Enable cancel and close in wizard
+  - Focus on finish button on last panel in wizard
+  - Display dates by message ID (not import date) by default
+  - Show help popup by default after posting message
+  - Add stack trace to internal error popup
+  - Start work on a help tab
+  - Put icons on MessageViewBody tabs
+  - Set italic font for unspecified author and forum on MessageView
+  - Don't show unread flag on MessageFlagBar, since you're looking at the message
+  Fixes:
+  - Fix NPE when viewing URI with a page number and the message is unknown locally
+  - Fix NPE on right-click disable images in PageRenderer
+  - Fix ManageForum avatar display
+  Syndication:
+  - Fix createEdition to always create a date in the recent past,
+    unless the replied-to date is in the future.
+    Ensure later than replied-to date if a reply.
+    Also prevent looping forever on bad dates.
+  Build:
+  - Make fonts a little larger (suggested)
+  - Reorder deps in pkg-all target
+  - Create launcher shellscripts for Linux
+  Other:
+  - Implement running a script when the db is created
+  - Implement importing of keys and posts at db create, for all UIs (was just Desktop)
+  - Add channel bans at db create
+  - More lenient parsing of URIs
+  - Added ctrlserv command to launch control server listener
+  - Cache hashes and keys where possible
+  - Create table in the db that was missed in db version 23. bump db rev to 24.
+  - Enclosure.main (dumpsyndie) improvements (decode body if body key available, show ident hash)
+  - Fix broken links to *.i2p.net in docs
+  - Remove unused servlet.jar
+  - Add missing licenses
+  - Correct outdated info/instructions
+
 * 2013-01-14 1.102b-7 (kytv, zzz)
   GUI improvements:
   - Fix avatar chooser menu if images are not displayed
