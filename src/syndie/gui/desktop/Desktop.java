@@ -845,36 +845,13 @@ class Desktop {
                     toggleForumSelectionPanel();
                 } 
             });
-            JobRunner.instance().enqueue(new Runnable() { public void run() { importMsgs(); } });
+            // Moved to TextEngine
+            //JobRunner.instance().enqueue(new Runnable() { public void run() { importMsgs(); } });
         }
         //if (ok)
         //    _display.asyncExec(new Runnable() { public void run() { showDesktopTabs(); } });
     }
     
-    private void importMsgs() {
-        int index = 1;
-        while (importMsgs("/import_meta" + index + ".syndie"))
-            index++;
-        index = 1;
-        while (importMsgs("/import_post" + index + ".syndie"))
-            index++;
-    }
-    private boolean importMsgs(String resourceName) {
-        try {
-            InputStream in = getClass().getResourceAsStream(resourceName);
-            if (in == null) {
-                return false;
-            }
-            
-            Importer imp = new Importer(_client);
-            boolean ok = imp.processMessage(_ui, in, _client.getLoggedInNymId(), _client.getPass(), null, false, null, null);
-            return true;
-        } catch (IOException ioe) {
-            _ui.errorMessage("Error importing packaged message " + resourceName);
-            return false;
-        }
-    }
-
     TabPanel getTabPanel(boolean create) {
         if ((_tabs == null) && create) {
             _tabs = new TabPanel(_center, this);
@@ -896,6 +873,7 @@ class Desktop {
         }
         return _tabs;
     }
+
     void showDesktopTabs() { show(getTabPanel(true), null, null, null); }
     
     void exit() { close(); }

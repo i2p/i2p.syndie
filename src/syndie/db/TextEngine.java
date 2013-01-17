@@ -41,6 +41,7 @@ public class TextEngine {
     private File _scriptDir;
     private final NestedGobbleUI _gobbleUI;
     private final UI _realUI;
+    private final UI _baseUI;
     private final List<String> _commandHistory;
     // no method to add a 2nd one
     private final List<ScriptListener> _scriptListeners;
@@ -66,6 +67,7 @@ public class TextEngine {
         _scriptListeners = new ArrayList();
         if (lsnr != null)
             _scriptListeners.add(lsnr);
+        _baseUI = ui;
         _realUI = new MenuUI(ui);
         _ui = _realUI;
         _gobbleUI = new NestedGobbleUI(_realUI);
@@ -95,6 +97,7 @@ public class TextEngine {
         if (lsnr != null)
             _scriptListeners.add(lsnr);
         _client = client;
+        _baseUI = ui;
         _realUI = new MenuUI(ui);
         _ui = _realUI;
         _gobbleUI = new NestedGobbleUI(_realUI);
@@ -351,7 +354,8 @@ public class TextEngine {
     
     /**
      *  This logs in.
-     *  If a new database was created, it runs the 'newdatabase' script.
+     *  If a new database was created,
+     *  it imports default messages for the given UI and runs the 'newdatabase' script.
      *  Then it runs the 'login' script.
      */
     private void processLogin(Opts opts) {
@@ -445,6 +449,7 @@ public class TextEngine {
             }
         }
     }
+
     private void processSwitchMenu(Opts opts) {
         String targetMenu = null;
         if (opts.size() > 0)
@@ -810,6 +815,7 @@ public class TextEngine {
     }
     
     private static final SimpleDateFormat _backupFmt = new SimpleDateFormat("yyyy-MM-dd");
+
     private void processBackup(Opts opts) {
         if ( (_client == null) || (!_client.isLoggedIn()) ) {
             _ui.errorMessage("You must be logged in to backup the database");
@@ -838,6 +844,50 @@ public class TextEngine {
         _client.backup(_ui, out, includeArchive);
     }
     
+    /**
+     *  Import all resources for a given UI
+     *  @since 1.102b-8
+     */
+    private void processImportDefaults(Opts opts) {
+        importMsgs("/imports/default");
+        if (_baseUI != null)
+            importMsgs("/imports/" + _baseUI.getClass().getSimpleName());
+    }
+
+    /**
+     *  Import all resources in a directory in the jar
+     *  @since 1.102b-8 moved from Desktop
+     */
+    private void importMsgs(String jarPath) {
+        _ui.debugMessage("Importing resources from " + jarPath);
+        int index = 1;
+        while (importMsg(jarPath + "/import_meta" + index + ".syndie"))
+            index++;
+        index = 1;
+        while (importMsg(jarPath + "/import_post" + index + ".syndie"))
+            index++;
+    }
+
+    /**
+     *  Import a single resource from the jar
+     *  @since 1.102b-8 moved from Desktop
+     */
+    private boolean importMsg(String resourceName) {
+        try {
+            InputStream in = getClass().getResourceAsStream(resourceName);
+            if (in == null) {
+                return false;
+            }
+            _ui.debugMessage("Importing resource " + resourceName);
+            Importer imp = new Importer(_client);
+            boolean ok = imp.processMessage(_ui, in, _client.getLoggedInNymId(), _client.getPass(), null, false, null, null);
+            return true;
+        } catch (IOException ioe) {
+            _ui.errorMessage("Error importing packaged message " + resourceName);
+            return false;
+        }
+    }
+
     private void processBuildURI(Opts opts) {
         SyndieURI uri = null;
         String url = opts.getOptValue("url");
@@ -1011,6 +1061,7 @@ public class TextEngine {
             ui.statusMessage(" backup --out $file [--includeArchive $boolean]");
             ui.statusMessage("                    : back up the database to the given (compressed) file,");
             ui.statusMessage("                    : optionally including the signed archive files");
+            ui.statusMessage(" importDefaults     : import default keys and posts from the jar");
         }
         public boolean processCommands(DBClient client, UI ui, Opts opts) {
             if ("sql".equalsIgnoreCase(opts.getCommand())) {
@@ -1018,6 +1069,9 @@ public class TextEngine {
                 return true;
             } else if ("backup".equalsIgnoreCase(opts.getCommand())) {
                 processBackup(opts);
+                return true;
+            } else if ("importdefaults".equalsIgnoreCase(opts.getCommand())) {
+                processImportDefaults(opts);
                 return true;
             }
             return false;

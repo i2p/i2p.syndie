@@ -2,6 +2,11 @@
 # This CLI script is run after a successful login to a new database,
 # but before the 'login' script.
 #
+menu start
+menu loggedin
+importDefaults
+menu start
 menu read
 ban --scope WF796VOGsznIsixh8d1M0j7h-~rR92Tcc1wbcOPu7c4= --delete true
 ban --scope LN2NCaoy2CZf~z89rLEfhDfslHh6D1u1cIqKUGGO46Y= --delete true
+menu start

@@ -330,6 +330,9 @@ public class Enclosure {
             rv.append("Enclosure body: ").append(_data.length).append(" bytes");
         else
             rv.append("Without enclosure body");
+        SigningPublicKey identKey = getHeaderSigningKey(Constants.MSG_META_HEADER_IDENTITY);
+        if (identKey != null)
+            rv.append("\nIdentity Hash: ").append(identKey.calculateHash().toBase64());
         rv.append("\nAuthorization Sig: ").append(_authorizationSig.toBase64());
         rv.append("\nAuthentication Sig: ").append(_authenticationSig.toBase64());
         rv.append("\nTotal size: ").append(_rawSize).append(" bytes");
