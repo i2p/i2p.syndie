@@ -153,6 +153,11 @@ delimited <code>name=value</code> pairs)</p>
   <dt id="general_definecmd"><code>definecmd --name $cmdName --class $className</code></dt>
   <dd>Extend the text interface by defining a new command to be run when the
       specified name is executed.</dd>
+  <dt id="general_ctrlserv"><code>ctrlserv ([--port $portNum])</code></dt>
+  <dd>Start the programmable control server, listening by default on port 10111. The control server will only listen on the loopback
+     address (127.0.0.1). There is no security implemented. Anyone who can connect
+     to the port will have complete access to impersonate you, read any messages you
+     are authorized to read, etc.</dd>
   <dt id="general_httpserv"><code>httpserv ([--port $port] [--listeners $num] [--writable $boolean] | --kill true)</code></dt>
   <dd>Run an HTTP server for the archive (or stop an existing one, if kill is specified).
       By default, it listens on port 8080 and can handle 5 concurrent requests.  It
