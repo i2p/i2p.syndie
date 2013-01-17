@@ -467,7 +467,7 @@ public class TextEngine {
                 Menu cur = (Menu)_menus.get(i);
                 if (cur.getName().equals(targetMenu)) {
                     _currentMenu = targetMenu;
-                    break;
+                    return;
                 }
             }
         }
@@ -490,6 +490,8 @@ public class TextEngine {
                 _ui.statusMessage(" sql      (advanced SQL interface to the backend database)");
                 */
             }
+        } else {
+            _ui.errorMessage("No such menu: " + targetMenu);
         }
     }
     private static String padBlank(String name, int paddedSize) {

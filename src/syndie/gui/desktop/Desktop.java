@@ -1198,9 +1198,12 @@ class Desktop {
         public void messagePostponed(long postponementId) {}
         public void messageCancelled() {}
     }
-}
 
-class CloseDesktopCorner extends DesktopCorner {
+
+
+
+/** make static inner class so depend doesn't complain, don't bother reindenting */
+private static class CloseDesktopCorner extends DesktopCorner {
     private Desktop _desktop;
     private Button _button;
     public CloseDesktopCorner(Desktop desktop, int color, Composite parent, UI ui) {
@@ -1225,7 +1228,8 @@ class CloseDesktopCorner extends DesktopCorner {
     }
 }
 
-class HelpDesktopCorner extends DesktopCorner {
+/** make static inner class so depend doesn't complain, don't bother reindenting */
+private static class HelpDesktopCorner extends DesktopCorner {
     private Desktop _desktop;
     private Button _button;
     public HelpDesktopCorner(Desktop desktop, int color, Composite parent, UI ui) {
@@ -1244,7 +1248,8 @@ class HelpDesktopCorner extends DesktopCorner {
     }
 }
 
-class SyndicateDesktopCorner extends DesktopCorner {
+/** make static inner class so depend doesn't complain, don't bother reindenting */
+private static class SyndicateDesktopCorner extends DesktopCorner {
     private Desktop _desktop;
     private Button _button;
     public SyndicateDesktopCorner(Desktop desktop, int color, Composite parent, UI ui) {
@@ -1267,7 +1272,8 @@ class SyndicateDesktopCorner extends DesktopCorner {
     }
 }
 
-class ControlDesktopCorner extends DesktopCorner {
+/** make static inner class so depend doesn't complain, don't bother reindenting */
+private static class ControlDesktopCorner extends DesktopCorner {
     private Desktop _desktop;
     private Button _button;
     public ControlDesktopCorner(Desktop desktop, int color, Composite parent, UI ui) {
@@ -1299,7 +1305,8 @@ class ControlDesktopCorner extends DesktopCorner {
     }
 }
 
-class CommandBar implements Themeable, Translatable {
+/** make static inner class so depend doesn't complain, don't bother reindenting */
+private static class CommandBar implements Themeable, Translatable {
     private UI _ui;
     private Composite _parent;
     private Composite _root;
@@ -1412,4 +1419,7 @@ class CommandBar implements Themeable, Translatable {
         _switchPanel.setText(registry.getText("Switch task"));
     }
     
+}
+
+
 }

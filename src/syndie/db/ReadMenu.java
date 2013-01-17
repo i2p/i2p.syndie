@@ -263,12 +263,12 @@ class ReadMenu implements TextEngine.Menu {
                 
                 ChannelInfo chan = client.getChannel(id);
                 if (chan.getReadKeyUnknown()) {
-                    buf.append("(undecrypted metadata)\n\tuse 'decrypt --channel ");
+                    buf.append("(undecrypted metadata)\tuse 'decrypt --channel ");
                     buf.append(_channelKeys.size()-1).append("' to decrypt");
                 } else if (chan.getPassphrasePrompt() != null) {
                     buf.append("(undecrypted metadata) - prompt: \"");
                     buf.append(CommandImpl.strip(chan.getPassphrasePrompt())).append("\"");
-                    buf.append("\n\tuse 'decrypt --channel ");
+                    buf.append("\tuse 'decrypt --channel ");
                     buf.append(_channelKeys.size()-1).append(" --passphrase $passphrase' to decrypt");
                 } else {
                     if (curName != null)
@@ -495,12 +495,12 @@ class ReadMenu implements TextEngine.Menu {
                 date = _dayFmt.format(new Date(msg.getMessageId()));
             }
             if (msg.getReplyKeyUnknown() || msg.getReadKeyUnknown()) {
-                buf.append("(undecrypted private message)\n\tuse 'decrypt --message ");
+                buf.append("(undecrypted private message)\tuse 'decrypt --message ");
                 buf.append(_messageKeys.size()-1).append("' to decrypt");
             } else if (msg.getPassphrasePrompt() != null) {
                 buf.append("(undecrypted private message) - prompt: \"");
                 buf.append(CommandImpl.strip(msg.getPassphrasePrompt()));
-                buf.append("\"\n\tuse 'decrypt --message ");
+                buf.append("\"\tuse 'decrypt --message ");
                 buf.append(_messageKeys.size()-1).append(" --passphrase $passphrase' to decrypt");
             } else {
                 buf.append("(Private message) ");
@@ -559,12 +559,12 @@ class ReadMenu implements TextEngine.Menu {
                 
                 MessageInfo msg = client.getMessage(id);
                 if (msg.getReplyKeyUnknown() || msg.getReadKeyUnknown()) {
-                    buf.append("(undecrypted message)\n\tuse 'decrypt --message ");
+                    buf.append("(undecrypted message)\tuse 'decrypt --message ");
                     buf.append(_messageKeys.size()-1).append("' to decrypt");
                 } else if (msg.getPassphrasePrompt() != null) {
                     buf.append("(undecrypted message) - prompt: \"");
                     buf.append(CommandImpl.strip(msg.getPassphrasePrompt()));
-                    buf.append("\"\n\tuse 'decrypt --message ");
+                    buf.append("\"\tuse 'decrypt --message ");
                     buf.append(_messageKeys.size()-1).append(" --passphrase $passphrase' to decrypt");
                 } else {
                     if (date == null)
@@ -1769,10 +1769,12 @@ class ReadMenu implements TextEngine.Menu {
         NestedUI nestedUI = new NestedUI(ui);
         try {
             ui.debugMessage("Importing from " + archivedFile.getPath());
-            boolean ok = imp.processMessage(nestedUI, new FileInputStream(archivedFile), client.getLoggedInNymId(), client.getPass(), passphrase, false, null, null);
+            // true -> forceReimport
+            boolean ok = imp.processMessage(nestedUI, new FileInputStream(archivedFile), client.getLoggedInNymId(),
+                                            client.getPass(), passphrase, true, null, null);
             if (ok) {
                 if (nestedUI.getExitCode() == 0) {
-                    ui.statusMessage("Decrypted successfully");
+                    ui.statusMessage("Decrypted successfully, now try 'view' again");
                     ui.commandComplete(0, null);
                 } else {
                     ui.errorMessage("Decryption failed");

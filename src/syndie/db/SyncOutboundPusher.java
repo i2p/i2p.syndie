@@ -164,7 +164,7 @@ public class SyncOutboundPusher {
         if (archive.getPostKey() == null)
             return "No posting key defined";
         
-        _manager.getUI().statusMessage("Pushing to freenet (fcp host " + host + " port " + port + ")");
+        _manager.getUI().debugMessage("Pushing to freenet (fcp host " + host + " port " + port + ")");
         try {
             Socket s = new Socket(host, port);
             OutputStream out = s.getOutputStream();
@@ -318,10 +318,10 @@ public class SyncOutboundPusher {
                     _manager.getUI().errorMessage(error);
                     _manager.getUI().debugMessage("FCP response: " + rv);
                 } else {
-                    _manager.getUI().statusMessage("Freenet archive publishing queued on the freenet server");
-                    _manager.getUI().statusMessage("Total size queued: " + (bytes+1023)/1024 + "KBytes");
-                    _manager.getUI().statusMessage("It may take a long time for the archive to be visible for others");
-                    _manager.getUI().statusMessage("Please see the Freenet fproxy for status information.");
+                    _manager.getUI().debugMessage("Freenet archive publishing queued on the freenet server");
+                    _manager.getUI().debugMessage("Total size queued: " + (bytes+1023)/1024 + "KBytes");
+                    _manager.getUI().debugMessage("It may take a long time for the archive to be visible for others");
+                    _manager.getUI().debugMessage("Please see the Freenet fproxy for status information.");
                 }
             }
             s.close();
@@ -474,7 +474,7 @@ public class SyncOutboundPusher {
             
             _manager.getUI().debugMessage("Posting " + f.getPath());
         }
-        _manager.getUI().statusMessage("Posting " + metaFiles.size() + " metadata messages and " + msgFiles.size() + " posts, totalling " + len);
+        _manager.getUI().debugMessage("Posting " + metaFiles.size() + " metadata messages and " + msgFiles.size() + " posts, totalling " + len);
         
         String url = archive.getURL();
         int q = url.indexOf('?');
@@ -492,9 +492,9 @@ public class SyncOutboundPusher {
         
         
         if ( (archive.getHTTPProxyHost() != null) && (archive.getHTTPProxyHost().length() > 0) )
-            _manager.getUI().statusMessage("Pushing to [" + url + "] proxy " + archive.getHTTPProxyHost() + ":" + archive.getHTTPProxyPort());
+            _manager.getUI().debugMessage("Pushing to [" + url + "] proxy " + archive.getHTTPProxyHost() + ":" + archive.getHTTPProxyPort());
         else
-            _manager.getUI().statusMessage("Pushing to [" + url + "]");
+            _manager.getUI().debugMessage("Pushing to [" + url + "]");
         Socket s = null;
         TimeoutEvent timeout = null;
         try {
@@ -552,7 +552,7 @@ public class SyncOutboundPusher {
 
             timeout.cancel();
             
-            _manager.getUI().statusMessage("Files posted");
+            _manager.getUI().debugMessage("Files posted");
             _manager.getUI().commandComplete(0, null);
         } catch (DataFormatException dfe) {
         	timeout.cancel();

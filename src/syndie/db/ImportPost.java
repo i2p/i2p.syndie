@@ -80,7 +80,8 @@ public class ImportPost {
      *
      * @return success
      */
-    public static boolean process(DBClient client, UI ui, Enclosure enc, long nymId, String pass, String bodyPassphrase, boolean forceReimport, byte replyIV[], SessionKey replySessionKey) {
+    public static boolean process(DBClient client, UI ui, Enclosure enc, long nymId, String pass,
+                                  String bodyPassphrase, boolean forceReimport, byte replyIV[], SessionKey replySessionKey) {
         ImportPost imp = new ImportPost(client, ui, enc, nymId, pass, bodyPassphrase, forceReimport, replyIV, replySessionKey);
         return imp.process();
     }
@@ -120,6 +121,10 @@ public class ImportPost {
                     _ui.debugMessage("post has been locally deleted, no need to import it again");
                     return true; // already decrypted
                 }
+            } else if (_client.getMessage(msgId).getReadKeyUnknown())  {
+                _ui.debugMessage("Allowing reimport of msg w/ unknown read key");
+            } else if (_client.getMessage(msgId).getReplyKeyUnknown())  {
+                _ui.debugMessage("Allowing reimport of msg w/ unknown reply key");
             } else if (!_forceReimport) {
                 // catch this here, it will fail the insert later
                 _ui.debugMessage("Message already exists and no force reimport");

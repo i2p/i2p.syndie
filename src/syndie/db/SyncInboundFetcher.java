@@ -151,7 +151,7 @@ class SyncInboundFetcher {
             if (url == null) {
                 action.fetchFailed("Invalid freenet archive URL", null);
             } else {
-                _manager.getUI().statusMessage("Fetching [" + url + "]");
+                _manager.getUI().debugMessage("Fetching [" + url + "]");
                 try {
                     File dataFile = SecureFile.createTempFile("freenetget", "dat", _manager.getClient().getTempDir());
                     EepGet get = new EepGet(I2PAppContext.getGlobalContext(), archive.getHTTPProxyHost(), archive.getHTTPProxyPort(), 0, dataFile.getAbsolutePath(), url);
@@ -354,9 +354,9 @@ class SyncInboundFetcher {
                 url = url + _query;
 
                 if ( (_archive.getHTTPProxyHost() != null) && (_archive.getHTTPProxyHost().length() > 0) )
-                    _manager.getUI().statusMessage(Thread.currentThread().getName() + ": Fetching [" + url + "] proxy " + _archive.getHTTPProxyHost() + ":" + _archive.getHTTPProxyPort());
+                    _manager.getUI().debugMessage(Thread.currentThread().getName() + ": Fetching [" + url + "] proxy " + _archive.getHTTPProxyHost() + ":" + _archive.getHTTPProxyPort());
                 else
-                    _manager.getUI().statusMessage(Thread.currentThread().getName() + ": Fetching [" + url + "]");
+                    _manager.getUI().debugMessage(Thread.currentThread().getName() + ": Fetching [" + url + "]");
                 try {
                     File dataFile = SecureFile.createTempFile("httpget", "dat", _manager.getClient().getTempDir());
                     EepGet get = new EepGet(I2PAppContext.getGlobalContext(), _archive.getHTTPProxyHost(), _archive.getHTTPProxyPort(), 3, dataFile.getAbsolutePath(), url);
@@ -442,7 +442,7 @@ class SyncInboundFetcher {
         public Set getWhitelistScopes() { return _whitelistScopes; }
         
         public void enqueueData(SyncArchive.IncomingAction action, File datafile, boolean delete) {
-            _manager.getUI().statusMessage(Thread.currentThread().getName() + ": enqueueing import from " + datafile.toString());
+            _manager.getUI().debugMessage(Thread.currentThread().getName() + ": enqueueing import from " + datafile.toString());
             synchronized (DataImporter.this) {
                 if (!_actions.contains(action)) {
                     _actions.add(action);
@@ -454,7 +454,7 @@ class SyncInboundFetcher {
         }
         
         public void complete() {
-            _manager.getUI().statusMessage(Thread.currentThread().getName() + ": No more imports");
+            _manager.getUI().debugMessage(Thread.currentThread().getName() + ": No more imports");
             synchronized (DataImporter.this) {
                 _complete = true;
                 DataImporter.this.notifyAll();
@@ -473,7 +473,7 @@ class SyncInboundFetcher {
                             DataImporter.this.wait(1000);
                     }
                 } catch (InterruptedException ie) {}
-                _manager.getUI().statusMessage(Thread.currentThread().getName() + ": Waiting for the pending " + remaining + " import action queue to clear...");
+                _manager.getUI().debugMessage(Thread.currentThread().getName() + ": Waiting for the pending " + remaining + " import action queue to clear...");
             }
         }
         
@@ -493,7 +493,7 @@ class SyncInboundFetcher {
                 }
                 
                 if (action != null) {
-                    _manager.getUI().statusMessage(Thread.currentThread().getName() + ": executing import from " + datafile.toString());
+                    _manager.getUI().debugMessage(Thread.currentThread().getName() + ": executing import from " + datafile.toString());
                     importData(action, datafile, delete, _whitelistScopes);
                 }
             }
