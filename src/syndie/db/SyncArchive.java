@@ -1025,6 +1025,8 @@ public class SyncArchive {
             setLastSyncTime(System.currentTimeMillis());
         
         _manager.getUI().debugMessage("updateSchedule(" + success + "): next sync: " + Constants.getDateTime(getNextSyncTime()));
+        _manager.getUI().debugMessage("incoming act/tot: " + _incomingActionsInProgress + " / " + _incomingActions.size());
+        _manager.getUI().debugMessage("outgoing act/tot: " + _outgoingActionsInProgress + " / " + _outgoingActions.size());
         store();
     }
 
