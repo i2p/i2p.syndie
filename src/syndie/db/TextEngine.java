@@ -752,11 +752,13 @@ public class TextEngine {
     }
     
     private void help() {
-       _ui.statusMessage("Commands: ");
         Menu menu = getCurrentMenu();
-        if (menu != null)
+        if (menu != null) {
+           _ui.statusMessage("<<< " + _currentMenu + " menu commands >>>");
             menu.listCommands(_ui);
+        }
         // alphabetical please
+        _ui.statusMessage("<<< top menu commands >>>");
         _ui.statusMessage(" builduri (--url $url | --channel $chanHash [--message $num [--page $num] )");
         _ui.statusMessage("                    : helper method for building Syndie URIs");
         _ui.statusMessage(" exit               : exit syndie");
@@ -772,6 +774,7 @@ public class TextEngine {
         _ui.statusMessage(" togglePaginate     : turn on or off output pagination");
         if (menu != null && !_currentMenu.equals(LoggedInMenu.NAME))
             _ui.statusMessage(" up                 : go up a menu");
+        _ui.statusMessage("<<< custom commands >>>");
         List<String> clicmds = CLI.getCommands();
         Collections.sort(clicmds);
         for (String cmd : clicmds) {
