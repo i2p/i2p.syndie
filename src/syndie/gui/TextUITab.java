@@ -10,6 +10,8 @@ import java.util.List;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.custom.StyledText;
+import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.events.TraverseEvent;
@@ -42,6 +44,7 @@ class TextUITab extends BrowserTab implements UI {
     private volatile boolean _showedHelp;
     private volatile boolean _closed;
     private final List<Record> _pendingMessages;
+    private int _historyPosition = Integer.MAX_VALUE;
     
     public TextUITab(BrowserControl browser, SyndieURI uri) {
         super(browser, uri);
@@ -90,6 +93,44 @@ class TextUITab extends BrowserTab implements UI {
                     runCommand();
             }
         });
+        _in.addKeyListener(new KeyListener() {
+            // history traversal
+            public void keyPressed(KeyEvent evt) {
+                if (evt.keyCode == SWT.ARROW_UP) {
+                    moveHistory(false);
+                } else if (evt.keyCode == SWT.ARROW_DOWN) {
+                    moveHistory(true);
+                }
+            }
+            private void moveHistory(boolean later) {
+                if (_historyPosition <= 0 && !later) {
+                    // at beginning
+                    return;
+                }
+                List<String> hist = ((Browser)getBrowser()).getEngine().getCommandHistory();
+                int end = hist.size() - 1;
+                if (_historyPosition > end && later) {
+                    return;
+                }
+                if (_historyPosition == end && later) {
+                    ++_historyPosition;
+                    _in.setText("");
+                    return;
+                }
+                if (later)
+                    ++_historyPosition;
+                else if (end < 0)
+                    return;
+                else if (_historyPosition > end)
+                    _historyPosition = end;
+                else
+                    --_historyPosition;
+                String newtxt = hist.get(_historyPosition);
+                _in.setText(newtxt);
+                _in.setSelection(newtxt.length()); // cursor at end
+            }
+            public void keyReleased(KeyEvent keyEvent) {}
+        });
         
         _exec = new Button(getRoot(), SWT.PUSH);
         _exec.setText("execute");
@@ -111,6 +152,7 @@ class TextUITab extends BrowserTab implements UI {
             return;
         _showedHelp = true;
         statusMessage("Enter commands in the box below.");
+        statusMessage("Use up and down arrows to access history.");
         statusMessage("Type 'help' for help.");
         statusMessage("Type 'exit' or 'quit' to close the tab.");
     }
@@ -130,6 +172,7 @@ class TextUITab extends BrowserTab implements UI {
     }
     
     private void runCommand() {
+        _historyPosition = Integer.MAX_VALUE;
         _out.setRedraw(false);
         String cmd = _in.getText().trim();
         // parse it here too, just to catch exit/quit
@@ -163,7 +206,7 @@ class TextUITab extends BrowserTab implements UI {
         }
     }
     
-    private static int MAX_LINES = 100;
+    private static int MAX_LINES = 1000;
     
     private Color _tsBGColor = ColorUtil.getColor("gray", null);
     private Color _tsFGColor = ColorUtil.getColor("black", null);
@@ -187,9 +230,9 @@ class TextUITab extends BrowserTab implements UI {
             public void run() {
                 if ( (_out == null) || (_out.isDisposed()) ) return;
                 _out.setRedraw(false);
-                int overallStart = _out.getCharCount();
                 
                 while (records.size() > 0) {
+                    int overallStart = _out.getCharCount();
                     Record r = (Record)records.remove(0);
                     int start = _out.getCharCount();
                     int end = -1;

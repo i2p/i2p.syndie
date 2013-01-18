@@ -495,6 +495,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         }
     }
     
+    public TextEngine getEngine() { return _engine; }
     public void setEngine(TextEngine engine) { _engine = engine; }
 
     public void startup(final Timer timer) {

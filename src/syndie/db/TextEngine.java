@@ -24,6 +24,10 @@ import syndie.data.SyndieURI;
 
 /**
  *  CLI and startup
+ *
+ *  Note: TextEngine (and TextUI and DBClient) are essentially singletons.
+ *  When using multiple UI interfaces, they may interact unpleasantly.
+ *  To be fixed.
  */
 public class TextEngine {
     private UI _ui;
@@ -173,7 +177,8 @@ public class TextEngine {
             // noop
         } else if (processMeta(opts) || processMenu(opts)) {
             ignored = false;
-            if (origLine.startsWith("!") || (origLine.startsWith("^")))
+            if (origLine.startsWith("!") || origLine.startsWith("^") ||
+                origLine.startsWith("notifyscriptend"))
                 ignored = true;
         } else {
             CLI.Command cmd = CLI.getCommand(opts.getCommand());
@@ -187,6 +192,7 @@ public class TextEngine {
                     }
                 }
                 unknownCommand(opts.getCommand());
+                ignored = false; // so we can mod it in the history
                 _ui.commandComplete(-1, null);
             } else {
                 ignored = false;
@@ -643,12 +649,23 @@ public class TextEngine {
                 for (int i = 0; i < _scriptListeners.size(); i++)
                     ((ScriptListener)_scriptListeners.get(i)).scriptComplete(script);
             }
+            clearCommandHistory();
             return true;
         } else {
             return false;
         }
     }
     
+    /** @since 1.102b-9 */
+    public List<String> getCommandHistory() {
+        return Collections.unmodifiableList(_commandHistory);
+    }
+
+    /** @since 1.102b-9 */
+    public void clearCommandHistory() {
+        _commandHistory.clear();
+    }
+
     private void processHistory(Opts opts) {
         for (int i = 0; i < _commandHistory.size(); i++)
             _ui.statusMessage((i+1) + ": " + (String)_commandHistory.get(i));
