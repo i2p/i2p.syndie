@@ -25,7 +25,11 @@ import syndie.data.NymKey;
  */
 public class LoginManager extends CommandImpl {
     private DBClient _client;
+
     public LoginManager(DBClient client) { _client = client; }
+
+    /** for CLI */
+    LoginManager() {}
     
     public static String getHelp(String cmd) {
         return "--login $nymLogin --pass $nymPass --name $nymName";
