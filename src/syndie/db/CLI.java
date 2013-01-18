@@ -10,9 +10,11 @@ import net.i2p.data.DataHelper;
  */
 public class CLI {
     private static final String PREFIX = CLI.class.getName().substring(0, CLI.class.getName().lastIndexOf("."));
+
     public static interface Command {
         public DBClient runCommand(Opts opts, UI ui, DBClient client);
     }
+
     private static Object _commands[][] = new Object[][] {
         new Object[] { "import", Importer.class },
         new Object[] { "register", LoginManager.class },
@@ -56,7 +58,8 @@ public class CLI {
             usage();
         }
     }
-    public static Command getCommand(String name) {
+
+    public synchronized static Command getCommand(String name) {
         Class cls = null;
         for (int i = 0; i < _commands.length; i++) {
             if (name.equalsIgnoreCase(_commands[i][0].toString())) {
@@ -79,7 +82,7 @@ public class CLI {
      * allow new commands to be added to the set of known commands,
      * or old commands to be replaced with new ones.
      */
-    public static void setCommand(String name, Class cmdClass) {
+    public synchronized static void setCommand(String name, Class cmdClass) {
         if (getCommand(name) == null) {
             Object old[][] = _commands;
             Object newcmd[][] = new Object[old.length+1][2];
@@ -99,7 +102,16 @@ public class CLI {
         }
     }
 
-    private static final void usage() {
+    /** unsorted */
+    public synchronized static List<String> getCommands() {
+        List<String> rv = new ArrayList(_commands.length);
+        for (int i = 0; i < _commands.length; i++) {
+            rv.add(_commands[i][0].toString());
+        }
+        return rv;
+    }
+
+    private synchronized static final void usage() {
         System.err.println("Usage: $command [$args]*");
         System.err.print("Known commands: ");
         for (int i = 0; i < _commands.length; i++)

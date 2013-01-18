@@ -153,6 +153,7 @@ public class TextEngine {
             return doRunStep();
         } catch (RuntimeException re) {
             _ui.errorMessage("Internal error", re);
+            _ui.commandComplete(-1, null);
             return true;
         }
     }
@@ -760,17 +761,22 @@ public class TextEngine {
             if (!_currentMenu.equals(LoggedInMenu.NAME))
                 _ui.statusMessage(" up                 : go up a menu");
         }
-        _ui.statusMessage(" init $jdbcURL      : create a new syndie database");
-        _ui.statusMessage(" menu [$newMenu]    : switch between the menus, or view available menus");
         _ui.statusMessage(" builduri (--url $url | --channel $chanHash [--message $num [--page $num] )");
         _ui.statusMessage("                    : helper method for building Syndie URIs");
-        _ui.statusMessage(" toggleDebug        : turn on or off debugging output");
-        _ui.statusMessage(" togglePaginate     : turn on or off output pagination");
+        _ui.statusMessage(" exit               : exit syndie");
+        _ui.statusMessage(" init $jdbcURL      : create a new syndie database");
+        _ui.statusMessage(" menu [$newMenu]    : switch between the menus, or view available menus");
         _ui.statusMessage(" prefs [--debug $boolean] [--paginate $boolean] ");
         _ui.statusMessage("       [--httpproxyhost $hostname --httpproxyport $portNum]");
         _ui.statusMessage("       [--archive $archiveURL]");
         _ui.statusMessage("                    : update or display the logged in nym's preferences");
-        _ui.statusMessage(" exit               : exit syndie");
+        _ui.statusMessage(" toggleDebug        : turn on or off debugging output");
+        _ui.statusMessage(" togglePaginate     : turn on or off output pagination");
+        List<String> clicmds = CLI.getCommands();
+        Collections.sort(clicmds);
+        for (String cmd : clicmds) {
+            _ui.statusMessage(' ' + cmd);
+        }
     }
     
     private void processSQL(Opts opts) {
@@ -1058,12 +1064,12 @@ public class TextEngine {
         public String getDescription() { return "logged in menu"; }
         public boolean requireLoggedIn() { return true; }
         public void listCommands(UI ui) {
-            ui.statusMessage(" register [--db $jdbcURL] --login $nymLogin --pass $nymPass --name $nymName");
-            ui.statusMessage(" sql $sqlQueryStatement");
             ui.statusMessage(" backup --out $file [--includeArchive $boolean]");
             ui.statusMessage("                    : back up the database to the given (compressed) file,");
             ui.statusMessage("                    : optionally including the signed archive files");
             ui.statusMessage(" importDefaults     : import default keys and posts from the jar");
+            ui.statusMessage(" register [--db $jdbcURL] --login $nymLogin --pass $nymPass --name $nymName");
+            ui.statusMessage(" sql $sqlQueryStatement");
         }
         public boolean processCommands(DBClient client, UI ui, Opts opts) {
             if ("sql".equalsIgnoreCase(opts.getCommand())) {

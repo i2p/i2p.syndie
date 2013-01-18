@@ -145,7 +145,17 @@ class TextUITab extends BrowserTab implements UI {
         _in.setText("");
     }
     
-    private static final SimpleDateFormat _fmt = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
+    private static final String FORMAT = "yyyy/MM/dd HH:mm:ss.SSS";
+    private static final SimpleDateFormat _fmt = new SimpleDateFormat(FORMAT);
+    private static final String SPACER;
+    static {
+        StringBuilder buf = new StringBuilder();
+        buf.append('\n');
+        for (int i = 0; i < FORMAT.length() + 2; i++)
+            buf.append(' ');
+        SPACER = buf.toString();
+    }
+
     private static final String now() { 
         synchronized (_fmt) { 
             return _fmt.format(new Date(System.currentTimeMillis()));
@@ -188,18 +198,20 @@ class TextUITab extends BrowserTab implements UI {
                         StyleRange range = new StyleRange(start, end-start, _tsFGColor, _tsBGColor);
                         _out.setStyleRange(range);
                         start = end;
-                        _out.append(" " + r.msg + "\n");
+                        String msg = r.msg.replace("\n", SPACER);
+                        _out.append(' ' + r.msg + '\n');
                         end = _out.getCharCount();
                     }
                     if (r.e != null) {
                         StringWriter out = new StringWriter();
                         r.e.printStackTrace(new PrintWriter(out));
                         start = _out.getCharCount();
-                        _out.append(now());
+                        _out.append(' ' + now() + ' ');
                         end = _out.getCharCount();
                         _out.setStyleRange(new StyleRange(start, end-start, _tsFGColor, _tsBGColor));
                         start = end;
-                        _out.append("\n" + out.getBuffer().toString() + "\n");
+                        String msg = out.getBuffer().toString().replace("\n", SPACER);
+                        _out.append(' ' + msg + '\n');
                     }
                     end = _out.getCharCount();
                     if (end > overallStart) {
