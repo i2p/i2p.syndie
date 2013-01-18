@@ -128,11 +128,12 @@ public class TextEngine {
     /** clear all the old state in the various menus, and put us back at the not-logged-in menu */
     private void rebuildMenus() {
         _menus.clear();
-        _menus.add(new StartMenu());
+        // alphabetical please
         _menus.add(new LoggedInMenu());
-        _menus.add(new ReadMenu(this));
         _menus.add(new ManageMenu(this));
         _menus.add(new PostMenu(this));
+        _menus.add(new ReadMenu(this));
+        _menus.add(new StartMenu());
         _menus.add(new SyndicateMenu(this));
         _currentMenu = StartMenu.NAME;
     }
@@ -474,11 +475,7 @@ public class TextEngine {
         }
         if (targetMenu == null) {
             _ui.statusMessage("Available menus: ");
-            boolean loggedIn = (_client != null) && (_client.isLoggedIn());
-            for (int i = 0; i < _menus.size(); i++) {
-                Menu menu = (Menu)_menus.get(i);
-                if (!menu.requireLoggedIn() || loggedIn)
-                    _ui.statusMessage(" " + menu.getName() + padBlank(menu.getName(), 16) + "(" + menu.getDescription() + ")");
+            displayMenus(_currentMenu);
                 /*
                 _ui.statusMessage(" manage   (to manage channels)");
                 _ui.statusMessage(" read     (to read posts)");
@@ -490,11 +487,23 @@ public class TextEngine {
                 _ui.statusMessage(" watched  (review and manage favorite channels/tags/resources)");
                 _ui.statusMessage(" sql      (advanced SQL interface to the backend database)");
                 */
-            }
         } else {
             _ui.errorMessage("No such menu: " + targetMenu);
         }
     }
+
+    private void displayMenus(String toSkip) {
+        boolean loggedIn = (_client != null) && (_client.isLoggedIn());
+        for (int i = 0; i < _menus.size(); i++) {
+            Menu menu = _menus.get(i);
+            String name = menu.getName();
+            if ((!menu.requireLoggedIn() || loggedIn) &&
+                !name.equals(toSkip)) {
+                _ui.statusMessage(' ' + name + padBlank(name, 19) + ": " + menu.getDescription());
+            }
+        }
+    }
+
     private static String padBlank(String name, int paddedSize) {
         StringBuilder buf = new StringBuilder();
         int pad = paddedSize - name.length();
@@ -502,6 +511,7 @@ public class TextEngine {
             buf.append(' ');
         return buf.toString();
     }
+
     private Menu getCurrentMenu() {
         for (int i = 0; i < _menus.size(); i++) {
             Menu menu = (Menu)_menus.get(i);
@@ -510,6 +520,7 @@ public class TextEngine {
         }
         return null;
     }
+
     /**
      * Process any menu commands, returning true if the command was
      * a handled meta command, false if not
@@ -538,6 +549,19 @@ public class TextEngine {
             _ui.commandComplete(0, null);
             return true;
         } else {
+            // menu name is a shortcut to switch to it
+            for (int i = 0; i < _menus.size(); i++) {
+                Menu menu = _menus.get(i);
+                String name = menu.getName();
+                if (name.equalsIgnoreCase(cmd)) {
+                    if (menu.getName().equals(_currentMenu))
+                        _ui.statusMessage("Already at menu " + name);
+                    else
+                         processSwitchMenu(new Opts("menu " + name));
+                    _ui.commandComplete(0, null);
+                    return true;
+                }
+            }
             Menu menu = getCurrentMenu();
             if (menu != null)
                 return menu.processCommands(_client, _ui, opts);
@@ -698,11 +722,11 @@ public class TextEngine {
                     _ui.statusMessage("Defined [" + cmdName + "] to run the command [" + cls.getName() + "]");
                     _ui.commandComplete(0, null);
                 } else {
-                    _ui.errorMessage("Specified command [" + cls.getName() + "] is not a valid CLI.Command");
+                    _ui.errorMessage("Class [" + cls.getName() + "] is not a valid CLI.Command");
                     _ui.commandComplete(-1, null);
                 }
             } catch (ClassNotFoundException cnfe) {
-                _ui.errorMessage("Specified command [" + className + "] was not found");
+                _ui.errorMessage("Class not found [" + className + "]");
                 _ui.commandComplete(-1, null);
             }
         } else {
@@ -733,11 +757,12 @@ public class TextEngine {
     }
     
     private void displayAliases() {
+        _ui.statusMessage("<<< aliases >>>");
         Map aliases = _client.getAliases(_client.getLoggedInNymId());
         for (Iterator iter = aliases.keySet().iterator(); iter.hasNext(); ) {
             String name = (String)iter.next();
             String value = (String)aliases.get(name);
-            _ui.statusMessage("Alias '" + name + "': " + value);
+            _ui.statusMessage(' ' + name + padBlank(name, 19) + ": " + value);
         }
     }
     
@@ -756,13 +781,9 @@ public class TextEngine {
     
     private void help() {
         Menu menu = getCurrentMenu();
-        if (menu != null) {
-           _ui.statusMessage("<<< " + _currentMenu + " menu commands >>>");
-            menu.listCommands(_ui);
-        }
+        _ui.statusMessage("<<< default commands >>>");
         // alphabetical please
-        _ui.statusMessage("<<< top menu commands >>>");
-        _ui.statusMessage(" alias [aliasName] [command [args...]]");
+        _ui.statusMessage(" alias [aliasName] [command [args...] (omit to delete alias)]");
         _ui.statusMessage(" builduri (--url $url | --channel $chanHash [--message $num [--page $num] )");
         _ui.statusMessage("                    : helper method for building Syndie URIs");
         _ui.statusMessage(" definecmd --name $commandName --class javaClassName");
@@ -788,10 +809,17 @@ public class TextEngine {
         _ui.statusMessage(" !$num              : repeat command $num from history");
         _ui.statusMessage(" !-$num             : repeat command $num back in history");
         _ui.statusMessage(" ^[from[^to]]       : repeat last command, optionally replacing 'from' with 'to'");
+        _ui.statusMessage("<<< shortcuts to other menus >>>");
+        displayMenus(_currentMenu);
+        displayAliases();
         _ui.statusMessage("<<< custom commands >>>");
         List<String> clicmds = CLI.getHelp();
         for (String cmd : clicmds) {
             _ui.statusMessage(' ' + cmd);
+        }
+        if (menu != null) {
+           _ui.statusMessage("<<< " + _currentMenu + " menu commands >>>");
+            menu.listCommands(_ui);
         }
     }
     
