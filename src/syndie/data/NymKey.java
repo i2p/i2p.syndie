@@ -72,7 +72,7 @@ public class NymKey {
     public String toString() {
         String auth = _authenticated ? "Authenticated " : "Unauthenticated ";
         return auth + _type + ' ' + _function + " private key for [" + _channel.toBase64() + "] (" +
-               _data.length + "bytes) is: " + Base64.encode(_data);
+               _data.length + " bytes) is: " + Base64.encode(_data);
                //+ (_dataHash != null ? " / " + _dataHash : "");
     }
 
