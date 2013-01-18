@@ -10,6 +10,9 @@ import syndie.data.SyndieURI;
 import syndie.data.WatchedChannel;
 import syndie.db.DBClient;
 
+/**
+ *  Used by NymChannelTree
+ */
 public class NymChannelSource implements NymChannelTree.ChannelSource {
     private DBClient _client;
     private TranslationRegistry _translationRegistry;

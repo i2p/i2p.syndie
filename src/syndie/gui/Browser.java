@@ -978,9 +978,9 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
     }
     
     private class ServerConfig {
-        private MenuItem _start;
-        private MenuItem _stop;
-        private MenuItem _cfg;
+        private final MenuItem _start;
+        private final MenuItem _stop;
+        private final MenuItem _cfg;
         
         public ServerConfig(MenuItem start, MenuItem stop, MenuItem cfg) {
             _start = start;
@@ -1097,6 +1097,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             s.pack();
             s.open();
         }
+
         private void saveConfig(String portStr, boolean writable, boolean runOnStartup) {
             int port = 8080;
             try {

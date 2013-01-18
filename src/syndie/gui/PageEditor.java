@@ -825,6 +825,7 @@ public class PageEditor extends BaseComponent implements Themeable {
     
     private Text _maxText;
     private TextChangeManager _maxTextManager;
+
     private class MaxEditor {
         private Shell _shell;
         

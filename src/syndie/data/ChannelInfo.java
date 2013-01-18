@@ -11,8 +11,8 @@ import net.i2p.data.Signature;
 import net.i2p.data.SigningPublicKey;
 
 /**
- *
- *
+ *  Internal representation of a channel.
+ *  Does not include private keys.
  */
 public class ChannelInfo {
     private long _channelId;

@@ -1307,11 +1307,25 @@ public class DBClient {
     private static final String SQL_GET_NYMKEYS = "SELECT keyType, keyData, keySalt, authenticated, keyPeriodBegin, keyPeriodEnd, keyFunction, keyChannel " +
                                                    "FROM nymKey WHERE nymId = ?";
 
-    /** return a list of NymKey structures */
+    /**
+     * Return a list of NymKey structures.
+     * Does not verify encryption (validate with the passphrase).
+     *
+     * @param channel null for all
+     * @param keyFunction null for all
+     * @return no particular order
+     */
     public List<NymKey> getNymKeys(long nymId, String pass, Hash channel, String keyFunction) {
         return getNymKeys(nymId, pass, channel, keyFunction, false);
     }
 
+    /**
+     * Return a list of NymKey structures.
+     *
+     * @param channel null for all
+     * @param keyFunction null for all
+     * @return no particular order
+     */
     public List<NymKey> getNymKeys(long nymId, String pass, Hash channel, String keyFunction, boolean verifyEncryption) {
         ensureLoggedIn(!verifyEncryption);
         List<NymKey> rv = new ArrayList(1);

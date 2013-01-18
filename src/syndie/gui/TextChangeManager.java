@@ -130,12 +130,13 @@ public class TextChangeManager {
     }
     
     private class TextMemento implements Memento {
-        private String _before;
-        private String _after;
-        private int _beforeCaret;
-        private int _afterCaret;
-        private int _beforeTopIndex;
-        private int _afterTopIndex;
+        private final String _before;
+        private final String _after;
+        private final int _beforeCaret;
+        private final int _afterCaret;
+        private final int _beforeTopIndex;
+        private final int _afterTopIndex;
+
         public TextMemento(String before, String after, int beforeCaret, int afterCaret, int beforeTopIndex, int afterTopIndex) {
             _before = before;
             _after = after;

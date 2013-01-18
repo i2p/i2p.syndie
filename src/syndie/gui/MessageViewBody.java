@@ -102,9 +102,8 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
         _themeRegistry.register(this);
     }
     
-    private class DetailState {
+    private static class DetailState {
         public boolean disposed;
-        public DetailState() { disposed = false; }
     }
     
     public void dispose() {
@@ -377,7 +376,8 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
     public void hideAttachmentTabs() { _hideAttachmentTabs = true; }
     
     private class URIAttachmentSource implements AttachmentPreview.AttachmentSource {
-        private SyndieURI _attachURI;
+        private final SyndieURI _attachURI;
+
         public URIAttachmentSource(SyndieURI uri) { _attachURI = uri; }
 
         public Properties getAttachmentConfig(int attachmentNum) {
@@ -485,6 +485,7 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
     }
 
     public void translate(TranslationRegistry registry) {}
+
     public void applyTheme(Theme theme) {
         _tabFolder.setFont(theme.TAB_FONT);
     }

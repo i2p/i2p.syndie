@@ -1599,12 +1599,14 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     }
     
     private class WebRipListener implements WebRipPageControl.RipControlListener {
-        private Shell _shell;
-        private WebRipPageControl _ctl;
+        private final Shell _shell;
+        private final WebRipPageControl _ctl;
+
         public WebRipListener(Shell shell, WebRipPageControl ctl) {
             _shell = shell;
             _ctl = ctl;
         }
+
         public void ripComplete(boolean successful, WebRipRunner runner) {
             _ui.debugMessage("rip complete: ok?" + successful);
             if (successful) {
@@ -2723,6 +2725,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     }
     
     public boolean isModifiedSinceOpen() { return _modifiedSinceOpen; }
+
     public SyndieURI getURI() {
         long prevVersion = _postponeVersion;
         saveState();
@@ -2738,10 +2741,12 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     private class IdentityChannelSource implements NymChannelTree.ChannelSource {
         private List _nodes;
         public List getReferenceNodes() { return _nodes; }
+
         public boolean isManageable(long chanId) { return false; }
         public boolean isPostable(long chanId) { return false; }
         public boolean isWatched(long chanId) { return false; }
         public boolean isDeletable(long chanId) { return false; }
+
         public void loadSource() {
             if (_nodes != null)
                 return;

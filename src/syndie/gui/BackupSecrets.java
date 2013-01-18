@@ -411,7 +411,7 @@ public class BackupSecrets extends BaseComponent implements Themeable, Translata
             
             TreeItem chanItem = new TreeItem(_tree, SWT.NONE);
             chanItem.setChecked(true);
-            chanItem.setText(chan.toBase64().substring(0,6) + ": " + chanName + " [" + chanKeys.size() + "]");
+            chanItem.setText(UIUtil.displayName(chanName, chan) + " [" + chanKeys.size() + "]");
             
             for (Iterator kiter = chanKeys.iterator(); kiter.hasNext(); ) {
                 NymKey key = (NymKey)kiter.next();

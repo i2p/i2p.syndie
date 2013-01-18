@@ -13,8 +13,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import net.i2p.data.Base64;
 import net.i2p.data.Hash;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.TraverseEvent;
 import org.eclipse.swt.events.TraverseListener;
@@ -31,6 +33,7 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
+
 import syndie.Constants;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
@@ -40,6 +43,11 @@ import syndie.db.DBClient;
 import syndie.db.JobRunner;
 import syndie.db.UI;
 
+/**
+ *
+ * Parent is usually a ForumReferenceChooserPopup.
+ *
+ */
 public class NymChannelTree implements Themeable, Translatable {
     private DBClient _client;
     private UI _ui;
@@ -632,7 +640,7 @@ public class NymChannelTree implements Themeable, Translatable {
         });
     }
     
-    private class Record {
+    private static class Record {
         public Record() { 
             channelId = -1;
             deletable = true;
@@ -666,6 +674,7 @@ public class NymChannelTree implements Themeable, Translatable {
             return new HashMap();
         return rv;
     }
+
     private void findNodes(Set rv, ReferenceNode node, boolean groupNodes) {
         SyndieURI uri = node.getURI();
         Record r = new Record();
@@ -691,6 +700,7 @@ public class NymChannelTree implements Themeable, Translatable {
     private static final String SQL_GET_RECORD_UNREADMSGS_BEGIN = "SELECT COUNT(msgId), targetChannelId FROM nymUnreadMessage num JOIN channelMessage cm ON num.msgId = cm.msgId WHERE cm.readKeyMissing = FALSE AND cm.replyKeyMissing = FALSE AND cm.pbePrompt IS NULL AND deletionCause IS NULL AND targetChannelId IN (";
     private static final String SQL_GET_RECORD_UNREADPRIV_BEGIN = "SELECT COUNT(msgId), targetChannelId FROM nymUnreadMessage num JOIN channelMessage cm ON num.msgId = cm.msgId WHERE cm.wasPrivate = true AND cm.readKeyMissing = FALSE AND cm.replyKeyMissing = FALSE AND cm.pbePrompt IS NULL AND deletionCause IS NULL AND targetChannelId IN (";
     private static final String SQL_GET_RECORD_TOTALMSGS_BEGIN = "SELECT COUNT(msgId) FROM channelMessage WHERE isCancelled = FALSE AND readKeyMissing = FALSE AND replyKeyMissing = FALSE AND pbePrompt IS NULL AND deletionCause IS NULL AND targetChannelId IN (";
+
     private boolean populateForumRecords(Set nodes, Map chanIdToRecord, ChannelSource src) {
         if (nodes.size() == 0)
             return true;
@@ -1062,7 +1072,7 @@ public class NymChannelTree implements Themeable, Translatable {
         
         long when = r.lastPostDate;
         if (when > 0)
-            item.setText(4, getDate(when));
+            item.setText(4, Constants.getDateTime(when));
         else
             item.setText(4, "");
         
@@ -1074,11 +1084,6 @@ public class NymChannelTree implements Themeable, Translatable {
         
         //t.addEvent("forum loaded: " + r.name);
         return item;
-    }
-    
-    private static final SimpleDateFormat _fmt = new SimpleDateFormat("yyyy/MM/dd");
-    private static final String getDate(long when) {
-        synchronized (_fmt) { return _fmt.format(new Date(when)); }
     }
     
     public void applyTheme(Theme theme) {

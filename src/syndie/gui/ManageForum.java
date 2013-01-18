@@ -995,10 +995,13 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
         return banned.getScopes();
     }
     
-    private class BannedRefs implements ReferenceNode.Visitor {
-        private ArrayList _scopes;
+    private static class BannedRefs implements ReferenceNode.Visitor {
+        private final ArrayList _scopes;
+
         public BannedRefs() { _scopes = new ArrayList(); }
+
         public ArrayList getScopes() { return _scopes; }
+
         public void visit(ReferenceNode node, int depth, int siblingOrder) {
             if (node.getURI() == null) return;
             String type = node.getReferenceType();
@@ -1021,11 +1024,14 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
     }
     
     
-    private class Counter implements ReferenceNode.Visitor {
+    private static class Counter implements ReferenceNode.Visitor {
         private int _count;
-        private boolean _countBanned;
+        private final boolean _countBanned;
+
         public Counter(boolean banned) { _countBanned = banned; }
+
         public int getCount() { return _count; }
+
         public void visit(ReferenceNode node, int depth, int siblingOrder) { 
             String type = node.getReferenceType();
             if (_countBanned) {
@@ -1056,8 +1062,10 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
     }
     
     private class TrimRefs implements ReferenceNode.Visitor {
-        private boolean _removeBanned;
+        private final boolean _removeBanned;
+
         public TrimRefs(boolean removeBanned) { _removeBanned = removeBanned; }
+
         public void visit(ReferenceNode node, int depth, int siblingOrder) {
             String type = node.getReferenceType();
             if (_removeBanned && !Constants.REF_TYPE_BANNED.equals(type)) {
@@ -1074,6 +1082,7 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
     private void loadBans(ChannelInfo info) {
         redrawBans();
     }
+
     private void redrawBans() {
         Counter counter = new Counter(true);
         ReferenceNode.walk(_referenceNodeRoots, counter);

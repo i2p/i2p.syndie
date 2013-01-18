@@ -25,6 +25,8 @@ import syndie.db.DBClient;
 import syndie.db.UI;
 
 /**
+ * Contains a NymChannelTree.
+ *
  * TODO this popup is also used for "choose author" from MessageEditor, but
  * needs some small changes for that case.
  * and also has the "only include forums" text at the top

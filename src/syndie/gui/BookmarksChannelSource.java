@@ -9,6 +9,9 @@ import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.db.DBClient;
 
+/**
+ *  Used by NymChannelTree
+ */
 public class BookmarksChannelSource implements NymChannelTree.ChannelSource {
     private DBClient _client;
     private TranslationRegistry _translationRegistry;

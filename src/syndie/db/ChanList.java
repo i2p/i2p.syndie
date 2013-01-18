@@ -13,7 +13,11 @@ import net.i2p.data.Hash;
  * --pass $pass
  */
 public class ChanList extends CommandImpl {
-    ChanList() {}
+
+    public static String getHelp(String cmd) {
+        return "            : lists all channels";
+    }
+
     public DBClient runCommand(Opts args, UI ui, DBClient client) {
         if ( (client == null) || (!client.isLoggedIn()) ) {
             List missing = args.requireOpts(new String[] { "db" });

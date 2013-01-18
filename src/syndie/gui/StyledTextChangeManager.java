@@ -21,6 +21,8 @@ import syndie.db.UI;
 /**
  * maintain the text / caret position / scroll index for the styled text, undoing
  * them on ^Z and redoing them on ^Y (clearing any redoables on a non-redo text change)
+ *
+ * Can this just extend TextChangeManager?
  */
 public class StyledTextChangeManager {
     private UI _ui;
@@ -130,12 +132,13 @@ public class StyledTextChangeManager {
     }
     
     private class TextMemento implements Memento {
-        private String _before;
-        private String _after;
-        private int _beforeCaret;
-        private int _afterCaret;
-        private int _beforeScroll;
-        private int _afterScroll;
+        private final String _before;
+        private final String _after;
+        private final int _beforeCaret;
+        private final int _afterCaret;
+        private final int _beforeScroll;
+        private final int _afterScroll;
+
         public TextMemento(String before, String after, int beforeCaret, int afterCaret, int beforeScroll, int afterScroll) {
             _before = before;
             _after = after;

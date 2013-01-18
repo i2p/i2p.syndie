@@ -243,10 +243,13 @@ class ManageForumBans extends BaseComponent implements Themeable, Translatable {
         return scopes.getScopes();
     }
     
-    private class Scopes implements ReferenceNode.Visitor {
-        private ArrayList _scopes;
+    private static class Scopes implements ReferenceNode.Visitor {
+        private final ArrayList _scopes;
+
         public Scopes() { _scopes = new ArrayList(); }
+
         public ArrayList getScopes() { return _scopes; }
+
         public void visit(ReferenceNode node, int depth, int siblingOrder) {
             SyndieURI uri = node.getURI();
             if (uri == null) return;
@@ -269,6 +272,7 @@ class ManageForumBans extends BaseComponent implements Themeable, Translatable {
     }
     
     private boolean _isDragging;
+
     private void initDnDBanListSrc() {
         _isDragging = false;
         Transfer transfer[] = new Transfer[] { TextTransfer.getInstance() };
