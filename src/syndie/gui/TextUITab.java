@@ -133,6 +133,7 @@ class TextUITab extends BrowserTab implements UI {
         _out.setRedraw(false);
         String cmd = _in.getText().trim();
         // parse it here too, just to catch exit/quit
+        append(COMMAND, cmd);
         Opts opts = new Opts(cmd);
         String cmdStr = opts.getCommand();
         if (cmdStr != null &&
@@ -151,7 +152,7 @@ class TextUITab extends BrowserTab implements UI {
     static {
         StringBuilder buf = new StringBuilder();
         buf.append('\n');
-        for (int i = 0; i < FORMAT.length() + 2; i++)
+        for (int i = 0; i < FORMAT.length() + 3; i++)
             buf.append(' ');
         SPACER = buf.toString();
     }
@@ -199,7 +200,7 @@ class TextUITab extends BrowserTab implements UI {
                         _out.setStyleRange(range);
                         start = end;
                         String msg = r.msg.replace("\n", SPACER);
-                        _out.append(' ' + r.msg + '\n');
+                        _out.append(' ' + msg + '\n');
                         end = _out.getCharCount();
                     }
                     if (r.e != null) {
@@ -221,6 +222,8 @@ class TextUITab extends BrowserTab implements UI {
                             _out.setLineBackground(startLine, curLine-startLine, _statusColor);
                         else if (r.type == DEBUG)
                             _out.setLineBackground(startLine, curLine-startLine, _debugColor);
+                        else if (r.type == COMMAND)
+                            _out.setLineBackground(startLine, curLine-startLine, _tsBGColor);
                         else
                             _out.setLineBackground(startLine, curLine-startLine, _errorColor);
                     }
@@ -244,6 +247,7 @@ class TextUITab extends BrowserTab implements UI {
     private static final int DEBUG = 1;
     private static final int STATUS = 2;
     private static final int ERROR = 3;
+    private static final int COMMAND = 4;
 
     public void errorMessage(String msg) { append(ERROR, msg); }
     public void errorMessage(String msg, Exception cause) { append(ERROR, msg, cause); }

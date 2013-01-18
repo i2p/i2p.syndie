@@ -111,75 +111,82 @@ class PostMenu implements TextEngine.Menu {
     public String getName() { return NAME; }
     public String getDescription() { return "posting menu"; }
     public boolean requireLoggedIn() { return true; }
+
     public void listCommands(UI ui) {
-        ui.statusMessage(" channels           : display a list of channels the current nym can post to");
-        if (_itemIsChannelList) {
-            ui.statusMessage(" next [--lines $num]: paginate through the channels, 10 or $num at a time");
-            ui.statusMessage(" prev [--lines $num]: paginate through the channels, 10 or $num at a time");
-        }
-        ui.statusMessage(" meta [--channel ($index|$hash)] : display the current channel's metadata");
-        if (_currentMessage == null) {
-            ui.statusMessage(" create --channel ($index|$hash): begin the process of creating a new post");
-        } else {
-            ui.statusMessage(" addPage [--page $num] --in ($filename|stdin) [--type $contentType]");
-            ui.statusMessage(" listpages          : display a list of pages currently sloted for posting");
-            ui.statusMessage(" delpage $num       : delete the given page");
+        // alphabetical please
+        if (_currentMessage != null) {
             ui.statusMessage(" addattachment [--attachment $num] --in $filename [--type $contentType]");
             ui.statusMessage("               [--name $name] [--description $desc]");
-            ui.statusMessage(" listattachments    : display a list of attachments currently sloted for posting");
-            ui.statusMessage(" delattachment $num");
-            ui.statusMessage(" addref --in $file  : load in references from the given file");
-            ui.statusMessage(" listkeys [--scope $scope] [--type $type]");
-            ui.statusMessage(" addref [--name $name] --uri $uri [--reftype $type] [--description $desc]");
-            ui.statusMessage("                    : add a single reference.  the reftype can be 'recommend', 'ignore', etc");
-            ui.statusMessage(" addref --readkey $keyHash --scope $scope [--name $name] [--description $desc]");
-            ui.statusMessage("                    : add a reference that includes the given channel read key (AES256)");
-            ui.statusMessage(" addref --postkey $keyHash --scope $scope [--name $name] [--description $desc]");
-            ui.statusMessage("                    : add a reference that includes the given channel post key (DSA private)");
-            ui.statusMessage(" addref --managekey $keyHash --scope $scope [--name $name] [--description $desc]");
-            ui.statusMessage("                    : add a reference that includes the given channel manage key (DSA private)");
-            ui.statusMessage(" addref --replykey $keyHash --scope $scope [--name $name] [--description $desc]");
-            ui.statusMessage("                    : add a reference that includes the given channel's reply key (ElGamal private)");
-            ui.statusMessage(" listrefs           : display an indexed list of references already added");
-            ui.statusMessage(" delref $index      : delete the specified reference");
+            ui.statusMessage(" addPage [--page $num] --in ($filename|stdin) [--type $contentType]");
             ui.statusMessage(" addparent --uri $uri [--order $num]");
             ui.statusMessage("                    : add the given syndie URI as a threaded parent to the new message");
-            ui.statusMessage(" listparents        : display a list of URIs this new post will be marked as");
-            ui.statusMessage("                    : replying to (most recent parent at index 0)");
+            ui.statusMessage(" addref [--name $name] --uri $uri [--reftype $type] [--description $desc]");
+            ui.statusMessage("                    : add a single reference.  the reftype can be 'recommend', 'ignore', etc");
+            ui.statusMessage(" addref --in $file  : load in references from the given file");
+            ui.statusMessage(" addref --managekey $keyHash --scope $scope [--name $name] [--description $desc]");
+            ui.statusMessage("                    : add a reference that includes the given channel manage key (DSA private)");
+            ui.statusMessage(" addref --postkey $keyHash --scope $scope [--name $name] [--description $desc]");
+            ui.statusMessage("                    : add a reference that includes the given channel post key (DSA private)");
+            ui.statusMessage(" addref --readkey $keyHash --scope $scope [--name $name] [--description $desc]");
+            ui.statusMessage("                    : add a reference that includes the given channel read key (AES256)");
+            ui.statusMessage(" addref --replykey $keyHash --scope $scope [--name $name] [--description $desc]");
+            ui.statusMessage("                    : add a reference that includes the given channel's reply key (ElGamal private)");
+            ui.statusMessage(" authenticate $index: use the specified key to authenticate the post");
+            ui.statusMessage(" authorize $index   : use the specified key to authorize the post");
+            ui.statusMessage(" cancel             : clear the current create state without updating anything");
+        }
+        ui.statusMessage(" channels           : display a list of channels the current nym can post to");
+        if (_currentMessage == null) {
+            ui.statusMessage(" create --channel ($index|$hash): begin the process of creating a new post");
+        }
+        if (_currentMessage != null) {
+            ui.statusMessage(" delattachment $num");
+            ui.statusMessage(" delpage $num       : delete the given page");
             ui.statusMessage(" delparent $index");
+            ui.statusMessage(" delref $index      : delete the specified reference");
+            ui.statusMessage(" execute [--out $filename]");
+            ui.statusMessage("                    : actually generate the post, exporting it to the given file, and then");
+            ui.statusMessage("                    : importing it into the local database");
+            ui.statusMessage(" listattachments    : display a list of attachments currently sloted for posting");
             ui.statusMessage(" listauthkeys [--authorizedOnly $boolean]");
             ui.statusMessage("                    : display an indexed list of signing keys that the nym has");
             ui.statusMessage("                    : access to.  if requested, only includes those keys which have");
             ui.statusMessage("                    : been marked as authorized to post in the channel (or");
             ui.statusMessage("                    : authorized to manage the channel)");
-            ui.statusMessage(" authenticate $index: use the specified key to authenticate the post");
-            ui.statusMessage(" authorize $index   : use the specified key to authorize the post");
+            ui.statusMessage(" listkeys [--scope $scope] [--type $type]");
+            ui.statusMessage(" listpages          : display a list of pages currently sloted for posting");
+            ui.statusMessage(" listparents        : display a list of URIs this new post will be marked as");
+            ui.statusMessage("                    : replying to (most recent parent at index 0)");
             ui.statusMessage(" listreadkeys       : display a list of known channel read keys that we can use to");
             ui.statusMessage("                    : encrypt the message");
+            ui.statusMessage(" listrefs           : display an indexed list of references already added");
+        }
+        ui.statusMessage(" meta [--channel ($index|$hash)] : display the current channel's metadata");
+        if (_itemIsChannelList) {
+            ui.statusMessage(" next [--lines $num]: paginate through the channels, 10 or $num at a time");
+            ui.statusMessage(" prev [--lines $num]: paginate through the channels, 10 or $num at a time");
+        }
+        if (_currentMessage != null) {
+            ui.statusMessage(" preview [--page $n]: view the post as it will be seen");
+            ui.statusMessage(" set --avatar $filename : specify a message-specific avatar to use");
+            //ui.statusMessage(" set --cancel $uri  : state that the given URI should be cancelled (ignored unless authorized)");
+            ui.statusMessage(" set --encryptToReply $boolean");
+            ui.statusMessage("                    : if true, the message should be encrypted to the channel's reply key");
+            ui.statusMessage("                    : so that only the channel's owner (or designee) can read it, and the");
+            ui.statusMessage("                    : channel is included in the public header (if not authorized)");
+            ui.statusMessage(" set --expiration ($yyyyMMdd|none) : suggest a date on which the message can be discarded");
+            ui.statusMessage(" set --forceNewThread $boolean : if true, branch off this message into a new thread");
+            ui.statusMessage(" set --messageId ($id|date) : specify the message Id, or if 'date', generate one based on the date");
+            ui.statusMessage(" set --overwrite $uri : mark this message as a replacement for the given URI");
+            ui.statusMessage(" set --privateTags [$tag[,$tag]*]: list of tags visible only by those authorized to read the message");
+            ui.statusMessage(" set --publicTags [$tag[,$tag]*]: list of tags visible by anyone");
             ui.statusMessage(" set --readkey (public|$index|pbe --passphrase $passphrase --prompt $prompt)");
             ui.statusMessage("                    : if public, create a random key and publicize it in the public");
             ui.statusMessage("                    : headers.  if pbe, then derive a read key from the passphrase,");
             ui.statusMessage("                    : publicizing the prompt in the public headers.  Otherwise use the");
             ui.statusMessage("                    : indexed read key for the channel");
-            //ui.statusMessage(" set --cancel $uri  : state that the given URI should be cancelled (ignored unless authorized)");
-            ui.statusMessage(" set --messageId ($id|date) : specify the message Id, or if 'date', generate one based on the date");
-            ui.statusMessage(" set --subject $subject : specify the message subject");
-            ui.statusMessage(" set --avatar $filename : specify a message-specific avatar to use");
-            ui.statusMessage(" set --encryptToReply $boolean");
-            ui.statusMessage("                    : if true, the message should be encrypted to the channel's reply key");
-            ui.statusMessage("                    : so that only the channel's owner (or designee) can read it, and the");
-            ui.statusMessage("                    : channel is included in the public header (if not authorized)");
-            ui.statusMessage(" set --overwrite $uri : mark this message as a replacement for the given URI");
-            ui.statusMessage(" set --expiration ($yyyyMMdd|none) : suggest a date on which the message can be discarded");
-            ui.statusMessage(" set --forceNewThread $boolean : if true, branch off this message into a new thread");
             ui.statusMessage(" set --refuseReplies $boolean : if true, only the author can reply to this message in the same thread");
-            ui.statusMessage(" set --publicTags [$tag[,$tag]*]: list of tags visible by anyone");
-            ui.statusMessage(" set --privateTags [$tag[,$tag]*]: list of tags visible only by those authorized to read the message");
-            ui.statusMessage(" preview [--page $n]: view the post as it will be seen");
-            ui.statusMessage(" execute [--out $filename]");
-            ui.statusMessage("                    : actually generate the post, exporting it to the given file, and then");
-            ui.statusMessage("                    : importing it into the local database");
-            ui.statusMessage(" cancel             : clear the current create state without updating anything");
+            ui.statusMessage(" set --subject $subject : specify the message subject");
         }
     }
     public boolean processCommands(DBClient client, UI ui, Opts opts) {
@@ -614,6 +621,7 @@ class PostMenu implements TextEngine.Menu {
         }
         
         ui.statusMessage(info.toString());
+        ui.commandComplete(0, null);
     }
     
     /** addPage [--page $num] --in ($filename|stdin) [--type $contentType] */
@@ -1239,6 +1247,7 @@ class PostMenu implements TextEngine.Menu {
         if (name == null) name = type;
         _referenceNodes.add(new ReferenceNode(name, uri, desc, type));
         ui.statusMessage("Reference added");
+        ui.commandComplete(0, null);
     }
     
     private static class Walker implements ReferenceNode.Visitor {

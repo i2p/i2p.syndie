@@ -754,17 +754,15 @@ public class TextEngine {
     private void help() {
        _ui.statusMessage("Commands: ");
         Menu menu = getCurrentMenu();
-        if (menu != null) {
+        if (menu != null)
             menu.listCommands(_ui);
-            if (menu.requireLoggedIn())
-                _ui.statusMessage(" logout             : disconnect from the database, but do not exit syndie");
-            if (!_currentMenu.equals(LoggedInMenu.NAME))
-                _ui.statusMessage(" up                 : go up a menu");
-        }
+        // alphabetical please
         _ui.statusMessage(" builduri (--url $url | --channel $chanHash [--message $num [--page $num] )");
         _ui.statusMessage("                    : helper method for building Syndie URIs");
         _ui.statusMessage(" exit               : exit syndie");
         _ui.statusMessage(" init $jdbcURL      : create a new syndie database");
+        if (menu != null && menu.requireLoggedIn())
+            _ui.statusMessage(" logout             : disconnect from the database, but do not exit syndie");
         _ui.statusMessage(" menu [$newMenu]    : switch between the menus, or view available menus");
         _ui.statusMessage(" prefs [--debug $boolean] [--paginate $boolean] ");
         _ui.statusMessage("       [--httpproxyhost $hostname --httpproxyport $portNum]");
@@ -772,6 +770,8 @@ public class TextEngine {
         _ui.statusMessage("                    : update or display the logged in nym's preferences");
         _ui.statusMessage(" toggleDebug        : turn on or off debugging output");
         _ui.statusMessage(" togglePaginate     : turn on or off output pagination");
+        if (menu != null && !_currentMenu.equals(LoggedInMenu.NAME))
+            _ui.statusMessage(" up                 : go up a menu");
         List<String> clicmds = CLI.getCommands();
         Collections.sort(clicmds);
         for (String cmd : clicmds) {

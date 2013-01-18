@@ -86,16 +86,53 @@ class ReadMenu implements TextEngine.Menu {
     public String getDescription() { return "read menu"; }
     public boolean requireLoggedIn() { return true; }
     public void listCommands(UI ui) {
+        // alphabetical please
+        if (_currentChannel != null || !_channelKeys.isEmpty()) {
+            ui.statusMessage(" backupSecrets [--channel ($index|$hash)] [--withmeta] [--out $file]");
+            ui.statusMessage("          : backup the private keys and optionally meta.syndie to a zip file");
+        }
+        if ( (_currentChannel != null) || (_currentMessage != null) ) {
+            ui.statusMessage(" ban [--scope (author|channel|$hash)] [--delete $boolean]");
+            ui.statusMessage("          : ban the author or channel so that no more posts from that author");
+            ui.statusMessage("          : or messages by any author in that channel will be allowed into the");
+            ui.statusMessage("          : Syndie archive.  If --delete is specified, the messages themselves");
+            ui.statusMessage("          : will be removed from the archive as well as the database");
+        }
         ui.statusMessage(" channels [--unreadOnly $boolean] [--name $name] [--hash $hashPrefix]");
         ui.statusMessage("          : lists channels matching the given criteria");
+        if ( (_currentChannel != null) || (_currentMessage != null) ) {
+            ui.statusMessage(" decrypt [(--message $msgId|--channel $channelId)] [--passphrase pass]");
+            ui.statusMessage("          : attempt to decrypt the specified channel metadata or message for");
+            ui.statusMessage("          : those that could not be decrypted earlier");
+        }
+        ui.statusMessage(" export [--message ($index|$uri)] --out $directory");
+        ui.statusMessage("          : dump the full set of pages/attachments/status to the");
+        ui.statusMessage("          : specified directory");
+        if (_currentMessage != null) {
+            ui.statusMessage(" importkey --position $position");
+            ui.statusMessage("          : import the key included in the given message reference");
+        }
+        ui.statusMessage(" messages [--channel ($index|$hash)] [--includeUnauthorized $boolean]");
+        ui.statusMessage("          [--includeUnauthenticated $boolean]");
+        ui.statusMessage("          : lists messages matching the given criteria");
+        ui.statusMessage(" meta [--channel ($index|$hash)] : display the channel's metadata");
         if ( (_messageKeys.size() > 0) || (_channelKeys.size() > 0) ) {
             ui.statusMessage(" next [--lines $num]  : iterate through the channels/messages");
             ui.statusMessage(" prev [--lines $num]  : iterate through the channels/messages");
         }
-        ui.statusMessage(" meta [--channel ($index|$hash)] : display the channel's metadata");
-        ui.statusMessage(" messages [--channel ($index|$hash)] [--includeUnauthorized $boolean]");
-        ui.statusMessage("          [--includeUnauthenticated $boolean]");
-        ui.statusMessage("          : lists messages matching the given criteria");
+        if (_currentMessage != null) {
+            ui.statusMessage(" reply    : jump to the post menu, prepopulating the --references field");
+        }
+        ui.statusMessage(" save [--message ($index|$uri)] (--page $n|--attachment $n) --out $filename");
+        ui.statusMessage("          : save just the specified page/attachment to the given file");
+        if (_currentMessage != null) {
+            ui.statusMessage(" threadnext [--position $position]");
+            ui.statusMessage("          : view the next message in the thread (or the given");
+            ui.statusMessage("          : thread position)");
+            ui.statusMessage(" threadprev [--position $position]");
+            ui.statusMessage("          : view the previous message in the thread (or the given");
+            ui.statusMessage("          : thread position)");
+        }
         ui.statusMessage(" threads [--channel ($index|$hash|all)] [-tags [-]tag[,[-]tag]*]");
         ui.statusMessage("         [--includeUnauthorized $boolean] [--compact $boolean]");
         ui.statusMessage("          : Display a list of threads matching the given criteria. The ");
@@ -104,39 +141,9 @@ class ReadMenu implements TextEngine.Menu {
         ui.statusMessage("          : tags prefaced by -");
         ui.statusMessage(" view [(--message ($index|$uri)|--thread $index)] [--page $n]");
         ui.statusMessage("          : view a page in the given message");
-        if (_currentMessage != null) {
-            ui.statusMessage(" threadnext [--position $position]");
-            ui.statusMessage("          : view the next message in the thread (or the given");
-            ui.statusMessage("          : thread position)");
-            ui.statusMessage(" threadprev [--position $position]");
-            ui.statusMessage("          : view the previous message in the thread (or the given");
-            ui.statusMessage("          : thread position)");
-            ui.statusMessage(" importkey --position $position");
-            ui.statusMessage("          : import the key included in the given message reference");
-        }
-        ui.statusMessage(" export [--message ($index|$uri)] --out $directory");
-        ui.statusMessage("          : dump the full set of pages/attachments/status to the");
-        ui.statusMessage("          : specified directory");
-        ui.statusMessage(" save [--message ($index|$uri)] (--page $n|--attachment $n) --out $filename");
-        ui.statusMessage("          : save just the specified page/attachment to the given file");
-        if (_currentMessage != null) {
-            ui.statusMessage(" reply    : jump to the post menu, prepopulating the --references field");
-        }
         if ( (_currentChannel != null) || (_currentMessage != null) ) {
-            ui.statusMessage(" ban [--scope (author|channel|$hash)] [--delete $boolean]");
-            ui.statusMessage("          : ban the author or channel so that no more posts from that author");
-            ui.statusMessage("          : or messages by any author in that channel will be allowed into the");
-            ui.statusMessage("          : Syndie archive.  If --delete is specified, the messages themselves");
-            ui.statusMessage("          : will be removed from the archive as well as the database");
-            ui.statusMessage(" decrypt [(--message $msgId|--channel $channelId)] [--passphrase pass]");
-            ui.statusMessage("          : attempt to decrypt the specified channel metadata or message for");
-            ui.statusMessage("          : those that could not be decrypted earlier");
             ui.statusMessage(" watch (--author $true|--channel $true) [--nickname $name]");
             ui.statusMessage("       [--category $nameInWatchedTree]");
-        }
-        if (_currentChannel != null || !_channelKeys.isEmpty()) {
-            ui.statusMessage(" backupSecrets [--channel ($index|$hash)] [--withmeta] [--out $file]");
-            ui.statusMessage("          : backup the private keys and optionally meta.syndie to a zip file");
         }
     }
     public boolean processCommands(DBClient client, UI ui, Opts opts) {

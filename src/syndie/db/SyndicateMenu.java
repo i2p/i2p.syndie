@@ -52,29 +52,31 @@ class SyndicateMenu implements TextEngine.Menu {
     public String getName() { return NAME; }
     public String getDescription() { return "syndication menu"; }
     public boolean requireLoggedIn() { return true; }
+
     public void listCommands(UI ui) {
+        // alphabetical please
         ui.statusMessage(" buildindex         : create or update the current archive's index");
-        ui.statusMessage(" getindex --archive $url [--proxyHost $host --proxyPort $port] [--pass $pass]");
-        ui.statusMessage("          [--scope (all|new|meta|unauth)]");
-        ui.statusMessage("                    : fetch the appropriate index from the archive");
+        ui.statusMessage(" bulkimport --dir $directory --delete $boolean --rmdir $boolean");
+        ui.statusMessage("                    : import all of the " + Constants.FILENAME_SUFFIX + " files in the given directory, deleting them on completion");
         ui.statusMessage(" diff [--maxSize $numBytes]");
         ui.statusMessage("                    : summarize the differences between the fetched index and the local db");
         ui.statusMessage(" fetch [--style (diff|known|metaonly|pir|unauth)] [--includeReplies $boolean] [--maxSize $numBytes]");
         ui.statusMessage("                    : actually fetch the posts/replies/metadata");
+        ui.statusMessage(" freenetpost --privateSSK ($key|new) [--fcpHost localhost] [--fcpPort 9481]");
+        ui.statusMessage("                    : post the entire local archive into Freenet, storing the data either in the");
+        ui.statusMessage("                    : given SSK or in a brand new SSK, as requested.");
+        ui.statusMessage(" getindex --archive $url [--proxyHost $host --proxyPort $port] [--pass $pass]");
+        ui.statusMessage("          [--scope (all|new|meta|unauth)]");
+        ui.statusMessage("                    : fetch the appropriate index from the archive");
+        ui.statusMessage(" listban            : list the channels currently banned in the local archive");
         ui.statusMessage(" nextpbe [--lines $num]");
         ui.statusMessage(" prevpbe [--lines $num]");
         ui.statusMessage("                    : paginate through the messages using passphrase based encryption");
+        ui.statusMessage(" put                : send up the scheduled posts/replies/metadata to the archive");
         ui.statusMessage(" resolvepbe --index $num --passphrase $passphrase");
         ui.statusMessage("                    : import the indexed message by using the specified passphrase");
         ui.statusMessage(" schedule --put (outbound|outboundmeta|archive|archivemeta) [--deleteOutbound $boolean] [--knownChanOnly $boolean]");
         ui.statusMessage("                    : schedule a set of messages to be posted");
-        ui.statusMessage(" put                : send up the scheduled posts/replies/metadata to the archive");
-        ui.statusMessage(" bulkimport --dir $directory --delete $boolean --rmdir $boolean");
-        ui.statusMessage("                    : import all of the " + Constants.FILENAME_SUFFIX + " files in the given directory, deleting them on completion");
-        ui.statusMessage(" freenetpost --privateSSK ($key|new) [--fcpHost localhost] [--fcpPort 9481]");
-        ui.statusMessage("                    : post the entire local archive into Freenet, storing the data either in the");
-        ui.statusMessage("                    : given SSK or in a brand new SSK, as requested.");
-        ui.statusMessage(" listban            : list the channels currently banned in the local archive");
         ui.statusMessage(" unban [--scope $index|$chanHash]");
     }
     public boolean processCommands(DBClient client, UI ui, Opts opts) {

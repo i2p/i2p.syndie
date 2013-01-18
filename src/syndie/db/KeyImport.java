@@ -35,13 +35,16 @@ public class KeyImport extends CommandImpl {
     public KeyImport() {}
 
     public DBClient runCommand(Opts args, UI ui, DBClient client) {
-        if ( (client == null) || (!client.isLoggedIn()) ) {
-            List missing = args.requireOpts(new String[] { "db", "login", "pass", "keyfile" });
-            if (missing.size() > 0) {
-                ui.errorMessage("Invalid options, missing " + missing);
-                ui.commandComplete(-1, null);
-                return client;
-            }
+        String[] reqd;
+        if ( (client == null) || (!client.isLoggedIn()) )
+            reqd = new String[] { "db", "login", "pass", "keyfile" };
+        else
+            reqd = new String[] { "keyfile" };
+        List missing = args.requireOpts(reqd);
+        if (missing.size() > 0) {
+            ui.errorMessage("Invalid options, missing " + missing);
+            ui.commandComplete(-1, null);
+            return client;
         }
         
         String db = args.getOptValue("db");

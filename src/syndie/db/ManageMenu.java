@@ -71,30 +71,42 @@ class ManageMenu implements TextEngine.Menu {
     public String getName() { return NAME; }
     public String getDescription() { return "channel management menu"; }
     public boolean requireLoggedIn() { return true; }
+
     public void listCommands(UI ui) {
+        // alphabetical please
+        if (_currentChannel != null) {
+            ui.statusMessage(" addnym (--nym $index | --key $base64(pubKey)) --action (manage|post)");
+            ui.statusMessage(" cancel             : clear the current create|update state without updating anything");
+        }
         ui.statusMessage(" channels           : display a list of channels the current nym can manage");
+        if (_currentChannel == null) {
+            ui.statusMessage(" create             : begin the process of creating a new channel");
+            ui.statusMessage(" execute --out $outputDir: create/update the channel, generating the metadata and ");
+            ui.statusMessage("                    : private keys in the given dir, and importing them into the current ");
+            ui.statusMessage("                    : nym.  also clears the current create or update state");
+        }
+        if (_currentChannel != null) {
+            ui.statusMessage(" listnyms [--name $namePrefix] [--channel $hashPrefix]");
+            ui.statusMessage("                    : list locally known nyms matching the criteria");
+        }
+        ui.statusMessage(" meta [--channel ($index|$hash)] : display the channel's metadata");
         if (_itemIsChannelList) {
             ui.statusMessage(" next [--lines $num]: paginate through the channels, 10 or $num at a time");
             ui.statusMessage(" prev [--lines $num]: paginate through the channels, 10 or $num at a time");
         }
-        ui.statusMessage(" meta [--channel ($index|$hash)] : display the channel's metadata");
-        if (_currentChannel == null) {
-            ui.statusMessage(" create             : begin the process of creating a new channel");
-            ui.statusMessage(" update --channel ($index|$hash): begin the process of updating an existing channel");
-        } else {
+        if (_currentChannel != null) {
+            ui.statusMessage(" preview            : summarize the channel configuration");
+            ui.statusMessage(" removenym (--nym $index | --key $base64(pubKey)) --action (manage|post)");
+        }
+        if (_currentChannel != null) {
             ui.statusMessage(" set [$opts]        : set various options on the channel being created/updated,");
             ui.statusMessage("                    : using the options from the ChanGen command");
-            ui.statusMessage(" listnyms [--name $namePrefix] [--channel $hashPrefix]");
-            ui.statusMessage("                    : list locally known nyms matching the criteria");
-            ui.statusMessage(" addnym (--nym $index | --key $base64(pubKey)) --action (manage|post)");
-            ui.statusMessage(" removenym (--nym $index | --key $base64(pubKey)) --action (manage|post)");
-            ui.statusMessage(" preview            : summarize the channel configuration");
-            ui.statusMessage(" execute --out $outputDir: create/update the channel, generating the metadata and ");
-            ui.statusMessage("                    : private keys in the given dir, and importing them into the current ");
-            ui.statusMessage("                    : nym.  also clears the current create or update state");
-            ui.statusMessage(" cancel             : clear the current create|update state without updating anything");
+        }
+        if (_currentChannel == null) {
+            ui.statusMessage(" update --channel ($index|$hash): begin the process of updating an existing channel");
         }
     }
+
     public boolean processCommands(DBClient client, UI ui, Opts opts) {
         String cmd = opts.getCommand();
         if ("channels".equalsIgnoreCase(cmd)) {
@@ -226,7 +238,7 @@ class ManageMenu implements TextEngine.Menu {
                 ui.commandComplete(0, null);
             } else {
                 int end = Math.min(_itemIteratorIndex+num, _itemKeys.size());
-                ui.statusMessage(name + " " + _itemIteratorIndex + " through " + (end-1) + " of " + (_itemKeys.size()-1));
+                ui.statusMessage(name + " " + _itemIteratorIndex + " through " + (end-1) + " of " + _itemKeys.size());
                 while (_itemIteratorIndex < end) {
                     String desc = (String)_itemText.get(_itemIteratorIndex);
                     ui.statusMessage(_itemIteratorIndex + ": " + desc);

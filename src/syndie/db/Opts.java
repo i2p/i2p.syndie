@@ -154,7 +154,9 @@ public class Opts {
             return (String)_args.get(index);
         return null;
     }
+
     public int size() { return _size; }
+
     /** return list of missing options, or an empty list if we have all of the required options */
     public List requireOpts(String opts[]) {
         List missing = new ArrayList();
