@@ -70,8 +70,10 @@ public class NymKey {
     public Hash getChannel() { return _channel; }
 
     public String toString() {
-        return _function + " for " + _channel.toBase64() + " " + Base64.encode(_data) 
-               + (_dataHash != null ? " / " + _dataHash : "") + " (" + _authenticated + ")";
+        String auth = _authenticated ? "Authenticated " : "Unauthenticated ";
+        return auth + _type + ' ' + _function + " private key for [" + _channel.toBase64() + "] (" +
+               _data.length + "bytes) is: " + Base64.encode(_data);
+               //+ (_dataHash != null ? " / " + _dataHash : "");
     }
 
     public boolean isIdentity() {
@@ -82,5 +84,27 @@ public class NymKey {
         if (pub == null)
             return false;
         return _channel.equals(pub.calculateHash());
+    }
+
+    @Override
+    public int hashCode() {
+        return DataHelper.hashCode(_data);
+    }
+
+    /**
+     *  Just for printing in KeyList for now.
+     *  May want to add channel if using elsewhere?
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (o == this)
+            return true;
+        if (o == null || !(o instanceof NymKey))
+            return false;
+        NymKey nk = (NymKey) o;
+        return
+            DataHelper.eq(_type, nk._type) &&
+            DataHelper.eq(_function, nk._function) &&
+            DataHelper.eq(_data, nk._data);
     }
 }
