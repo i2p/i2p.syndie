@@ -27,7 +27,9 @@ public class LoginManager extends CommandImpl {
     private DBClient _client;
     public LoginManager(DBClient client) { _client = client; }
     
-    LoginManager() {}
+    public static String getHelp(String cmd) {
+        return "--login $nymLogin --pass $nymPass --name $nymName";
+    }
 
     public DBClient runCommand(Opts args, UI ui, DBClient client) {
         if ( (client == null) || (!client.isLoggedIn()) ) {

@@ -32,7 +32,9 @@ import syndie.data.SyndieURI;
  */
 public class KeyImport extends CommandImpl {
 
-    public KeyImport() {}
+    public static String getHelp(String cmd) {
+        return "--keyfile $keyFile [--authentic $boolean] [--expireExisting $boolean]";
+    }
 
     public DBClient runCommand(Opts args, UI ui, DBClient client) {
         String[] reqd;

@@ -12,7 +12,11 @@ import net.i2p.data.Hash;
  * --channel $base64(channelHash)
  */
 public class MessageList extends CommandImpl {
-    MessageList() {}
+
+    public static String getHelp(String cmd) {
+        return "--channel $base64channelhash";
+    }
+
     public DBClient runCommand(Opts args, UI ui, DBClient client) {
         if ( (client == null) || (!client.isLoggedIn()) ) {
             List missing = args.requireOpts(new String[] { "db", "channel" });

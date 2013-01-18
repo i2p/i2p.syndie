@@ -628,7 +628,9 @@ public class TextEngine {
     private void processHistory(Opts opts) {
         for (int i = 0; i < _commandHistory.size(); i++)
             _ui.statusMessage((i+1) + ": " + (String)_commandHistory.get(i));
+        _ui.commandComplete(0, null);
     }
+
     /** deal with !!, !123, and !-123 */
     private void processHistoryBang(Opts opts) {
         String cmd = opts.getCommand();
@@ -727,6 +729,7 @@ public class TextEngine {
             else
                 _ui.statusMessage("New alias for '" + name + "': " + value);
         }
+        _ui.commandComplete(0, null);
     }
     
     private void displayAliases() {
@@ -759,9 +762,13 @@ public class TextEngine {
         }
         // alphabetical please
         _ui.statusMessage("<<< top menu commands >>>");
+        _ui.statusMessage(" alias [aliasName] [command [args...]]");
         _ui.statusMessage(" builduri (--url $url | --channel $chanHash [--message $num [--page $num] )");
         _ui.statusMessage("                    : helper method for building Syndie URIs");
+        _ui.statusMessage(" definecmd --name $commandName --class javaClassName");
         _ui.statusMessage(" exit               : exit syndie");
+        _ui.statusMessage(" gobble             : suppress all normal status messages (until you 'ungobble')");
+        _ui.statusMessage(" history");
         _ui.statusMessage(" init $jdbcURL      : create a new syndie database");
         if (menu != null && menu.requireLoggedIn())
             _ui.statusMessage(" logout             : disconnect from the database, but do not exit syndie");
@@ -770,13 +777,19 @@ public class TextEngine {
         _ui.statusMessage("       [--httpproxyhost $hostname --httpproxyport $portNum]");
         _ui.statusMessage("       [--archive $archiveURL]");
         _ui.statusMessage("                    : update or display the logged in nym's preferences");
+        _ui.statusMessage(" quit               : exit syndie");
         _ui.statusMessage(" toggleDebug        : turn on or off debugging output");
         _ui.statusMessage(" togglePaginate     : turn on or off output pagination");
+        _ui.statusMessage(" ungobble");
         if (menu != null && !_currentMenu.equals(LoggedInMenu.NAME))
             _ui.statusMessage(" up                 : go up a menu");
+        _ui.statusMessage(" version");
+        _ui.statusMessage(" !!                 : repeat last command");
+        _ui.statusMessage(" !$num              : repeat command $num from history");
+        _ui.statusMessage(" !-$num             : repeat command $num back in history");
+        _ui.statusMessage(" ^[from[^to]]       : repeat last command, optionally replacing 'from' with 'to'");
         _ui.statusMessage("<<< custom commands >>>");
-        List<String> clicmds = CLI.getCommands();
-        Collections.sort(clicmds);
+        List<String> clicmds = CLI.getHelp();
         for (String cmd : clicmds) {
             _ui.statusMessage(' ' + cmd);
         }

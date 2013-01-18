@@ -15,7 +15,11 @@ import syndie.data.ChannelInfo;
  * --channel $base64(channelHash)
  */
 public class ViewMetadata extends CommandImpl {
-    ViewMetadata() {}
+
+    public static String getHelp(String cmd) {
+        return "--channel $base64channelhash";
+    }
+
     public DBClient runCommand(Opts args, UI ui, DBClient client) {
         if ( (client == null) || (!client.isLoggedIn()) ) {
             List missing = args.requireOpts(new String[] { "db", "login", "pass", "channel" });

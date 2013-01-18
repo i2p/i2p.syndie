@@ -1,37 +1,48 @@
 package syndie.db;
 
 import java.io.IOException;
-import java.util.*;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.TreeMap;
+
 import net.i2p.data.Base64;
 import net.i2p.data.DataHelper;
 
 /**
- *
+ *  Custom commands
  */
 public class CLI {
-    private static final String PREFIX = CLI.class.getName().substring(0, CLI.class.getName().lastIndexOf("."));
 
+    /**
+     *  Implementing classes should also provide:
+     *  public static String getHelp(String cmd)
+     */
     public static interface Command {
         public DBClient runCommand(Opts opts, UI ui, DBClient client);
     }
 
-    private static Object _commands[][] = new Object[][] {
-        new Object[] { "import", Importer.class },
-        new Object[] { "register", LoginManager.class },
-//        new Object[] { "login", LoginManager.class },
-        new Object[] { "changen", ChanGen.class },
-        new Object[] { "chanlist", ChanList.class },
-        new Object[] { "keyimport", KeyImport.class },
-        new Object[] { "keygen", KeyGen.class },
-        new Object[] { "keylist", KeyList.class },
-        new Object[] { "messagegen", MessageGen.class },
-        new Object[] { "messageextract", MessageExtract.class },
-        new Object[] { "viewmetadata", ViewMetadata.class },
-        new Object[] { "messagelist", MessageList.class },
-        new Object[] { "viewmessage", ViewMessage.class },
-        new Object[] { "httpserv", HTTPServ.class },
-        new Object[] { "ctrlserv", ControlServer.class }
-    };
+    private static final Map<String, Class<? extends Command>> _commands = new TreeMap();
+
+    static {
+        // must be lower case here
+        _commands.put("changen", ChanGen.class);
+        _commands.put("chanlist", ChanList.class);
+        _commands.put("ctrlserv", ControlServer.class);
+        _commands.put("httpserv", HTTPServ.class);
+        _commands.put("import", Importer.class);
+        _commands.put("keygen", KeyGen.class);
+        _commands.put("keyimport", KeyImport.class);
+        _commands.put("keylist", KeyList.class);
+        _commands.put("messageextract", MessageExtract.class);
+        _commands.put("messagegen", MessageGen.class);
+        _commands.put("messagelist", MessageList.class);
+        _commands.put("register", LoginManager.class);
+        _commands.put("viewmessage", ViewMessage.class);
+        _commands.put("viewmetadata", ViewMetadata.class);
+    }
     
     public static void main(String args[]) {
         //args = new String[] { "Importer" };
@@ -60,16 +71,11 @@ public class CLI {
     }
 
     public synchronized static Command getCommand(String name) {
-        Class cls = null;
-        for (int i = 0; i < _commands.length; i++) {
-            if (name.equalsIgnoreCase(_commands[i][0].toString())) {
-                cls = (Class)_commands[i][1];
-                break;
-            }
-        }
+        name = name.toLowerCase(Locale.US);
+        Class<? extends Command> cls = _commands.get(name);
         if (cls != null) {
             try {
-                return (Command)cls.newInstance();
+                return cls.newInstance();
             } catch (Exception e) {
                 return null;
             }
@@ -82,31 +88,29 @@ public class CLI {
      * allow new commands to be added to the set of known commands,
      * or old commands to be replaced with new ones.
      */
-    public synchronized static void setCommand(String name, Class cmdClass) {
-        if (getCommand(name) == null) {
-            Object old[][] = _commands;
-            Object newcmd[][] = new Object[old.length+1][2];
-            for (int i = 0; i < old.length; i++) {
-                newcmd[i][0] = old[i][0];
-                newcmd[i][1] = old[i][1];
-            }
-            newcmd[old.length][0] = name;
-            newcmd[old.length][1] = cmdClass;
-            _commands = newcmd;
-        } else {
-            for (int i = 0; i < _commands.length; i++) {
-                if (name.equalsIgnoreCase(_commands[i][0].toString())) {
-                    _commands[i][1] = cmdClass;
-                }
-            }
-        }
+    public synchronized static void setCommand(String name, Class<Command> cmdClass) {
+        name = name.toLowerCase(Locale.US);
+        _commands.put(name, cmdClass);
     }
 
-    /** unsorted */
+    /** sorted */
     public synchronized static List<String> getCommands() {
-        List<String> rv = new ArrayList(_commands.length);
-        for (int i = 0; i < _commands.length; i++) {
-            rv.add(_commands[i][0].toString());
+        return new ArrayList(_commands.keySet());
+    }
+
+    /** sorted */
+    public synchronized static List<String> getHelp() {
+        List<String> rv = new ArrayList(_commands.size());
+        for (Map.Entry<String, Class<? extends Command>> e : _commands.entrySet()) {
+            String cmd = e.getKey();
+            Class cls = e.getValue();
+            try {
+                Method m = cls.getMethod("getHelp", String.class);
+                String help = (String) m.invoke(null, cmd);
+                rv.add(cmd + ' ' + help);
+            } catch (Exception exc) {
+                rv.add(cmd);
+            }
         }
         return rv;
     }
@@ -114,8 +118,8 @@ public class CLI {
     private synchronized static final void usage() {
         System.err.println("Usage: $command [$args]*");
         System.err.print("Known commands: ");
-        for (int i = 0; i < _commands.length; i++)
-            System.err.print(_commands[i][0].toString() + " ");
+        for (String msg : getHelp())
+            System.err.print(msg);
         System.err.println();
     }
 }

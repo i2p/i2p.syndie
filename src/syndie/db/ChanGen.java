@@ -65,6 +65,10 @@ public class ChanGen extends CommandImpl {
     public ChanGen(I2PAppContext ctx) { _ctx = ctx; }
     public ChanGen() { this(I2PAppContext.getGlobalContext()); }
     
+    public static String getHelp(String cmd) {
+        return "--name $name --keyManageOut $keyFile --keyReplyOut $keyFile (see source for more options)";
+    }
+
     public DBClient runCommand(Opts args, UI ui, DBClient client) {
         List missing = args.requireOpts(new String[] { "name", /*"metaOut",*/ "keyManageOut", "keyReplyOut" });
         if (missing.size() > 0) {

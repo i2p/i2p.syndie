@@ -20,7 +20,11 @@ import syndie.Constants;
  * (--pubOut $pubKeyFile --privOut $privKeyFile | --sessionOut $sessionKeyFile)
  */
 public class KeyGen extends CommandImpl {
-    KeyGen() {}
+
+    public static String getHelp(String cmd) {
+        return "--type (signing|encryption|post) [--scope $base64(channelHash)] (--pubOut $pubKeyFile --privOut $privKeyFile | --sessionOut $sessionKeyFile)";
+    }
+
     public DBClient runCommand(Opts args, UI ui, DBClient client) {
         List missing = args.requireOpts(new String[] { "type" });
         if (missing.size() > 0) {

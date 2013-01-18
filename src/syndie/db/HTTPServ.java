@@ -56,6 +56,10 @@ public class HTTPServ implements CLI.Command {
     
     private static final boolean REJECT_INPROXY = true;
 
+    public static String getHelp(String cmd) {
+        return "[--port $num (default 8080)] [--listeners $num (default 5)] [--writable true] | [--kill true]";
+    }
+
     public HTTPServ() {
         if (isAlive()) return;
         _runners = new ArrayList();

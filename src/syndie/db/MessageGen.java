@@ -67,8 +67,12 @@ import syndie.data.SyndieURI;
  */
 public class MessageGen extends CommandImpl {
     private byte _replyIV[];
-    public MessageGen() {}
     public byte[] getReplyIV() { return _replyIV; }
+
+    public static String getHelp(String cmd) {
+        return "-out $outDirectory (see source for more options)";
+    }
+
     public DBClient runCommand(Opts args, UI ui, DBClient client) {
         if ( (client == null) || (!client.isLoggedIn()) ) {
             List missing = args.requireOpts(new String[] { "db", "login", "pass", "out" });

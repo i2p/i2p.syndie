@@ -20,6 +20,10 @@ class ControlServer implements CLI.Command {
     
     private Boolean _shutdown = Boolean.valueOf(false);
     
+    public static String getHelp(String cmd) {
+        return "[--port $port (default 10111)]";
+    }
+
     public DBClient runCommand(Opts opts, final UI ui, DBClient client) {
         _client = client;
         _ui = ui;

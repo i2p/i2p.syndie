@@ -33,7 +33,11 @@ import syndie.data.SyndieURI;
  * [--passphrase $passphrase] // use the passphrase for the PBE key derivation
  */
 public class MessageExtract extends CommandImpl {
-    MessageExtract() {}
+
+    public static String getHelp(String cmd) {
+        return "--in $filename --out $outDirectory [--passphrase $passphrase]";
+    }
+
     public DBClient runCommand(Opts args, UI ui, DBClient client) {
         if ( (client == null) || (!client.isLoggedIn()) ) {
             List missing = args.requireOpts(new String[] { "db", "login", "pass", "in", "out" });

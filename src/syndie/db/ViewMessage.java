@@ -25,7 +25,11 @@ import syndie.data.ReferenceNode;
  * --out $outputDirectory
  */
 public class ViewMessage extends CommandImpl {
-    ViewMessage() {}
+
+    public static String getHelp(String cmd) {
+        return "--internalid $internalMessageId --out $outputDirectory";
+    }
+
     public DBClient runCommand(Opts args, UI ui, DBClient client) {
         if ( (client == null) || (!client.isLoggedIn()) ) {
             List missing = args.requireOpts(new String[] { "db", "login", "pass", "internalid", "out" });
