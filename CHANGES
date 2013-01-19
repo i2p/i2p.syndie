@@ -1,5 +1,39 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
+* 2013-01-19 1.102b-9 (kytv, MOSFET, zzz)
+  GUI improvements:
+  - Clear 'search term' and enable/disable button automatically in NymChannelTree
+  - Finish tag cleanup - capitalization, symbols, spelling, spaces, consistency
+  - Note meta fetch/pulls on syndicator tab
+  - Add up/down arrow support to TextUITab
+  - Fix coloring issues in TextUITab
+  - Increase buffer size in TextUITab
+  - Better formatting of multiline messages in TextUITab
+  - Change SQL, Log, and UI tabs to monospace font
+  - Show completed count for fetches/pulls
+  Fixes:
+  - Fix in-progress fetch count for unknwon reply key
+  - Fix keyimport NPE if missing arg
+  - Fix CLI recovery after RuntimeException
+  - Clean up streams correctly when loading/storing Enclosures
+  Syndication:
+  - Change default pull policy from 6 months to 2 months
+  - Fix reimporting of messages with unknown read/reply keys
+  Build:
+  - Fix classes in Desktop causing dependency warnings
+  Other:
+  - Preliminary support for standard URI query encoding
+  - Update English PO file, ready for translation
+  - Add help for missing CLI and TextEngine commands
+  - More CLI help improvements, add aliases and shortcuts to menus, sorting, cleanup
+  - Add CLI 'no such menu' error
+  - Improve keylist CLI
+  - Fix command history issues
+  - Add two python script attachments from MOSFET's control server patch
+  - Add more default archives
+  - Implement backup of nymkeys and meta.syndie at db creation
+  - Add default bans at db creation
+
 * 2013-01-17 1.102b-8 (kytv, MOSFET, zzz)
   GUI improvements:
   - Fixes in syndicator tab when there are no archives defined
