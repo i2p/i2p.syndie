@@ -17,6 +17,8 @@ import net.i2p.data.DataHelper;
 public class CLI {
 
     /**
+     *  Implementing classes MUST have a 0-arg constructor.
+     *
      *  Implementing classes should also provide:
      *  public static String getHelp(String cmd)
      */

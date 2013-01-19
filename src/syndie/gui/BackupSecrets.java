@@ -281,6 +281,10 @@ public class BackupSecrets extends BaseComponent implements Themeable, Translata
     }
     
     private static final byte ZIP_HEADER[] = new byte[] { 'P', 'K', 0x03, 0x04 };
+
+    /**
+     *  TODO does not update bookmark bar, etc
+     */
     static void restore(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, final Shell parent, final File src) {
         final byte origData[] = new byte[(int)src.length()];
         FileInputStream fin = null;
@@ -303,6 +307,10 @@ public class BackupSecrets extends BaseComponent implements Themeable, Translata
         
         restore(client, ui, themes, trans, parent, src, origData, origData);
     }
+
+    /**
+     *  TODO does not update bookmark bar, etc
+     */
     private static void restore(final DBClient client, final UI ui, final ThemeRegistry themes, final TranslationRegistry trans, final Shell parent, final File str, final byte origData[], final byte decrypted[]) {
         if (!DataHelper.eq(ZIP_HEADER, 0, decrypted, 0, ZIP_HEADER.length)) {
             PassphrasePrompt prompt = new PassphrasePrompt(client, ui, themes, trans, parent, false);

@@ -1723,11 +1723,16 @@ public class DBClient {
     private static final String SQL_LIST_MANAGED_CHANNELS = "SELECT channelId FROM channelManageKey WHERE authPubKey = ?";
     private static final String SQL_LIST_POST_CHANNELS = "SELECT channelId FROM channelPostKey WHERE authPubKey = ?";
 
-    /** channels */
+    /**
+     *  Returns authenticated channels only
+     */
     public ChannelCollector getChannels(boolean includeManage, boolean includeIdent, boolean includePost, boolean includePublicPost) {
         return getChannels(includeManage, includeIdent, includePost, includePublicPost, true);
     }
 
+    /**
+     *  Returns authenticated channels only
+     */
     public ChannelCollector getChannels(boolean includeManage, boolean includeIdent, boolean includePost, boolean includePublicPost, boolean fetchInfo) {
         ChannelCollector rv = new ChannelCollector();
         

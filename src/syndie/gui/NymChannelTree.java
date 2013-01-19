@@ -795,6 +795,7 @@ public class NymChannelTree implements Themeable, Translatable {
                 long chanId = rs.getLong(2);
                 
                 Record r = (Record)chanIdToRecord.get(new Long(chanId));
+                // FIXME what date is this?
                 r.lastPostDate = (when != null ? when.getTime() : -1);
             }
         } catch (SQLException se) {

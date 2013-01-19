@@ -29,13 +29,19 @@ import syndie.data.SyndieURI;
  * --keyfile $keyFile      // keytype: (manage|reply|read)\nscope: $base64(channelHash)\nraw: $base64(data)\n
  * [--authentic $boolean]
  * [--expireExisting $boolean] // if true, expire all other existing keys of the same type for the scope
+ *
+ * TODO no way to delete or modify keys to change to authenticated,
+ * either in the CLI or GUI.
  */
 public class KeyImport extends CommandImpl {
 
     public static String getHelp(String cmd) {
-        return "--keyfile $keyFile [--authentic $boolean] [--expireExisting $boolean]";
+        return "--keyfile $keyFile [--authentic $boolean (true recommended)] [--expireExisting $boolean]";
     }
 
+    /**
+     *  Problematic, must decide authentic or not, and no way to change later.
+     */
     public DBClient runCommand(Opts args, UI ui, DBClient client) {
         String[] reqd;
         if ( (client == null) || (!client.isLoggedIn()) )
@@ -59,6 +65,9 @@ public class KeyImport extends CommandImpl {
         return importKey(ui, client, db, login, pass, keyFile, authentic, expireExisting);
     }
     
+    /**
+     *  FIXME fails w/o exception or return code
+     */
     private DBClient importKey(UI ui, DBClient client, String db, String login, String pass, String keyFile, boolean authentic, boolean expireExisting) {
         File f = new File(keyFile);
         if (!f.exists()) {
@@ -69,7 +78,10 @@ public class KeyImport extends CommandImpl {
         FileInputStream fin = null;
         try {
             fin = new FileInputStream(f);
-            return importKey(ui, client, db, login, pass, fin, authentic, expireExisting);
+            DBClient rv = importKey(ui, client, db, login, pass, fin, authentic, expireExisting);
+            // just to make sure, however could already be set to -1 below, FIXME
+            ui.commandComplete(0, null);
+            return rv;
         } catch (IOException ioe) {
             ui.errorMessage("Error importing the key", ioe);
             ui.commandComplete(-1, null);
@@ -79,10 +91,16 @@ public class KeyImport extends CommandImpl {
         }
     }
 
+    /**
+     *  FIXME fails w/o exception or return code
+     */
     public static DBClient importKey(UI ui, DBClient client, InputStream fin, boolean authentic, boolean expireExisting) throws IOException {
         return importKey(ui, client, null, null, null, fin, authentic, expireExisting);
     }
 
+    /**
+     *  FIXME fails w/o exception or return code
+     */
     public static DBClient importKey(UI ui, DBClient client, String db, String login, String pass, InputStream fin, boolean authentic, boolean expireExisting) throws IOException {
         String line = DataHelper.readLine(fin);
         if (!line.startsWith("keytype: ") || (line.length() < ("keytype: ".length() + 1)))
@@ -116,10 +134,16 @@ public class KeyImport extends CommandImpl {
                                                  "(?, ?, ?, ?, ?, ?, ?, NULL, NULL)";
     private static final String SQL_EXPIRE = "UPDATE nymKey SET keyPeriodEnd = NOW() WHERE nymId = ? AND keyChannel = ? and keyFunction = ?";
 
+    /**
+     *  FIXME fails w/o exception or return code
+     */
     public static DBClient importKey(UI ui, DBClient client, String type, Hash scope, byte[] raw, boolean authenticated, boolean expireExisting) {
         return importKey(ui, client, null, null, null, type, scope, raw, authenticated, expireExisting);
     }
 
+    /**
+     *  FIXME fails w/o exception or return code
+     */
     public static DBClient importKey(UI ui, DBClient client, String db, String login, String pass, String type, Hash scope, byte[] raw, boolean authenticated, boolean expireExisting) {
         client.clearNymChannelCache();
         PreparedStatement stmt = null;
@@ -210,6 +234,7 @@ public class KeyImport extends CommandImpl {
             ui.commandComplete(0, null);
         } catch (SQLException se) {
             ui.errorMessage("Error importing the key", se);
+            // FIXME
             ui.commandComplete(-1, null);
         } finally {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
@@ -218,7 +243,7 @@ public class KeyImport extends CommandImpl {
         return client;
     }
     
-    public static void importKeys(UI ui, DBClient client, Hash keyScope, SyndieURI uri, List nymKeys) {
+    public static void importKeys(UI ui, DBClient client, Hash keyScope, SyndieURI uri, List<NymKey> nymKeys) {
         if (uri == null)
             return;
         if (uri.getReadKey() != null)
@@ -231,43 +256,51 @@ public class KeyImport extends CommandImpl {
             importManageKey(ui, client, keyScope, uri, nymKeys);
     }
     
-    private static void importReadKey(UI ui, DBClient client, Hash scope, SyndieURI uri, List nymKeys) {
+    private static void importReadKey(UI ui, DBClient client, Hash scope, SyndieURI uri, List<NymKey> nymKeys) {
         boolean authorized = getKeyAuthorized(client, scope, uri.getScope());
         if (authorized) {
-            KeyImport.importKey(ui, client, Constants.KEY_FUNCTION_READ, scope, uri.getReadKey().getData(), true, false);
+            importKey(ui, client, Constants.KEY_FUNCTION_READ, scope, uri.getReadKey().getData(), true, false);
             nymKeys.add(new NymKey(Constants.KEY_TYPE_AES256, uri.getReadKey().getData(), true, Constants.KEY_FUNCTION_READ, client.getLoggedInNymId(), scope, false));
+        } else {
+            ui.debugMessage("Not authorized to import read key");
         }
     }
     
-    private static void importReplyKey(UI ui, DBClient client, Hash scope, SyndieURI uri, List nymKeys) {
+    private static void importReplyKey(UI ui, DBClient client, Hash scope, SyndieURI uri, List<NymKey> nymKeys) {
         boolean authorized = getKeyAuthorized(client, scope, uri.getScope());
         if (authorized) {
-            KeyImport.importKey(ui, client, Constants.KEY_FUNCTION_REPLY, scope, uri.getReplyKey().getData(), true, false);
+            importKey(ui, client, Constants.KEY_FUNCTION_REPLY, scope, uri.getReplyKey().getData(), true, false);
             nymKeys.add(new NymKey(Constants.KEY_TYPE_ELGAMAL2048, uri.getReplyKey().getData(), true, Constants.KEY_FUNCTION_REPLY, client.getLoggedInNymId(), scope, false));
+        } else {
+            ui.debugMessage("Not authorized to import reply key");
         }
     }
     
-    private static void importPostKey(UI ui, DBClient client, Hash scope, SyndieURI uri, List nymKeys) {
+    private static void importPostKey(UI ui, DBClient client, Hash scope, SyndieURI uri, List<NymKey> nymKeys) {
         SigningPrivateKey priv = uri.getPostKey();
         SigningPublicKey pub = priv.toPublic();
         importKey(ui, client, Constants.KEY_FUNCTION_MANAGE, pub.calculateHash(), priv.getData(), true, false);
         nymKeys.add(new NymKey(Constants.KEY_TYPE_DSA, priv.getData(), true, Constants.KEY_FUNCTION_MANAGE, client.getLoggedInNymId(), pub.calculateHash()));
         if (getKeyAuthorized(client, scope, uri.getScope())) {
             // if the author is authorized to manage the scope, also tag this key as a posting key for the given channel
-            KeyImport.importKey(ui, client, Constants.KEY_FUNCTION_POST, scope, priv.getData(), true, false);
+            importKey(ui, client, Constants.KEY_FUNCTION_POST, scope, priv.getData(), true, false);
             nymKeys.add(new NymKey(Constants.KEY_TYPE_DSA, priv.getData(), true, Constants.KEY_FUNCTION_POST, client.getLoggedInNymId(), scope, false));
+        } else {
+            ui.debugMessage("Not authorized to import post key");
         }
     }
     
-    private static void importManageKey(UI ui, DBClient client, Hash scope, SyndieURI uri, List nymKeys) {
+    private static void importManageKey(UI ui, DBClient client, Hash scope, SyndieURI uri, List<NymKey> nymKeys) {
         SigningPrivateKey priv = uri.getManageKey();
         SigningPublicKey pub = priv.toPublic();
         importKey(ui, client, Constants.KEY_FUNCTION_MANAGE, pub.calculateHash(), priv.getData(), true, false);
         nymKeys.add(new NymKey(Constants.KEY_TYPE_DSA, priv.getData(), true, Constants.KEY_FUNCTION_MANAGE, client.getLoggedInNymId(), pub.calculateHash()));
         if (getKeyAuthorized(client, scope, uri.getScope())) {
             // if the author is authorized to manage the scope, also tag this key as a managing key for the given channel
-            KeyImport.importKey(ui, client, Constants.KEY_FUNCTION_MANAGE, scope, priv.getData(), true, false);
+            importKey(ui, client, Constants.KEY_FUNCTION_MANAGE, scope, priv.getData(), true, false);
             nymKeys.add(new NymKey(Constants.KEY_TYPE_DSA, priv.getData(), true, Constants.KEY_FUNCTION_MANAGE, client.getLoggedInNymId(), scope, false));
+        } else {
+            ui.debugMessage("Not authorized to import manage key");
         }
     }
     
@@ -295,7 +328,7 @@ public class KeyImport extends CommandImpl {
      * so try to resolve those now.  these nymKeys can come from posts as part of their references,
      * from metadata as part of their references, or from metadata as published read keys.
      */
-    public static void resolveWithNewKeys(UI ui, DBClient client, List nymKeys) {
+    public static void resolveWithNewKeys(UI ui, DBClient client, List<NymKey> nymKeys) {
         for (int i = 0; i < nymKeys.size(); i++) {
             NymKey key = (NymKey)nymKeys.get(i);
             if (Constants.KEY_FUNCTION_MANAGE.equals(key.getFunction())) {
