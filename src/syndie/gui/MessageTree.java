@@ -739,17 +739,21 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         
         private void populateAgeCombo() {
             String [] items = {
-                _translationRegistry.getText("Last day"),
-                _translationRegistry.getText("Last 2 days"),
-                _translationRegistry.getText("Last week"),
-                _translationRegistry.getText("Last 2 weeks"),
-                _translationRegistry.getText("Last month"),
-                _translationRegistry.getText("Last 2 months"),
-                _translationRegistry.getText("Last 6 months"),
-                _translationRegistry.getText("Last year"),
-                _translationRegistry.getText("Last 3 years"),
-                _translationRegistry.getText("Last 5 years"),
-                _translationRegistry.getText("Last 10 years")
+                // translators: you may use "Last {0} day" for the singular if that's better
+                _translationRegistry.ngettext("Last day", "Last {0} days", 1),
+                _translationRegistry.ngettext("Last day", "Last {0} days", 2),
+                // translators: you may use "Last {0} week" for the singular if that's better
+                _translationRegistry.ngettext("Last week", "Last {0} weeks", 1),
+                _translationRegistry.ngettext("Last week", "Last {0} weeks", 2),
+                // translators: you may use "Last {0} month" for the singular if that's better
+                _translationRegistry.ngettext("Last month", "Last {0} months", 1),
+                _translationRegistry.ngettext("Last month", "Last {0} months", 2),
+                _translationRegistry.ngettext("Last month", "Last {0} months", 6),
+                // translators: you may use "Last {0} year" for the singular if that's better
+                _translationRegistry.ngettext("Last year", "Last {0} years", 1),
+                _translationRegistry.ngettext("Last year", "Last {0} years", 3),
+                _translationRegistry.ngettext("Last year", "Last {0} years", 5),
+                _translationRegistry.ngettext("Last year", "Last {0} years", 10),
             };
             
             _filterAge.setItems(items);

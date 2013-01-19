@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.StringTokenizer;
 import java.util.TreeMap;
 
 import net.i2p.data.Base64;
@@ -31,11 +32,11 @@ import syndie.Constants;
  * Sadly, doesn't extend URI, which is final.
  */
 public class SyndieURI {
-    private final SortedMap _attributes;
+    private final SortedMap<String, Object> _attributes;
     private final String _type;
     private transient String _stringified;
 
-    private static final SortedMap EMPTY_MAP = Collections.unmodifiableSortedMap(new TreeMap());
+    private static final SortedMap<String, Object> EMPTY_MAP = Collections.unmodifiableSortedMap(new TreeMap());
 
     public static final String PREFIX = "urn:syndie:";
     public static final String PREFIX_SHORT = "syndie:";
@@ -78,8 +79,12 @@ public class SyndieURI {
             return;
         }
         encoded = encoded.substring(endType+1);
-        // TODO support standard URI query with % encoding,
+        // Spport standard URI query with % encoding,
         // as UTF-8 encoding and '=' in hashes may break in browsers
+        if (encoded.startsWith("?")) {
+            _attributes = uriDecode(encoded);
+            return;
+        }
         try { 
             _attributes = bdecode(encoded);
         } catch (IllegalArgumentException iae) {
@@ -87,15 +92,12 @@ public class SyndieURI {
         } catch (IndexOutOfBoundsException ioobe) {
             throw new URISyntaxException(encoded, "Error bencoding: " + ioobe.getMessage());
         }
-        if (_attributes == null) {
-            throw new URISyntaxException(encoded, "Invalid bencoded attributes");
-        }
     }
 
     /**
      *  @throws IllegalArgumentException
      */
-    public SyndieURI(String type, SortedMap attributes) {
+    public SyndieURI(String type, SortedMap<String, Object> attributes) {
         if ( (type == null) || (type.trim().length() <= 0) || (attributes == null) ) 
             throw new IllegalArgumentException("Invalid attributes or type");
         _type = type;
@@ -463,7 +465,7 @@ public class SyndieURI {
     public boolean isSearch() { return TYPE_SEARCH.equals(_type); }
     
     public String getType() { return _type; }
-    public SortedMap getAttributes() { return _attributes; }
+    public SortedMap<String, Object> getAttributes() { return _attributes; }
     
     public String getString(String key) { 
         Object o = _attributes.get(key);
@@ -473,9 +475,21 @@ public class SyndieURI {
             return o.toString();
     }
 
-    public Long getLong(String key) { return (Long)_attributes.get(key); }
+    public Long getLong(String key) {
+        try {
+            return (Long)_attributes.get(key);
+        } catch (ClassCastException cce) {
+            return null;
+        }
+    }
 
-    public String[] getStringArray(String key) { return (String[])_attributes.get(key); }
+    public String[] getStringArray(String key) {
+        try {
+            return (String[])_attributes.get(key);
+        } catch (ClassCastException cce) {
+            return null;
+        }
+    }
 
     public boolean getBoolean(String key, boolean defaultVal) {
         Object o = _attributes.get(key);
@@ -486,10 +500,13 @@ public class SyndieURI {
         if (str == null)
             return defaultVal;
         else
-            return Boolean.valueOf(str).booleanValue();
+            return Boolean.parseBoolean(str);
     }
+
     public String getURL() { return getString("url"); }
+
     public Hash getScope() { return getHash("channel"); }
+
     public Hash getHash(String key) {
         Object obj = _attributes.get(key);
         if (obj == null) return null;
@@ -508,6 +525,7 @@ public class SyndieURI {
         }
         return null;
     }
+
     public SessionKey getReadKey() {
         byte val[] = decodeKey(getString("readKey"), SessionKey.KEYSIZE_BYTES);
         if ( (val != null) && (val.length == SessionKey.KEYSIZE_BYTES) )
@@ -515,6 +533,7 @@ public class SyndieURI {
         else
             return null;
     }
+
     public SessionKey getArchiveKey() {
         byte val[] = decodeKey(getString(Constants.URI_ARCHIVE_PASSPHRASE), SessionKey.KEYSIZE_BYTES);
         if ( (val != null) && (val.length == SessionKey.KEYSIZE_BYTES) )
@@ -522,6 +541,7 @@ public class SyndieURI {
         else
             return null;
     }
+
     public SigningPrivateKey getPostKey() {
         byte val[] = decodeKey(getString("postKey"), SigningPrivateKey.KEYSIZE_BYTES);
         if ( (val != null) && (val.length == SigningPrivateKey.KEYSIZE_BYTES) )
@@ -529,6 +549,7 @@ public class SyndieURI {
         else
             return null;
     }
+
     public byte[] getPostKeyData() {
         String str = getString("postKeyData");
         if (str != null)
@@ -536,6 +557,7 @@ public class SyndieURI {
         else
             return null;
     }
+
     public String getArchivePassphrase() {
         String str = getString("postKeyData");
         if (str != null) {
@@ -545,6 +567,7 @@ public class SyndieURI {
         }
         return null;
     }
+
     public SigningPrivateKey getManageKey() {
         byte val[] = decodeKey(getString("manageKey"), SigningPrivateKey.KEYSIZE_BYTES);
         if ( (val != null) && (val.length == SigningPrivateKey.KEYSIZE_BYTES) )
@@ -552,6 +575,7 @@ public class SyndieURI {
         else
             return null;
     }
+
     public PrivateKey getReplyKey() {
         byte val[] = decodeKey(getString("replyKey"), PrivateKey.KEYSIZE_BYTES);
         if ( (val != null) && (val.length == PrivateKey.KEYSIZE_BYTES) )
@@ -561,8 +585,11 @@ public class SyndieURI {
     }
 
     public Long getMessageId() { return getLong("messageId"); }
+
     public Long getAttachment() { return getLong("attachment"); }
+
     public Long getPage() { return getLong("page"); }
+
     public Hash[] getSearchScopes() { 
         String scopes[] = getStringArray("scope");
         if (scopes == null) return null;
@@ -642,6 +669,7 @@ public class SyndieURI {
         }
         return Base64.encode(orig, start, remaining);
     }
+
     public static byte[] decodeKey(String orig, int size) {
         byte rv[] = new byte[size];
         byte decoded[] = Base64.decode(orig);
@@ -774,7 +802,7 @@ public class SyndieURI {
     /////
     
     /** */
-    private static final String bencode(SortedMap attributes) {
+    private static final String bencode(SortedMap<String, Object> attributes) {
         StringBuilder buf = new StringBuilder(64);
         buf.append('d');
         for (Iterator iter = attributes.entrySet().iterator(); iter.hasNext(); ) {
@@ -804,7 +832,7 @@ public class SyndieURI {
         }
     }
     
-    private static final boolean bdecodeNext(StringBuilder remaining, SortedMap target) throws URISyntaxException {
+    private static final boolean bdecodeNext(StringBuilder remaining, SortedMap<String, Object> target) throws URISyntaxException {
         String key = null;
         while (true) {
             if (remaining.length() <= 0) return true;
@@ -904,7 +932,7 @@ public class SyndieURI {
      * be a single dictionary and contain either strings, integers, or lists of
      * strings.
      */
-    private static final SortedMap bdecode(String bencoded) throws URISyntaxException {
+    private static final SortedMap<String, Object> bdecode(String bencoded) throws URISyntaxException {
         //if ( (bencoded.charAt(0) != 'd') || (bencoded.charAt(bencoded.length()-1) != 'e') )
         //    throw new URISyntaxException(bencoded, "Not bencoded properly");
         if (bencoded.charAt(0) != 'd')
@@ -917,5 +945,193 @@ public class SyndieURI {
         while (!done)
             done = bdecodeNext(buf, rv);
         return rv;
+    }
+
+    ////
+    ////  Standard URI decode/encode methods below
+    ////
+
+    /**
+     *  Can only handle Integers, Longs, and Strings as values
+     *
+     *  @since 1.102b-9 adapted from i2ptunnel LocalHTTPServer
+     */
+    private static String uriEncode(SortedMap<String, Object> attributes) {
+        StringBuilder buf = new StringBuilder(64);
+        boolean first = true;
+        for (Map.Entry<String, Object> e : attributes.entrySet()) {
+            String key = e.getKey();
+            Object val = e.getValue();
+            if ((!(val instanceof String)) && (!(val instanceof Integer)) && (!(val instanceof Long)))
+                throw new IllegalArgumentException("Can't uri encode " + val.getClass());
+            if (first) {
+                buf.append('?');
+            } else {
+                buf.append('&');
+                first = false;
+            }
+            buf.append(paramEncode(key)).append('=').append(paramEncode(val.toString()));
+        }
+        return buf.toString();
+    }
+
+    /**
+     * Very lazy byte[] to URL encoder.  Just encodes almost everything, even
+     * some "normal" chars.
+     * By not encoding about 1/4 of the chars, we make random data like hashes about 16% smaller.
+     *
+     * RFC1738: 0-9a-zA-Z$-_.+!*'(),
+     * Us:      0-9a-zA-Z
+     *
+     *  @since 1.102b-9 adapted from i2psnark TrackerClient
+     */
+    private static String paramEncode(String s) {
+        byte[] bs = DataHelper.getUTF8(s);
+        StringBuilder sb = new StringBuilder(bs.length*3);
+        for (int i = 0; i < bs.length; i++) {
+            int c = bs[i] & 0xFF;
+            if ((c >= '0' && c <= '9') ||
+                (c >= 'A' && c <= 'Z') ||
+                (c >= 'a' && c <= 'z')) {
+                sb.append((char)c);
+            } else {
+                sb.append('%');
+                if (c < 16)
+                  sb.append('0');
+                sb.append(Integer.toHexString(c));
+            }
+        }
+        return sb.toString();
+    }
+    
+    /** last token */
+    private enum PREV { KEY, VAL, EQUALS, AMP }
+    /** current token */
+    private enum GOT  { STRING, EQUALS, AMP }
+
+    /**
+     *  Take URL-style params, decode them and put them in the map.
+     *  Does not handle multiple identical keys, as SyndieURIs don't support that. Last one wins.
+     *  We could convert multiple keys to a list or array, perhaps.
+     *  Stops parsing at '#'.
+     *
+     *  @since 1.102b-9 adapted from i2ptunnel LocalHTTPServer
+     */
+    private static SortedMap<String, Object> uriDecode(String encoded) throws URISyntaxException {
+        SortedMap<String, Object> rv = new TreeMap();
+        StringTokenizer tok = new StringTokenizer(encoded, "=&;#", true);
+        PREV prev = PREV.AMP;
+        GOT got;
+        String k = null;
+        while (tok.hasMoreTokens()) {
+            String s = tok.nextToken();
+            if (s.equals("="))
+                got = GOT.EQUALS;
+            else if (s.equals("&") || s.equals(";"))
+                got = GOT.AMP;
+            else if (s.equals("#"))
+                break;
+            else
+                got = GOT.STRING;
+
+            switch (prev) {
+              case AMP:
+                  // expecting KEY
+                  if (got == GOT.STRING) {
+                      k = s;
+                      prev = PREV.KEY;
+                  } else {
+                      throw new URISyntaxException(encoded, "&&/&=");
+                  }
+                  break;
+
+              case KEY:
+                  // expecting EQUALS or AMP
+                  if (got == GOT.EQUALS) {
+                      prev = PREV.EQUALS;
+                  } else if (got == GOT.AMP) {
+                      putIfAbsent(rv, paramDecode(k), "");
+                      k = null;
+                      prev = PREV.AMP;
+                  } else {
+                      // can't happen
+                      throw new URISyntaxException(encoded, "huh");
+                  }
+                  break;
+
+              case EQUALS:
+                  // expecting VAL or AMP
+                  if (got == GOT.STRING) {
+                      putIfAbsent(rv, paramDecode(k), paramDecode(s));
+                      k = null;
+                      prev = PREV.VAL;
+                  } else if (got == GOT.AMP) {
+                      putIfAbsent(rv, paramDecode(k), "");
+                      k = null;
+                      prev = PREV.AMP;
+                  } else {
+                      throw new URISyntaxException(encoded, "==");
+                  }
+                  break;
+
+              case VAL:
+                  // expecting AMP
+                  if (got == GOT.AMP) {
+                      prev = PREV.AMP;
+                  } else if (got == GOT.EQUALS) {
+                      throw new URISyntaxException(encoded, "val=");
+                  } else {
+                      // can't happen
+                      throw new URISyntaxException(encoded, "huh");
+                  }
+                  break;
+            } // switch
+        }
+        // trailing foo or foo=
+        if (k != null && (prev == PREV.KEY || prev == PREV.EQUALS))
+            putIfAbsent(rv, paramDecode(k), "");
+        return rv;
+    }
+
+    /**
+     *  Put it in if not already there, else throw.
+     *  Puts apparent number values as Longs.
+     *  If a value should be a String but looks like a number, getString() will convert it back.
+     */
+    private static void putIfAbsent(Map<String, Object> map, String key, String val) throws URISyntaxException {
+        Object value = val;
+        if (val.length() > 0 && val.replaceAll("[0-9-]", "").length() == 0) {
+            try {
+                value = Long.parseLong(val);
+            } catch (NumberFormatException nfe) {}
+        }
+        Object old = map.put(key, value);
+        if (old != null)
+            throw new URISyntaxException(key, "Dup parm");
+    }
+
+    /**
+     *  Decode %xx encoding of an individual key/value
+     *  @since 1.102b-9 adapted from i2ptunnel LocalHTTPServer
+     */
+    private static String paramDecode(String s) {
+        if (!s.contains("%"))
+            return s;
+        StringBuilder buf = new StringBuilder(s.length());
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (c != '%') {
+                buf.append(c);
+            } else {
+                try {
+                    buf.append((char) Integer.parseInt(s.substring(++i, (++i) + 1), 16));
+                } catch (IndexOutOfBoundsException ioobe) {
+                    break;
+                } catch (NumberFormatException nfe) {
+                    break;
+                }
+            }
+        }
+        return buf.toString();
     }
 }
