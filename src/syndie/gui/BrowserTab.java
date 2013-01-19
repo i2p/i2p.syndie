@@ -211,11 +211,7 @@ public abstract class BrowserTab extends BaseComponent implements Themeable {
             boolean disposed = ImageUtil.dispose(old);
             _ui.debugMessage("disposing old tab " + getClass().getName() + " image: " + disposed);
         }
-        String title = getName();
-        if (title == null)
-            title = "";
-        else if (title.length() > MAX_TAB_NAME_LEN)
-            title = title.substring(0, MAX_TAB_NAME_LEN) + "...";
+        String title = UIUtil.truncate(getName(), MAX_TAB_NAME_LEN);
         _item.setText(title);
         _item.setToolTipText((null != getDescription() ? getDescription() : ""));
         debug("reconfiguring item: complete");

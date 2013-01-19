@@ -1,6 +1,7 @@
 package syndie.gui;
 
 import java.util.*;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Device;
@@ -9,10 +10,14 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Display;
 
 public class ColorUtil {
-    private static final Map _colorNameToRGB = new HashMap();
-    private static final Map _colorNameToSystem = new HashMap();
-    private static final Map _colorRGBToSystem = new HashMap();
-    private static final ArrayList _systemColorNames = new ArrayList();
+    private static final Map<String, String> _colorNameToRGB = new HashMap();
+
+    private static final Map<String, Color> _colorNameToSystem = new HashMap();
+
+    private static final Map<String, Color> _colorRGBToSystem = new HashMap();
+
+    private static final ArrayList<String> _systemColorNames = new ArrayList();
+
     private static void buildColorNameToSystemColor() {
         Device dev = Display.getDefault();
         _colorNameToSystem.put("darkblue", dev.getSystemColor(SWT.COLOR_DARK_BLUE));
@@ -33,14 +38,15 @@ public class ColorUtil {
         _colorNameToSystem.put("black", dev.getSystemColor(SWT.COLOR_BLACK));
         _systemColorNames.clear();
         _systemColorNames.addAll(new TreeSet(_colorNameToSystem.keySet()));
-        for (Iterator iter = _colorNameToSystem.keySet().iterator(); iter.hasNext(); ) {
-            String name = (String)iter.next();
-            Color color = (Color)_colorNameToSystem.get(name);
+        for (Map.Entry<String, Color> e :_colorNameToSystem.entrySet()) {
+            String name = e.getKey();
+            Color color = e.getValue();
             String rgb = "#" + toHex(color.getRed()) + toHex(color.getGreen()) + toHex(color.getBlue());
             _colorNameToRGB.put(name, rgb);
             _colorRGBToSystem.put(rgb, color);
         }
     }
+
     private static String toHex(int color) {
         String rv = Integer.toHexString(color);
         if (color <= 0x0F)
@@ -48,14 +54,18 @@ public class ColorUtil {
         else
             return rv;
     }
-    private static Map _systemColorSwatches = new HashMap();
+
+    private static Map<Color, Image> _systemColorSwatches = new HashMap();
+
     private static void buildSystemColorSwatches() {
         for (Iterator iter = _colorNameToSystem.values().iterator(); iter.hasNext(); ) {
             Color color = (Color)iter.next();
             _systemColorSwatches.put(color, ImageUtil.createImage(16, 16, color, true));
         }
     }
+
     private static boolean _initialized = false;
+
     public static void init() {
         synchronized (ColorUtil.class) {
             buildColorNameToSystemColor();
@@ -66,7 +76,7 @@ public class ColorUtil {
     }
     
     /** alphabetically ordered list of system colors */
-    public static ArrayList getSystemColorNames() { return _systemColorNames; }
+    public static ArrayList<String> getSystemColorNames() { return _systemColorNames; }
     
     private static class ColorQuery {
         Color rv;
@@ -78,6 +88,7 @@ public class ColorUtil {
     public static Color getSystemColor(String rgb) { return (Color)_colorRGBToSystem.get(rgb); }
     
     public static Color getColor(String color) { return getColor(color, null); }
+
     /**
      * get the given color, pulling it from the set of system colors or the cache,
      * if possible.  can be called from any thread

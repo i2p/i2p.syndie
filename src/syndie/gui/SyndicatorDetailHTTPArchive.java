@@ -1100,14 +1100,17 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
     private static final int PULL_POLICY_DEFAULT = 0;
     
     private static final int[] SIZES = new int[] { 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096 };
+    /** See SyncArchive for actual default, this setting has no effect */
     private static final int SIZE_DEFAULT_INDEX = 7; // 512KB
     
     private static final int[] SYNC_DELAY = new int[] { 1, 2, 4, 6, 12, 18, 24 };
     private static final int SYNC_DELAY_DEFAULT_INDEX = 2;
     
-    private static final int[] NEWAGEDAYS = new int[] { -1, 7, 31, 91, 183, 365, 1095, 1826, 3653 };
-    private static final int NEWAGE_DEFAULT_INDEX = NEWAGEDAYS.length - 1;
+    private static final int[] NEWAGEDAYS = new int[] { -1, 7, 31, 62, 92, 183, 365, 1095, 1826, 3653 };
+    /** See SyncArchive for actual default, this setting has no effect */
+    private static final int NEWAGE_DEFAULT_INDEX = 3;
     
+    /** See SyncArchive for actual default */
     private static final int SENDAGE_DEFAULT_INDEX = 0;
     private static final int[] SENDAGEDAYS = new int[] { 7, 14, 31, 62, 183, 365, -1 };
         
@@ -1151,6 +1154,7 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         _pullNewAge.add(registry.getText("Whatever the archive advertises as new"));
         _pullNewAge.add(registry.ngettext("{0} week", "{0} weeks", 1));
         _pullNewAge.add(registry.ngettext("{0} month", "{0} months", 1));
+        _pullNewAge.add(registry.ngettext("{0} month", "{0} months", 2));
         _pullNewAge.add(registry.ngettext("{0} month", "{0} months", 3));
         _pullNewAge.add(registry.ngettext("{0} month", "{0} months", 6));
         _pullNewAge.add(registry.ngettext("{0} year", "{0} years", 1));

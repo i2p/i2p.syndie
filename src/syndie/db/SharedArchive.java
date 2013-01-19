@@ -33,8 +33,10 @@ public class SharedArchive {
     private About _about;
     private long _loadedOn = System.currentTimeMillis();
 
+    /** See also SyndicatorDetailHTTPArchive */
     public static final int DEFAULT_MAX_SIZE_KB = 512;
-    public static final int DEFAULT_NEWAGE_DAYS = 183;
+    /** See also SyndicatorDetailHTTPArchive */
+    public static final int DEFAULT_NEWAGE_DAYS = 62;
     public static final boolean DEFAULT_RECENT_ONLY = false;
     
     void setChannels(List channels) { _channels = (Channel[])channels.toArray(new Channel[0]); }

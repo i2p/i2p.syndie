@@ -12,6 +12,10 @@ import net.i2p.data.Hash;
  */
 public class UIUtil {
 
+    public static final int MAX_NAME_LEN = 28;
+    public static final int MAX_DESCRIPTION_LEN = 100;
+    public static final int MAX_SUBJECT_LEN = 50;
+
     /**
      *  Consistent display of forums and authors
      *
@@ -21,7 +25,7 @@ public class UIUtil {
     public static String displayName(String name, Hash hash) {
         StringBuilder buf = new StringBuilder(64);
         if (name != null)
-            buf.append(name).append(' ');
+            buf.append(truncate(name, MAX_NAME_LEN)).append(' ');
         buf.append('[');
         if (hash != null)
             buf.append(hash.toBase64().substring(0, 6));
@@ -63,5 +67,18 @@ public class UIUtil {
         } catch (IOException ioe) {}
         byte tb[] = baos.toByteArray();
         buf.append(new String(tb));
+    }
+
+    /**
+     *  Truncate and add ... if truncated
+     *
+     *  @since 1.102b-8
+     */
+    public static String truncate(String s, int max) {
+        if (s == null)
+            return  "";
+        if (s.length() <= max)
+            return s;
+        return s.substring(0, max - 3) + "...";
     }
 }

@@ -18,6 +18,10 @@ import net.i2p.data.Base64;
 import net.i2p.data.Hash;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.FocusEvent;
+import org.eclipse.swt.events.FocusListener;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.TraverseEvent;
 import org.eclipse.swt.events.TraverseListener;
 import org.eclipse.swt.graphics.Image;
@@ -68,6 +72,7 @@ public class NymChannelTree implements Themeable, Translatable {
     private Text _search;
     private Button _searchButton;
     private Button _searchAll;
+    private boolean _wasSearchHelpCleared;
 
     private Composite _bottom;
     private Button _nymChannelsButton;
@@ -94,6 +99,9 @@ public class NymChannelTree implements Themeable, Translatable {
     private NymChannelTreeListener _listener;
     
     private NymChannelTreeDnD _dnd;
+
+    private static final String SPACER = "                                                                 ";
+
 
     public interface ChannelSource {
         public List getReferenceNodes();
@@ -294,10 +302,10 @@ public class NymChannelTree implements Themeable, Translatable {
     
     private void initTop() {
         GridLayout gl = new GridLayout(6, false);
-        gl.horizontalSpacing = 0;
+        gl.horizontalSpacing = 8;
         gl.verticalSpacing = 0;
-        gl.marginHeight = 0;
-        gl.marginWidth = 0;
+        gl.marginHeight = 3;
+        gl.marginWidth = 5;
         _top.setLayout(gl);
         
         _filterLabel = new Label(_top, SWT.NONE);
@@ -315,22 +323,52 @@ public class NymChannelTree implements Themeable, Translatable {
         _search.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, true));
         _search.addTraverseListener(new TraverseListener() {
             public void keyTraversed(TraverseEvent evt) {
-                if (evt.detail == SWT.TRAVERSE_RETURN)
-                    recalcTree(_search.getText(), _unreadOnlySel.getSelection(), _privateOnlySel.getSelection());
+                if (evt.detail == SWT.TRAVERSE_RETURN) {
+                    String s = _search.getText();
+                    String t = s.trim();
+                    if (!s.equals(t))
+                        _search.setText(t);
+                    recalcTree(t, _unreadOnlySel.getSelection(), _privateOnlySel.getSelection());
+                }
             }
         });
-        /*
-        _search.addFocusListener(new FocusListener() {
-            public void focusGained(FocusEvent focusEvent) { _search.selectAll(); }
-            public void focusLost(FocusEvent focusEvent) {}
-        });
-         */
+
         _searchButton = new Button(_top, SWT.PUSH);
         _searchButton.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _searchButton.addSelectionListener(new FireSelectionListener() { 
             public void fire() { 
-                recalcTree(_search.getText(), _unreadOnlySel.getSelection(), _privateOnlySel.getSelection());
+                String s = _search.getText();
+                String t = s.trim();
+                if (!s.equals(t))
+                    _search.setText(t);
+                recalcTree(t, _unreadOnlySel.getSelection(), _privateOnlySel.getSelection());
             } 
+        });
+
+        _search.addModifyListener(new ModifyListener() {
+            public void modifyText(ModifyEvent modifyEvent) {
+                boolean hasText = _search.getText().length() > 0;
+                _searchButton.setEnabled(hasText);
+            }
+        });
+        _search.addFocusListener(new FocusListener() {
+            // clear help when clicked on
+            private boolean _wasCleared;
+            public void focusGained(FocusEvent focusEvent) {
+                if (!_wasSearchHelpCleared) {
+                    _search.setForeground(_unreadOnlySel.getForeground());  // just use button - how to get default color? or just save it...
+                    _search.setText("");
+                    _wasSearchHelpCleared = true;
+                }
+            }
+            public void focusLost(FocusEvent focusEvent) {
+                if (_wasSearchHelpCleared && _search.getText().length() <= 0) {
+                    _search.setForeground(ColorUtil.getColor("gray"));
+                    _search.setText(_translationRegistry.getText("Search term") + SPACER);  // make bigger
+                    _searchButton.setEnabled(false);
+                    _wasSearchHelpCleared = false;
+                }
+            }
         });
         
         _searchAll = new Button(_top, SWT.PUSH);
@@ -599,7 +637,7 @@ public class NymChannelTree implements Themeable, Translatable {
         _unreadOnlySel.setEnabled(!loading);
         _privateOnlySel.setEnabled(!loading);
         _search.setEnabled(!loading);
-        _searchButton.setEnabled(!loading);
+        _searchButton.setEnabled(_wasSearchHelpCleared && _search.getText().length() > 0 && !loading);
         _searchAll.setEnabled(!loading);
         _nymChannelsButton.setEnabled(!loading);
         _bookmarksButton.setEnabled(!loading);
@@ -1112,7 +1150,8 @@ public class NymChannelTree implements Themeable, Translatable {
         _filterLabel.setText(registry.getText("Only include forums with") + ": ");
         _unreadOnlySel.setText(registry.getText("Unread messages"));
         _privateOnlySel.setText(registry.getText("Private messages"));
-        _search.setText(registry.getText("Search term"));
+        _search.setText(registry.getText("Search term") + SPACER);   // make bigger
+        _search.setForeground(ColorUtil.getColor("gray"));
         _searchButton.setText(registry.getText("Search"));
         _searchAll.setText(registry.getText("View all"));
         
