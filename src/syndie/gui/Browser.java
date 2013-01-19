@@ -1735,14 +1735,14 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
                     }
                 }
             } else if (BrowserTab.TYPE_LOGS.equals(uri.getType())) {
-                name = _translation.getText("logs");
-                desc = _translation.getText("watch log messages");
+                name = _translation.getText("Logs");
+                desc = _translation.getText("Watch log messages");
             } else if (BrowserTab.TYPE_POST.equals(uri.getType())) {
-                name = _translation.getText("post");
-                desc = _translation.getText("post a new message");
+                name = _translation.getText("Post");
+                desc = _translation.getText("Post a new message");
             } else if (BrowserTab.TYPE_TEXTUI.equals(uri.getType())) {
-                name = _translation.getText("text UI");
-                desc = _translation.getText("text based interface");
+                name = _translation.getText("Text UI");
+                desc = _translation.getText("Text-based interface");
             }
         }
         
@@ -1814,7 +1814,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         MessageBox box = new MessageBox(_shell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
         box.setMessage(getTranslationRegistry().getText(
                 "All of the messages in it will be removed and you will never receive " +
-                "any messages in it again, or posts written by the forum's owner.  Do you want to ban: ") 
+                "any messages in it again, or posts written by the forum's owner.  Do you want to ban") + ": " 
                 + scopeName);
         box.setText(getTranslationRegistry().getText("Confirm ban"));
         int rc = box.open();
@@ -1852,7 +1852,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
 
         MessageBox box = new MessageBox(_shell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
         box.setMessage(getTranslationRegistry().getText(
-                "Do you really want to tell everyone to ignore this message: " + scopeName));
+                "Do you really want to tell everyone to ignore this message?") + ' ' + scopeName);
         box.setText(getTranslationRegistry().getText("Confirm cancel"));
         int rc = box.open();
         if (rc == SWT.YES) {
@@ -1888,7 +1888,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
 
         MessageBox box = new MessageBox(_shell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
         box.setMessage(getTranslationRegistry().getText(
-                "Do you really want to locally delete this message: " + scopeName));
+                "Do you really want to locally delete this message?")  + ' ' + scopeName);
         box.setText(getTranslationRegistry().getText("Confirm delete"));
         int rc = box.open();
         if (rc == SWT.YES) {

@@ -508,7 +508,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         GridData gd = (GridData)_unread.getLayoutData();
         boolean wasExcluded = gd.exclude;
         if (threads > 0) {
-            _unread.setText(_translationRegistry.getText("Unread: ") + sortedForums.size() + "/" + threads);
+            _unread.setText(_translationRegistry.getText("Unread") + ": " + sortedForums.size() + "/" + threads);
             gd.exclude = false;
             _unread.setVisible(true);
             if (wasExcluded)
@@ -766,7 +766,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         }
         
         if (!forums.isEmpty()) {
-            _newForum.setText(_translationRegistry.getText("New forums: ") + forums.size());
+            _newForum.setText(_translationRegistry.getText("New forums") + ": " + forums.size());
             ((GridData)_newForum.getLayoutData()).exclude = false;
             _newForum.setVisible(true);
         } else {
@@ -817,10 +817,10 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
     private void displayOnlineState(boolean online) {
         if (online) {
             _onlineState.setImage(ImageUtil.ICON_ONLINE);
-            _onlineState.setToolTipText(_translationRegistry.getText("Online: syndication is enabled"));
+            _onlineState.setToolTipText(_translationRegistry.getText("Online: Syndication is enabled"));
         } else {
             _onlineState.setImage(ImageUtil.ICON_OFFLINE);
-            _onlineState.setToolTipText(_translationRegistry.getText("Offline: syndication is deferred"));
+            _onlineState.setToolTipText(_translationRegistry.getText("Offline: Syndication is deferred"));
         }
         updateNextSync();
     }
@@ -928,7 +928,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
     
     public void translate(TranslationRegistry registry) {
         _nextSyncLabel.setText(registry.getText("Next sync") + ':');
-        _bookmark.setText(registry.getText("Bookmark!"));
+        _bookmark.setText(registry.getText("Bookmark"));
         _root.layout(true);
     }
     

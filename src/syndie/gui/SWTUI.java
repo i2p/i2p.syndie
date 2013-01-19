@@ -155,7 +155,7 @@ public class SWTUI {
             s.setLayout(new GridLayout(1, true));
             Label l = new Label(s, SWT.SINGLE | SWT.WRAP);
             l.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-            l.setText(browser.getTranslationRegistry().getText("Syndie ran into an internal error trying to start up - please see the logs: ") + lsnr.getLoginFailedCause().getMessage());
+            l.setText(browser.getTranslationRegistry().getText("Syndie ran into an internal error trying to start up - please see the logs") + ": " + lsnr.getLoginFailedCause().getMessage());
             Button b = new Button(s, SWT.PUSH);
             b.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
             b.setText(browser.getTranslationRegistry().getText("Exit"));

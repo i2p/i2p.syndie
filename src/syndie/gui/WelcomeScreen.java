@@ -331,59 +331,66 @@ public class WelcomeScreen extends Wizard {
     public void translate(TranslationRegistry registry) {
         super.translate(registry);
         
-        // TODO Fix this for tagging
-
-        _welcomeMessage.setText(registry.getText(reflow(new String [] {
-                "Welcome to Syndie!\n\n",
-                "This wizard will help you set up your new Syndie installation. First we'll set up your identity,",
-                "and then we'll configure some archives for you to syndicate with.\n\n",
-                "It is strongly recommended that you have I2P running before you start Syndie.",
-                "If I2P is not running, please start it and wait 5 minutes before proceeding."
-        })));
+        _welcomeMessage.setText(reflow(registry, new String [] {
+                _x("Welcome to Syndie!"), "\n\n",
+                _x("This wizard will help you set up your new Syndie installation. First we'll set up your identity, " +
+                "and then we'll configure some archives for you to syndicate with."), "\n\n",
+                _x("It is strongly recommended that you have I2P running before you start Syndie."),
+                _x("If I2P is not running, please start it and wait 5 minutes before proceeding.")
+        }));
         
-        _description.setText(registry.getText(reflow(new String [] {
-                "Syndie will create a new identity for you to use with which to post messages in other forums and to run",
-                "your own blog/forum."})));
+        _description.setText(reflow(registry, new String [] {
+                _x("Syndie will create a new identity for you to use with which to post messages in other forums and to run" +
+                "your own blog/forum.")}));
 
         _nameLabel.setText(registry.getText("What name would you like to use for your new identity?"));
         _name.setText(registry.getText("Syndie user") + ' ' + (1001 + RandomSource.getInstance().nextInt(98888)));
-        _avatarLabel.setText(registry.getText("Click the image to select the avatar would you like to use:"));
+        _avatarLabel.setText(registry.getText("Click the image to select the avatar would you like to use") + ':');
         _authenticationLabel.setText(registry.getText("In your new identity's blog/forum, would  you like to allow other people to post?"));
         _authenticatePublic.setText(registry.getText("Yes, let anyone reply to existing posts and post new topics"));
         _authenticateReplies.setText(registry.getText("Yes, let anyone reply to existing posts"));
         _authenticateAuth.setText(registry.getText("No"));
         
-        _archiveExplanationMessage.setText(registry.getText(reflow(new String [] {
-                "Next it's time to select some archives to syndicate with.\n\n",
-                "Syndie messages are propagated from one Syndie instance to another by a process called 'syndication'.",
-                "Each client connects to one or more archives and uploads any messages which the client has, but the",
-                "archive does not, and downloads any messages which the archive has, but the client does not. In this",
-                "way messages are propagated from client to client and archive to archive within a Syndie community.\n\n",
-                "To join a Syndie community, you need to syndicate with one or more archives of that community."})));
+        _archiveExplanationMessage.setText(reflow(registry, new String [] {
+                _x("Next it's time to select some archives to syndicate with."), "\n\n",
+                _x("Syndie messages are propagated from one Syndie instance to another by a process called 'syndication'."),
+                _x("Each client connects to one or more archives and uploads any messages which the client has, but the " +
+                "archive does not, and downloads any messages which the archive has, but the client does not. In this " +
+                "way messages are propagated from client to client and archive to archive within a Syndie community."), "\n\n",
+                _x("To join a Syndie community, you need to syndicate with one or more archives of that community.")}));
         
-        _archiveInstructions.setText(registry.getText(reflow(new String [] {
-                "The default archives shipped with your Syndie install are listed above. Double-click a field to edit it.",
-                "Please make any necessary changes and uncheck any archives that you don't want."})));
+        _archiveInstructions.setText(reflow(registry, new String [] {
+                _x("The default archives shipped with your Syndie install are listed above. Double-click a field to edit it."),
+                _x("Please make any necessary changes and uncheck any archives that you don't want.")}));
         
-        _finishMessage.setText(registry.getText(reflow(new String [] {
-                "Congratulations! Your Syndie installation is configured!\n\n",
-                "Click Finish to start exploring Syndie."})));
+        _finishMessage.setText(reflow(registry, new String [] {
+                _x("Congratulations! Your Syndie installation is configured!"), "\n\n",
+                _x("Click Finish to start exploring Syndie.")}));
     }
     
-    private String reflow(String [] str) {
+    /**
+     *  Tagging for static initializers. Does not translate!
+     *  @return s
+     */
+    private static final String _x(String s) {
+        return s;
+    }
+
+    private String reflow(TranslationRegistry registry, String [] str) {
         String sep = SWT.getPlatform().equals("win32") ? "\n" : " ";
-        String r = null;
+        StringBuilder buf = new StringBuilder();
         
         for (int c = 0; c < str.length;c ++) {
-            if (r == null)
-                r = str[c];
-            else if (r.endsWith("\n")) // manual break
-                r = r.concat(str[c]);
+            String line = registry.getText(str[c]);
+            if (buf.length() == 0)
+                buf.append(line);
+            else if (line.endsWith("\n")) // manual break
+                buf.append(line);
             else
-                r = r.concat(sep.concat(str[c]));
+                buf.append(sep).append(line);
         }
         
-        return r;
+        return buf.toString();
     }
     
     public static interface CompleteListener { public void complete(boolean success); }

@@ -389,7 +389,7 @@ public class CancelManager extends BaseComponent implements Themeable, Translata
             });
             
             _honorFromForumManager = new Button(_detailRoot, SWT.CHECK);
-            _honorFromForumManager.setText(_translationRegistry.getText("Honor cancel messages from any forum manager(s)"));
+            _honorFromForumManager.setText(_translationRegistry.getText("Honor cancel messages from any forum manager"));
             _honorFromForumManager.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
             _honorFromForumManager.setEnabled(false);
             _honorFromForumManager.addSelectionListener(new FireSelectionListener() {

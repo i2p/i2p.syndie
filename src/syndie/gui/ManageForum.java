@@ -946,7 +946,7 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
             numSelected++;
         }
         
-        _archiveGroup.setText(_translationRegistry.getText("Archives: ") + numSelected + " ");
+        _archiveGroup.setText(_translationRegistry.getText("Archives") + ": " + numSelected + " ");
         _archiveRemoveAll.setEnabled(numSelected > 0);
         
         _archiveGroup.getParent().layout(new Control[] { _archiveGroup });
@@ -966,7 +966,7 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
         Counter counter = new Counter(false);
         ReferenceNode.walk(_referenceNodeRoots, counter);
         numSelected = counter.getCount();
-        _refGroup.setText(_translationRegistry.getText("References: ") + numSelected + " ");
+        _refGroup.setText(_translationRegistry.getText("References") + ": " + numSelected + " ");
         _refRemoveAll.setEnabled(numSelected > 0);
         _refGroup.getParent().layout(new Control[] { _refGroup });
     }
@@ -983,7 +983,7 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
         ReferenceNode.walk(_referenceNodeRoots, trim);
         for (int i = 0; i < scopes.size(); i++)
             _referenceNodeRoots.add(new ReferenceNode("banned", SyndieURI.createScope((Hash)scopes.get(i)), "", Constants.REF_TYPE_BANNED));
-        _banGroup.setText(_translationRegistry.getText("Bans: ") + scopes.size() + " ");
+        _banGroup.setText(_translationRegistry.getText("Bans") + ": " + scopes.size() + " ");
         _banRemoveAll.setEnabled(scopes.size() > 0);
         _banGroup.getParent().layout(new Control[] { _banGroup });
         modified();
@@ -1046,7 +1046,7 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
     private void removeRefs() {
         TrimRefs trim = new TrimRefs(false);
         ReferenceNode.walk(_referenceNodeRoots, trim);
-        _refGroup.setText(_translationRegistry.getText("References: ") + 0 + " ");
+        _refGroup.setText(_translationRegistry.getText("References") + ": " + 0 + " ");
         _refRemoveAll.setEnabled(false);
         _refGroup.getParent().layout(new Control[] { _refGroup });
         modified();
@@ -1055,7 +1055,7 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
     private void removeBans() {
         TrimRefs trim = new TrimRefs(true);
         ReferenceNode.walk(_referenceNodeRoots, trim);
-        _banGroup.setText(_translationRegistry.getText("Bans: ") + 0 + " ");
+        _banGroup.setText(_translationRegistry.getText("Bans") + ": " + 0 + " ");
         _banRemoveAll.setEnabled(false);
         _banGroup.getParent().layout(new Control[] { _banGroup });
         modified();
@@ -1087,7 +1087,7 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
         Counter counter = new Counter(true);
         ReferenceNode.walk(_referenceNodeRoots, counter);
         int numSelected = counter.getCount();
-        _banGroup.setText(_translationRegistry.getText("Bans: ") + numSelected + " ");
+        _banGroup.setText(_translationRegistry.getText("Bans") + ": " + numSelected + " ");
         _banRemoveAll.setEnabled(numSelected > 0);
         _banGroup.getParent().layout(new Control[] { _banGroup });
     }

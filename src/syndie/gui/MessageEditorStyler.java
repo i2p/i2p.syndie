@@ -401,22 +401,22 @@ class MessageEditorStyler extends BaseComponent implements Themeable, Translatab
         // todo: translate
         _txtShell.setText(registry.getText("Text style chooser"));        
         _grpText.setText(registry.getText("Styling"));
-        _txtBold.setText(registry.getText("B"));
-        _txtItalic.setText(registry.getText("I"));
-        _txtUnderline.setText(registry.getText("U"));
-        _txtStrikeout.setText(registry.getText("SO"));
+        _txtBold.setText(registry.getText("Bold"));
+        _txtItalic.setText(registry.getText("Italic"));
+        _txtUnderline.setText(registry.getText("Underline"));
+        _txtStrikeout.setText(registry.getText("Strikeout"));
         _txtFont.setToolTipText(registry.getText("Adjust the font"));
         _txtFontSize.setToolTipText(registry.getText("Adjust the font size"));
         _grpAlign.setText(registry.getText("Alignment"));
-        _txtAlignLeft.setText(registry.getText("left"));
+        _txtAlignLeft.setText(registry.getText("Left"));
         _txtAlignLeft.setToolTipText(registry.getText("Align the text to the left"));
-        _txtAlignCenter.setText(registry.getText("center"));
+        _txtAlignCenter.setText(registry.getText("Center"));
         _txtAlignCenter.setToolTipText(registry.getText("Align the text to the center"));
-        _txtAlignRight.setText(registry.getText("right"));
+        _txtAlignRight.setText(registry.getText("Right"));
         _txtAlignRight.setToolTipText(registry.getText("Align the text to the right"));
         _sampleText.setText(registry.getText("This is the sample text"));
-        _styleOk.setText(registry.getText("ok"));
-        _styleCancel.setText(registry.getText("cancel"));
+        _styleOk.setText(registry.getText("OK"));
+        _styleCancel.setText(registry.getText("Cancel"));
     }
     
     public void applyTheme(Theme theme) {

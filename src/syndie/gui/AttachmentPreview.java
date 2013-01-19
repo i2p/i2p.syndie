@@ -272,7 +272,7 @@ class AttachmentPreview extends BaseComponent implements Translatable, Themeable
             // hrm
             MessageBox box = new MessageBox(_root.getShell(), SWT.OK | SWT.ICON_ERROR);
             box.setText(_translationRegistry.getText("Error saving attachment"));
-            box.setMessage(_translationRegistry.getText("Attachment could not be saved: ") + ioe.getMessage());
+            box.setMessage(_translationRegistry.getText("Attachment could not be saved") + ": " + ioe.getMessage());
             box.open();
         } finally {
             if (fos != null) try { fos.close(); } catch (IOException ioe) {}

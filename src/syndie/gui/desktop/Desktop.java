@@ -421,14 +421,14 @@ class Desktop {
             public void run() {
                 // show a special warning/error screen
                 final Shell s = new Shell(_display, SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
-                s.setText(strans("Passphrase..."));
+                s.setText(strans("Passphrase") + "...");
                 if (_themeRegistry != null)
                     s.setFont(_themeRegistry.getTheme().SHELL_FONT);
                 s.setLayout(new GridLayout(2, false));
 
                 Label l = new Label(s, SWT.SINGLE | SWT.WRAP);
                 l.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
-                l.setText(strans("Passphrase:"));
+                l.setText(strans("Passphrase") + ':');
                 if (_themeRegistry != null)
                     l.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
                 final Text pass = new Text(s, SWT.SINGLE | SWT.WRAP);
@@ -758,7 +758,7 @@ class Desktop {
         } else {
             MessageBox box = new MessageBox(_shell, SWT.ICON_ERROR | SWT.OK);
             box.setText(_translationRegistry.getText("Invalid URI"));
-            box.setMessage(_translationRegistry.getText("The URI visited is not understood by Syndie: ") + uri);
+            box.setMessage(_translationRegistry.getText("The URI visited is not understood by Syndie") + ": " + uri);
             box.open();
         }
     }
@@ -1063,7 +1063,7 @@ class Desktop {
             MessageBox box = new MessageBox(_shell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
             box.setMessage(_translationRegistry.getText(
                     "All of the messages in it will be removed and you will never receive " +
-                    "any messages in it again, or posts written by the forum's owner.  Do you want to ban: ") 
+                    "any messages in it again, or posts written by the forum's owner.  Do you want to ban") + ": " 
                     + scopeName);
             box.setText(_translationRegistry.getText("Confirm ban"));
             int rc = box.open();
@@ -1094,7 +1094,7 @@ class Desktop {
 
             MessageBox box = new MessageBox(_shell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
             box.setMessage(getTranslationRegistry().getText(
-                    "Do you really want to tell everyone to ignore this message: " + scopeName));
+                    "Do you really want to tell everyone to ignore this message?") + ' ' + scopeName);
             box.setText(getTranslationRegistry().getText("Confirm cancel"));
             int rc = box.open();
             if (rc == SWT.YES) {
@@ -1130,7 +1130,7 @@ class Desktop {
 
             MessageBox box = new MessageBox(_shell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
             box.setMessage(getTranslationRegistry().getText(
-                    "Do you really want to locally delete this message: " + scopeName));
+                    "Do you really want to locally delete this message?") + ' ' + scopeName);
             box.setText(getTranslationRegistry().getText("Confirm delete"));
             int rc = box.open();
             if (rc == SWT.YES) {

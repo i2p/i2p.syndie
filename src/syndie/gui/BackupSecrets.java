@@ -187,13 +187,13 @@ public class BackupSecrets extends BaseComponent implements Themeable, Translata
                 String err = backup(nymKeys, chanMeta, pass, filename);
                 if (err != null) {
                     MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
-                    box.setMessage(_translationRegistry.getText("There was an error backing up the keys: ") + err);
+                    box.setMessage(_translationRegistry.getText("There was an error backing up the keys")  + ": "+ err);
                     box.setText(_translationRegistry.getText("Error"));
                     box.open();
                 } else {
                     _navControl.unview(_uri);
                     MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_INFORMATION | SWT.OK);
-                    box.setMessage(_translationRegistry.getText("The keys were backed up to: ") + filename);
+                    box.setMessage(_translationRegistry.getText("The keys were backed up to")  + ": "+ filename);
                     box.setText(_translationRegistry.getText("Backup successful"));
                     box.open();
                 }
@@ -299,7 +299,7 @@ public class BackupSecrets extends BaseComponent implements Themeable, Translata
         }
         if (origData.length <= ZIP_HEADER.length) {
             MessageBox box = new MessageBox(parent, SWT.ICON_ERROR | SWT.OK);
-            box.setMessage(trans.getText("The secrets file was too short"));
+            box.setMessage(trans.getText("The secrets file was corrupt"));
             box.setText(trans.getText("Error reading"));
             box.open();
             return;
@@ -358,7 +358,7 @@ public class BackupSecrets extends BaseComponent implements Themeable, Translata
                 zin = null;
                 
                 MessageBox box = new MessageBox(parent, SWT.ICON_INFORMATION | SWT.OK);
-                box.setMessage(trans.getText("Restored keys/meta/corrupt meta: ") + keysRead + "/" + metaRead + "/" + failedMeta);
+                box.setMessage(trans.getText("Restored keys/meta/corrupt meta")  + ": "+ keysRead + "/" + metaRead + "/" + failedMeta);
                 box.setText(trans.getText("Restored"));
                 box.open();
             } catch (IOException ioe) {
@@ -372,7 +372,7 @@ public class BackupSecrets extends BaseComponent implements Themeable, Translata
     
     private static void fail(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Shell parent, String err) {
         MessageBox box = new MessageBox(parent, SWT.ICON_ERROR | SWT.OK);
-        box.setMessage(trans.getText("The secrets file was corrupt: ") + err);
+        box.setMessage(trans.getText("The secrets file was corrupt")  + ": "+ err);
         box.setText(trans.getText("Error reading"));
         box.open();
     }
@@ -436,7 +436,7 @@ public class BackupSecrets extends BaseComponent implements Themeable, Translata
                     str = _translationRegistry.getText("Forum read key");
                 
                 if (key.getIsExpired())
-                    str = str + " [" + _translationRegistry.getText("expired") + "]";
+                    str = str + " [" + _translationRegistry.getText("Expired") + "]";
                 
                 str = str + " (" + _client.sha256(key.getData()).toBase64().substring(0,12) + ")";
                 item.setText(str);
@@ -494,7 +494,7 @@ public class BackupSecrets extends BaseComponent implements Themeable, Translata
         _includeMeta.setText(registry.getText("Backup related forum profile?"));
         _includeExpiredKeys.setText(registry.getText("Backup expired keys?"));
         _passphraseRequired.setText(registry.getText("Passphrase required to restore") + ':');
-        _ok.setText(registry.getText("Ok"));
+        _ok.setText(registry.getText("OK"));
         _cancel.setText(registry.getText("Cancel"));
     }
 }

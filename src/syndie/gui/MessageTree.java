@@ -671,13 +671,15 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             } catch (ParseException pe) {
                 MessageBox box = new MessageBox(_filterRow.getShell(), SWT.ICON_ERROR | SWT.OK);
                 box.setText(_translationRegistry.getText("Bad date"));
-                box.setMessage(_translationRegistry.getText("Error parsing date: ") + pe.getMessage());
+                box.setMessage(_translationRegistry.getText("Error parsing date") + ": " + pe.getMessage());
                 box.open();
                 date.forceFocus();
             }
         }
         
         private static final SimpleDateFormat _fmt = new SimpleDateFormat("yyyy/MM/dd", Locale.UK);
+
+        private static final String PRIVATE = "private";
         
         public void setFilter(SyndieURI uri) {
             Long days = null;
@@ -713,7 +715,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             else
                 _advancedScopeAll.setSelection(true);
             
-            _ui.debugMessage("filterBar.setFilter has private? (" + uri.getString("private") + "): "+ uri + ")");
+            _ui.debugMessage("filterBar.setFilter has private? (" + uri.getString(PRIVATE) + "): "+ uri + ")");
             _advancedPrivacyPBE.setSelection(uri.getBoolean("pbe", true));
             _advancedPrivacyAuthorized.setSelection(uri.getBoolean("authorized", true));
             _advancedPrivacyPublic.setSelection(uri.getBoolean("public", true));
@@ -941,7 +943,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
          */
         
         public void translate(TranslationRegistry registry) {
-            _filterLabel.setText(registry.getText("Filter:  Since:"));
+            _filterLabel.setText(getText("Filter") + ":  " + getText("Since") + ':');
 
             _filterAdvanced.setText(registry.getText("Advanced") + "...");
             _filterKeywordLabel.setText(registry.getText("Text") + ':');
@@ -1698,7 +1700,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
       ****/
         
         StringBuilder buf = new StringBuilder();
-        buf.append(_translationRegistry.getText("Page: "));
+        buf.append(_translationRegistry.getText("Page") + ": ");
         buf.append(_currentPage+1);
         buf.append(" / ");
         buf.append(pages);

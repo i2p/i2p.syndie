@@ -83,6 +83,10 @@ public class TranslationRegistry {
         return postprocess(val);
     }
 
+    public String ngettext(String s, String p, int n) {
+        return Translate.getString(n, s, p, _context, BUNDLE);
+    }
+
     /** @deprecated unused */
     public Image getImage(String key) {
         Image img = (Image)_images.get(key);

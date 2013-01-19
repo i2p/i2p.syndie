@@ -31,6 +31,10 @@ public class DesktopNavigationControl implements NavigationControl {
         }
     }
     
+    private static final String CHANNEL = "channel";
+    private static final String PARENT = "parent";
+    private static final String REPLY = "reply";
+
     private DesktopPanel createPanel(SyndieURI uri, String name, String desc) {
         if (uri == null) return null;
         // we have already checked and none of the existing message tree panels can show
@@ -48,9 +52,9 @@ public class DesktopNavigationControl implements NavigationControl {
             if ( (postponeId != null) && (postponeVer != null) ) {
                 return new MessageEditorPanel(_desktop, _desktop.getDBClient(), _desktop.getUI(), _desktop.getThemeRegistry(), _desktop.getTranslationRegistry(), _desktop.getCenter(), postponeId.longValue(), postponeVer.intValue(), uri);
             } else {
-                Hash targetForum = uri.getHash("channel");
-                String parentStr = uri.getString("parent");  
-                String asReplyStr = uri.getString("reply");
+                Hash targetForum = uri.getHash(CHANNEL);
+                String parentStr = uri.getString(PARENT);  
+                String asReplyStr = uri.getString(REPLY);
                 SyndieURI parent = null;
                 boolean asReply = false;
                 if ( (asReplyStr != null) && (Boolean.valueOf(asReplyStr).booleanValue()) )

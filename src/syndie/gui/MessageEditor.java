@@ -528,13 +528,13 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                                 ((LocalMessageCallback)iter.next()).messageCreated(uri);
                         } else {
                             MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
-                            box.setMessage(_translationRegistry.getText("There was an error creating the message.  Please view the log for more information: ") + errors);
+                            box.setMessage(_translationRegistry.getText("There was an error creating the message.  Please view the log for more information.") + ' ' + errors);
                             box.setText(_translationRegistry.getText("Error creating the message"));
                             box.open();
                         }
                     } else {
                         MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
-                        box.setMessage(_translationRegistry.getText("There was an error creating the message.  Please view the log for more information: ") + errors);
+                        box.setMessage(_translationRegistry.getText("There was an error creating the message.  Please view the log for more information.") + ' ' + errors);
                         box.setText(_translationRegistry.getText("Error creating the message"));
                         box.open();
                     }
@@ -548,7 +548,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                     if (show == null || Boolean.parseBoolean(show)) {
                         final Shell shell = new Shell(_root.getShell(), SWT.APPLICATION_MODAL | SWT.DIALOG_TRIM);
                         shell.setFont(_themeRegistry.getTheme().SHELL_FONT);
-                        shell.setText(_translationRegistry.getText("Message created!"));
+                        shell.setText(_translationRegistry.getText("Message created"));
                         
                         GridLayout gl = new GridLayout(2, false);
                         shell.setLayout(gl);
@@ -1832,16 +1832,22 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         if (reply)
             pickPrivacy(PRIVACY_REPLY);
     }
+
+    private static final String PBEPASS = "pbePass";
+    private static final String PBEPROMPT = "pbePrompt";
+    private static final String REFS = "refs";
+    private static final String ATTACHMENT = "attachment";
+
     public void configurationComplete(SyndieURI uri) {
-        String pbePass = uri.getString("pbePass");
-        String pbePrompt = uri.getString("pbePrompt");
+        String pbePass = uri.getString(PBEPASS);
+        String pbePrompt = uri.getString(PBEPROMPT);
         if ( (pbePass != null) && (pbePrompt != null) ) {
             // a passphrase is provided in the ViewForum tab via Browser.createPostURI
             pickPrivacy(PRIVACY_PBE, false);
             _passphrase = pbePass;
             _passphrasePrompt = pbePrompt;
         }
-        String refs = uri.getString("refs");
+        String refs = uri.getString(REFS);
         if (refs != null) {
             // refs may include private read/post/manage/reply keys for various forums
             List refNodes = ReferenceNode.buildTree(new ByteArrayInputStream(DataHelper.getUTF8(refs)));
@@ -1859,7 +1865,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _ui.debugMessage("configuration complete, with attachments: " + attach);
         if (attach != null) {
             for (int i = 0; i < attach.intValue(); i++) {
-                String filename = uri.getString("attachment" + i);
+                String filename = uri.getString(ATTACHMENT + i);
                 if (filename == null) break;
                 File f = new File(filename);
                 if (!f.exists()) break;
@@ -2706,7 +2712,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                 _attachmentSummary.add(summary);
                 
                 CTabItem item = _pageTabs.getItem(_pageEditors.size()+i);
-                item.setText(_translationRegistry.getText("Attachment ") + (i+1));
+                item.setText(_translationRegistry.getText("Attachment") + ' ' + (i+1));
             }
         } else {
             _attachmentSummary.add(_translationRegistry.getText("none"));

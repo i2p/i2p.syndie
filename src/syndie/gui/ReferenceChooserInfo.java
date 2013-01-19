@@ -517,37 +517,37 @@ public class ReferenceChooserInfo extends BaseComponent implements ReferenceChoo
 
     public void translate(TranslationRegistry registry) {
         _rootChannel.setText(registry.getText("Forum summary"));
-        _channelNameLabel.setText(registry.getText("Name: "));
-        _channelDescLabel.setText(registry.getText("Description: "));
-        _channelHashLabel.setText(registry.getText("Hash: "));
-        _channelPubPost.setText(registry.getText("anyone can post"));
-        _channelPubReply.setText(registry.getText("anyone can reply to posts"));
+        _channelNameLabel.setText(registry.getText("Name") + ": ");
+        _channelDescLabel.setText(registry.getText("Description") + ": ");
+        _channelHashLabel.setText(registry.getText("Hash") + ": ");
+        _channelPubPost.setText(registry.getText("Anyone can post"));
+        _channelPubReply.setText(registry.getText("Anyone can reply to posts"));
         if (_channelAccept != null)
             _channelAccept .setText(registry.getText("Accept"));
         if (_channelCancel != null)
             _channelCancel.setText(registry.getText("Cancel"));
         
         _rootMessage.setText(registry.getText("Message summary"));
-        _messageChannelNameLabel.setText(registry.getText("Name: "));
-        _messageChannelDescLabel.setText(registry.getText("Description: "));
-        _messageChannelHashLabel.setText(registry.getText("Hash: "));
-        _messageSubjectLabel.setText(registry.getText("Subject: "));
-        _messageAuthorLabel.setText(registry.getText("Author: "));
-        _messageDateLabel.setText(registry.getText("Date: "));
+        _messageChannelNameLabel.setText(registry.getText("Name") + ": ");
+        _messageChannelDescLabel.setText(registry.getText("Description") + ": ");
+        _messageChannelHashLabel.setText(registry.getText("Hash") + ": ");
+        _messageSubjectLabel.setText(registry.getText("Subject") + ": ");
+        _messageAuthorLabel.setText(registry.getText("Author") + ": ");
+        _messageDateLabel.setText(registry.getText("Date") + ": ");
         if (_messageAccept != null)
             _messageAccept .setText(registry.getText("Accept"));
         if (_messageCancel != null)
             _messageCancel.setText(registry.getText("Cancel"));
         
         _rootArchive.setText(registry.getText("Archive summary"));
-        _archiveLabel.setText(registry.getText("Archive: "));
+        _archiveLabel.setText(registry.getText("Archive") + ": ");
         if (_archiveAccept != null)
             _archiveAccept.setText(registry.getText("Accept"));
         if (_archiveCancel != null)
             _archiveCancel.setText(registry.getText("Cancel"));
         
         _rootURI.setText(registry.getText("URI summary"));
-        _uriLabel.setText(registry.getText("URI: "));
+        _uriLabel.setText(registry.getText("URI") + ": ");
         if (_uriAccept != null)
             _uriAccept.setText(registry.getText("Accept"));
         if (_uriCancel != null)

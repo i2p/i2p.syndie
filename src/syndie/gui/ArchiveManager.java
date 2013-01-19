@@ -339,7 +339,7 @@ public class ArchiveManager extends BaseComponent implements Translatable, Theme
         _deniableLabel.setText(registry.getText("Deniable forums") + ':');
         _deniableManage.setText(registry.getText("Manage") + "...");
         
-        _bannedLabel.setText(registry.getText("Banned forums/authors:"));
+        _bannedLabel.setText(registry.getText("Banned forums/authors") + ':');
         _bannedManage.setText(registry.getText("Manage") + "...");
         
         _save.setText(registry.getText("Save"));

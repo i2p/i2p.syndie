@@ -460,8 +460,8 @@ public class MessageEditorPanel extends DesktopPanel implements LocalMessageCall
         }
         public void translate(TranslationRegistry registry) {
             _privacyLabel.setText(registry.getText("Who can read the post?"));
-            _forumNameLabel.setText(registry.getText("Forum (to):"));
-            _authorNameLabel.setText(registry.getText("Author (from):"));
+            _forumNameLabel.setText(registry.getText("Forum") + ':');
+            _authorNameLabel.setText(registry.getText("Author") + ':');
         }
     }
     

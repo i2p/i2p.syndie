@@ -259,7 +259,7 @@ public class ArchiveDefaults extends Composite implements Themeable, Translatabl
         
         Label l = new Label(shell, SWT.NONE);
         l.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, false, false));
-        l.setText(_translationRegistry.getText("Archive name: "));
+        l.setText(_translationRegistry.getText("Archive name") + ": ");
         l.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
         
         final Text name = new Text(shell, SWT.SINGLE | SWT.BORDER);
@@ -318,7 +318,7 @@ public class ArchiveDefaults extends Composite implements Themeable, Translatabl
         
         Label l = new Label(shell, SWT.NONE);
         l.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, false, false));
-        l.setText(_translationRegistry.getText("Archive location: "));
+        l.setText(_translationRegistry.getText("Archive location") + ": ");
         l.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
         
         final Text url = new Text(shell, SWT.SINGLE | SWT.BORDER | SWT.WRAP);
@@ -393,7 +393,7 @@ public class ArchiveDefaults extends Composite implements Themeable, Translatabl
         
         Label l = new Label(shell, SWT.NONE);
         l.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, false, false));
-        l.setText(_translationRegistry.getText("Proxy host: "));
+        l.setText(_translationRegistry.getText("Proxy host") + ": ");
         l.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
         
         final Text host = new Text(shell, SWT.SINGLE | SWT.BORDER | SWT.WRAP);
@@ -403,7 +403,7 @@ public class ArchiveDefaults extends Composite implements Themeable, Translatabl
         
         l = new Label(shell, SWT.NONE);
         l.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, false, false));
-        l.setText(_translationRegistry.getText("port: "));
+        l.setText(_translationRegistry.getText("Port") + ": ");
         l.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
         
         final Text port = new Text(shell, SWT.SINGLE | SWT.BORDER | SWT.WRAP);
@@ -538,8 +538,8 @@ public class ArchiveDefaults extends Composite implements Themeable, Translatabl
         _colImport.setText(registry.getText("Archive"));
         _colLocation.setText(registry.getText("URL"));
         _colProxy.setText(registry.getText("Proxy"));
-        _colPullOnly.setText(registry.getText("Read Only"));
-        _colAutomatic.setText(registry.getText("Auto Sync"));
+        _colPullOnly.setText(registry.getText("Read only"));
+        _colAutomatic.setText(registry.getText("Auto sync"));
         
         _colImport.setToolTipText(registry.getText("Archive"));
         _colLocation.setToolTipText(registry.getText("Archive location"));

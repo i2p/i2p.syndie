@@ -165,15 +165,15 @@ public class ReferenceChooserSearch extends BaseComponent implements Translatabl
     
     
     public void translate(TranslationRegistry registry) {
-        _searchTags.setText(registry.getText("Tags: "));
-        _name.setToolTipText(registry.getText("the channel name must start with this string"));
+        _searchTags.setText(registry.getText("Tags") + ": ");
+        _name.setToolTipText(registry.getText("The channel name must start with this string"));
         _root.setText(registry.getText("Forum search criteria") + ':');
-        _searchCriteria.setText(registry.getText("Name: "));
+        _searchCriteria.setText(registry.getText("Name") + ": ");
         _tags.setToolTipText(registry.getText("-tag excludes, +tag requires all, without a prefix requires one or more"));
-        _searchHash.setText(registry.getText("Hash: "));
-        _hash.setToolTipText(registry.getText("the channel's hash must start with this string"));
-        _publicPost.setText(registry.getText("anyone can post?"));
-        _publicPost.setToolTipText(registry.getText("if true, include channels that anyone is allowed to post to"));
+        _searchHash.setText(registry.getText("Hash") + ": ");
+        _hash.setToolTipText(registry.getText("The channel hash must start with this string"));
+        _publicPost.setText(registry.getText("Anyone can post"));
+        _publicPost.setToolTipText(registry.getText("If true, include channels that anyone is allowed to post to"));
         _search.setText(registry.getText("Search"));
                 
     }

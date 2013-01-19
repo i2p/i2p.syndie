@@ -168,8 +168,8 @@ abstract public class Wizard implements Themeable, Translatable {
     
     public void translate(TranslationRegistry registry) {
         _shell.setText(registry.getText("Welcome to Syndie!"));
-        _back.setText(registry.getText("< Back"));
-        _next.setText(registry.getText("Next >"));
+        _back.setText("< " + registry.getText("Back"));
+        _next.setText(registry.getText("Next") + " >");
         _finish.setText(registry.getText("Finish"));
         _cancel.setText(registry.getText("Cancel"));
     }

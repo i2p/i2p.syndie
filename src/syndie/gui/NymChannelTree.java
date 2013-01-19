@@ -1109,12 +1109,12 @@ public class NymChannelTree implements Themeable, Translatable {
         _colLastPost.setText(registry.getText("Last post"));
         _colAttributes.setToolTipText(registry.getText("Profile published references?"));
         
-        _filterLabel.setText(registry.getText("Only include forums with: "));
-        _unreadOnlySel.setText(registry.getText("unread messages"));
-        _privateOnlySel.setText(registry.getText("private messages"));
-        _search.setText(registry.getText("search term"));
-        _searchButton.setText(registry.getText("search"));
-        _searchAll.setText(registry.getText("view all"));
+        _filterLabel.setText(registry.getText("Only include forums with") + ": ");
+        _unreadOnlySel.setText(registry.getText("Unread messages"));
+        _privateOnlySel.setText(registry.getText("Private messages"));
+        _search.setText(registry.getText("Search term"));
+        _searchButton.setText(registry.getText("Search"));
+        _searchAll.setText(registry.getText("View all"));
         
         _nymChannelsButton.setText(registry.getText("Special forums"));
         _bookmarksButton.setText(registry.getText("Bookmarks"));

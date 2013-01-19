@@ -406,14 +406,14 @@ class ManageForumAuthPost extends BaseComponent implements Themeable, Translatab
         
         _choiceAnyone.setText(registry.getText("Anyone can post"));
         _choiceAllowed.setText(registry.getText("Only authorized users can post or reply"));
-        _choiceReplies.setText(registry.getText("Anyone can reply to an authorised post"));
+        _choiceReplies.setText(registry.getText("Anyone can reply to an authorized post"));
         
         _selected.setText(registry.getText("What identities are authorized?"));
         _selectedAdd.setText(registry.getText("Add"));
         _selectedDel.setText(registry.getText("Delete"));
         
         _sendNew.setText(registry.getText("Create a new identity and allow it to post"));
-        _sendNewLabel.setText(registry.getText("Send the new identity's key to the administrators of the selected forums:"));
+        _sendNewLabel.setText(registry.getText("Send the new identity's key to the administrators of the selected forums") + ':');
         _sendNewAdd.setText(registry.getText("Add"));
         _sendNewDel.setText(registry.getText("Delete"));
         _sendNewPBE.setText(registry.getText("Post the new identity's key in a passphrase protected message to the forum"));

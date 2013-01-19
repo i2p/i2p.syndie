@@ -59,6 +59,8 @@ public abstract class BrowserTab extends BaseComponent implements Themeable {
     static final String TYPE_SYNC = "sync";
     static final String TYPE_HELP = "help";
     
+    private static final String PARENT = "parent";
+
     private static final int MAX_TAB_NAME_LEN = 22;
 
     public static BrowserTab build(BrowserControl browser, SyndieURI uri, String suggestedName, String suggestedDescription) {
@@ -71,7 +73,7 @@ public abstract class BrowserTab extends BaseComponent implements Themeable {
                 //return new EditMessageTab(browser, uri);
             } else {
                 Hash forum = uri.getScope();
-                String parentURI = uri.getString("parent");
+                String parentURI = uri.getString(PARENT);
                 SyndieURI parent = null;
                 if (parentURI != null) {
                     try { parent = new SyndieURI(parentURI); } catch (URISyntaxException use) {}

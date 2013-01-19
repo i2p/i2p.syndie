@@ -227,6 +227,9 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
         
         loadData();
     }
+
+    // to prevent tagging by xgettext
+    private static final String NAME = "name";
     
     public void show(SyndieURI uri) {
         if (uri.isArchive()) {
@@ -248,7 +251,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
             _tree.setSelection(new TreeItem[0]);
             SyncArchive archive = new SyncArchive(mgr, _client);
             archive.setURL(uri.getURL());
-            archive.setName(uri.getString("name"));
+            archive.setName(uri.getString(NAME));
             _ui.debugMessage("editing as if we are viewing [" + archive.getURL() + "] [" + archive.getName() + "]");
             viewDetailArchive(archive, false);
         }
@@ -674,7 +677,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
         } else if (!SyncManager.getInstance(_client, _ui).isOnline()) {
             rootItem.setText(1, Constants.getDateTime(nextTime));
             rootItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_SCHEDULED);
-            rootItem.setText(3, _translationRegistry.getText("Offline - set as online to start"));
+            rootItem.setText(3, _translationRegistry.getText("Offline: Set as online to start"));
         } else {
             rootItem.setText(1, Constants.getDateTime(nextTime));
             rootItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_SCHEDULED);
@@ -878,7 +881,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
             if (id != null)
                 bf.append(' ').append(Constants.getDateTime(id.longValue()));
             else
-                bf.append(' ').append(getText("forum info"));
+                bf.append(' ').append(getText("Forum info"));
             actionItem.setText(0, bf.toString());
 
             if (action.isScheduled()) {
@@ -891,7 +894,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
             } else if (action.getPBEPrompt() != null) {
                 actionItem.setText(1, Constants.getDateTime(action.getCompletionTime()));                    
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_PBE);
-                actionItem.setText(3, _translationRegistry.getText("Passphrase required: ") + action.getPBEPrompt());
+                actionItem.setText(3, _translationRegistry.getText("Passphrase required") + ": " + action.getPBEPrompt());
             } else if (action.isReplyKeyUnknown()) {
                 actionItem.setText(1, Constants.getDateTime(action.getCompletionTime()));                    
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_NOKEY);
@@ -906,7 +909,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                 if (action.getFetchError() != null)
                     msg = msg + " - " + action.getFetchError().getMessage();
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
-                actionItem.setText(3, _translationRegistry.getText("Fetch failed: ") + msg);
+                actionItem.setText(3, _translationRegistry.getText("Fetch failed") + ": " + msg);
             } else if (action.isFetchingMeta()) {
                 actionItem.setText(1, _translationRegistry.getText("Now"));
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_INPROGRESS);
@@ -1068,7 +1071,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
             if (id != null)
                 bf.append(' ').append(Constants.getDateTime(id.longValue()));
             else
-                bf.append(' ').append(getText("forum info"));
+                bf.append(' ').append(getText("Forum info"));
             actionItem.setText(0, bf.toString());
 
             if (action.isScheduled()) {
@@ -1104,7 +1107,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
             } else if (action.getErrorMsg() != null) {
                 actionItem.setText(1, Constants.getDateTime(action.getCompletionTime()));
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
-                actionItem.setText(3, _translationRegistry.getText("Error pushing: ") + action.getErrorMsg());
+                actionItem.setText(3, _translationRegistry.getText("Error pushing") + ": " + action.getErrorMsg());
             } else { // complete
                 actionItem.setText(1, Constants.getDateTime(action.getCompletionTime()));
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_OK);

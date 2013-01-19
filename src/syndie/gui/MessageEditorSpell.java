@@ -74,7 +74,7 @@ class MessageEditorSpell implements Themeable, Translatable {
             _spellSuggestions.setEnabled(true);
             _spellAdd.setEnabled(false); // todo: user-specific dictionary
             _spellCancel.setEnabled(true);
-            _spellCancel.setText(_translationRegistry.getText("cancel"));
+            _spellCancel.setText(_translationRegistry.getText("Cancel"));
             _spellIgnore.setEnabled(true);
             _spellIgnoreAll.setEnabled(true);
             _spellReplace.setEnabled(true);
@@ -88,7 +88,7 @@ class MessageEditorSpell implements Themeable, Translatable {
             _spellSuggestions.setEnabled(false);
             _spellAdd.setEnabled(false);
             _spellCancel.setEnabled(true);
-            _spellCancel.setText(_translationRegistry.getText("ok"));
+            _spellCancel.setText(_translationRegistry.getText("OK"));
             _spellIgnore.setEnabled(false);
             _spellIgnoreAll.setEnabled(false);
             _spellReplace.setEnabled(false);
@@ -202,13 +202,13 @@ class MessageEditorSpell implements Themeable, Translatable {
     
     public void translate(TranslationRegistry registry) {
         _spellShell.setText(registry.getText("Spell checker"));
-        _spellWordLabel.setText(registry.getText("Word: "));
-        _spellSuggestionsLabel.setText(registry.getText("Suggestions: "));
-        _spellReplace.setText(registry.getText("replace"));
-        _spellReplaceAll.setText(registry.getText("replace all"));
-        _spellIgnore.setText(registry.getText("ignore"));
-        _spellIgnoreAll.setText(registry.getText("ignore all"));
-        _spellAdd.setText(registry.getText("add"));
-        _spellCancel.setText(registry.getText("cancel"));
+        _spellWordLabel.setText(registry.getText("Word") + ": ");
+        _spellSuggestionsLabel.setText(registry.getText("Suggestions") + ": ");
+        _spellReplace.setText(registry.getText("Replace"));
+        _spellReplaceAll.setText(registry.getText("Replace all"));
+        _spellIgnore.setText(registry.getText("Ignore"));
+        _spellIgnoreAll.setText(registry.getText("Ignore all"));
+        _spellAdd.setText(registry.getText("Add"));
+        _spellCancel.setText(registry.getText("Cancel"));
     }
 }

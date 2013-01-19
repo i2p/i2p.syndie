@@ -507,7 +507,7 @@ public class ReferenceEditor extends BaseComponent implements Themeable, Transla
                 _ui.errorMessage("Error creating the image from " + selected, se);
                 MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
                 box.setText(_translationRegistry.getText("Invalid image"));
-                box.setMessage(_translationRegistry.getText("Unable to load the image: ") + se.getMessage());
+                box.setMessage(_translationRegistry.getText("Unable to load the image") + ": " + se.getMessage());
                 box.open();
             }
         }

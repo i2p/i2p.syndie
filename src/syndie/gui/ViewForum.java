@@ -848,7 +848,7 @@ public class ViewForum extends BaseComponent implements Translatable, Themeable 
         _expirationManager.setText(registry.getText("Manage"));
         _archiveGroup.setText(registry.getText("Advertised archives") + ':');
         _userGroup.setText(registry.getText("Authorized managers and posters") + ':');
-        _banGroup.setText(registry.getText("Banned forums/authors:"));
+        _banGroup.setText(registry.getText("Banned forums/authors") + ':');
         _refGroup.setText(registry.getText("Advertised references") + ':');
         _authorizationLabel.setText(registry.getText("Authorization") + ':');
 

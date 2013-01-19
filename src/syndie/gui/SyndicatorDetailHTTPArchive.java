@@ -446,7 +446,7 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         gl.marginHeight = 0;
         gl.marginWidth = 0;
         shell.setLayout(gl);
-        shell.setText(_translationRegistry.getText("Whitelist: ") + scopes.size());
+        shell.setText(_translationRegistry.getText("Whitelist") + ": " + scopes.size());
         
         ScrolledComposite scroll = new ScrolledComposite(shell, SWT.V_SCROLL);
         scroll.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
@@ -481,7 +481,7 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         
         Button done = new Button(shell, SWT.PUSH);
         done.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        done.setText(_translationRegistry.getText("Ok"));
+        done.setText(_translationRegistry.getText("OK"));
         done.setFont(_themeRegistry.getTheme().BUTTON_FONT);
         done.addSelectionListener(new FireSelectionListener() {
             public void fire() {
@@ -548,7 +548,7 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
             fcpHost.setText("127.0.0.1");
         Label fcpPortLabel = new Label(row, SWT.NONE);
         fcpPortLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        fcpPortLabel.setText(_translationRegistry.getText("port") + ':');
+        fcpPortLabel.setText(_translationRegistry.getText("Port") + ':');
         final Text fcpPort = new Text(row, SWT.SINGLE | SWT.BORDER);
         fcpPort.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         if (_archive.getFCPPort() > 0)
@@ -1124,7 +1124,7 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         sel = (cnt > 0 ? _pushMaxSize.getSelectionIndex() : SIZE_DEFAULT_INDEX);
         _pushMaxSize.removeAll();
         for (int i = 0; i < SIZES.length; i++)
-            _pushMaxSize.add(SIZES[i] + registry.getText(" KBytes"));
+            _pushMaxSize.add(SIZES[i] + " " + registry.getText("KBytes"));
         _pushMaxSize.select(sel);
         
         cnt = _pullPolicy.getItemCount();
@@ -1142,7 +1142,7 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         sel = (cnt > 0 ? _pullMaxSize.getSelectionIndex() : SIZE_DEFAULT_INDEX);
         _pullMaxSize.removeAll();
         for (int i = 0; i < SIZES.length; i++)
-            _pullMaxSize.add(SIZES[i] + registry.getText(" KBytes"));
+            _pullMaxSize.add(SIZES[i] + " " + registry.getText("KBytes"));
         _pullMaxSize.select(sel);
 
         cnt = _pullNewAge.getItemCount();
@@ -1168,17 +1168,14 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         _pushAge.add(registry.getText("2 months"));
         _pushAge.add(registry.getText("6 months"));
         _pushAge.add(registry.getText("1 year"));
-        _pushAge.add(registry.getText("Unlimited (only use if your clock is off)"));
+        _pushAge.add(registry.getText("Unlimited"));
         _pushAge.select(sel);
         
         cnt = _nextSyncDelay.getItemCount();
         sel = (cnt > 0 ? _nextSyncDelay.getSelectionIndex() : SYNC_DELAY_DEFAULT_INDEX);
         _nextSyncDelay.removeAll();
         for (int i = 0; i < SYNC_DELAY.length; i++) {
-            if (SYNC_DELAY[i] == 1)
-                _nextSyncDelay.add(SYNC_DELAY[i] + registry.getText(" hour"));
-            else
-                _nextSyncDelay.add(SYNC_DELAY[i] + registry.getText(" hours"));
+            _nextSyncDelay.add(registry.ngettext("{} hour", "{} hours", SYNC_DELAY[i]));
         }
         _nextSyncDelay.select(sel);
     }

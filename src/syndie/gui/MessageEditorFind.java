@@ -170,11 +170,11 @@ class MessageEditorFind implements Translatable, Themeable {
     
     public void translate(TranslationRegistry registry) {
         _findShell.setText(registry.getText("Find"));
-        _findTextLabel.setText(registry.getText("Find what: "));
-        _findReplaceLabel.setText(registry.getText("Replace with: "));
-        _findMatchCase.setText(registry.getText("match case"));
-        _findWrapAround.setText(registry.getText("wrap around"));
-        _findBackwards.setText(registry.getText("backwards"));
+        _findTextLabel.setText(registry.getText("Find what") + ": ");
+        _findReplaceLabel.setText(registry.getText("Replace with") + ": ");
+        _findMatchCase.setText(registry.getText("Match case"));
+        _findWrapAround.setText(registry.getText("Wrap around"));
+        _findBackwards.setText(registry.getText("Backwards"));
         _findNext.setText(registry.getText("Find next"));
         _findNext.setToolTipText(registry.getText("Find the next occurrence of the word"));
         _close.setText(registry.getText("Close"));

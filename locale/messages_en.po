@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: I2P i2psnark\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-01-10 14:03+0000\n"
+"POT-Creation-Date: 2013-01-19 15:04+0000\n"
 "PO-Revision-Date: 2010-06-15 14:09+0100\n"
 "Last-Translator: duck <duck@mail.i2p>\n"
 "Language-Team: duck <duck@mail.i2p>\n"
@@ -29,25 +29,30 @@ msgid "Edit name"
 msgstr ""
 
 #: src/syndie/gui/ArchiveDefaults.java:262
-msgid "Archive name: "
+#: src/syndie/gui/ManageForumArchives.java:498
+msgid "Archive name"
 msgstr ""
 
 #: src/syndie/gui/ArchiveDefaults.java:280
 #: src/syndie/gui/ArchiveDefaults.java:339
 #: src/syndie/gui/ArchiveDefaults.java:434
-#: src/syndie/gui/ArchiveManager.java:217 src/syndie/gui/Browser.java:1077
-#: src/syndie/gui/ManageForumArchives.java:498
+#: src/syndie/gui/ArchiveManager.java:218
+#: src/syndie/gui/BackupSecrets.java:497 src/syndie/gui/Browser.java:1090
+#: src/syndie/gui/ManageForumArchives.java:503
 #: src/syndie/gui/ManageForumAuthManage.java:312
 #: src/syndie/gui/ManageForumAuthPost.java:423
 #: src/syndie/gui/ManageForumAuthRead.java:341
 #: src/syndie/gui/ManageForumAuthReply.java:237
-#: src/syndie/gui/ManageForumBans.java:309
+#: src/syndie/gui/ManageForumBans.java:316
 #: src/syndie/gui/ManageForumReferences.java:538
 #: src/syndie/gui/MessageChooserPopup.java:123
-#: src/syndie/gui/MessageEditor.java:563
-#: src/syndie/gui/MessageEditor.java:1365
-#: src/syndie/gui/PassphrasePrompt.java:137
+#: src/syndie/gui/MessageEditor.java:574
+#: src/syndie/gui/MessageEditor.java:1377
+#: src/syndie/gui/MessageEditorSpell.java:91
+#: src/syndie/gui/MessageEditorStyler.java:418
+#: src/syndie/gui/PassphrasePrompt.java:141
 #: src/syndie/gui/ReferenceEditor.java:688
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:484
 #: src/syndie/gui/WebRipPageControl.java:371
 msgid "OK"
 msgstr ""
@@ -56,27 +61,30 @@ msgstr ""
 #: src/syndie/gui/ArchiveDefaults.java:350
 #: src/syndie/gui/ArchiveDefaults.java:454
 #: src/syndie/gui/ArchiveDefaultsPopup.java:98
-#: src/syndie/gui/ArchiveManager.java:341
-#: src/syndie/gui/BackupSecrets.java:490
-#: src/syndie/gui/ForumReferenceChooserPopup.java:159
-#: src/syndie/gui/ManageForumArchives.java:499
+#: src/syndie/gui/ArchiveManager.java:346
+#: src/syndie/gui/BackupSecrets.java:498
+#: src/syndie/gui/ForumReferenceChooserPopup.java:161
+#: src/syndie/gui/ManageForumArchives.java:504
 #: src/syndie/gui/ManageForumAuthManage.java:313
 #: src/syndie/gui/ManageForumAuthPost.java:424
 #: src/syndie/gui/ManageForumAuthRead.java:342
 #: src/syndie/gui/ManageForumAuthReply.java:238
-#: src/syndie/gui/ManageForumBans.java:310
+#: src/syndie/gui/ManageForumBans.java:317
 #: src/syndie/gui/ManageForumReferences.java:539
 #: src/syndie/gui/MessageChooserPopup.java:124
-#: src/syndie/gui/PassphrasePrompt.java:138
+#: src/syndie/gui/MessageEditorSpell.java:77
+#: src/syndie/gui/MessageEditorSpell.java:212
+#: src/syndie/gui/MessageEditorStyler.java:419
+#: src/syndie/gui/PassphrasePrompt.java:142
 #: src/syndie/gui/ReferenceChooserInfo.java:528
 #: src/syndie/gui/ReferenceChooserInfo.java:540
 #: src/syndie/gui/ReferenceChooserInfo.java:547
 #: src/syndie/gui/ReferenceChooserInfo.java:554
-#: src/syndie/gui/ReferenceEditor.java:689 src/syndie/gui/Syndicator.java:503
-#: src/syndie/gui/Syndicator.java:535
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:622
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1078
-#: src/syndie/gui/WebRipPageControl.java:362 src/syndie/gui/Wizard.java:173
+#: src/syndie/gui/ReferenceEditor.java:689 src/syndie/gui/Syndicator.java:507
+#: src/syndie/gui/Syndicator.java:539
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:620
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1076
+#: src/syndie/gui/WebRipPageControl.java:362 src/syndie/gui/Wizard.java:174
 #: src/syndie/gui/desktop/ChangePassPopup.java:89
 #: src/syndie/gui/desktop/MessageEditorPanel.java:525
 msgid "Cancel"
@@ -87,7 +95,8 @@ msgid "Edit URL"
 msgstr ""
 
 #: src/syndie/gui/ArchiveDefaults.java:321
-msgid "Archive location: "
+#: src/syndie/gui/ArchiveDefaults.java:545
+msgid "Archive location"
 msgstr ""
 
 #: src/syndie/gui/ArchiveDefaults.java:385
@@ -95,15 +104,19 @@ msgid "Edit proxy"
 msgstr ""
 
 #: src/syndie/gui/ArchiveDefaults.java:396
-msgid "Proxy host: "
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1058
+msgid "Proxy host"
 msgstr ""
 
 #: src/syndie/gui/ArchiveDefaults.java:406
-msgid "port: "
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:551
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1059
+msgid "Port"
 msgstr ""
 
 #: src/syndie/gui/ArchiveDefaults.java:538
 #: src/syndie/gui/ArchiveDefaults.java:544
+#: src/syndie/gui/ReferenceChooserInfo.java:543
 msgid "Archive"
 msgstr ""
 
@@ -117,15 +130,12 @@ msgid "Proxy"
 msgstr ""
 
 #: src/syndie/gui/ArchiveDefaults.java:541
-msgid "Read Only"
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:533
+msgid "Read only"
 msgstr ""
 
 #: src/syndie/gui/ArchiveDefaults.java:542
-msgid "Auto Sync"
-msgstr ""
-
-#: src/syndie/gui/ArchiveDefaults.java:545
-msgid "Archive location"
+msgid "Auto sync"
 msgstr ""
 
 #: src/syndie/gui/ArchiveDefaults.java:546
@@ -160,62 +170,71 @@ msgstr ""
 msgid "Save archives as your own"
 msgstr ""
 
-#: src/syndie/gui/ArchiveManager.java:196
+#: src/syndie/gui/ArchiveManager.java:197
+#: src/syndie/gui/ArchiveManager.java:336 src/syndie/gui/ViewForum.java:849
 msgid "Advertised archives"
 msgstr ""
 
-#: src/syndie/gui/ArchiveManager.java:200
+#: src/syndie/gui/ArchiveManager.java:201
 msgid ""
 "If you allow people to sync off your archive, you can tell them about some "
 "alternate archives they can sync off as well"
 msgstr ""
 
-#: src/syndie/gui/ArchiveManager.java:251 src/syndie/gui/Browser.java:1812
+#: src/syndie/gui/ArchiveManager.java:252 src/syndie/gui/Browser.java:1833
+#: src/syndie/gui/Browser.java:1834
 msgid "Banned"
 msgstr ""
 
-#: src/syndie/gui/ArchiveManager.java:257
+#: src/syndie/gui/ArchiveManager.java:258
 msgid ""
 "These authors and forums are completely ignored, with all of the associated "
 "messages refused"
 msgstr ""
 
-#: src/syndie/gui/ArchiveManager.java:275
+#: src/syndie/gui/ArchiveManager.java:270
+msgid "Full hash"
+msgstr ""
+
+#: src/syndie/gui/ArchiveManager.java:279
 msgid "Unban checked"
 msgstr ""
 
-#: src/syndie/gui/ArchiveManager.java:328
+#: src/syndie/gui/ArchiveManager.java:333
 msgid "Manage expiration policies"
 msgstr ""
 
-#: src/syndie/gui/ArchiveManager.java:329
+#: src/syndie/gui/ArchiveManager.java:334
 msgid "Manage cancel policies"
 msgstr ""
 
-#: src/syndie/gui/ArchiveManager.java:331 src/syndie/gui/ViewForum.java:846
-msgid "Advertised archives:"
-msgstr ""
-
-#: src/syndie/gui/ArchiveManager.java:332
-#: src/syndie/gui/ArchiveManager.java:335
-#: src/syndie/gui/ArchiveManager.java:338
-msgid "Manage..."
-msgstr ""
-
-#: src/syndie/gui/ArchiveManager.java:334
-msgid "Deniable forums:"
-msgstr ""
-
-#: src/syndie/gui/ArchiveManager.java:337 src/syndie/gui/ViewForum.java:848
-msgid "Banned forums/authors:"
-msgstr ""
-
+#: src/syndie/gui/ArchiveManager.java:337
 #: src/syndie/gui/ArchiveManager.java:340
+#: src/syndie/gui/ArchiveManager.java:343 src/syndie/gui/BrowseForum.java:706
+#: src/syndie/gui/Browser.java:2822 src/syndie/gui/BrowserTree.java:347
+#: src/syndie/gui/ManageForum.java:1151 src/syndie/gui/ManageForum.java:1161
+#: src/syndie/gui/ViewForum.java:848
+msgid "Manage"
+msgstr ""
+
+#: src/syndie/gui/ArchiveManager.java:339
+msgid "Deniable forums"
+msgstr ""
+
+#: src/syndie/gui/ArchiveManager.java:342 src/syndie/gui/ViewForum.java:851
+msgid "Banned forums/authors"
+msgstr ""
+
+#: src/syndie/gui/ArchiveManager.java:345
 #: src/syndie/gui/AttachmentPreview.java:297
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:605
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1077
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:603
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1075
 #: src/syndie/gui/desktop/MessageEditorPanel.java:502
 msgid "Save"
+msgstr ""
+
+#: src/syndie/gui/ArchiveManagerTab.java:27
+msgid "Manage archive configuration"
 msgstr ""
 
 #: src/syndie/gui/AttachmentPreview.java:132 src/syndie/gui/MaxView.java:31
@@ -227,7 +246,7 @@ msgid "Attachment saved"
 msgstr ""
 
 #: src/syndie/gui/AttachmentPreview.java:269
-msgid "Attachment saved to:"
+msgid "Attachment saved to"
 msgstr ""
 
 #: src/syndie/gui/AttachmentPreview.java:274
@@ -235,38 +254,58 @@ msgid "Error saving attachment"
 msgstr ""
 
 #: src/syndie/gui/AttachmentPreview.java:275
-msgid "Attachment could not be saved: "
+msgid "Attachment could not be saved"
 msgstr ""
 
 #: src/syndie/gui/AttachmentPreview.java:291
-#: src/syndie/gui/ManageForum.java:1134
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1054
-#: src/syndie/gui/ViewForum.java:841
-msgid "Name:"
+#: src/syndie/gui/ManageForum.java:1147
+#: src/syndie/gui/ManageForumArchives.java:491
+#: src/syndie/gui/ManageForumReferences.java:535
+#: src/syndie/gui/ManageReferenceChooser.java:609
+#: src/syndie/gui/MessageReferencesEditor.java:530
+#: src/syndie/gui/NymChannelTree.java:1105
+#: src/syndie/gui/ReferenceChooserInfo.java:520
+#: src/syndie/gui/ReferenceChooserInfo.java:531
+#: src/syndie/gui/ReferenceChooserSearch.java:171
+#: src/syndie/gui/ReferencesPanel.java:327
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1052
+#: src/syndie/gui/ViewForum.java:844
+msgid "Name"
 msgstr ""
 
 #: src/syndie/gui/AttachmentPreview.java:292
-#: src/syndie/gui/ManageForum.java:1136 src/syndie/gui/ViewForum.java:843
-msgid "Description:"
+#: src/syndie/gui/ManageForum.java:1149
+#: src/syndie/gui/ManageForumReferences.java:534
+#: src/syndie/gui/ManageReferenceChooser.java:606
+#: src/syndie/gui/MessageReferencesEditor.java:529
+#: src/syndie/gui/NymChannelTree.java:1106
+#: src/syndie/gui/ReferenceChooserInfo.java:521
+#: src/syndie/gui/ReferenceChooserInfo.java:532
+#: src/syndie/gui/ReferencesPanel.java:329 src/syndie/gui/ViewForum.java:846
+msgid "Description"
 msgstr ""
 
 #: src/syndie/gui/AttachmentPreview.java:293
-msgid "Size:"
+msgid "Size"
 msgstr ""
 
 #: src/syndie/gui/AttachmentPreview.java:294
-msgid "Type:"
+#: src/syndie/gui/ManageForumArchives.java:492
+#: src/syndie/gui/ManageReferenceChooser.java:607
+#: src/syndie/gui/MessageReferencesEditor.java:531
+#: src/syndie/gui/ReferencesPanel.java:328
+msgid "Type"
 msgstr ""
 
 #: src/syndie/gui/AttachmentPreview.java:295
-msgid "Save as:"
+msgid "Save as"
 msgstr ""
 
 #: src/syndie/gui/AttachmentPreview.java:296
 #: src/syndie/gui/ReferenceEditor.java:687
 #: src/syndie/gui/desktop/ControlMenuPanel.java:617
 #: src/syndie/gui/desktop/ControlMenuPanel.java:625
-msgid "Browse..."
+msgid "Browse"
 msgstr ""
 
 #: src/syndie/gui/BackupSecrets.java:149
@@ -275,7 +314,7 @@ msgid ""
 "keys, please uncheck the passphrase checkbox"
 msgstr ""
 
-#: src/syndie/gui/BackupSecrets.java:150
+#: src/syndie/gui/BackupSecrets.java:150 src/syndie/gui/Syndicator.java:897
 #: src/syndie/gui/desktop/MessageEditorPanel.java:432
 msgid "Passphrase required"
 msgstr ""
@@ -285,208 +324,194 @@ msgid "File to write the backup to"
 msgstr ""
 
 #: src/syndie/gui/BackupSecrets.java:190
-msgid "There was an error backing up the keys: "
+msgid "There was an error backing up the keys"
 msgstr ""
 
-#: src/syndie/gui/BackupSecrets.java:191 src/syndie/gui/LogTab.java:282
+#: src/syndie/gui/BackupSecrets.java:191 src/syndie/gui/LogTab.java:284
 #: src/syndie/gui/ManageForum.java:583
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:655
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:674
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:653
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:672
 msgid "Error"
 msgstr ""
 
 #: src/syndie/gui/BackupSecrets.java:196
-msgid "The keys were backed up to: "
+msgid "The keys were backed up to"
 msgstr ""
 
 #: src/syndie/gui/BackupSecrets.java:197
 msgid "Backup successful"
 msgstr ""
 
-#: src/syndie/gui/BackupSecrets.java:298
-msgid "The secrets file was too short"
+#: src/syndie/gui/BackupSecrets.java:302 src/syndie/gui/BackupSecrets.java:375
+msgid "The secrets file was corrupt"
 msgstr ""
 
-#: src/syndie/gui/BackupSecrets.java:299 src/syndie/gui/BackupSecrets.java:368
+#: src/syndie/gui/BackupSecrets.java:303 src/syndie/gui/BackupSecrets.java:376
 msgid "Error reading"
 msgstr ""
 
-#: src/syndie/gui/BackupSecrets.java:353
-msgid "Restored keys/meta/corrupt meta: "
+#: src/syndie/gui/BackupSecrets.java:361
+msgid "Restored keys/meta/corrupt meta"
 msgstr ""
 
-#: src/syndie/gui/BackupSecrets.java:354
+#: src/syndie/gui/BackupSecrets.java:362
 msgid "Restored"
 msgstr ""
 
-#: src/syndie/gui/BackupSecrets.java:367
-msgid "The secrets file was corrupt: "
-msgstr ""
-
-#: src/syndie/gui/BackupSecrets.java:422
+#: src/syndie/gui/BackupSecrets.java:430
 msgid "Forum management key"
 msgstr ""
 
-#: src/syndie/gui/BackupSecrets.java:424
+#: src/syndie/gui/BackupSecrets.java:432
 msgid "Forum reply key"
 msgstr ""
 
-#: src/syndie/gui/BackupSecrets.java:426
+#: src/syndie/gui/BackupSecrets.java:434
 msgid "Forum post key"
 msgstr ""
 
-#: src/syndie/gui/BackupSecrets.java:428
+#: src/syndie/gui/BackupSecrets.java:436
 msgid "Forum read key"
 msgstr ""
 
-#: src/syndie/gui/BackupSecrets.java:431
-msgid "expired"
+#: src/syndie/gui/BackupSecrets.java:439
+msgid "Expired"
 msgstr ""
 
-#: src/syndie/gui/BackupSecrets.java:486
+#: src/syndie/gui/BackupSecrets.java:494
 msgid "Backup related forum profile?"
 msgstr ""
 
-#: src/syndie/gui/BackupSecrets.java:487
+#: src/syndie/gui/BackupSecrets.java:495
 msgid "Backup expired keys?"
 msgstr ""
 
-#: src/syndie/gui/BackupSecrets.java:488
-msgid "Passphrase required to restore:"
+#: src/syndie/gui/BackupSecrets.java:496
+msgid "Passphrase required to restore"
 msgstr ""
 
-#: src/syndie/gui/BackupSecrets.java:489
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:486
-msgid "Ok"
+#: src/syndie/gui/BrowseForum.java:550
+msgid "Forum not found. It was banned or deleted."
 msgstr ""
 
-#: src/syndie/gui/BrowseForum.java:528
-msgid "multiple forums selected"
-msgstr ""
-
-#: src/syndie/gui/BrowseForum.java:677
+#: src/syndie/gui/BrowseForum.java:700
 msgid "You can manage this forum"
 msgstr ""
 
-#: src/syndie/gui/BrowseForum.java:678
+#: src/syndie/gui/BrowseForum.java:701
 msgid "You can post in this forum"
 msgstr ""
 
-#: src/syndie/gui/BrowseForum.java:679
+#: src/syndie/gui/BrowseForum.java:702
 msgid "This forum has published archives"
 msgstr ""
 
-#: src/syndie/gui/BrowseForum.java:680
+#: src/syndie/gui/BrowseForum.java:703
 msgid "This forum has published references"
 msgstr ""
 
-#: src/syndie/gui/BrowseForum.java:681
+#: src/syndie/gui/BrowseForum.java:704
 msgid "This forum has specific admins"
 msgstr ""
 
-#: src/syndie/gui/BrowseForum.java:683 src/syndie/gui/BrowserTree.java:347
-#: src/syndie/gui/ManageForum.java:1138 src/syndie/gui/ManageForum.java:1148
-#: src/syndie/gui/ViewForum.java:845
-msgid "Manage"
-msgstr ""
-
-#: src/syndie/gui/BrowseForum.java:684 src/syndie/gui/BrowserTree.java:357
+#: src/syndie/gui/BrowseForum.java:707 src/syndie/gui/Browser.java:1741
+#: src/syndie/gui/Browser.java:2825 src/syndie/gui/BrowserTree.java:357
 #: src/syndie/gui/MessageEditorTab.java:111
 #: src/syndie/gui/desktop/MessageEditorPanel.java:520
 msgid "Post"
 msgstr ""
 
-#: src/syndie/gui/BrowseForum.java:686
+#: src/syndie/gui/BrowseForum.java:709
 msgid "View the forum profile"
 msgstr ""
 
-#: src/syndie/gui/BrowseForum.java:689
+#: src/syndie/gui/BrowseForum.java:712
 msgid "Bookmark this forum"
 msgstr ""
 
-#: src/syndie/gui/BrowseForum.java:692
+#: src/syndie/gui/BrowseForum.java:715
 msgid "Mark all messages read"
 msgstr ""
 
-#: src/syndie/gui/BrowseForum.java:693
+#: src/syndie/gui/BrowseForum.java:716
 msgid "Delete read messages"
 msgstr ""
 
-#: src/syndie/gui/BrowseForum.java:694
+#: src/syndie/gui/BrowseForum.java:717
 msgid "Copy forum URI"
 msgstr ""
 
-#: src/syndie/gui/BrowseForum.java:695
+#: src/syndie/gui/BrowseForum.java:718
 msgid "Send the forum administrators a private message"
 msgstr ""
 
-#: src/syndie/gui/BrowseForum.java:696
+#: src/syndie/gui/BrowseForum.java:719
 msgid "Delete all messages"
 msgstr ""
 
-#: src/syndie/gui/BrowseForum.java:697
+#: src/syndie/gui/BrowseForum.java:720
 msgid "Ban this forum"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:824 src/syndie/gui/Browser.java:957
+#: src/syndie/gui/Browser.java:837 src/syndie/gui/Browser.java:970
 msgid "Start HTTP archive server"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:827 src/syndie/gui/Browser.java:959
+#: src/syndie/gui/Browser.java:840 src/syndie/gui/Browser.java:972
 msgid "Stop HTTP archive server"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:830 src/syndie/gui/Browser.java:961
+#: src/syndie/gui/Browser.java:843 src/syndie/gui/Browser.java:974
 msgid "Configure HTTP archive server"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:1074
-msgid "HTTP listen port:"
+#: src/syndie/gui/Browser.java:1087
+msgid "HTTP listen port"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:1075
+#: src/syndie/gui/Browser.java:1088
 msgid "Others can post new messages to this server"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:1076
+#: src/syndie/gui/Browser.java:1089
 #: src/syndie/gui/desktop/ControlMenuPanel.java:632
 msgid "Run on startup"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:1103
+#: src/syndie/gui/Browser.java:1117 src/syndie/gui/Browser.java:2865
 msgid "About"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:1147 src/syndie/gui/Browser.java:1617
+#: src/syndie/gui/Browser.java:1161 src/syndie/gui/Browser.java:1625
 #: src/syndie/gui/ManageReferenceChooserPopup.java:106
 #: src/syndie/gui/MessageEditorFind.java:180
 #: src/syndie/gui/ReferencesPanel.java:326
-#: src/syndie/gui/desktop/Desktop.java:745
+#: src/syndie/gui/desktop/Desktop.java:747
 #: src/syndie/gui/desktop/StandaloneMessageViewer.java:121
 msgid "Close"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:1178
+#: src/syndie/gui/Browser.java:1192
 msgid "Confirm exit"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:1179
+#: src/syndie/gui/Browser.java:1193
 msgid "Are you sure you want to exit Syndie?"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:1528 src/syndie/gui/SWTUI.java:154
+#: src/syndie/gui/Browser.java:1530 src/syndie/gui/SWTUI.java:154
 msgid "Internal error"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:1529
-msgid "There was an internal error viewing the given location: "
+#: src/syndie/gui/Browser.java:1532
+msgid "There was an internal error viewing"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:1599 src/syndie/gui/desktop/Desktop.java:727
+#: src/syndie/gui/Browser.java:1605 src/syndie/gui/desktop/Desktop.java:729
 msgid "External URL selected"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:1602 src/syndie/gui/desktop/Desktop.java:730
+#: src/syndie/gui/Browser.java:1608 src/syndie/gui/desktop/Desktop.java:732
 msgid ""
 "The URL selected refers to a resource outside of Syndie.  You may load this "
 "in the browser of your choice, but doing so may be risky, as Syndie cannot "
@@ -494,385 +519,372 @@ msgid ""
 "identity or security."
 msgstr ""
 
-#: src/syndie/gui/Browser.java:1633 src/syndie/gui/desktop/Desktop.java:758
+#: src/syndie/gui/Browser.java:1641 src/syndie/gui/desktop/Desktop.java:760
 msgid "Invalid URI"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:1634 src/syndie/gui/desktop/Desktop.java:759
-msgid "The URI visited is not understood by Syndie: "
+#: src/syndie/gui/Browser.java:1642 src/syndie/gui/desktop/Desktop.java:761
+msgid "The URI visited is not understood by Syndie"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:1726
-msgid "logs"
+#: src/syndie/gui/Browser.java:1738 src/syndie/gui/Browser.java:2856
+#: src/syndie/gui/LogTab.java:280
+msgid "Logs"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:1727
-msgid "watch log messages"
+#: src/syndie/gui/Browser.java:1739
+msgid "Watch log messages"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:1729
-msgid "post"
+#: src/syndie/gui/Browser.java:1742 src/syndie/gui/MessageEditorTab.java:112
+#: src/syndie/gui/desktop/MessageTreePanel.java:556
+msgid "Post a new message"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:1730
-msgid "post a new message"
+#: src/syndie/gui/Browser.java:1744
+msgid "Text UI"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:1732
-msgid "text UI"
+#: src/syndie/gui/Browser.java:1745
+msgid "Text-based interface"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:1733
-msgid "text based interface"
-msgstr ""
-
-#: src/syndie/gui/Browser.java:1796 src/syndie/gui/desktop/Desktop.java:1085
+#: src/syndie/gui/Browser.java:1816 src/syndie/gui/desktop/Desktop.java:1065
 msgid ""
 "All of the messages in it will be removed and you will never receive any "
 "messages in it again, or posts written by the forum's owner.  Do you want to "
-"ban: "
+"ban"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:1799 src/syndie/gui/desktop/Desktop.java:1088
+#: src/syndie/gui/Browser.java:1819 src/syndie/gui/desktop/Desktop.java:1068
 msgid "Confirm ban"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:1813
-msgid "Selected forum/author banned"
+#: src/syndie/gui/Browser.java:1855 src/syndie/gui/desktop/Desktop.java:1097
+msgid "Do you really want to tell everyone to ignore this message?"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:1834 src/syndie/gui/desktop/Desktop.java:1117
-msgid "Do you really want to tell everyone to ignore this message: "
-msgstr ""
-
-#: src/syndie/gui/Browser.java:1835 src/syndie/gui/desktop/Desktop.java:1118
+#: src/syndie/gui/Browser.java:1856 src/syndie/gui/desktop/Desktop.java:1098
 msgid "Confirm cancel"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:1848 src/syndie/gui/Syndicator.java:277
-#: src/syndie/gui/Syndicator.java:405 src/syndie/gui/Syndicator.java:509
-#: src/syndie/gui/Syndicator.java:541 src/syndie/gui/desktop/Desktop.java:1131
+#: src/syndie/gui/Browser.java:1869 src/syndie/gui/Syndicator.java:281
+#: src/syndie/gui/Syndicator.java:409 src/syndie/gui/Syndicator.java:513
+#: src/syndie/gui/Syndicator.java:545 src/syndie/gui/desktop/Desktop.java:1111
 msgid "Cancelled"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:1849 src/syndie/gui/desktop/Desktop.java:1132
+#: src/syndie/gui/Browser.java:1870 src/syndie/gui/desktop/Desktop.java:1112
 msgid "Selected message cancelled"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:1870 src/syndie/gui/desktop/Desktop.java:1153
-msgid "Do you really want to locally delete this message: "
+#: src/syndie/gui/Browser.java:1891 src/syndie/gui/desktop/Desktop.java:1133
+msgid "Do you really want to locally delete this message?"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:1871 src/syndie/gui/desktop/Desktop.java:1154
+#: src/syndie/gui/Browser.java:1892 src/syndie/gui/desktop/Desktop.java:1134
 msgid "Confirm delete"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:1884 src/syndie/gui/desktop/Desktop.java:1167
+#: src/syndie/gui/Browser.java:1905 src/syndie/gui/desktop/Desktop.java:1147
 msgid "Deleted"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:1885 src/syndie/gui/desktop/Desktop.java:1168
+#: src/syndie/gui/Browser.java:1906 src/syndie/gui/desktop/Desktop.java:1148
 msgid "Selected message deleted"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:2065
+#: src/syndie/gui/Browser.java:1919
+msgid "Select font"
+msgstr ""
+
+#: src/syndie/gui/Browser.java:2111 src/syndie/gui/Browser.java:2797
+#: src/syndie/gui/desktop/ControlMenuPanel.java:621
 msgid "Open Syndie URI"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:2068
-msgid "Location: "
+#: src/syndie/gui/Browser.java:2114
+#: src/syndie/gui/ManageForumArchives.java:493
+#: src/syndie/gui/ReferenceEditor.java:678
+msgid "Location"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:2075
+#: src/syndie/gui/Browser.java:2121
 #: src/syndie/gui/desktop/ControlMenuPanel.java:623
 msgid "Open"
 msgstr ""
 
 #. retranslate each time
-#: src/syndie/gui/Browser.java:2173
+#: src/syndie/gui/Browser.java:2224
 #: src/syndie/gui/desktop/ControlMenuPanel.java:464
 msgid "Import syndie file"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:2174 src/syndie/gui/Browser.java:2358
+#: src/syndie/gui/Browser.java:2225 src/syndie/gui/Browser.java:2409
 #: src/syndie/gui/desktop/ControlMenuPanel.java:465
 msgid "All files"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:2174
+#: src/syndie/gui/Browser.java:2225
 #: src/syndie/gui/desktop/ControlMenuPanel.java:465
 msgid "Syndie files"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:2194 src/syndie/gui/Browser.java:2229
+#: src/syndie/gui/Browser.java:2245 src/syndie/gui/Browser.java:2280
 #: src/syndie/gui/desktop/ControlMenuPanel.java:530
 msgid "Import complete"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:2195 src/syndie/gui/Browser.java:2230
+#: src/syndie/gui/Browser.java:2246 src/syndie/gui/Browser.java:2281
 #: src/syndie/gui/desktop/ControlMenuPanel.java:531
-msgid "Messages imported successfully/total: "
+msgid "Messages imported successfully/total"
 msgstr ""
 
 #. retranslate each time
-#: src/syndie/gui/Browser.java:2209
+#: src/syndie/gui/Browser.java:2260
 msgid "Import directories recursively"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:2301
-msgid "Export..."
+#: src/syndie/gui/Browser.java:2352 src/syndie/gui/Browser.java:2801
+msgid "Export"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:2318
+#: src/syndie/gui/Browser.java:2369
 msgid "Export to"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:2357
+#: src/syndie/gui/Browser.java:2408
 msgid "Syndie secrets files"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:2360
+#: src/syndie/gui/Browser.java:2411
 msgid "Select Syndie secrets file to restore"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:2371
+#: src/syndie/gui/Browser.java:2422 src/syndie/gui/Browser.java:2815
 msgid "Find forums"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:2738 src/syndie/gui/Browser.java:2820
+#: src/syndie/gui/Browser.java:2790 src/syndie/gui/Browser.java:2873
+#: src/syndie/gui/BugReport.java:655
 msgid "Syndie"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:2739
-msgid "close all tabs"
-msgstr ""
-
-#: src/syndie/gui/Browser.java:2740
-msgid "close other tabs"
-msgstr ""
-
-#: src/syndie/gui/Browser.java:2741
-msgid "copy tab location"
-msgstr ""
-
-#: src/syndie/gui/Browser.java:2742
-msgid "bookmark tab"
-msgstr ""
-
-#: src/syndie/gui/Browser.java:2744
-msgid "&File"
-msgstr ""
-
-#: src/syndie/gui/Browser.java:2745
-msgid "&Open Syndie URI"
-msgstr ""
-
-#: src/syndie/gui/Browser.java:2746
-msgid "&Minimize to the systray"
-msgstr ""
-
-#: src/syndie/gui/Browser.java:2747
-msgid "&Import"
-msgstr ""
-
-#: src/syndie/gui/Browser.java:2748
-msgid "Import &bulk"
-msgstr ""
-
-#: src/syndie/gui/Browser.java:2749
-msgid "&Export"
-msgstr ""
-
-#: src/syndie/gui/Browser.java:2750
-msgid "E&xit"
-msgstr ""
-
-#: src/syndie/gui/Browser.java:2757
-msgid "&View"
-msgstr ""
-
-#: src/syndie/gui/Browser.java:2758
-msgid "Show &bookmarks"
-msgstr ""
-
-#: src/syndie/gui/Browser.java:2762
-msgid "F&orums"
-msgstr ""
-
-#: src/syndie/gui/Browser.java:2763
-msgid "&Find forums"
-msgstr ""
-
-#: src/syndie/gui/Browser.java:2764
-msgid "Read &forums"
-msgstr ""
-
-#: src/syndie/gui/Browser.java:2765
-msgid "&Read all"
-msgstr ""
-
-#: src/syndie/gui/Browser.java:2766
-msgid "Read &all by forum"
-msgstr ""
-
-#: src/syndie/gui/Browser.java:2767
-msgid "Read &private messages"
-msgstr ""
-
-#: src/syndie/gui/Browser.java:2768
-msgid "&Create"
-msgstr ""
-
-#: src/syndie/gui/Browser.java:2770
-msgid "&Manage"
-msgstr ""
-
-#: src/syndie/gui/Browser.java:2773
-msgid "&Post"
-msgstr ""
-
-#: src/syndie/gui/Browser.java:2774
-msgid "Post &new"
-msgstr ""
-
-#: src/syndie/gui/Browser.java:2776
-msgid "Post &web rip"
-msgstr ""
-
-#: src/syndie/gui/Browser.java:2777
-msgid "&Resume draft"
-msgstr ""
-
-#: src/syndie/gui/Browser.java:2779
-msgid "&Manageable forums"
-msgstr ""
-
-#: src/syndie/gui/Browser.java:2780
-msgid "&Postable forums"
-msgstr ""
-
-#: src/syndie/gui/Browser.java:2781
-msgid "&Publically postable forums"
-msgstr ""
-
-#: src/syndie/gui/Browser.java:2783
-msgid "&Syndicate"
-msgstr ""
-
-#: src/syndie/gui/Browser.java:2784
-msgid "&Control syndication"
-msgstr ""
-
-#: src/syndie/gui/Browser.java:2786
-msgid "Toggle &online state"
-msgstr ""
-
-#: src/syndie/gui/Browser.java:2787
-msgid "Manage &archive"
-msgstr ""
-
-#: src/syndie/gui/Browser.java:2790
-msgid "&Language"
+#: src/syndie/gui/Browser.java:2791
+msgid "Close all tabs"
 msgstr ""
 
 #: src/syndie/gui/Browser.java:2792
-msgid "&Translate"
+msgid "Close other tabs"
 msgstr ""
 
 #: src/syndie/gui/Browser.java:2793
-msgid "&Refresh translations"
+msgid "Copy tab location"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:2795
-msgid "&Style"
+#: src/syndie/gui/Browser.java:2794
+msgid "Bookmark tab"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:2797
-msgid "&Increase font"
+#: src/syndie/gui/Browser.java:2796
+msgid "File"
 msgstr ""
 
 #: src/syndie/gui/Browser.java:2798
-msgid "&Decrease font"
+msgid "Minimize to the systray"
 msgstr ""
 
 #: src/syndie/gui/Browser.java:2799
-msgid "&Reset style"
+#: src/syndie/gui/desktop/ControlMenuPanel.java:614
+#: src/syndie/gui/desktop/ControlMenuPanel.java:618
+msgid "Import"
 msgstr ""
 
 #: src/syndie/gui/Browser.java:2800
-msgid "&Configure"
+msgid "Import bulk"
 msgstr ""
 
 #: src/syndie/gui/Browser.java:2802
-msgid "&Advanced"
-msgstr ""
-
-#: src/syndie/gui/Browser.java:2803
-msgid "&Logs"
-msgstr ""
-
-#: src/syndie/gui/Browser.java:2804
-msgid "&Text interface"
-msgstr ""
-
-#: src/syndie/gui/Browser.java:2805
-msgid "&Backup secrets"
-msgstr ""
-
-#: src/syndie/gui/Browser.java:2806
-msgid "&Restore secrets"
-msgstr ""
-
-#: src/syndie/gui/Browser.java:2807
-msgid "&SQL interface"
-msgstr ""
-
-#: src/syndie/gui/Browser.java:2808
-msgid "Dump resources"
+msgid "Quit"
 msgstr ""
 
 #: src/syndie/gui/Browser.java:2809
-msgid "Dump resource differences"
+#: src/syndie/gui/ManageReferenceChooser.java:613
+#: src/syndie/gui/MessagePreview.java:315
+#: src/syndie/gui/MessageTreePreview.java:232
+#: src/syndie/gui/ReferencesPanel.java:150
+#: src/syndie/gui/ReferencesPanel.java:195 src/syndie/gui/Syndicator.java:482
+#: src/syndie/gui/Syndicator.java:521 src/syndie/gui/ViewForum.java:372
+#: src/syndie/gui/desktop/MessageTreePanel.java:701
+msgid "View"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:2811
-msgid "&Help"
+#: src/syndie/gui/Browser.java:2810
+msgid "Show bookmarks"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:2812
-msgid "&About"
-msgstr ""
-
-#: src/syndie/gui/Browser.java:2814
-msgid "File a new &bug report"
+#: src/syndie/gui/Browser.java:2814 src/syndie/gui/NymChannelSource.java:66
+msgid "Forums"
 msgstr ""
 
 #: src/syndie/gui/Browser.java:2816
-msgid "&FAQ"
+msgid "Read forums"
 msgstr ""
 
 #: src/syndie/gui/Browser.java:2817
-msgid "&GUI manual"
+msgid "Read all"
 msgstr ""
 
 #: src/syndie/gui/Browser.java:2818
-msgid "&Text interface manual"
+msgid "Read all by forum"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:2821
+#: src/syndie/gui/Browser.java:2819
+msgid "Read private messages"
+msgstr ""
+
+#: src/syndie/gui/Browser.java:2820 src/syndie/gui/ReferenceEditor.java:683
+msgid "Create"
+msgstr ""
+
+#: src/syndie/gui/Browser.java:2826
+msgid "New post"
+msgstr ""
+
+#: src/syndie/gui/Browser.java:2828
+msgid "Post web rip"
+msgstr ""
+
+#: src/syndie/gui/Browser.java:2829
+msgid "Resume draft"
+msgstr ""
+
+#: src/syndie/gui/Browser.java:2831
+#: src/syndie/gui/ReferenceChooserTree.java:964
+msgid "Manageable forums"
+msgstr ""
+
+#: src/syndie/gui/Browser.java:2832
+msgid "Postable forums"
+msgstr ""
+
+#: src/syndie/gui/Browser.java:2833
+msgid "Publically postable forums"
+msgstr ""
+
+#: src/syndie/gui/Browser.java:2835
+msgid "Syndicate"
+msgstr ""
+
+#: src/syndie/gui/Browser.java:2836
+msgid "Control syndication"
+msgstr ""
+
+#: src/syndie/gui/Browser.java:2838
+msgid "Toggle online state"
+msgstr ""
+
+#: src/syndie/gui/Browser.java:2839
+msgid "Manage archive"
+msgstr ""
+
+#: src/syndie/gui/Browser.java:2842
+msgid "Language"
+msgstr ""
+
+#: src/syndie/gui/Browser.java:2844
+msgid "Translate"
+msgstr ""
+
+#: src/syndie/gui/Browser.java:2845
+msgid "Refresh translations"
+msgstr ""
+
+#: src/syndie/gui/Browser.java:2847
+msgid "Style"
+msgstr ""
+
+#: src/syndie/gui/Browser.java:2849
+msgid "Change font"
+msgstr ""
+
+#: src/syndie/gui/Browser.java:2850
+msgid "Increase font"
+msgstr ""
+
+#: src/syndie/gui/Browser.java:2851
+msgid "Decrease font"
+msgstr ""
+
+#: src/syndie/gui/Browser.java:2852
+msgid "Reset style"
+msgstr ""
+
+#: src/syndie/gui/Browser.java:2853
+#: src/syndie/gui/desktop/ControlMenuPanel.java:633
+msgid "Configure"
+msgstr ""
+
+#: src/syndie/gui/Browser.java:2855 src/syndie/gui/MessageTree.java:948
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1054
+msgid "Advanced"
+msgstr ""
+
+#: src/syndie/gui/Browser.java:2857
+msgid "Text interface"
+msgstr ""
+
+#: src/syndie/gui/Browser.java:2858
+msgid "Backup secrets"
+msgstr ""
+
+#: src/syndie/gui/Browser.java:2859
+msgid "Restore secrets"
+msgstr ""
+
+#: src/syndie/gui/Browser.java:2860
+msgid "SQL interface"
+msgstr ""
+
+#: src/syndie/gui/Browser.java:2861
+msgid "Dump resources"
+msgstr ""
+
+#: src/syndie/gui/Browser.java:2862
+msgid "Dump resource differences"
+msgstr ""
+
+#: src/syndie/gui/Browser.java:2864
+msgid "Help"
+msgstr ""
+
+#: src/syndie/gui/Browser.java:2867 src/syndie/gui/BugReportTab.java:42
+msgid "File a new bug report"
+msgstr ""
+
+#: src/syndie/gui/Browser.java:2869
+msgid "FAQ"
+msgstr ""
+
+#: src/syndie/gui/Browser.java:2870
+msgid "GUI manual"
+msgstr ""
+
+#: src/syndie/gui/Browser.java:2871
+msgid "Text interface manual"
+msgstr ""
+
+#: src/syndie/gui/Browser.java:2874
 msgid "Syndie is running"
-msgstr ""
-
-#: src/syndie/gui/BrowserTab.java:65
-#: src/syndie/gui/desktop/DesktopNavigationControl.java:52
-msgid "parent"
 msgstr ""
 
 #: src/syndie/gui/BrowserTree.java:176
 msgid "Forum search"
 msgstr ""
 
-#: src/syndie/gui/BrowserTree.java:211 src/syndie/gui/BrowserTree.java:771
+#. _searchMenuView.setText(registry.getText("View"));
+#: src/syndie/gui/BrowserTree.java:211 src/syndie/gui/BrowserTree.java:769
+#: src/syndie/gui/BrowserTree.java:771 src/syndie/gui/NymChannelTree.java:1116
 #: src/syndie/gui/ReferenceChooserSearch.java:177
 msgid "Search"
 msgstr ""
@@ -947,7 +959,7 @@ msgstr ""
 msgid "Are you sure you want to delete this bookmark?"
 msgstr ""
 
-#: src/syndie/gui/BrowserTree.java:629 src/syndie/gui/ViewForum.java:852
+#: src/syndie/gui/BrowserTree.java:629 src/syndie/gui/ViewForum.java:855
 msgid "View the selected forum"
 msgstr ""
 
@@ -975,11 +987,6 @@ msgstr ""
 msgid "Stop watching the selected forum"
 msgstr ""
 
-#. _searchMenuView.setText(registry.getText("View"));
-#: src/syndie/gui/BrowserTree.java:769
-msgid "Search..."
-msgstr ""
-
 #: src/syndie/gui/BugReport.java:303 src/syndie/gui/BugReport.java:309
 msgid "Error posting report"
 msgstr ""
@@ -989,47 +996,43 @@ msgid "File to attach"
 msgstr ""
 
 #: src/syndie/gui/BugReport.java:649
-msgid "Component:"
+msgid "Component"
 msgstr ""
 
 #: src/syndie/gui/BugReport.java:650
-msgid "Bug type:"
+msgid "Bug type"
 msgstr ""
 
 #: src/syndie/gui/BugReport.java:651
-msgid "Severity:"
+msgid "Severity"
 msgstr ""
 
 #: src/syndie/gui/BugReport.java:652
-msgid "OS:"
+msgid "OS"
 msgstr ""
 
 #: src/syndie/gui/BugReport.java:653
-msgid "JVM:"
+msgid "JVM"
 msgstr ""
 
 #: src/syndie/gui/BugReport.java:654
-msgid "SWT:"
-msgstr ""
-
-#: src/syndie/gui/BugReport.java:655
-msgid "Syndie:"
+msgid "SWT"
 msgstr ""
 
 #: src/syndie/gui/BugReport.java:656
-msgid "Issue summary:"
+msgid "Issue summary"
 msgstr ""
 
 #: src/syndie/gui/BugReport.java:657
-msgid "Details:"
+msgid "Details"
 msgstr ""
 
 #: src/syndie/gui/BugReport.java:658
-msgid "Attachments:"
+msgid "Attachments"
 msgstr ""
 
 #: src/syndie/gui/BugReport.java:659
-#: src/syndie/gui/ManageForumArchives.java:497
+#: src/syndie/gui/ManageForumArchives.java:502
 #: src/syndie/gui/ManageForumAuthManage.java:301
 #: src/syndie/gui/ManageForumAuthManage.java:306
 #: src/syndie/gui/ManageForumAuthPost.java:412
@@ -1037,6 +1040,7 @@ msgstr ""
 #: src/syndie/gui/ManageForumAuthRead.java:336
 #: src/syndie/gui/ManageForumAuthReply.java:230
 #: src/syndie/gui/ManageReferenceChooser.java:610
+#: src/syndie/gui/MessageEditorSpell.java:211
 msgid "Add"
 msgstr ""
 
@@ -1049,9 +1053,9 @@ msgstr ""
 msgid "Post bug report"
 msgstr ""
 
-#: src/syndie/gui/BugReport.java:663 src/syndie/gui/MessageEditor.java:2447
+#: src/syndie/gui/BugReport.java:663 src/syndie/gui/MessageEditor.java:2470
 #: src/syndie/gui/WebRipPostControl.java:210
-msgid "Post to:"
+msgid "Post to"
 msgstr ""
 
 #: src/syndie/gui/BugReport.java:664
@@ -1059,7 +1063,7 @@ msgid "Report includes sensitive data (so only let the admins read it)"
 msgstr ""
 
 #: src/syndie/gui/BugReport.java:665
-msgid "Sign report as:"
+msgid "Sign report as"
 msgstr ""
 
 #: src/syndie/gui/BugReport.java:668
@@ -1068,10 +1072,6 @@ msgstr ""
 
 #: src/syndie/gui/BugReportTab.java:41
 msgid "Bug report"
-msgstr ""
-
-#: src/syndie/gui/BugReportTab.java:42
-msgid "File a new bug report"
 msgstr ""
 
 #: src/syndie/gui/CancelManager.java:233
@@ -1085,7 +1085,7 @@ msgstr ""
 
 #: src/syndie/gui/CancelManager.java:280
 #: src/syndie/gui/ExpirationManager.java:346
-#: src/syndie/gui/ManageForum.java:1140
+#: src/syndie/gui/ManageForum.java:1153
 #: src/syndie/gui/desktop/ProfilePanel.java:422
 msgid "Save changes"
 msgstr ""
@@ -1109,11 +1109,16 @@ msgid "Honor cancel messages from the forum owner"
 msgstr ""
 
 #: src/syndie/gui/CancelManager.java:392
-msgid "Honor cancel messages from any forum manager(s)"
+msgid "Honor cancel messages from any forum manager"
 msgstr ""
 
 #: src/syndie/gui/CancelManager.java:404
 msgid "Honor cancel messages from any explicitly authorized forum posters"
+msgstr ""
+
+#: src/syndie/gui/CancelManagerTab.java:47
+#: src/syndie/gui/desktop/CancelManagerPanel.java:50
+msgid "Control whose cancel messages to honor"
 msgstr ""
 
 #: src/syndie/gui/ExpirationManager.java:289
@@ -1121,8 +1126,8 @@ msgid "Execute expiration policies"
 msgstr ""
 
 #: src/syndie/gui/ExpirationManager.java:298
-#: src/syndie/gui/NymChannelSource.java:64
-#: src/syndie/gui/ReferenceChooserTree.java:953
+#: src/syndie/gui/NymChannelSource.java:67
+#: src/syndie/gui/ReferenceChooserTree.java:966
 msgid "Watched forums"
 msgstr ""
 
@@ -1139,42 +1144,47 @@ msgid "Sharable external message data"
 msgstr ""
 
 #: src/syndie/gui/ExpirationManager.java:566
-msgid "Max number of messages: "
+msgid "Max number of messages"
 msgstr ""
 
 #: src/syndie/gui/ExpirationManager.java:617
-msgid "Max total size (KBytes): "
+msgid "Max total size (KBytes)"
 msgstr ""
 
 #: src/syndie/gui/ExpirationManager.java:668
-msgid "Max age (days): "
+msgid "Max age (days)"
 msgstr ""
 
-#: src/syndie/gui/ForumReferenceChooserPopup.java:158
+#: src/syndie/gui/ExpirationManagerTab.java:47
+#: src/syndie/gui/desktop/ExpirationManagerPanel.java:50
+msgid "Control the deletion of old messages"
+msgstr ""
+
+#: src/syndie/gui/ForumReferenceChooserPopup.java:160
 msgid "Select forum"
 msgstr ""
 
-#: src/syndie/gui/LogTab.java:277
-msgid "Clear records"
-msgstr ""
-
-#: src/syndie/gui/LogTab.java:278
-msgid "Logs"
+#: src/syndie/gui/HelpTab.java:62 src/syndie/gui/HelpTab.java:63
+msgid "File not found"
 msgstr ""
 
 #: src/syndie/gui/LogTab.java:279
+msgid "Clear records"
+msgstr ""
+
+#: src/syndie/gui/LogTab.java:281
 msgid "Log messages"
 msgstr ""
 
-#: src/syndie/gui/LogTab.java:280
+#: src/syndie/gui/LogTab.java:282
 msgid "Debug"
 msgstr ""
 
-#: src/syndie/gui/LogTab.java:281 src/syndie/gui/Syndicator.java:1119
+#: src/syndie/gui/LogTab.java:283 src/syndie/gui/Syndicator.java:1152
 msgid "Status"
 msgstr ""
 
-#: src/syndie/gui/LogTab.java:283
+#: src/syndie/gui/LogTab.java:285
 msgid "Log levels"
 msgstr ""
 
@@ -1183,49 +1193,62 @@ msgid "Do you want to discard these changes to the forum?"
 msgstr ""
 
 #: src/syndie/gui/ManageForum.java:584
-msgid "Internal error saving the forum:"
+msgid "Internal error saving the forum"
 msgstr ""
 
-#: src/syndie/gui/ManageForum.java:837 src/syndie/gui/WelcomeScreen.java:280
+#: src/syndie/gui/ManageForum.java:794
+msgid "Current"
+msgstr ""
+
+#: src/syndie/gui/ManageForum.java:808 src/syndie/gui/WelcomeScreen.java:258
+msgid "Default"
+msgstr ""
+
+#: src/syndie/gui/ManageForum.java:841 src/syndie/gui/WelcomeScreen.java:287
 msgid "Select a 48x48 pixel PNG image"
 msgstr ""
 
-#: src/syndie/gui/ManageForum.java:839 src/syndie/gui/WelcomeScreen.java:282
+#: src/syndie/gui/ManageForum.java:843 src/syndie/gui/WelcomeScreen.java:289
 msgid "PNG image"
 msgstr ""
 
-#: src/syndie/gui/ManageForum.java:945
-msgid "Archives: "
+#: src/syndie/gui/ManageForum.java:949
+msgid "Archives"
 msgstr ""
 
-#: src/syndie/gui/ManageForum.java:965 src/syndie/gui/ManageForum.java:1039
-msgid "References: "
+#: src/syndie/gui/ManageForum.java:969 src/syndie/gui/ManageForum.java:1049
+#: src/syndie/gui/ManageForumReferences.java:537
+#: src/syndie/gui/ManageReferenceChooserPopup.java:107
+#: src/syndie/gui/MessageEditor.java:2475
+#: src/syndie/gui/MessageViewBody.java:301
+msgid "References"
 msgstr ""
 
-#: src/syndie/gui/ManageForum.java:982 src/syndie/gui/ManageForum.java:1048
-#: src/syndie/gui/ManageForum.java:1077
-msgid "Bans: "
+#: src/syndie/gui/ManageForum.java:986 src/syndie/gui/ManageForum.java:1058
+#: src/syndie/gui/ManageForum.java:1090
+msgid "Bans"
 msgstr ""
 
-#: src/syndie/gui/ManageForum.java:1135 src/syndie/gui/ViewForum.java:842
-#: src/syndie/gui/WebRipPostControl.java:209
-msgid "Tags:"
+#: src/syndie/gui/ManageForum.java:1148 src/syndie/gui/MessageTree.java:2385
+#: src/syndie/gui/ReferenceChooserSearch.java:168
+#: src/syndie/gui/ViewForum.java:845 src/syndie/gui/WebRipPostControl.java:209
+msgid "Tags"
 msgstr ""
 
-#: src/syndie/gui/ManageForum.java:1137 src/syndie/gui/ViewForum.java:844
-msgid "Expiration:"
+#: src/syndie/gui/ManageForum.java:1150 src/syndie/gui/ViewForum.java:847
+msgid "Expiration"
 msgstr ""
 
-#: src/syndie/gui/ManageForum.java:1141
+#: src/syndie/gui/ManageForum.java:1154
 #: src/syndie/gui/desktop/ProfilePanel.java:423
 msgid "Cancel changes"
 msgstr ""
 
-#: src/syndie/gui/ManageForum.java:1144
+#: src/syndie/gui/ManageForum.java:1157
 msgid "Authorization and authentication"
 msgstr ""
 
-#: src/syndie/gui/ManageForum.java:1145
+#: src/syndie/gui/ManageForum.java:1158
 msgid ""
 "Forum authorization and authentication takes four forms - those allowed to "
 "read a forum's posts, those allowed to post to a forum, those allowed to "
@@ -1233,87 +1256,61 @@ msgid ""
 "administrators"
 msgstr ""
 
-#: src/syndie/gui/ManageForum.java:1146
+#: src/syndie/gui/ManageForum.java:1159
 msgid "Read posts"
 msgstr ""
 
-#: src/syndie/gui/ManageForum.java:1147
+#: src/syndie/gui/ManageForum.java:1160
 msgid "Create posts"
 msgstr ""
 
-#: src/syndie/gui/ManageForum.java:1149
+#: src/syndie/gui/ManageForum.java:1162
 #: src/syndie/gui/ManageForumAuthReply.java:225
 msgid "Read forum feedback"
 msgstr ""
 
-#: src/syndie/gui/ManageForum.java:1151 src/syndie/gui/ManageForum.java:1154
-#: src/syndie/gui/ManageForum.java:1157
+#: src/syndie/gui/ManageForum.java:1164 src/syndie/gui/ManageForum.java:1167
+#: src/syndie/gui/ManageForum.java:1170
 msgid "Remove all"
 msgstr ""
 
-#: src/syndie/gui/ManageForum.java:1152 src/syndie/gui/ManageForum.java:1155
-#: src/syndie/gui/ManageForum.java:1158
+#: src/syndie/gui/ManageForum.java:1165 src/syndie/gui/ManageForum.java:1168
+#: src/syndie/gui/ManageForum.java:1171
 #: src/syndie/gui/ReferenceEditor.java:679
-msgid "Select..."
+msgid "Select"
 msgstr ""
 
-#: src/syndie/gui/ManageForum.java:1160 src/syndie/gui/WelcomeScreen.java:268
-msgid "Other..."
+#: src/syndie/gui/ManageForum.java:1173
+msgid "Click to change avatar"
 msgstr ""
 
-#. not handled above
-#: src/syndie/gui/ManageForumArchives.java:292
-#: src/syndie/gui/ManageForumArchives.java:304
-#: src/syndie/gui/PageRendererTab.java:58 src/syndie/gui/Syndicator.java:251
-msgid "name"
-msgstr ""
-
-#: src/syndie/gui/ManageForumArchives.java:484
-msgid "Archives advertised"
-msgstr ""
-
-#: src/syndie/gui/ManageForumArchives.java:486
-#: src/syndie/gui/ManageForumReferences.java:535
-#: src/syndie/gui/ManageReferenceChooser.java:609
-#: src/syndie/gui/MessageReferencesEditor.java:530
-#: src/syndie/gui/NymChannelTree.java:1099
-#: src/syndie/gui/ReferencesPanel.java:327
-msgid "Name"
-msgstr ""
-
-#: src/syndie/gui/ManageForumArchives.java:487
-#: src/syndie/gui/ManageReferenceChooser.java:607
-#: src/syndie/gui/MessageReferencesEditor.java:531
-#: src/syndie/gui/ReferencesPanel.java:328
-msgid "Type"
-msgstr ""
-
-#: src/syndie/gui/ManageForumArchives.java:488
-msgid "Location"
+#: src/syndie/gui/ManageForum.java:1174 src/syndie/gui/WelcomeScreen.java:271
+msgid "Load from file"
 msgstr ""
 
 #: src/syndie/gui/ManageForumArchives.java:489
-msgid "Public?"
-msgstr ""
-
-#: src/syndie/gui/ManageForumArchives.java:491
-msgid "Anyone can see this, not just authorized readers"
-msgstr ""
-
-#: src/syndie/gui/ManageForumArchives.java:493
-msgid "Archive name:"
+msgid "Archives advertised"
 msgstr ""
 
 #: src/syndie/gui/ManageForumArchives.java:494
-msgid "HTTP URL:"
-msgstr ""
-
-#: src/syndie/gui/ManageForumArchives.java:495
-msgid "Freenet key:"
+#: src/syndie/gui/ViewForum.java:729
+msgid "Public"
 msgstr ""
 
 #: src/syndie/gui/ManageForumArchives.java:496
-msgid "Syndie URI:"
+msgid "Anyone can see this, not just authorized readers"
+msgstr ""
+
+#: src/syndie/gui/ManageForumArchives.java:499
+msgid "HTTP URL"
+msgstr ""
+
+#: src/syndie/gui/ManageForumArchives.java:500
+msgid "Freenet key"
+msgstr ""
+
+#: src/syndie/gui/ManageForumArchives.java:501
+msgid "Syndie URI"
 msgstr ""
 
 #: src/syndie/gui/ManageForumAuthManage.java:299
@@ -1325,7 +1322,7 @@ msgid "Create a new identity and allow it to manage the forum"
 msgstr ""
 
 #: src/syndie/gui/ManageForumAuthManage.java:305
-msgid "Send the new identity key to the administrators of the selected forums:"
+msgid "Send the new identity key to the administrators of the selected forums"
 msgstr ""
 
 #: src/syndie/gui/ManageForumAuthManage.java:308
@@ -1338,16 +1335,18 @@ msgstr ""
 #: src/syndie/gui/ManageForumAuthPost.java:420
 #: src/syndie/gui/ManageForumAuthRead.java:339
 #: src/syndie/gui/ManageForumAuthReply.java:234
-#: src/syndie/gui/PassphrasePrompt.java:135
+#: src/syndie/gui/PassphrasePrompt.java:138
+#: src/syndie/gui/PassphrasePrompt.java:139
+#: src/syndie/gui/desktop/Desktop.java:424
 #: src/syndie/gui/desktop/Desktop.java:431
-msgid "Passphrase:"
+msgid "Passphrase"
 msgstr ""
 
 #: src/syndie/gui/ManageForumAuthManage.java:310
 #: src/syndie/gui/ManageForumAuthPost.java:421
 #: src/syndie/gui/ManageForumAuthRead.java:340
 #: src/syndie/gui/ManageForumAuthReply.java:235
-msgid "Prompt:"
+msgid "Prompt"
 msgstr ""
 
 #: src/syndie/gui/ManageForumAuthPost.java:405
@@ -1355,6 +1354,8 @@ msgid "Who can post in the forum?"
 msgstr ""
 
 #: src/syndie/gui/ManageForumAuthPost.java:407
+#: src/syndie/gui/ReferenceChooserInfo.java:523
+#: src/syndie/gui/ReferenceChooserSearch.java:175
 msgid "Anyone can post"
 msgstr ""
 
@@ -1376,7 +1377,7 @@ msgstr ""
 
 #: src/syndie/gui/ManageForumAuthPost.java:416
 msgid ""
-"Send the new identity's key to the administrators of the selected forums:"
+"Send the new identity's key to the administrators of the selected forums"
 msgstr ""
 
 #: src/syndie/gui/ManageForumAuthRead.java:328
@@ -1404,7 +1405,7 @@ msgid "Anyone who has a newly created key"
 msgstr ""
 
 #: src/syndie/gui/ManageForumAuthRead.java:335
-msgid "Send the key explicitly to the managers of the following forums:"
+msgid "Send the key explicitly to the managers of the following forums"
 msgstr ""
 
 #: src/syndie/gui/ManageForumAuthRead.java:338
@@ -1416,18 +1417,18 @@ msgid "Rotate the reply key"
 msgstr ""
 
 #: src/syndie/gui/ManageForumAuthReply.java:229
-msgid "Send the new key to the administrators of the selected forums:"
+msgid "Send the new key to the administrators of the selected forums"
 msgstr ""
 
 #: src/syndie/gui/ManageForumAuthReply.java:233
 msgid "Post the new key in a passphrase protected message to the forum"
 msgstr ""
 
-#: src/syndie/gui/ManageForumBans.java:307
+#: src/syndie/gui/ManageForumBans.java:314
 msgid "Locally banned scopes"
 msgstr ""
 
-#: src/syndie/gui/ManageForumBans.java:308
+#: src/syndie/gui/ManageForumBans.java:315
 msgid "Banned scopes"
 msgstr ""
 
@@ -1438,24 +1439,9 @@ msgstr ""
 msgid "Add reference"
 msgstr ""
 
-#: src/syndie/gui/ManageForumReferences.java:534
-#: src/syndie/gui/ManageReferenceChooser.java:606
-#: src/syndie/gui/MessageReferencesEditor.java:529
-#: src/syndie/gui/NymChannelTree.java:1100
-#: src/syndie/gui/ReferencesPanel.java:329
-msgid "Description"
-msgstr ""
-
 #: src/syndie/gui/ManageForumReferences.java:536
 #: src/syndie/gui/MessageReferencesEditor.java:532
 msgid "Target"
-msgstr ""
-
-#: src/syndie/gui/ManageForumReferences.java:537
-#: src/syndie/gui/ManageReferenceChooserPopup.java:107
-#: src/syndie/gui/MessageEditor.java:2452
-#: src/syndie/gui/MessageViewBody.java:266
-msgid "References"
 msgstr ""
 
 #: src/syndie/gui/ManageForumReferences.java:540
@@ -1465,16 +1451,6 @@ msgstr ""
 
 #: src/syndie/gui/ManageReferenceChooser.java:611
 msgid "Add child"
-msgstr ""
-
-#: src/syndie/gui/ManageReferenceChooser.java:613
-#: src/syndie/gui/MessagePreview.java:315
-#: src/syndie/gui/MessageTreePreview.java:232
-#: src/syndie/gui/ReferencesPanel.java:150
-#: src/syndie/gui/ReferencesPanel.java:195 src/syndie/gui/Syndicator.java:478
-#: src/syndie/gui/Syndicator.java:517 src/syndie/gui/ViewForum.java:369
-#: src/syndie/gui/desktop/MessageTreePanel.java:701
-msgid "View"
 msgstr ""
 
 #: src/syndie/gui/ManageReferenceChooser.java:615
@@ -1489,175 +1465,160 @@ msgstr ""
 msgid "Import all to local bookmarks"
 msgstr ""
 
-#: src/syndie/gui/MessageEditor.java:497
+#: src/syndie/gui/MessageEditor.java:504
 msgid "Post empty message?"
 msgstr ""
 
-#: src/syndie/gui/MessageEditor.java:498
+#: src/syndie/gui/MessageEditor.java:505
 msgid "Do you really want to post this empty message?"
 msgstr ""
 
-#: src/syndie/gui/MessageEditor.java:524 src/syndie/gui/MessageEditor.java:530
+#: src/syndie/gui/MessageEditor.java:531 src/syndie/gui/MessageEditor.java:537
 msgid ""
 "There was an error creating the message.  Please view the log for more "
-"information: "
+"information."
 msgstr ""
 
-#: src/syndie/gui/MessageEditor.java:525 src/syndie/gui/MessageEditor.java:531
+#: src/syndie/gui/MessageEditor.java:532 src/syndie/gui/MessageEditor.java:538
 msgid "Error creating the message"
 msgstr ""
 
-#: src/syndie/gui/MessageEditor.java:542
-msgid "Message created!"
+#: src/syndie/gui/MessageEditor.java:551
+msgid "Message created"
 msgstr ""
 
-#: src/syndie/gui/MessageEditor.java:553
+#: src/syndie/gui/MessageEditor.java:562
 msgid ""
-"Message created and imported successfully!  Please be sure to syndicate it "
-"to others so they can read it"
+"Message created successfully! \n"
+"Please be sure to syndicate it to the arcives so others may read it. \n"
+"The message timestamp has been randomized to protect your anonymity. \n"
 msgstr ""
 
-#: src/syndie/gui/MessageEditor.java:557
+#: src/syndie/gui/MessageEditor.java:568
 msgid "Display this message next time"
 msgstr ""
 
-#: src/syndie/gui/MessageEditor.java:669
+#: src/syndie/gui/MessageEditor.java:681
 msgid "Are you sure you want to cancel this message?"
 msgstr ""
 
-#: src/syndie/gui/MessageEditor.java:670
+#: src/syndie/gui/MessageEditor.java:682
 msgid "Confirm message cancellation"
 msgstr ""
 
-#: src/syndie/gui/MessageEditor.java:898
-#: src/syndie/gui/MessageEditor.java:1515
-#: src/syndie/gui/MessageEditor.java:1542
-#: src/syndie/gui/MessageViewBody.java:198
+#: src/syndie/gui/MessageEditor.java:910
+#: src/syndie/gui/MessageEditor.java:1527
+#: src/syndie/gui/MessageEditor.java:1554
+#: src/syndie/gui/MessageViewBody.java:231
 msgid "Page "
 msgstr ""
 
-#: src/syndie/gui/MessageEditor.java:1340
+#: src/syndie/gui/MessageEditor.java:1352
+#: src/syndie/gui/MessageEditor.java:1356
 msgid "Page title"
 msgstr ""
 
-#: src/syndie/gui/MessageEditor.java:1344
-msgid "Page title:"
-msgstr ""
-
-#: src/syndie/gui/MessageEditor.java:1398
+#: src/syndie/gui/MessageEditor.java:1410
 msgid "Anyone can read the post"
 msgstr ""
 
-#: src/syndie/gui/MessageEditor.java:1399
+#: src/syndie/gui/MessageEditor.java:1411
 msgid "Authorized readers of the forum can read the post"
 msgstr ""
 
-#: src/syndie/gui/MessageEditor.java:1400
-msgid "Passphrase required to read the post..."
+#: src/syndie/gui/MessageEditor.java:1412
+msgid "Passphrase required to read the post"
 msgstr ""
 
-#: src/syndie/gui/MessageEditor.java:1401
+#: src/syndie/gui/MessageEditor.java:1413
 msgid "Only forum administrators can read the post"
 msgstr ""
 
-#: src/syndie/gui/MessageEditor.java:1481
+#: src/syndie/gui/MessageEditor.java:1493
 #: src/syndie/gui/desktop/MessageEditorPanel.java:536
 msgid "Post the message"
 msgstr ""
 
-#: src/syndie/gui/MessageEditor.java:1482
+#: src/syndie/gui/MessageEditor.java:1494
 #: src/syndie/gui/desktop/MessageEditorPanel.java:534
 msgid "Save the message for later"
 msgstr ""
 
-#: src/syndie/gui/MessageEditor.java:1483
+#: src/syndie/gui/MessageEditor.java:1495
 msgid "Cancel the message"
 msgstr ""
 
-#: src/syndie/gui/MessageEditor.java:1578
+#: src/syndie/gui/MessageEditor.java:1590
 msgid "Add web rip"
 msgstr ""
 
-#: src/syndie/gui/MessageEditor.java:1625
+#: src/syndie/gui/MessageEditor.java:1639
 msgid "Rip failed"
 msgstr ""
 
-#: src/syndie/gui/MessageEditor.java:1702
+#: src/syndie/gui/MessageEditor.java:1719
 msgid "Edit the message"
 msgstr ""
 
-#: src/syndie/gui/MessageEditor.java:1704
+#: src/syndie/gui/MessageEditor.java:1721
 msgid "Preview the message"
 msgstr ""
 
-#: src/syndie/gui/MessageEditor.java:1819
-msgid "pbePass"
-msgstr ""
-
-#: src/syndie/gui/MessageEditor.java:1820
-msgid "pbePrompt"
-msgstr ""
-
-#: src/syndie/gui/MessageEditor.java:1827
-msgid "refs"
-msgstr ""
-
-#: src/syndie/gui/MessageEditor.java:1845
-msgid "attachment"
-msgstr ""
-
-#: src/syndie/gui/MessageEditor.java:2404
+#: src/syndie/gui/MessageEditor.java:2427
 msgid ""
 "The selected author does not have permission to write in the selected forum "
 "- please adjust your selection"
 msgstr ""
 
-#: src/syndie/gui/MessageEditor.java:2405
+#: src/syndie/gui/MessageEditor.java:2428
 #: src/syndie/gui/desktop/MessagePanel.java:186
 msgid "Not authorized"
 msgstr ""
 
-#: src/syndie/gui/MessageEditor.java:2446 src/syndie/gui/MessageView.java:887
-msgid "Author:"
+#: src/syndie/gui/MessageEditor.java:2469 src/syndie/gui/MessageTree.java:2382
+#: src/syndie/gui/MessageView.java:896
+#: src/syndie/gui/ReferenceChooserInfo.java:535
+#: src/syndie/gui/desktop/MessageEditorPanel.java:464
+msgid "Author"
 msgstr ""
 
-#: src/syndie/gui/MessageEditor.java:2448
+#: src/syndie/gui/MessageEditor.java:2471
 msgid "Change author"
 msgstr ""
 
-#: src/syndie/gui/MessageEditor.java:2449
+#: src/syndie/gui/MessageEditor.java:2472
 msgid "Change forum"
 msgstr ""
 
-#: src/syndie/gui/MessageEditor.java:2450
+#: src/syndie/gui/MessageEditor.java:2473
 msgid "Change signed by"
 msgstr ""
 
-#: src/syndie/gui/MessageEditor.java:2453
-#: src/syndie/gui/MessageViewBody.java:215
+#: src/syndie/gui/MessageEditor.java:2476
+#: src/syndie/gui/MessageViewBody.java:249
 msgid "Thread"
 msgstr ""
 
-#: src/syndie/gui/MessageEditor.java:2461
+#: src/syndie/gui/MessageEditor.java:2484
 msgid "Attach file"
 msgstr ""
 
-#: src/syndie/gui/MessageEditor.java:2483
+#: src/syndie/gui/MessageEditor.java:2506
 msgid ""
 "The attachment could not be added, as it exceeds the maximum attachment size "
 "("
 msgstr ""
 
-#: src/syndie/gui/MessageEditor.java:2484
+#: src/syndie/gui/MessageEditor.java:2507
 msgid "Too large"
 msgstr ""
 
-#: src/syndie/gui/MessageEditor.java:2692
-#: src/syndie/gui/MessageViewBody.java:284
-msgid "Attachment "
+#: src/syndie/gui/MessageEditor.java:2715
+#: src/syndie/gui/MessageViewBody.java:320
+msgid "Attachment"
 msgstr ""
 
-#: src/syndie/gui/MessageEditor.java:2695
+#: src/syndie/gui/MessageEditor.java:2718
 msgid "none"
 msgstr ""
 
@@ -1666,23 +1627,23 @@ msgid "Find"
 msgstr ""
 
 #: src/syndie/gui/MessageEditorFind.java:173
-msgid "Find what: "
+msgid "Find what"
 msgstr ""
 
 #: src/syndie/gui/MessageEditorFind.java:174
-msgid "Replace with: "
+msgid "Replace with"
 msgstr ""
 
 #: src/syndie/gui/MessageEditorFind.java:175
-msgid "match case"
+msgid "Match case"
 msgstr ""
 
 #: src/syndie/gui/MessageEditorFind.java:176
-msgid "wrap around"
+msgid "Wrap around"
 msgstr ""
 
 #: src/syndie/gui/MessageEditorFind.java:177
-msgid "backwards"
+msgid "Backwards"
 msgstr ""
 
 #: src/syndie/gui/MessageEditorFind.java:178
@@ -1698,6 +1659,7 @@ msgid "Finish searching"
 msgstr ""
 
 #: src/syndie/gui/MessageEditorFind.java:182
+#: src/syndie/gui/MessageEditorSpell.java:207
 msgid "Replace"
 msgstr ""
 
@@ -1706,6 +1668,7 @@ msgid "Replace the current occurrence of the word"
 msgstr ""
 
 #: src/syndie/gui/MessageEditorFind.java:184
+#: src/syndie/gui/MessageEditorSpell.java:208
 msgid "Replace all"
 msgstr ""
 
@@ -1713,19 +1676,8 @@ msgstr ""
 msgid "Replace all remaining occurrences of the word"
 msgstr ""
 
-#: src/syndie/gui/MessageEditorSpell.java:77
-#: src/syndie/gui/MessageEditorSpell.java:212
-#: src/syndie/gui/MessageEditorStyler.java:419
-msgid "cancel"
-msgstr ""
-
 #: src/syndie/gui/MessageEditorSpell.java:83
 msgid "End of content reached"
-msgstr ""
-
-#: src/syndie/gui/MessageEditorSpell.java:91
-#: src/syndie/gui/MessageEditorStyler.java:418
-msgid "ok"
 msgstr ""
 
 #: src/syndie/gui/MessageEditorSpell.java:204
@@ -1733,31 +1685,19 @@ msgid "Spell checker"
 msgstr ""
 
 #: src/syndie/gui/MessageEditorSpell.java:205
-msgid "Word: "
+msgid "Word"
 msgstr ""
 
 #: src/syndie/gui/MessageEditorSpell.java:206
-msgid "Suggestions: "
-msgstr ""
-
-#: src/syndie/gui/MessageEditorSpell.java:207
-msgid "replace"
-msgstr ""
-
-#: src/syndie/gui/MessageEditorSpell.java:208
-msgid "replace all"
+msgid "Suggestions"
 msgstr ""
 
 #: src/syndie/gui/MessageEditorSpell.java:209
-msgid "ignore"
+msgid "Ignore"
 msgstr ""
 
 #: src/syndie/gui/MessageEditorSpell.java:210
-msgid "ignore all"
-msgstr ""
-
-#: src/syndie/gui/MessageEditorSpell.java:211
-msgid "add"
+msgid "Ignore all"
 msgstr ""
 
 #: src/syndie/gui/MessageEditorStyler.java:347
@@ -1774,19 +1714,19 @@ msgid "Styling"
 msgstr ""
 
 #: src/syndie/gui/MessageEditorStyler.java:404
-msgid "B"
+msgid "Bold"
 msgstr ""
 
 #: src/syndie/gui/MessageEditorStyler.java:405
-msgid "I"
+msgid "Italic"
 msgstr ""
 
 #: src/syndie/gui/MessageEditorStyler.java:406
-msgid "U"
+msgid "Underline"
 msgstr ""
 
 #: src/syndie/gui/MessageEditorStyler.java:407
-msgid "SO"
+msgid "Strikeout"
 msgstr ""
 
 #: src/syndie/gui/MessageEditorStyler.java:408
@@ -1802,7 +1742,7 @@ msgid "Alignment"
 msgstr ""
 
 #: src/syndie/gui/MessageEditorStyler.java:411
-msgid "left"
+msgid "Left"
 msgstr ""
 
 #: src/syndie/gui/MessageEditorStyler.java:412
@@ -1810,7 +1750,7 @@ msgid "Align the text to the left"
 msgstr ""
 
 #: src/syndie/gui/MessageEditorStyler.java:413
-msgid "center"
+msgid "Center"
 msgstr ""
 
 #: src/syndie/gui/MessageEditorStyler.java:414
@@ -1818,7 +1758,7 @@ msgid "Align the text to the center"
 msgstr ""
 
 #: src/syndie/gui/MessageEditorStyler.java:415
-msgid "right"
+msgid "Right"
 msgstr ""
 
 #: src/syndie/gui/MessageEditorStyler.java:416
@@ -1830,107 +1770,99 @@ msgid "This is the sample text"
 msgstr ""
 
 #: src/syndie/gui/MessageEditorTab.java:81
-#: src/syndie/gui/desktop/MessageEditorPanel.java:130
-msgid "Postpone message?"
+msgid "Save message?"
 msgstr ""
 
 #: src/syndie/gui/MessageEditorTab.java:82
-#: src/syndie/gui/desktop/MessageEditorPanel.java:131
-msgid "Do you want to postpone this message to resume it later?"
+msgid "Message has not been sent. Do you want to save the message as a draft?"
 msgstr ""
 
-#: src/syndie/gui/MessageEditorTab.java:112
-#: src/syndie/gui/desktop/MessageTreePanel.java:556
-msgid "Post a new message"
-msgstr ""
-
-#: src/syndie/gui/MessageFlagBar.java:285
+#: src/syndie/gui/MessageFlagBar.java:288
 msgid "Post is passphrase protected"
 msgstr ""
 
-#: src/syndie/gui/MessageFlagBar.java:287
-#: src/syndie/gui/ReferenceChooserTree.java:772
-#: src/syndie/gui/Syndicator.java:868
+#: src/syndie/gui/MessageFlagBar.java:290 src/syndie/gui/Syndicator.java:893
 msgid "Read key unknown"
 msgstr ""
 
-#: src/syndie/gui/MessageFlagBar.java:289
+#: src/syndie/gui/MessageFlagBar.java:292
 msgid "Private key unknown"
 msgstr ""
 
-#: src/syndie/gui/MessageFlagBar.java:291
+#: src/syndie/gui/MessageFlagBar.java:294
 msgid "Message is not readable"
 msgstr ""
 
-#: src/syndie/gui/MessageFlagBar.java:293
+#: src/syndie/gui/MessageFlagBar.java:296
 msgid "Message was publically readable"
 msgstr ""
 
-#: src/syndie/gui/MessageFlagBar.java:295
+#: src/syndie/gui/MessageFlagBar.java:298
 msgid "Author is authentic"
 msgstr ""
 
-#: src/syndie/gui/MessageFlagBar.java:297
+#: src/syndie/gui/MessageFlagBar.java:300
 msgid "Author is allowed to post in the forum"
 msgstr ""
 
-#: src/syndie/gui/MessageFlagBar.java:299
+#: src/syndie/gui/MessageFlagBar.java:302
 msgid "Post is banned"
 msgstr ""
 
-#: src/syndie/gui/MessageFlagBar.java:301
+#: src/syndie/gui/MessageFlagBar.java:304
 msgid "Author is bookmarked"
 msgstr ""
 
-#: src/syndie/gui/MessageFlagBar.java:303
+#: src/syndie/gui/MessageFlagBar.java:306
 msgid "Forum is bookmarked"
 msgstr ""
 
-#: src/syndie/gui/MessageFlagBar.java:305
+#: src/syndie/gui/MessageFlagBar.java:308
 msgid "Message is scheduled to expire"
 msgstr ""
 
-#: src/syndie/gui/MessageFlagBar.java:307
+#: src/syndie/gui/MessageFlagBar.java:310
 msgid "Message includes keys you can import"
 msgstr ""
 
-#: src/syndie/gui/MessageFlagBar.java:309
+#: src/syndie/gui/MessageFlagBar.java:312
 msgid "Message refers to archives"
 msgstr ""
 
-#: src/syndie/gui/MessageFlagBar.java:311
+#: src/syndie/gui/MessageFlagBar.java:314
 msgid "Message includes references"
 msgstr ""
 
-#: src/syndie/gui/MessageFlagBar.java:313
+#: src/syndie/gui/MessageFlagBar.java:316
 msgid "Message includes attachments"
 msgstr ""
 
-#: src/syndie/gui/MessageFlagBar.java:315
+#: src/syndie/gui/MessageFlagBar.java:318
 msgid "Message is unread"
 msgstr ""
 
-#: src/syndie/gui/MessageFlagBar.java:317
+#: src/syndie/gui/MessageFlagBar.java:320
 msgid "Message was privately encrypted"
 msgstr ""
 
-#: src/syndie/gui/MessagePreview.java:316 src/syndie/gui/MessageView.java:886
-msgid "Reply..."
+#: src/syndie/gui/MessagePreview.java:316 src/syndie/gui/MessageView.java:895
+#: src/syndie/gui/desktop/MessageTreePanel.java:557
+msgid "Reply"
 msgstr ""
 
 #. duplicate the reply menu
-#: src/syndie/gui/MessagePreview.java:318 src/syndie/gui/MessageView.java:891
-#: src/syndie/gui/MessageView.java:896
+#: src/syndie/gui/MessagePreview.java:318 src/syndie/gui/MessageView.java:900
+#: src/syndie/gui/MessageView.java:905
 msgid "Send a private reply to the author"
 msgstr ""
 
-#: src/syndie/gui/MessagePreview.java:319 src/syndie/gui/MessageView.java:892
-#: src/syndie/gui/MessageView.java:897
+#: src/syndie/gui/MessagePreview.java:319 src/syndie/gui/MessageView.java:901
+#: src/syndie/gui/MessageView.java:906
 msgid "Send a private reply to the forum administrators"
 msgstr ""
 
-#: src/syndie/gui/MessagePreview.java:320 src/syndie/gui/MessageView.java:893
-#: src/syndie/gui/MessageView.java:898
+#: src/syndie/gui/MessagePreview.java:320 src/syndie/gui/MessageView.java:902
+#: src/syndie/gui/MessageView.java:907
 msgid "Send a public reply to the forum"
 msgstr ""
 
@@ -1938,341 +1870,324 @@ msgstr ""
 msgid "View reference"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:665
+#: src/syndie/gui/MessageTree.java:673
 msgid "Bad date"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:666
-msgid "Error parsing date: "
-msgstr ""
-
-#: src/syndie/gui/MessageTree.java:708
-msgid "private"
-msgstr ""
-
-#: src/syndie/gui/MessageTree.java:732
-msgid "Last day"
-msgstr ""
-
-#: src/syndie/gui/MessageTree.java:733
-msgid "Last 2 days"
-msgstr ""
-
-#: src/syndie/gui/MessageTree.java:734
-msgid "Last week"
-msgstr ""
-
-#: src/syndie/gui/MessageTree.java:735
-msgid "Last 2 weeks"
-msgstr ""
-
-#: src/syndie/gui/MessageTree.java:736
-msgid "Last month"
-msgstr ""
-
-#: src/syndie/gui/MessageTree.java:737
-msgid "Last 2 months"
-msgstr ""
-
-#: src/syndie/gui/MessageTree.java:738
-msgid "Last 6 months"
-msgstr ""
-
-#: src/syndie/gui/MessageTree.java:739
-msgid "Last year"
-msgstr ""
-
-#: src/syndie/gui/MessageTree.java:740
-msgid "Last 3 years"
-msgstr ""
-
-#: src/syndie/gui/MessageTree.java:741
-msgid "Last 5 years"
+#: src/syndie/gui/MessageTree.java:674
+msgid "Error parsing date"
 msgstr ""
 
 #: src/syndie/gui/MessageTree.java:742
+msgid "Last day"
+msgstr ""
+
+#: src/syndie/gui/MessageTree.java:743
+msgid "Last 2 days"
+msgstr ""
+
+#: src/syndie/gui/MessageTree.java:744
+msgid "Last week"
+msgstr ""
+
+#: src/syndie/gui/MessageTree.java:745
+msgid "Last 2 weeks"
+msgstr ""
+
+#: src/syndie/gui/MessageTree.java:746
+msgid "Last month"
+msgstr ""
+
+#: src/syndie/gui/MessageTree.java:747
+msgid "Last 2 months"
+msgstr ""
+
+#: src/syndie/gui/MessageTree.java:748
+msgid "Last 6 months"
+msgstr ""
+
+#: src/syndie/gui/MessageTree.java:749
+msgid "Last year"
+msgstr ""
+
+#: src/syndie/gui/MessageTree.java:750
+msgid "Last 3 years"
+msgstr ""
+
+#: src/syndie/gui/MessageTree.java:751
+msgid "Last 5 years"
+msgstr ""
+
+#: src/syndie/gui/MessageTree.java:752
 msgid "Last 10 years"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:760
+#: src/syndie/gui/MessageTree.java:770
 msgid "Any tags"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:936
-msgid "Filter:  Since:"
-msgstr ""
-
-#: src/syndie/gui/MessageTree.java:938
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1056
-msgid "Advanced..."
-msgstr ""
-
-#: src/syndie/gui/MessageTree.java:939
-msgid "Text:"
-msgstr ""
-
-#: src/syndie/gui/MessageTree.java:940
-msgid "Tag:"
-msgstr ""
-
-#: src/syndie/gui/MessageTree.java:941
-msgid "Unread only"
-msgstr ""
-
-#: src/syndie/gui/MessageTree.java:942
-msgid "Search pages and subjects for the phrase"
-msgstr ""
-
-#: src/syndie/gui/MessageTree.java:944
-msgid "All forums"
-msgstr ""
-
-#: src/syndie/gui/MessageTree.java:945
-msgid "Bookmarked forums"
+#: src/syndie/gui/MessageTree.java:946
+msgid "Filter"
 msgstr ""
 
 #: src/syndie/gui/MessageTree.java:946
-msgid "Specific forum..."
-msgstr ""
-
-#: src/syndie/gui/MessageTree.java:948
-msgid "Readable by: anyone"
+msgid "Since"
 msgstr ""
 
 #: src/syndie/gui/MessageTree.java:949
-msgid "Readable by: authorized readers"
+msgid "Text"
 msgstr ""
 
 #: src/syndie/gui/MessageTree.java:950
-msgid "Readable by: those with a passphrase"
+msgid "Tag"
 msgstr ""
 
 #: src/syndie/gui/MessageTree.java:951
-msgid "Readable by: forum administrators"
+msgid "Unread only"
 msgstr ""
 
 #: src/syndie/gui/MessageTree.java:952
-msgid "Use local import date instead of (unreliable) message creation date"
-msgstr ""
-
-#: src/syndie/gui/MessageTree.java:953
-msgid "Organize results in threads"
+msgid "Search pages and subjects for the phrase"
 msgstr ""
 
 #: src/syndie/gui/MessageTree.java:954
-msgid "Show a preview of the selected message"
+msgid "All forums"
 msgstr ""
 
 #: src/syndie/gui/MessageTree.java:955
-msgid "Mark messages read when opened"
+msgid "Bookmarked forums"
 msgstr ""
 
 #: src/syndie/gui/MessageTree.java:956
+msgid "Specific forum"
+msgstr ""
+
+#: src/syndie/gui/MessageTree.java:958
+msgid "Readable by: anyone"
+msgstr ""
+
+#: src/syndie/gui/MessageTree.java:959
+msgid "Readable by: authorized readers"
+msgstr ""
+
+#: src/syndie/gui/MessageTree.java:960
+msgid "Readable by: those with a passphrase"
+msgstr ""
+
+#: src/syndie/gui/MessageTree.java:961
+msgid "Readable by: forum administrators"
+msgstr ""
+
+#: src/syndie/gui/MessageTree.java:962
+msgid "Use local import date instead of (unreliable) message creation date"
+msgstr ""
+
+#: src/syndie/gui/MessageTree.java:963
+msgid "Organize results in threads"
+msgstr ""
+
+#: src/syndie/gui/MessageTree.java:964
+msgid "Show a preview of the selected message"
+msgstr ""
+
+#: src/syndie/gui/MessageTree.java:965
+msgid "Mark messages read when opened"
+msgstr ""
+
+#: src/syndie/gui/MessageTree.java:966
 msgid "Mark messages read when previewed"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:957
+#: src/syndie/gui/MessageTree.java:967
 msgid "Messages requiring a new passphrase"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:1535
+#: src/syndie/gui/MessageTree.java:1547
 msgid "Message filtering in progress"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:1635
+#: src/syndie/gui/MessageTree.java:1650
 msgid "No items to display"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:1688
-msgid "Page: "
+#: src/syndie/gui/MessageTree.java:1703
+msgid "Page"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:1938
+#: src/syndie/gui/MessageTree.java:1952
 msgid "agelocal"
 msgstr ""
 
 #. message is not locally known
-#: src/syndie/gui/MessageTree.java:1948
+#: src/syndie/gui/MessageTree.java:1962
 msgid "Message is not known locally"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2370
+#: src/syndie/gui/MessageTree.java:2381
+#: src/syndie/gui/ReferenceChooserInfo.java:534
 #: src/syndie/gui/desktop/ResumeablePanel.java:246
 msgid "Subject"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2371
-msgid "Author"
-msgstr ""
-
-#: src/syndie/gui/MessageTree.java:2372
+#: src/syndie/gui/MessageTree.java:2383 src/syndie/gui/MessageView.java:897
+#: src/syndie/gui/desktop/MessageEditorPanel.java:463
 #: src/syndie/gui/desktop/ResumeablePanel.java:244
 msgid "Forum"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2373
+#: src/syndie/gui/MessageTree.java:2384 src/syndie/gui/MessageView.java:898
+#: src/syndie/gui/ReferenceChooserInfo.java:536
 #: src/syndie/gui/desktop/ResumeablePanel.java:245
 msgid "Date"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2374
-msgid "Tags"
-msgstr ""
-
-#: src/syndie/gui/MessageTree.java:2382
+#: src/syndie/gui/MessageTree.java:2393
 msgid "View the message"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2383
+#: src/syndie/gui/MessageTree.java:2394
 msgid "Reply to the message"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2384
+#: src/syndie/gui/MessageTree.java:2395
 msgid "View the forum's messages"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2385 src/syndie/gui/NymChannelTree.java:482
+#: src/syndie/gui/MessageTree.java:2396 src/syndie/gui/NymChannelTree.java:490
 msgid "View the forum's profile"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2386
+#: src/syndie/gui/MessageTree.java:2397
 msgid "View the author's blog"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2387
+#: src/syndie/gui/MessageTree.java:2398
 msgid "View the author's profile"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2388
+#: src/syndie/gui/MessageTree.java:2399
 msgid "Bookmark the forum"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2389
+#: src/syndie/gui/MessageTree.java:2400
 msgid "Bookmark the author"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2390
+#: src/syndie/gui/MessageTree.java:2401
 msgid "Expand the thread fully"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2391
+#: src/syndie/gui/MessageTree.java:2402
 msgid "Collapse the thread fully"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2392
+#: src/syndie/gui/MessageTree.java:2403
 msgid "Mark the message as read"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2393
+#: src/syndie/gui/MessageTree.java:2404
 msgid "Mark the thread as read"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2394
+#: src/syndie/gui/MessageTree.java:2405
 msgid "Mark the message as unread"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2395
+#: src/syndie/gui/MessageTree.java:2406
 msgid "Mark the forum as read"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2396
+#: src/syndie/gui/MessageTree.java:2407
 msgid "Delete the message locally"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2397
+#: src/syndie/gui/MessageTree.java:2408
 msgid "Cancel the message (tell others to delete it)"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2399
+#: src/syndie/gui/MessageTree.java:2410
 msgid "Mark Message Read"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2400
+#: src/syndie/gui/MessageTree.java:2411
 msgid "Mark Thread Read"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2401
+#: src/syndie/gui/MessageTree.java:2412
 msgid "Refresh"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2402
+#: src/syndie/gui/MessageTree.java:2413
 msgid "Expand Thread"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2403
+#: src/syndie/gui/MessageTree.java:2414
 msgid "Collapse Thread"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2405
-msgid "Page size:"
+#: src/syndie/gui/MessageTree.java:2416
+msgid "Page size"
 msgstr ""
 
-#: src/syndie/gui/MessageView.java:278 src/syndie/gui/MessageView.java:291
+#: src/syndie/gui/MessageView.java:280 src/syndie/gui/MessageView.java:292
 msgid "Unspecified"
 msgstr ""
 
 #. no ancestors with a subject found
-#: src/syndie/gui/MessageView.java:362 src/syndie/gui/MessageView.java:399
+#. TODO return null and have caller set italic font?
+#: src/syndie/gui/MessageView.java:366 src/syndie/gui/MessageView.java:406
 msgid "No subject"
 msgstr ""
 
-#: src/syndie/gui/MessageView.java:496
+#: src/syndie/gui/MessageView.java:504
 #: src/syndie/gui/desktop/MessagePanel.java:229
 msgid "Passphrase incorrect"
 msgstr ""
 
-#: src/syndie/gui/MessageView.java:497
+#: src/syndie/gui/MessageView.java:505
 #: src/syndie/gui/desktop/MessagePanel.java:230
 msgid ""
 "The message could not be reimported - the passphrase was not correct.  Would "
 "you like to try again?"
 msgstr ""
 
-#: src/syndie/gui/MessageView.java:888
-msgid "Forum:"
-msgstr ""
-
-#: src/syndie/gui/MessageView.java:889
-msgid "Date:"
-msgstr ""
-
-#: src/syndie/gui/MessageView.java:900
+#: src/syndie/gui/MessageView.java:909
 msgid "Ban author"
 msgstr ""
 
-#: src/syndie/gui/MessageView.java:901
+#: src/syndie/gui/MessageView.java:910
 msgid "Bookmark author"
 msgstr ""
 
-#: src/syndie/gui/MessageView.java:902
+#: src/syndie/gui/MessageView.java:911
 msgid "View author's information"
 msgstr ""
 
-#: src/syndie/gui/MessageView.java:903
+#: src/syndie/gui/MessageView.java:912
 msgid "View author's forum"
 msgstr ""
 
-#: src/syndie/gui/MessageView.java:905
+#: src/syndie/gui/MessageView.java:914
 msgid "Ban forum"
 msgstr ""
 
-#: src/syndie/gui/MessageView.java:906
+#: src/syndie/gui/MessageView.java:915
 msgid "Bookmark forum"
 msgstr ""
 
-#: src/syndie/gui/MessageView.java:908 src/syndie/gui/ViewForum.java:338
+#: src/syndie/gui/MessageView.java:917 src/syndie/gui/ViewForum.java:341
 msgid "View forum profile"
 msgstr ""
 
-#: src/syndie/gui/MessageView.java:910
+#: src/syndie/gui/MessageView.java:919
 msgid "View forum messages"
 msgstr ""
 
-#: src/syndie/gui/MessageView.java:912
+#: src/syndie/gui/MessageView.java:921 src/syndie/gui/Wizard.java:172
 msgid "Next"
 msgstr ""
 
-#: src/syndie/gui/MessageView.java:913
+#: src/syndie/gui/MessageView.java:922
 msgid "Prev"
 msgstr ""
 
@@ -2286,136 +2201,121 @@ msgstr ""
 msgid "The selected message is not known locally"
 msgstr ""
 
-#: src/syndie/gui/NymChannelSource.java:63
-msgid "Forums"
-msgstr ""
-
-#: src/syndie/gui/NymChannelSource.java:65
+#: src/syndie/gui/NymChannelSource.java:68
 msgid "Locally owned forums"
 msgstr ""
 
-#: src/syndie/gui/NymChannelSource.java:66
+#: src/syndie/gui/NymChannelSource.java:69
 msgid "Locally managed forums"
 msgstr ""
 
-#: src/syndie/gui/NymChannelSource.java:67
+#: src/syndie/gui/NymChannelSource.java:70
 msgid "Explicitly postable forums"
 msgstr ""
 
-#: src/syndie/gui/NymChannelSource.java:68
+#: src/syndie/gui/NymChannelSource.java:71
 msgid "Publicly postable forums"
 msgstr ""
 
-#: src/syndie/gui/NymChannelTree.java:415
+#: src/syndie/gui/NymChannelTree.java:423
 msgid "Combined view of the selected forums"
 msgstr ""
 
-#: src/syndie/gui/NymChannelTree.java:472
+#: src/syndie/gui/NymChannelTree.java:480
 msgid "View the forum"
 msgstr ""
 
-#: src/syndie/gui/NymChannelTree.java:493
+#: src/syndie/gui/NymChannelTree.java:501
 msgid "Manage the forum"
 msgstr ""
 
-#: src/syndie/gui/NymChannelTree.java:505
+#: src/syndie/gui/NymChannelTree.java:513
 msgid "Post in the forum"
 msgstr ""
 
-#: src/syndie/gui/NymChannelTree.java:519
+#: src/syndie/gui/NymChannelTree.java:527
 #: src/syndie/gui/desktop/MessageTreePanel.java:567
 #: src/syndie/gui/desktop/ProfilePanel.java:427
 msgid "Unwatch the forum"
 msgstr ""
 
-#: src/syndie/gui/NymChannelTree.java:528
+#: src/syndie/gui/NymChannelTree.java:536
 msgid "View the resource"
 msgstr ""
 
-#: src/syndie/gui/NymChannelTree.java:541
+#: src/syndie/gui/NymChannelTree.java:549
 msgid "Drop the reference"
 msgstr ""
 
-#: src/syndie/gui/NymChannelTree.java:1098
+#: src/syndie/gui/NymChannelTree.java:1104
 msgid "Avatar"
 msgstr ""
 
-#: src/syndie/gui/NymChannelTree.java:1101
-msgid "Msgs"
-msgstr ""
-
-#: src/syndie/gui/NymChannelTree.java:1102
-msgid "Unread / Private / Total messages"
-msgstr ""
-
-#: src/syndie/gui/NymChannelTree.java:1103
-msgid "Last post"
-msgstr ""
-
-#: src/syndie/gui/NymChannelTree.java:1104
-msgid "Profile published references?"
-msgstr ""
-
-#: src/syndie/gui/NymChannelTree.java:1106
-msgid "Only include forums with: "
-msgstr ""
-
 #: src/syndie/gui/NymChannelTree.java:1107
-msgid "unread messages"
+#: src/syndie/gui/desktop/ProfilePanel.java:327
+msgid "Messages"
 msgstr ""
 
 #: src/syndie/gui/NymChannelTree.java:1108
-msgid "private messages"
+msgid "Unread / Private / Total messages"
 msgstr ""
 
 #: src/syndie/gui/NymChannelTree.java:1109
-msgid "search term"
+msgid "Last post"
 msgstr ""
 
 #: src/syndie/gui/NymChannelTree.java:1110
-msgid "search"
+msgid "Profile published references?"
 msgstr ""
 
-#: src/syndie/gui/NymChannelTree.java:1111
-msgid "view all"
+#: src/syndie/gui/NymChannelTree.java:1112
+msgid "Only include forums with"
 msgstr ""
 
 #: src/syndie/gui/NymChannelTree.java:1113
+msgid "Unread messages"
+msgstr ""
+
+#: src/syndie/gui/NymChannelTree.java:1114
+msgid "Private messages"
+msgstr ""
+
+#: src/syndie/gui/NymChannelTree.java:1115
+msgid "Search term"
+msgstr ""
+
+#: src/syndie/gui/NymChannelTree.java:1117
+msgid "View all"
+msgstr ""
+
+#: src/syndie/gui/NymChannelTree.java:1119
 #: src/syndie/gui/desktop/LinkEdge.java:65
 msgid "Special forums"
 msgstr ""
 
-#: src/syndie/gui/NymChannelTree.java:1114
+#: src/syndie/gui/NymChannelTree.java:1120
 #: src/syndie/gui/desktop/LinkEdge.java:82
 msgid "Bookmarks"
 msgstr ""
 
-#: src/syndie/gui/PageEditor.java:835
+#: src/syndie/gui/PageEditor.java:836
 msgid "Restore normal editor size"
 msgstr ""
 
-#: src/syndie/gui/PageEditor.java:838
+#: src/syndie/gui/PageEditor.java:839
 msgid "Show maximized preview"
 msgstr ""
 
-#: src/syndie/gui/PageEditor.java:918
+#: src/syndie/gui/PageEditor.java:919
 msgid "Restore normal preview size"
 msgstr ""
 
-#: src/syndie/gui/PageEditor.java:921
+#: src/syndie/gui/PageEditor.java:922
 msgid "Show maximized editor"
 msgstr ""
 
-#: src/syndie/gui/PageRendererTab.java:61
-msgid "body"
-msgstr ""
-
-#: src/syndie/gui/PassphrasePrompt.java:134
-msgid "Passphrase"
-msgstr ""
-
-#: src/syndie/gui/PassphrasePrompt.java:136
-msgid "Publicly visible hint:"
+#: src/syndie/gui/PassphrasePrompt.java:140
+msgid "Publicly visible hint"
 msgstr ""
 
 #: src/syndie/gui/RefTree.java:84 src/syndie/gui/RefTree.java:101
@@ -2427,29 +2327,14 @@ msgstr ""
 msgid "Forum summary"
 msgstr ""
 
-#: src/syndie/gui/ReferenceChooserInfo.java:520
-#: src/syndie/gui/ReferenceChooserInfo.java:531
-#: src/syndie/gui/ReferenceChooserSearch.java:171
-msgid "Name: "
-msgstr ""
-
-#: src/syndie/gui/ReferenceChooserInfo.java:521
-#: src/syndie/gui/ReferenceChooserInfo.java:532
-msgid "Description: "
-msgstr ""
-
 #: src/syndie/gui/ReferenceChooserInfo.java:522
 #: src/syndie/gui/ReferenceChooserInfo.java:533
 #: src/syndie/gui/ReferenceChooserSearch.java:173
-msgid "Hash: "
-msgstr ""
-
-#: src/syndie/gui/ReferenceChooserInfo.java:523
-msgid "anyone can post"
+msgid "Hash"
 msgstr ""
 
 #: src/syndie/gui/ReferenceChooserInfo.java:524
-msgid "anyone can reply to posts"
+msgid "Anyone can reply to posts"
 msgstr ""
 
 #: src/syndie/gui/ReferenceChooserInfo.java:526
@@ -2463,24 +2348,8 @@ msgstr ""
 msgid "Message summary"
 msgstr ""
 
-#: src/syndie/gui/ReferenceChooserInfo.java:534
-msgid "Subject: "
-msgstr ""
-
-#: src/syndie/gui/ReferenceChooserInfo.java:535
-msgid "Author: "
-msgstr ""
-
-#: src/syndie/gui/ReferenceChooserInfo.java:536
-msgid "Date: "
-msgstr ""
-
 #: src/syndie/gui/ReferenceChooserInfo.java:542
 msgid "Archive summary"
-msgstr ""
-
-#: src/syndie/gui/ReferenceChooserInfo.java:543
-msgid "Archive: "
 msgstr ""
 
 #: src/syndie/gui/ReferenceChooserInfo.java:549
@@ -2488,23 +2357,19 @@ msgid "URI summary"
 msgstr ""
 
 #: src/syndie/gui/ReferenceChooserInfo.java:550
-msgid "URI: "
+msgid "URI"
 msgstr ""
 
 #: src/syndie/gui/ReferenceChooserPopupImpl.java:49
 msgid "Reference chooser"
 msgstr ""
 
-#: src/syndie/gui/ReferenceChooserSearch.java:168
-msgid "Tags: "
-msgstr ""
-
 #: src/syndie/gui/ReferenceChooserSearch.java:169
-msgid "the channel name must start with this string"
+msgid "The channel name must start with this string"
 msgstr ""
 
 #: src/syndie/gui/ReferenceChooserSearch.java:170
-msgid "Forum search criteria:"
+msgid "Forum search criteria"
 msgstr ""
 
 #: src/syndie/gui/ReferenceChooserSearch.java:172
@@ -2512,15 +2377,11 @@ msgid "-tag excludes, +tag requires all, without a prefix requires one or more"
 msgstr ""
 
 #: src/syndie/gui/ReferenceChooserSearch.java:174
-msgid "the channel's hash must start with this string"
-msgstr ""
-
-#: src/syndie/gui/ReferenceChooserSearch.java:175
-msgid "anyone can post?"
+msgid "The channel hash must start with this string"
 msgstr ""
 
 #: src/syndie/gui/ReferenceChooserSearch.java:176
-msgid "if true, include channels that anyone is allowed to post to"
+msgid "If true, include channels that anyone is allowed to post to"
 msgstr ""
 
 #: src/syndie/gui/ReferenceChooserTree.java:583
@@ -2533,23 +2394,23 @@ msgstr ""
 msgid "Schedule syndication?"
 msgstr ""
 
-#: src/syndie/gui/ReferenceChooserTree.java:764
+#: src/syndie/gui/ReferenceChooserTree.java:777
 msgid "Requires password"
 msgstr ""
 
-#: src/syndie/gui/ReferenceChooserTree.java:947
+#: src/syndie/gui/ReferenceChooserTree.java:785
+msgid "Forum key unknown"
+msgstr ""
+
+#: src/syndie/gui/ReferenceChooserTree.java:960
 msgid "Bookmarked references"
 msgstr ""
 
-#: src/syndie/gui/ReferenceChooserTree.java:949
+#: src/syndie/gui/ReferenceChooserTree.java:962
 msgid "Writable forums"
 msgstr ""
 
-#: src/syndie/gui/ReferenceChooserTree.java:951
-msgid "Manageable forums"
-msgstr ""
-
-#: src/syndie/gui/ReferenceChooserTree.java:955
+#: src/syndie/gui/ReferenceChooserTree.java:968
 msgid "Imported resources"
 msgstr ""
 
@@ -2563,15 +2424,11 @@ msgid "Invalid image"
 msgstr ""
 
 #: src/syndie/gui/ReferenceEditor.java:510
-msgid "Unable to load the image: "
+msgid "Unable to load the image"
 msgstr ""
 
 #: src/syndie/gui/ReferenceEditor.java:648
 msgid "Select location"
-msgstr ""
-
-#: src/syndie/gui/ReferenceEditor.java:678
-msgid "Location:"
 msgstr ""
 
 #: src/syndie/gui/ReferenceEditor.java:680
@@ -2579,23 +2436,19 @@ msgid "Include in the watched list"
 msgstr ""
 
 #: src/syndie/gui/ReferenceEditor.java:681
-msgid "Add to my references in:"
+msgid "Add to my references in"
 msgstr ""
 
 #: src/syndie/gui/ReferenceEditor.java:682
-msgid "New category name:"
-msgstr ""
-
-#: src/syndie/gui/ReferenceEditor.java:683
-msgid "Create"
+msgid "New category name"
 msgstr ""
 
 #: src/syndie/gui/ReferenceEditor.java:684
-msgid "Custom nickname:"
+msgid "Custom nickname"
 msgstr ""
 
 #: src/syndie/gui/ReferenceEditor.java:685
-msgid "Custom description:"
+msgid "Custom description"
 msgstr ""
 
 #: src/syndie/gui/ReferenceEditor.java:686
@@ -2610,11 +2463,13 @@ msgstr ""
 msgid "Copy target URI"
 msgstr ""
 
-#: src/syndie/gui/SQLTab.java:274 src/syndie/gui/desktop/SQLPanel.java:289
+#: src/syndie/gui/SQLTab.java:295 src/syndie/gui/desktop/SQLPanel.java:289
 msgid "SQL"
 msgstr ""
 
-#: src/syndie/gui/SQLTab.java:275 src/syndie/gui/desktop/SQLPanel.java:290
+#: src/syndie/gui/SQLTab.java:296
+#: src/syndie/gui/desktop/ControlMenuPanel.java:622
+#: src/syndie/gui/desktop/SQLPanel.java:290
 msgid "Advanced SQL interface"
 msgstr ""
 
@@ -2635,556 +2490,553 @@ msgstr ""
 
 #: src/syndie/gui/SWTUI.java:158
 msgid ""
-"Syndie ran into an internal error trying to start up - please see the logs: "
+"Syndie ran into an internal error trying to start up - please see the logs"
 msgstr ""
 
-#: src/syndie/gui/StatusBar.java:307
-msgid "Pass. req: "
+#: src/syndie/gui/StatusBar.java:344
+msgid "Pass. reqd"
 msgstr ""
 
-#: src/syndie/gui/StatusBar.java:316
-msgid "Private msgs: "
+#: src/syndie/gui/StatusBar.java:353
+msgid "Private msgs"
 msgstr ""
 
-#: src/syndie/gui/StatusBar.java:325
-msgid "Drafts: "
+#: src/syndie/gui/StatusBar.java:362
+msgid "Drafts"
 msgstr ""
 
-#: src/syndie/gui/StatusBar.java:424
+#: src/syndie/gui/StatusBar.java:461
 msgid "View unread in bookmarked forums"
 msgstr ""
 
-#: src/syndie/gui/StatusBar.java:435
+#: src/syndie/gui/StatusBar.java:472
 msgid "View unread in all forums"
 msgstr ""
 
-#: src/syndie/gui/StatusBar.java:474
-msgid "Unread: "
+#: src/syndie/gui/StatusBar.java:511
+msgid "Unread"
 msgstr ""
 
-#: src/syndie/gui/StatusBar.java:552
+#: src/syndie/gui/StatusBar.java:589
 msgid "Mark all as read"
 msgstr ""
 
-#: src/syndie/gui/StatusBar.java:652
-msgid "Postponed on: "
+#: src/syndie/gui/StatusBar.java:688
+msgid "Saved"
 msgstr ""
 
-#: src/syndie/gui/StatusBar.java:733
-msgid "New forums: "
+#: src/syndie/gui/StatusBar.java:769
+msgid "New forums"
 msgstr ""
 
-#: src/syndie/gui/StatusBar.java:788
-msgid "Online: syndication is enabled"
+#: src/syndie/gui/StatusBar.java:820
+msgid "Online: Syndication is enabled"
 msgstr ""
 
-#: src/syndie/gui/StatusBar.java:791
-msgid "Offline: syndication is deferred"
+#: src/syndie/gui/StatusBar.java:823
+msgid "Offline: Syndication is deferred"
 msgstr ""
 
-#: src/syndie/gui/StatusBar.java:807
-msgid "Deferred..."
+#: src/syndie/gui/StatusBar.java:839
+msgid "Deferred"
 msgstr ""
 
-#: src/syndie/gui/StatusBar.java:810
+#: src/syndie/gui/StatusBar.java:842
 msgid "None scheduled"
 msgstr ""
 
-#: src/syndie/gui/StatusBar.java:813 src/syndie/gui/Syndicator.java:665
-#: src/syndie/gui/Syndicator.java:716 src/syndie/gui/Syndicator.java:889
-#: src/syndie/gui/Syndicator.java:903 src/syndie/gui/Syndicator.java:917
-#: src/syndie/gui/Syndicator.java:1046 src/syndie/gui/Syndicator.java:1055
-#: src/syndie/gui/Syndicator.java:1064
+#: src/syndie/gui/StatusBar.java:845 src/syndie/gui/Syndicator.java:670
+#: src/syndie/gui/Syndicator.java:721 src/syndie/gui/Syndicator.java:914
+#: src/syndie/gui/Syndicator.java:928 src/syndie/gui/Syndicator.java:942
+#: src/syndie/gui/Syndicator.java:1081 src/syndie/gui/Syndicator.java:1090
+#: src/syndie/gui/Syndicator.java:1099
 msgid "Now"
 msgstr ""
 
-#: src/syndie/gui/StatusBar.java:881
+#: src/syndie/gui/StatusBar.java:913
 msgid "messages"
 msgstr ""
 
-#: src/syndie/gui/StatusBar.java:898
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1070
-msgid "Next sync:"
+#: src/syndie/gui/StatusBar.java:930
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1068
+msgid "Next sync"
 msgstr ""
 
-#: src/syndie/gui/StatusBar.java:899
-msgid "Bookmark!"
+#: src/syndie/gui/StatusBar.java:931
+msgid "Bookmark"
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:288
+#: src/syndie/gui/Syndicator.java:292
 msgid "Are you sure you want to delete this archive? "
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:289
+#: src/syndie/gui/Syndicator.java:293
 msgid "Delete?"
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:383
-msgid "Settings..."
+#: src/syndie/gui/Syndicator.java:387
+msgid "Settings"
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:392
+#: src/syndie/gui/Syndicator.java:396
 msgid "Sync now (recurring)"
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:397
+#: src/syndie/gui/Syndicator.java:401
 msgid "Sync now (one time)"
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:403
+#: src/syndie/gui/Syndicator.java:407
 msgid "Cancel sync"
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:407
+#: src/syndie/gui/Syndicator.java:411
 msgid "Cancel next sync"
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:411
+#: src/syndie/gui/Syndicator.java:415
 msgid "Schedule sync"
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:419 src/syndie/gui/Syndicator.java:432
-#: src/syndie/gui/Syndicator.java:447
+#: src/syndie/gui/Syndicator.java:423 src/syndie/gui/Syndicator.java:436
+#: src/syndie/gui/Syndicator.java:451
 msgid "Clear complete actions"
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:461
+#: src/syndie/gui/Syndicator.java:465
 msgid "Clear"
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:485
+#: src/syndie/gui/Syndicator.java:489
 msgid "Resolve passphrase prompt"
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:492 src/syndie/gui/Syndicator.java:525
+#: src/syndie/gui/Syndicator.java:496 src/syndie/gui/Syndicator.java:529
 msgid "Clear action"
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:596
+#: src/syndie/gui/Syndicator.java:600
 msgid "HTTP archive"
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:667
+#: src/syndie/gui/Syndicator.java:672
 msgid "Syndicating"
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:669
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:918
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:927
+#. never successfully fetched
+#: src/syndie/gui/Syndicator.java:674 src/syndie/gui/Syndicator.java:750
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:916
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:925
 msgid "Never"
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:671
+#: src/syndie/gui/Syndicator.java:676
 msgid "No syndication scheduled"
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:675
-msgid "Offline - set as online to start"
+#: src/syndie/gui/Syndicator.java:680
+msgid "Offline: Set as online to start"
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:679
+#: src/syndie/gui/Syndicator.java:684
 msgid "Syndication scheduled"
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:714
+#: src/syndie/gui/Syndicator.java:719
 msgid "Fetch index"
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:719
+#: src/syndie/gui/Syndicator.java:724
 msgid "In Progress"
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:733
-msgid "Fetch error: "
+#: src/syndie/gui/Syndicator.java:738 src/syndie/gui/Syndicator.java:753
+msgid "Fetch error"
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:737
+#: src/syndie/gui/Syndicator.java:742
 msgid "Fetch complete"
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:800
-msgid "fetches"
+#. text doesn't change
+#: src/syndie/gui/Syndicator.java:815
+msgid "Fetches"
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:863 src/syndie/gui/Syndicator.java:1043
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:923
+#: src/syndie/gui/Syndicator.java:823 src/syndie/gui/Syndicator.java:1016
+msgid "Complete"
+msgstr ""
+
+#: src/syndie/gui/Syndicator.java:884 src/syndie/gui/Syndicator.java:1074
+msgid "Forum info"
+msgstr ""
+
+#: src/syndie/gui/Syndicator.java:888 src/syndie/gui/Syndicator.java:1078
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:921
 msgid "ASAP"
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:872
-msgid "Passphrase required: "
-msgstr ""
-
-#: src/syndie/gui/Syndicator.java:876
+#: src/syndie/gui/Syndicator.java:901
 msgid "Reply key unknown"
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:880
+#: src/syndie/gui/Syndicator.java:905
 msgid "Message is corrupt"
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:887
-msgid "Fetch failed: "
+#: src/syndie/gui/Syndicator.java:912
+msgid "Fetch failed"
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:892
+#: src/syndie/gui/Syndicator.java:917
 msgid "Fetching keys"
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:906
+#: src/syndie/gui/Syndicator.java:931
 msgid "Fetching message"
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:919 src/syndie/gui/Syndicator.java:1067
+#: src/syndie/gui/Syndicator.java:944 src/syndie/gui/Syndicator.java:1102
 msgid "Queued"
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:924
+#: src/syndie/gui/Syndicator.java:949
 msgid "Imported"
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:983
-msgid "pushes"
+#. text doesn't change
+#: src/syndie/gui/Syndicator.java:1008
+msgid "Pushes"
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:1049
+#: src/syndie/gui/Syndicator.java:1084
 msgid "Pushing keys"
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:1058
+#: src/syndie/gui/Syndicator.java:1093
 msgid "Pushing message"
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:1075
-msgid "Error pushing: "
+#: src/syndie/gui/Syndicator.java:1110
+msgid "Error pushing"
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:1080
+#: src/syndie/gui/Syndicator.java:1115
 msgid "Pushed"
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:1118
+#: src/syndie/gui/Syndicator.java:1151
 msgid "Time"
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:1120
+#: src/syndie/gui/Syndicator.java:1153
 msgid "Summary"
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:1123
+#: src/syndie/gui/Syndicator.java:1155
+msgid "No archives defined - click 'Add archive' to add one"
+msgstr ""
+
+#: src/syndie/gui/Syndicator.java:1164
 #: src/syndie/gui/desktop/SyndicatorPanel.java:225
 msgid "Add archive"
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:1125
+#: src/syndie/gui/Syndicator.java:1166
 msgid "Cancel syndications"
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:1127
+#: src/syndie/gui/Syndicator.java:1169
 #: src/syndie/gui/desktop/SyndicatorPanel.java:228
 msgid "Delete archive"
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:1130
+#: src/syndie/gui/Syndicator.java:1173
 msgid "Sync Now"
 msgstr ""
 
-#: src/syndie/gui/Syndicator.java:1132
+#: src/syndie/gui/Syndicator.java:1175
 msgid "Sync Now (one time only)"
 msgstr ""
 
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:449
-msgid "Whitelist: "
+msgid "Whitelist"
 msgstr ""
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:515
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:513
 msgid "Freenet configuration"
 msgstr ""
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:523
-msgid "Public key:"
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:521
+msgid "Public key"
 msgstr ""
 
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:535
-msgid "Read only"
-msgstr ""
-
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:537
 msgid "Write only"
 msgstr ""
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:544
-msgid "FCP host:"
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:542
+msgid "FCP host"
 msgstr ""
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:553
-msgid "port:"
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:564
+msgid "Private key"
 msgstr ""
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:566
-msgid "Private key:"
-msgstr ""
-
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:575
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:573
 msgid "Generate new"
 msgstr ""
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:654
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:673
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:652
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:671
 msgid "Error communicating with the Freenet server"
 msgstr ""
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1055
-msgid "Archive URL:"
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1053
+msgid "Archive URL"
 msgstr ""
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1057
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1055
 msgid "Specify posting key"
 msgstr ""
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1058
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1056
 msgid "Specify reading key"
 msgstr ""
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1059
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1057
 msgid "Configure freenet settings"
 msgstr ""
 
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1060
-msgid "Proxy host:"
+msgid "Push policy"
 msgstr ""
 
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1061
-msgid "Port:"
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1063
+msgid "Max message size"
 msgstr ""
 
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1062
-msgid "Push policy:"
-msgstr ""
-
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1063
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1065
-msgid "Max message size:"
+msgid "Pull policy"
 msgstr ""
 
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1064
-msgid "Pull policy:"
-msgstr ""
-
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1066
 msgid "Pull any private messages?"
 msgstr ""
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1067
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1065
 msgid "Pull private messages for us only?"
 msgstr ""
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1068
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1066
 msgid "Pull passphrase protected messages?"
 msgstr ""
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1069
-msgid "Last sync:"
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1067
+msgid "Last sync"
 msgstr ""
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1071
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1069
 msgid "Sync ASAP"
 msgstr ""
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1072
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1070
 msgid "Never sync"
 msgstr ""
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1073
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1071
 msgid "Sync only once"
 msgstr ""
 
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1072
+msgid "Min sync delay"
+msgstr ""
+
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1073
+msgid "Sync failures"
+msgstr ""
+
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1074
-msgid "Min sync delay:"
-msgstr ""
-
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1075
-msgid "Sync failures:"
-msgstr ""
-
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1076
 msgid "Back off after failing?"
 msgstr ""
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1080
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1078
 msgid "Age to treat as 'recent'"
 msgstr ""
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1081
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1079
 msgid "Oldest message to send"
 msgstr ""
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1082
-msgid "Whitelisted category:"
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1080
+msgid "Whitelisted category"
 msgstr ""
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1084
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1082
 msgid ""
 "Forums that are referenced in the specified category (and posts to those "
 "forums) are allowed to be imported"
 msgstr ""
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1085
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1083
 msgid "Only pull whitelisted content (reduces anonymity but saves bandwidth)"
 msgstr ""
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1086
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1084
 #: src/syndie/gui/desktop/MessageEditorPanel.java:514
 msgid "Preview"
 msgstr ""
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1120
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1118
 msgid "Send all messages they don't have"
 msgstr ""
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1121
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1119
 msgid "Send locally created messages they don't have"
 msgstr ""
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1122
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1120
 msgid "Send nothing"
 msgstr ""
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1129
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1147
-msgid " KBytes"
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1127
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1145
+msgid "KBytes"
 msgstr ""
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1135
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1133
 msgid "Recent messages we don't have"
 msgstr ""
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1136
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1134
 msgid "All messages we don't have"
 msgstr ""
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1137
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1135
 msgid "Recent messages in forums we know"
 msgstr ""
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1138
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1136
 msgid "All messages in forums we know"
 msgstr ""
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1139
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1137
 msgid "Everything the archive considers recent (PIR)"
 msgstr ""
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1140
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1138
 msgid "Nothing"
 msgstr ""
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1153
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1151
 msgid "Whatever the archive advertises as new"
 msgstr ""
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1154
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1167
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1152
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1165
 msgid "1 week"
+msgstr ""
+
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1153
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1167
+msgid "1 month"
+msgstr ""
+
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1154
+msgid "3 months"
 msgstr ""
 
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1155
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1169
-msgid "1 month"
-msgstr ""
-
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1156
-msgid "3 months"
-msgstr ""
-
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1157
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1171
 msgid "6 months"
 msgstr ""
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1158
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1172
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1156
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1170
 msgid "1 year"
 msgstr ""
 
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1157
+msgid "3 years"
+msgstr ""
+
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1158
+msgid "5 years"
+msgstr ""
+
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1159
-msgid "3 year"
-msgstr ""
-
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1160
-msgid "5 year"
-msgstr ""
-
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1161
 msgid "10 years"
 msgstr ""
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1168
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1166
 msgid "2 weeks"
 msgstr ""
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1170
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1168
 msgid "2 months"
 msgstr ""
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1173
-msgid "Unlimited (only use if your clock is off)"
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1171
+msgid "Unlimited"
 msgstr ""
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1181
-msgid " hour"
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1178
+msgid "{} hour"
+msgid_plural "{} hours"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/syndie/gui/SyndicatorTab.java:28
+msgid "Gather and share messages"
 msgstr ""
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1183
-msgid " hours"
+#: src/syndie/gui/TextUITab.java:319
+msgid "Advanced text interface"
 msgstr ""
 
-#: src/syndie/gui/ViewForum.java:324
+#: src/syndie/gui/ViewForum.java:327
 msgid "View forum"
 msgstr ""
 
-#: src/syndie/gui/ViewForum.java:726
-msgid "Public"
-msgstr ""
-
-#: src/syndie/gui/ViewForum.java:728
+#: src/syndie/gui/ViewForum.java:731
 #: src/syndie/gui/desktop/MessageEditorPanel.java:446
 msgid "Authorized readers only"
 msgstr ""
 
-#: src/syndie/gui/ViewForum.java:775
+#: src/syndie/gui/ViewForum.java:778
 msgid "Manager"
 msgstr ""
 
-#: src/syndie/gui/ViewForum.java:777
+#: src/syndie/gui/ViewForum.java:780
 msgid "Authorized poster"
 msgstr ""
 
-#: src/syndie/gui/ViewForum.java:847
-msgid "Authorized managers and posters:"
-msgstr ""
-
-#: src/syndie/gui/ViewForum.java:849
-msgid "Advertised references:"
-msgstr ""
-
 #: src/syndie/gui/ViewForum.java:850
-msgid "Authorization:"
+msgid "Authorized managers and posters"
+msgstr ""
+
+#: src/syndie/gui/ViewForum.java:852
+msgid "Advertised references"
 msgstr ""
 
 #: src/syndie/gui/ViewForum.java:853
+msgid "Authorization"
+msgstr ""
+
+#: src/syndie/gui/ViewForum.java:856
 msgid "Ban the selected forum"
 msgstr ""
 
-#: src/syndie/gui/ViewForum.java:857
+#: src/syndie/gui/ViewForum.java:860
 msgid "Allow anyone to post to the forum"
 msgstr ""
 
-#: src/syndie/gui/ViewForum.java:859
+#: src/syndie/gui/ViewForum.java:862
 msgid "Allow anyone to reply to authorized posts"
 msgstr ""
 
-#: src/syndie/gui/ViewForum.java:861
+#: src/syndie/gui/ViewForum.java:864
 msgid "Only allow authorized posters to post"
 msgstr ""
 
@@ -3201,7 +3053,7 @@ msgid "Step 3 of 6: Web page fetched"
 msgstr ""
 
 #: src/syndie/gui/WebRipPageControl.java:263
-msgid "Step 4 of 6: Fetching attachments - "
+msgid "Step 4 of 6: Fetching attachments"
 msgstr ""
 
 #: src/syndie/gui/WebRipPageControl.java:264
@@ -3213,15 +3065,15 @@ msgid "Step 6 of 6: Web page rewritten"
 msgstr ""
 
 #: src/syndie/gui/WebRipPageControl.java:359
-msgid "Rip URL:"
+msgid "Rip URL"
 msgstr ""
 
 #: src/syndie/gui/WebRipPageControl.java:360
-msgid "Options..."
+msgid "Options"
 msgstr ""
 
 #: src/syndie/gui/WebRipPageControl.java:361
-msgid "Rip!"
+msgid "Rip"
 msgstr ""
 
 #: src/syndie/gui/WebRipPageControl.java:363
@@ -3233,7 +3085,7 @@ msgid "Attach images"
 msgstr ""
 
 #: src/syndie/gui/WebRipPageControl.java:365
-msgid "Configure proxy..."
+msgid "Configure proxy"
 msgstr ""
 
 #: src/syndie/gui/WebRipPageControl.java:366
@@ -3241,11 +3093,11 @@ msgid "Attach torrents"
 msgstr ""
 
 #: src/syndie/gui/WebRipPageControl.java:368
-msgid "HTTP proxy host:"
+msgid "HTTP proxy host"
 msgstr ""
 
 #: src/syndie/gui/WebRipPageControl.java:369
-msgid "HTTP proxy port:"
+msgid "HTTP proxy port"
 msgstr ""
 
 #: src/syndie/gui/WebRipPageControl.java:370
@@ -3257,7 +3109,7 @@ msgid "Anyone can read the rip"
 msgstr ""
 
 #: src/syndie/gui/WebRipPostControl.java:205
-msgid "Passphrase required to read the rip..."
+msgid "Passphrase required to read the rip"
 msgstr ""
 
 #: src/syndie/gui/WebRipPostControl.java:206
@@ -3269,7 +3121,7 @@ msgid "Tag the post with the URL?"
 msgstr ""
 
 #: src/syndie/gui/WebRipPostControl.java:211
-msgid "Post from:"
+msgid "Post from"
 msgstr ""
 
 #: src/syndie/gui/WebRipPostPopup.java:82
@@ -3277,11 +3129,13 @@ msgid "New web rip"
 msgstr ""
 
 #: src/syndie/gui/WebRipPostPopup.java:98
-msgid "Web rip could not be created: "
+msgid "Web rip could not be created"
 msgstr ""
 
 #: src/syndie/gui/WebRipPostPopup.java:99
+#: src/syndie/gui/WebRipPostPopup.java:167
 #: src/syndie/gui/WebRipPostPopup.java:168
+#: src/syndie/gui/WebRipPostPopup.java:177
 #: src/syndie/gui/WebRipPostPopup.java:178
 msgid "Web rip failed"
 msgstr ""
@@ -3294,54 +3148,114 @@ msgstr ""
 msgid "Web rip created"
 msgstr ""
 
-#: src/syndie/gui/WebRipPostPopup.java:167
-#: src/syndie/gui/WebRipPostPopup.java:177
-msgid "Web rip failed: "
+#: src/syndie/gui/WelcomeScreen.java:335 src/syndie/gui/Wizard.java:170
+#: src/syndie/gui/desktop/WelcomePopup.java:161
+msgid "Welcome to Syndie!"
 msgstr ""
 
-#: src/syndie/gui/WelcomeScreen.java:341
-msgid "What name would you like to use for your new identity?"
+#: src/syndie/gui/WelcomeScreen.java:336
+msgid ""
+"This wizard will help you set up your new Syndie installation. First we'll "
+"set up your identity, and then we'll configure some archives for you to "
+"syndicate with."
 msgstr ""
 
-#: src/syndie/gui/WelcomeScreen.java:342
-msgid "Syndie user"
+#: src/syndie/gui/WelcomeScreen.java:338
+msgid ""
+"It is strongly recommended that you have I2P running before you start Syndie."
+msgstr ""
+
+#: src/syndie/gui/WelcomeScreen.java:339
+msgid ""
+"If I2P is not running, please start it and wait 5 minutes before proceeding."
 msgstr ""
 
 #: src/syndie/gui/WelcomeScreen.java:343
-msgid "What avatar would you like to use?"
+msgid ""
+"Syndie will create a new identity for you to use with which to post messages "
+"in other forums and to runyour own blog/forum."
 msgstr ""
 
-#: src/syndie/gui/WelcomeScreen.java:344
+#: src/syndie/gui/WelcomeScreen.java:346
+msgid "What name would you like to use for your new identity?"
+msgstr ""
+
+#: src/syndie/gui/WelcomeScreen.java:347
+msgid "Syndie user"
+msgstr ""
+
+#: src/syndie/gui/WelcomeScreen.java:348
+msgid "Click the image to select the avatar would you like to use"
+msgstr ""
+
+#: src/syndie/gui/WelcomeScreen.java:349
 msgid ""
 "In your new identity's blog/forum, would  you like to allow other people to "
 "post?"
 msgstr ""
 
-#: src/syndie/gui/WelcomeScreen.java:345
+#: src/syndie/gui/WelcomeScreen.java:350
 msgid "Yes, let anyone reply to existing posts and post new topics"
 msgstr ""
 
-#: src/syndie/gui/WelcomeScreen.java:346
+#: src/syndie/gui/WelcomeScreen.java:351
 msgid "Yes, let anyone reply to existing posts"
 msgstr ""
 
-#: src/syndie/gui/WelcomeScreen.java:347
+#: src/syndie/gui/WelcomeScreen.java:352
 msgid "No"
 msgstr ""
 
-#: src/syndie/gui/Wizard.java:169
-msgid "Welcome to Syndie!"
+#: src/syndie/gui/WelcomeScreen.java:355
+msgid "Next it's time to select some archives to syndicate with."
 msgstr ""
 
-#: src/syndie/gui/Wizard.java:170
-msgid "< Back"
+#: src/syndie/gui/WelcomeScreen.java:356
+msgid ""
+"Syndie messages are propagated from one Syndie instance to another by a "
+"process called 'syndication'."
+msgstr ""
+
+#: src/syndie/gui/WelcomeScreen.java:357
+msgid ""
+"Each client connects to one or more archives and uploads any messages which "
+"the client has, but the archive does not, and downloads any messages which "
+"the archive has, but the client does not. In this way messages are "
+"propagated from client to client and archive to archive within a Syndie "
+"community."
+msgstr ""
+
+#: src/syndie/gui/WelcomeScreen.java:360
+msgid ""
+"To join a Syndie community, you need to syndicate with one or more archives "
+"of that community."
+msgstr ""
+
+#: src/syndie/gui/WelcomeScreen.java:363
+msgid ""
+"The default archives shipped with your Syndie install are listed above. "
+"Double-click a field to edit it."
+msgstr ""
+
+#: src/syndie/gui/WelcomeScreen.java:364
+msgid ""
+"Please make any necessary changes and uncheck any archives that you don't "
+"want."
+msgstr ""
+
+#: src/syndie/gui/WelcomeScreen.java:367
+msgid "Congratulations! Your Syndie installation is configured!"
+msgstr ""
+
+#: src/syndie/gui/WelcomeScreen.java:368
+msgid "Click Finish to start exploring Syndie."
 msgstr ""
 
 #: src/syndie/gui/Wizard.java:171
-msgid "Next >"
+msgid "Back"
 msgstr ""
 
-#: src/syndie/gui/Wizard.java:172
+#: src/syndie/gui/Wizard.java:173
 msgid "Finish"
 msgstr ""
 
@@ -3374,24 +3288,20 @@ msgstr ""
 msgid "Cancel manager"
 msgstr ""
 
-#: src/syndie/gui/desktop/CancelManagerPanel.java:50
-msgid "Control whose cancel messages to honor"
-msgstr ""
-
 #: src/syndie/gui/desktop/ChangePassPopup.java:41
 msgid "Change passphrase"
 msgstr ""
 
 #: src/syndie/gui/desktop/ChangePassPopup.java:47
-msgid "Old passphrase:"
+msgid "Old passphrase"
 msgstr ""
 
 #: src/syndie/gui/desktop/ChangePassPopup.java:56
-msgid "New passphrase:"
+msgid "New passphrase"
 msgstr ""
 
 #: src/syndie/gui/desktop/ChangePassPopup.java:65
-msgid "New passphrase (again):"
+msgid "New passphrase (again)"
 msgstr ""
 
 #: src/syndie/gui/desktop/ChangePassPopup.java:74
@@ -3416,7 +3326,7 @@ msgid "Server failed"
 msgstr ""
 
 #: src/syndie/gui/desktop/ControlMenuPanel.java:279
-msgid "There was an error starting up the HTTP server: "
+msgid "There was an error starting up the HTTP server"
 msgstr ""
 
 #: src/syndie/gui/desktop/ControlMenuPanel.java:285
@@ -3424,7 +3334,7 @@ msgid "Running - press to stop"
 msgstr ""
 
 #: src/syndie/gui/desktop/ControlMenuPanel.java:288
-msgid "Startup in progress..."
+msgid "Startup in progress"
 msgstr ""
 
 #: src/syndie/gui/desktop/ControlMenuPanel.java:291
@@ -3436,11 +3346,11 @@ msgid "Archive server options"
 msgstr ""
 
 #: src/syndie/gui/desktop/ControlMenuPanel.java:360
-msgid "TCP port to listen on: "
+msgid "TCP port to listen on"
 msgstr ""
 
 #: src/syndie/gui/desktop/ControlMenuPanel.java:384
-msgid "Minimum number of handlers: "
+msgid "Minimum number of handlers"
 msgstr ""
 
 #: src/syndie/gui/desktop/ControlMenuPanel.java:404
@@ -3459,20 +3369,12 @@ msgstr ""
 msgid "Root directory"
 msgstr ""
 
-#: src/syndie/gui/desktop/ControlMenuPanel.java:614
-msgid "Import: "
-msgstr ""
-
 #: src/syndie/gui/desktop/ControlMenuPanel.java:615
-msgid "individual message"
+msgid "Individual message"
 msgstr ""
 
 #: src/syndie/gui/desktop/ControlMenuPanel.java:616
-msgid "directory (recursively)"
-msgstr ""
-
-#: src/syndie/gui/desktop/ControlMenuPanel.java:618
-msgid "Import"
+msgid "Directory"
 msgstr ""
 
 #. _tabbedUI.setText(registry.getText("Advanced: Display the tabbed UI"));
@@ -3480,16 +3382,8 @@ msgstr ""
 msgid "Change Syndie instance passphrase"
 msgstr ""
 
-#: src/syndie/gui/desktop/ControlMenuPanel.java:621
-msgid "Open Syndie URI:"
-msgstr ""
-
-#: src/syndie/gui/desktop/ControlMenuPanel.java:622
-msgid "Advanced: SQL interface"
-msgstr ""
-
 #: src/syndie/gui/desktop/ControlMenuPanel.java:624
-msgid "Log in to a different Syndie instance:"
+msgid "Log in to a different Syndie instance"
 msgstr ""
 
 #: src/syndie/gui/desktop/ControlMenuPanel.java:626
@@ -3501,44 +3395,28 @@ msgid "Reshow welcome screen"
 msgstr ""
 
 #: src/syndie/gui/desktop/ControlMenuPanel.java:631
-msgid "Integrated HTTP-accessible archive server:"
-msgstr ""
-
-#: src/syndie/gui/desktop/ControlMenuPanel.java:633
-msgid "Configure..."
-msgstr ""
-
-#: src/syndie/gui/desktop/Desktop.java:424
-msgid "Passphrase..."
+msgid "Integrated HTTP-accessible archive server"
 msgstr ""
 
 #: src/syndie/gui/desktop/Desktop.java:448
 msgid "Login"
 msgstr ""
 
-#: src/syndie/gui/desktop/Desktop.java:1429
+#: src/syndie/gui/desktop/Desktop.java:1416
 msgid "Share"
 msgstr ""
 
 #. _read.setText(registry.getText("Read"));
-#: src/syndie/gui/desktop/Desktop.java:1431
+#: src/syndie/gui/desktop/Desktop.java:1418
 msgid "Write"
 msgstr ""
 
-#: src/syndie/gui/desktop/Desktop.java:1432
+#: src/syndie/gui/desktop/Desktop.java:1419
 msgid "Switch task"
-msgstr ""
-
-#: src/syndie/gui/desktop/DesktopNavigationControl.java:53
-msgid "reply"
 msgstr ""
 
 #: src/syndie/gui/desktop/ExpirationManagerPanel.java:49
 msgid "Expiration manager"
-msgstr ""
-
-#: src/syndie/gui/desktop/ExpirationManagerPanel.java:50
-msgid "Control the deletion of old messages"
 msgstr ""
 
 #: src/syndie/gui/desktop/ForumSelectionPanel.java:176
@@ -3555,6 +3433,14 @@ msgstr ""
 
 #: src/syndie/gui/desktop/ForumSelectionPanel.java:179
 msgid "Create bookmark"
+msgstr ""
+
+#: src/syndie/gui/desktop/MessageEditorPanel.java:130
+msgid "Postpone message?"
+msgstr ""
+
+#: src/syndie/gui/desktop/MessageEditorPanel.java:131
+msgid "Do you want to postpone this message to resume it later?"
 msgstr ""
 
 #: src/syndie/gui/desktop/MessageEditorPanel.java:169
@@ -3575,14 +3461,6 @@ msgstr ""
 
 #: src/syndie/gui/desktop/MessageEditorPanel.java:462
 msgid "Who can read the post?"
-msgstr ""
-
-#: src/syndie/gui/desktop/MessageEditorPanel.java:463
-msgid "Forum (to):"
-msgstr ""
-
-#: src/syndie/gui/desktop/MessageEditorPanel.java:464
-msgid "Author (from):"
 msgstr ""
 
 #: src/syndie/gui/desktop/MessageEditorPanel.java:535
@@ -3709,11 +3587,7 @@ msgstr ""
 
 #: src/syndie/gui/desktop/MessageTreePanel.java:343
 #: src/syndie/gui/desktop/ProfilePanel.java:216
-msgid "* Forum notices and references:"
-msgstr ""
-
-#: src/syndie/gui/desktop/MessageTreePanel.java:557
-msgid "Reply"
+msgid "Forum notices and references"
 msgstr ""
 
 #: src/syndie/gui/desktop/MessageTreePanel.java:558
@@ -3753,10 +3627,6 @@ msgstr ""
 
 #: src/syndie/gui/desktop/MessageTreePanel.java:729
 msgid "Create ref"
-msgstr ""
-
-#: src/syndie/gui/desktop/ProfilePanel.java:327
-msgid "Messages"
 msgstr ""
 
 #: src/syndie/gui/desktop/ResumeablePanel.java:116
@@ -3824,30 +3694,26 @@ msgstr ""
 msgid "Welcome"
 msgstr ""
 
-#: src/syndie/gui/desktop/WelcomePopup.java:161
-msgid "Welcome to your new Syndie instance!"
-msgstr ""
-
 #: src/syndie/gui/desktop/WelcomePopup.java:162
-msgid "Do you want to..."
+msgid "Do you want to"
 msgstr ""
 
 #: src/syndie/gui/desktop/WelcomePopup.java:163
-msgid "take the tour?"
+msgid "Take the tour?"
 msgstr ""
 
 #: src/syndie/gui/desktop/WelcomePopup.java:164
-msgid "configure your sharing policy?"
+msgid "Configure your sharing policy?"
 msgstr ""
 
 #: src/syndie/gui/desktop/WelcomePopup.java:165
-msgid "configure your default identity?"
+msgid "Configure your default identity?"
 msgstr ""
 
 #: src/syndie/gui/desktop/WelcomePopup.java:166
-msgid "configure your instance passphrase?"
+msgid "Configure your instance passphrase?"
 msgstr ""
 
 #: src/syndie/gui/desktop/WelcomePopup.java:167
-msgid "continue on to Syndie?"
+msgid "Continue on to Syndie?"
 msgstr ""

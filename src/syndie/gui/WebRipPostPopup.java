@@ -95,7 +95,7 @@ public class WebRipPostPopup extends BaseComponent implements Themeable, Transla
                 _shell.getDisplay().asyncExec(new Runnable() {
                     public void run() {
                         MessageBox box = new MessageBox(_parent, SWT.ICON_ERROR | SWT.OK);
-                        box.setMessage(_translationRegistry.getText("Web rip could not be created: " + err.toString()));
+                        box.setMessage(_translationRegistry.getText("Web rip could not be created") + ": " + err.toString());
                         box.setText(_translationRegistry.getText("Web rip failed"));
                         box.open();
                     }
@@ -164,7 +164,7 @@ public class WebRipPostPopup extends BaseComponent implements Themeable, Transla
                                 _parent.getDisplay().asyncExec(new Runnable() { 
                                     public void run() {
                                         MessageBox box = new MessageBox(_parent, SWT.ICON_ERROR | SWT.OK);
-                                        box.setMessage(_translationRegistry.getText("Web rip failed: ") + errors);
+                                        box.setMessage(_translationRegistry.getText("Web rip failed") + ": " + errors);
                                         box.setText(_translationRegistry.getText("Web rip failed"));
                                         box.open();
                                     }
@@ -174,7 +174,7 @@ public class WebRipPostPopup extends BaseComponent implements Themeable, Transla
                             _parent.getDisplay().asyncExec(new Runnable() { 
                                 public void run() {
                                     MessageBox box = new MessageBox(_parent, SWT.ICON_ERROR | SWT.OK);
-                                    box.setMessage(_translationRegistry.getText("Web rip failed: ") + errors);
+                                    box.setMessage(_translationRegistry.getText("Web rip failed") + ": " + errors);
                                     box.setText(_translationRegistry.getText("Web rip failed"));
                                     box.open();
                                 }

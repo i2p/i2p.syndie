@@ -38,10 +38,13 @@ public class HelpTab extends  PageRendererTab {
         getBrowser().getTranslationRegistry().register(this);
     }
 
+    // prevent gettext
+    private static final String FILE = "file";
+
     @Override
     public void show(SyndieURI uri) {
         String body = null;
-        String path = getURI().getString("file");
+        String path = getURI().getString(FILE);
         if (path == null)
             path = "index.html";
         if (path.endsWith(".html")) {

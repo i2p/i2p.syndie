@@ -62,7 +62,7 @@ public class ChangePassPopup {
         
         l = new Label(s, SWT.SINGLE | SWT.WRAP);
         l.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
-        l.setText(_translationRegistry.getText("New passphrase (again):"));
+        l.setText(_translationRegistry.getText("New passphrase (again)") + ':');
         l.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
         final Text newPass2 = new Text(s, SWT.SINGLE | SWT.WRAP | SWT.PASSWORD | SWT.BORDER);
         newPass2.setText("");

@@ -213,7 +213,7 @@ public class ProfilePanel extends DesktopPanel implements Themeable, Translatabl
             _ui.debugMessage("North edge updated w/ new summary=" + buf.toString() + " and refs=" + refs);
             _refNodes = new ArrayList();
             if (refs.size() > 0) {
-                _refs.add(_translationRegistry.getText("* Forum notices and references:"));
+                _refs.add("* " + _translationRegistry.getText("Forum notices and references") + ':');
                 ReferenceNode.walk(refs, new ReferenceNode.Visitor() {
                     public void visit(ReferenceNode node, int depth, int siblingOrder) {
                         if (node.getURI() != null) {

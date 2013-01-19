@@ -246,6 +246,9 @@ public class ManageForumArchives extends BaseComponent implements Themeable, Tra
         _isPublic.setSelection(pub);
         _curItem = item;
     }
+
+    // to prevent tagging by xgettext
+    private static final String NAME = "name";
     
     private void loadData() {
         List pub = _manage.getPublicArchiveURIs();
@@ -289,7 +292,7 @@ public class ManageForumArchives extends BaseComponent implements Themeable, Tra
             SyndieURI uri = (SyndieURI)pub.get(i);
             String url = getURL(uri);
             if (pubURLs.contains(url)) { // not handled above
-                String name = uri.getString("name");
+                String name = uri.getString(NAME);
                 url = uri.getURL();
                 if (url == null) url = "";
                 boolean isPub = true;
@@ -301,7 +304,7 @@ public class ManageForumArchives extends BaseComponent implements Themeable, Tra
             SyndieURI uri = (SyndieURI)priv.get(i);
             String url = getURL(uri);
             if (privURLs.contains(url)) { // not handled above
-                String name = uri.getString("name");
+                String name = uri.getString(NAME);
                 url = uri.getURL();
                 if (url == null) url = "";
                 boolean isPub = false;
@@ -488,7 +491,7 @@ public class ManageForumArchives extends BaseComponent implements Themeable, Tra
         _colName.setText(registry.getText("Name"));
         _colType.setText(registry.getText("Type"));
         _colLocation.setText(registry.getText("Location"));
-        _colPublic.setText(registry.getText("Public?"));
+        _colPublic.setText(registry.getText("Public"));
 
         _isPublic.setText(registry.getText("Anyone can see this, not just authorized readers"));
 

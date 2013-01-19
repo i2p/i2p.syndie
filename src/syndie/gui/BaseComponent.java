@@ -32,6 +32,12 @@ public abstract class BaseComponent {
     protected String getText(String text) { return _translationRegistry.getText(text); }
 
     /**
+     *  Helper
+     *  @since 1.102b-9
+     */
+    protected String ngettext(String s, String p, int n) { return _translationRegistry.ngettext(s, p, n); }
+
+    /**
      *  Following all moved from BrowserTab for ease of use
      *  @since 1.102b-9
      */

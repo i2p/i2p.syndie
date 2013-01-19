@@ -276,7 +276,7 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
         if (HTTPServ.startFailed() && (HTTPServ.getStartFailedMessage() != null)) {
             MessageBox box = new MessageBox(getRoot().getShell(), SWT.ICON_ERROR | SWT.OK);
             box.setText(_translationRegistry.getText("Server failed"));
-            box.setMessage(_translationRegistry.getText("There was an error starting up the HTTP server: ") + HTTPServ.getStartFailedMessage());
+            box.setMessage(_translationRegistry.getText("There was an error starting up the HTTP server") + ": " + HTTPServ.getStartFailedMessage());
             box.open();
             HTTPServ.clearFailedMessage();
         }
@@ -357,7 +357,7 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
         
         Label l = new Label(shell, SWT.SINGLE);
         l.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        l.setText(_translationRegistry.getText("TCP port to listen on: "));
+        l.setText(_translationRegistry.getText("TCP port to listen on") + ": ");
         l.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
         
         final Text port = new Text(shell, SWT.SINGLE | SWT.BORDER);
@@ -381,7 +381,7 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
 
         l = new Label(shell, SWT.SINGLE);
         l.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        l.setText(_translationRegistry.getText("Minimum number of handlers: "));
+        l.setText(_translationRegistry.getText("Minimum number of handlers") + ": ");
         l.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
         
         final Spinner minListeners = new Spinner(shell, SWT.READ_ONLY | SWT.BORDER);
@@ -528,7 +528,7 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
                     public void run() {
                         MessageBox box = new MessageBox(getRoot().getShell(), SWT.ICON_INFORMATION | SWT.OK);
                         box.setText(_translationRegistry.getText("Import complete"));
-                        box.setMessage(_translationRegistry.getText("Messages imported successfully/total: ") + successful + "/" + total);
+                        box.setMessage(_translationRegistry.getText("Messages imported successfully/total") + ": " + successful + "/" + total);
                         box.open();
                         _import.setEnabled(true);
                         _importBrowse.setEnabled(true);
@@ -611,15 +611,15 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
     
     
     public void translate(TranslationRegistry registry) {
-        _importLabel.setText(registry.getText("Import: "));
-        _importFile.setText(registry.getText("individual message"));
-        _importBulk.setText(registry.getText("directory (recursively)"));
+        _importLabel.setText(registry.getText("Import") + ": ");
+        _importFile.setText(registry.getText("Individual message"));
+        _importBulk.setText(registry.getText("Directory"));
         _importBrowse.setText(registry.getText("Browse") + "...");
         _import.setText(registry.getText("Import"));
         //_tabbedUI.setText(registry.getText("Advanced: Display the tabbed UI"));
         _changePass.setText(registry.getText("Change Syndie instance passphrase"));
         _openLabel.setText(registry.getText("Open Syndie URI") + ':');
-        _sql.setText(registry.getText("Advanced: SQL interface"));
+        _sql.setText(registry.getText("Advanced SQL interface"));
         _open.setText(registry.getText("Open"));
         _switchLabel.setText(registry.getText("Log in to a different Syndie instance") + ':');
         _switchBrowse.setText(registry.getText("Browse") + "...");
@@ -628,7 +628,7 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
         _archiveMgr.setText(registry.getText("Archive manager"));
         _exit.setText(registry.getText("Exit"));
 
-        _httpservLabel.setText(registry.getText("Integrated HTTP-accessible archive server:"));
+        _httpservLabel.setText(registry.getText("Integrated HTTP-accessible archive server") + ':');
         _httpservOnStart.setText(registry.getText("Run on startup"));
         _httpservOptions.setText(registry.getText("Configure") + "...");
         

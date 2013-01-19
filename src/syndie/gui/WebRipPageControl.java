@@ -260,7 +260,7 @@ public class WebRipPageControl extends BaseComponent implements Translatable, Th
     private static final String DEFAULT_STATUS_INIT = _x("Step 1 of 6: Rip initialized");
     private static final String DEFAULT_STATUS_FETCHING_HTML = _x("Step 2 of 6: Fetching web page");
     private static final String DEFAULT_STATUS_HTML_FETCHED = _x("Step 3 of 6: Web page fetched");
-    private static final String DEFAULT_STATUS_FETCHING_ATTACHMENTS = _x("Step 4 of 6: Fetching attachments - ");
+    private static final String DEFAULT_STATUS_FETCHING_ATTACHMENTS = _x("Step 4 of 6: Fetching attachments");
     private static final String DEFAULT_STATUS_ATTACHMENTS_FETCHED = _x("Step 5 of 6: Attachments fetched");
     private static final String DEFAULT_STATUS_REWRITTEN = _x("Step 6 of 6: Web page rewritten");
     
@@ -358,7 +358,7 @@ public class WebRipPageControl extends BaseComponent implements Translatable, Th
     public void translate(TranslationRegistry registry) {
         _urlLabel.setText(registry.getText("Rip URL") + ':');
         _urlOptions.setText(registry.getText("Options") + "...");
-        _rip.setText(registry.getText("Rip!"));
+        _rip.setText(registry.getText("Rip"));
         _cancel.setText(registry.getText("Cancel"));
         _optionAllowFiles.setText(registry.getText("Import file attachments (dangerous!)"));
         _optionImages.setText(registry.getText("Attach images"));

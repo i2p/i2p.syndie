@@ -53,6 +53,10 @@ public class PageRendererTab extends BrowserTab implements Translatable, Themeab
         _renderer.renderPage(new PageRendererSourceMem(getBrowser().getClient(), getBrowser().getThemeRegistry(), msgInfo, pages, attachments, attachmentOrder, null), DUMMY_URI);
     }
     
+    // to prevent tagging by xgettext
+    private static final String NAME = "name";
+    private static final String BODY = "body";
+
     protected void initComponents() {
         getRoot().setLayout(new FillLayout());
         _renderer = ComponentBuilder.instance().createPageRenderer(getRoot(), true);
@@ -61,10 +65,10 @@ public class PageRendererTab extends BrowserTab implements Translatable, Themeab
         getBrowser().getThemeRegistry().register(this);
         getBrowser().getTranslationRegistry().register(this);
         
-        String name = getURI().getString("name");
+        String name = getURI().getString(NAME);
         if (name == null) name = "";
         String desc = name;
-        String body = getURI().getString("body");
+        String body = getURI().getString(BODY);
         show(body, name, desc);
     }
     

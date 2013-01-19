@@ -563,7 +563,7 @@ public class ExpirationManager extends BaseComponent implements Themeable, Trans
             
             _maxNumMsgsEnable = new Button(row, SWT.CHECK);
             _maxNumMsgsLabel = new Label(row, SWT.NONE);
-            _maxNumMsgsLabel.setText(_translationRegistry.getText("Max number of messages: "));
+            _maxNumMsgsLabel.setText(_translationRegistry.getText("Max number of messages") + ": ");
             _maxNumMsgsVal = new Text(row, SWT.SINGLE | SWT.BORDER);
             _maxNumMsgsVal.setTextLimit(7);
             
@@ -614,7 +614,7 @@ public class ExpirationManager extends BaseComponent implements Themeable, Trans
             row.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
             _maxSizeKBEnable = new Button(row, SWT.CHECK);
             _maxSizeKBLabel = new Label(row, SWT.NONE);
-            _maxSizeKBLabel.setText(_translationRegistry.getText("Max total size (KBytes): "));
+            _maxSizeKBLabel.setText(_translationRegistry.getText("Max total size (KBytes)") + ": ");
             _maxSizeKBVal  = new Text(row, SWT.SINGLE | SWT.BORDER);
             _maxSizeKBVal.setTextLimit(7);
 
@@ -665,7 +665,7 @@ public class ExpirationManager extends BaseComponent implements Themeable, Trans
             row.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
             _maxAgeDaysEnable = new Button(row, SWT.CHECK);
             _maxAgeDaysLabel = new Label(row, SWT.NONE);
-            _maxAgeDaysLabel.setText(_translationRegistry.getText("Max age (days): "));
+            _maxAgeDaysLabel.setText(_translationRegistry.getText("Max age (days)") + ": ");
             _maxAgeDaysVal = new Text(row, SWT.SINGLE | SWT.BORDER);
             _maxAgeDaysVal.setTextLimit(4);
             
