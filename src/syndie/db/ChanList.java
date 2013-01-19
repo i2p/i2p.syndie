@@ -15,7 +15,7 @@ import net.i2p.data.Hash;
 public class ChanList extends CommandImpl {
 
     public static String getHelp(String cmd) {
-        return "            : lists all channels";
+        return "          : lists all channels";
     }
 
     public DBClient runCommand(Opts args, UI ui, DBClient client) {

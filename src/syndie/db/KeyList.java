@@ -24,7 +24,7 @@ import syndie.data.NymKey;
 public class KeyList extends CommandImpl {
 
     public static String getHelp(String cmd) {
-        return "            : lists private keys";
+        return "           : lists private keys";
     }
 
     public DBClient runCommand(Opts args, UI ui, DBClient client) {

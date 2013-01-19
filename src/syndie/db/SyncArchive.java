@@ -313,7 +313,7 @@ public class SyncArchive {
         void importMissingReplyKey() {
             _completionTime = System.currentTimeMillis();
             _noReplyKey = true;
-            notifyUpdate(this);
+            setIsExecuting(false);
         }
         void importMissingReadKey() {
             _completionTime = System.currentTimeMillis();

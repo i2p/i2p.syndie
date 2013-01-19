@@ -28,6 +28,7 @@ import syndie.db.UI;
  */
 public abstract class BrowserTab extends BaseComponent implements Themeable {
     private final BrowserControl _browser;
+    /** this tab */
     private final CTabItem _item;
     private final SyndieURI _uri;
     private final Composite _root;
@@ -58,6 +59,8 @@ public abstract class BrowserTab extends BaseComponent implements Themeable {
     static final String TYPE_SYNC = "sync";
     static final String TYPE_HELP = "help";
     
+    private static final int MAX_TAB_NAME_LEN = 22;
+
     public static BrowserTab build(BrowserControl browser, SyndieURI uri, String suggestedName, String suggestedDescription) {
         // build a new browser tab based on the uri pointed to
         if (TYPE_POST.equalsIgnoreCase(uri.getType())) {
@@ -206,7 +209,12 @@ public abstract class BrowserTab extends BaseComponent implements Themeable {
             boolean disposed = ImageUtil.dispose(old);
             _ui.debugMessage("disposing old tab " + getClass().getName() + " image: " + disposed);
         }
-        _item.setText((null != getName() ? getName() : ""));
+        String title = getName();
+        if (title == null)
+            title = "";
+        else if (title.length() > MAX_TAB_NAME_LEN)
+            title = title.substring(0, MAX_TAB_NAME_LEN) + "...";
+        _item.setText(title);
         _item.setToolTipText((null != getDescription() ? getDescription() : ""));
         debug("reconfiguring item: complete");
     }

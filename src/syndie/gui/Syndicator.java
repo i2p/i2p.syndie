@@ -877,6 +877,8 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
             Long id = uri.getMessageId();
             if (id != null)
                 bf.append(' ').append(Constants.getDateTime(id.longValue()));
+            else
+                bf.append(' ').append(getText("forum info"));
             actionItem.setText(0, bf.toString());
 
             if (action.isScheduled()) {
@@ -1065,6 +1067,8 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
             Long id = uri.getMessageId();
             if (id != null)
                 bf.append(' ').append(Constants.getDateTime(id.longValue()));
+            else
+                bf.append(' ').append(getText("forum info"));
             actionItem.setText(0, bf.toString());
 
             if (action.isScheduled()) {
