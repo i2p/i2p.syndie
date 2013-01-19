@@ -1,6 +1,7 @@
 [I2P.Syndie]
 source_file = locale/messages_en.po
 source_lang = en
+type = PO
 
 [main]
 host = http://www.transifex.net
