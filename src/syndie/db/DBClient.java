@@ -377,8 +377,8 @@ public class DBClient {
             }
             stmt.execute();
             _log.logAlways(Log.WARN, "Database shutdown complete");
-            if (_log.shouldLog(Log.INFO))
-                _log.info("Database shutdown complete", new Exception("shutdown by"));
+            //if (_log.shouldLog(Log.INFO))
+            //    _log.info("Database shutdown complete", new Exception("shutdown by"));
             stmt.close();
             stmt = null;
             _con.close();
