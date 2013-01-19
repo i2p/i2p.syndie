@@ -1,12 +1,11 @@
-# I2P
-# Copyright (C) 2009 The I2P Project
-# This file is distributed under the same license as the i2psnark package.
+# Syndie
+# Copyright (C) 2013 The I2P Project
+# This file is distributed under the same license as the Syndie package.
 # To contribute translations, see http://www.i2p2.de/newdevelopers
-# foo <foo@bar>, 2009.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: I2P i2psnark\n"
+"Project-Id-Version: Syndie\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-01-19 15:04+0000\n"
 "PO-Revision-Date: 2010-06-15 14:09+0100\n"
