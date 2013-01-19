@@ -1149,25 +1149,25 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         sel = (cnt > 0 ? _pullNewAge.getSelectionIndex() : NEWAGE_DEFAULT_INDEX);
         _pullNewAge.removeAll();
         _pullNewAge.add(registry.getText("Whatever the archive advertises as new"));
-        _pullNewAge.add(registry.getText("1 week"));
-        _pullNewAge.add(registry.getText("1 month"));
-        _pullNewAge.add(registry.getText("3 months"));
-        _pullNewAge.add(registry.getText("6 months"));
-        _pullNewAge.add(registry.getText("1 year"));
-        _pullNewAge.add(registry.getText("3 years"));
-        _pullNewAge.add(registry.getText("5 years"));
-        _pullNewAge.add(registry.getText("10 years"));
+        _pullNewAge.add(registry.ngettext("{0} week", "{0} weeks", 1));
+        _pullNewAge.add(registry.ngettext("{0} month", "{0} months", 1));
+        _pullNewAge.add(registry.ngettext("{0} month", "{0} months", 3));
+        _pullNewAge.add(registry.ngettext("{0} month", "{0} months", 6));
+        _pullNewAge.add(registry.ngettext("{0} year", "{0} years", 1));
+        _pullNewAge.add(registry.ngettext("{0} year", "{0} years", 3));
+        _pullNewAge.add(registry.ngettext("{0} year", "{0} years", 5));
+        _pullNewAge.add(registry.ngettext("{0} year", "{0} years", 10));
         _pullNewAge.select(sel);
 
         cnt = _pushAge.getItemCount();
         sel = (cnt > 0 ? _pushAge.getSelectionIndex() : SENDAGE_DEFAULT_INDEX);
         _pushAge.removeAll();
-        _pushAge.add(registry.getText("1 week"));
-        _pushAge.add(registry.getText("2 weeks"));
-        _pushAge.add(registry.getText("1 month"));
-        _pushAge.add(registry.getText("2 months"));
-        _pushAge.add(registry.getText("6 months"));
-        _pushAge.add(registry.getText("1 year"));
+        _pushAge.add(registry.ngettext("{0} week", "{0} weeks", 1));
+        _pushAge.add(registry.ngettext("{0} week", "{0} weeks", 2));
+        _pushAge.add(registry.ngettext("{0} month", "{0} months", 1));
+        _pushAge.add(registry.ngettext("{0} month", "{0} months", 2));
+        _pushAge.add(registry.ngettext("{0} month", "{0} months", 6));
+        _pushAge.add(registry.ngettext("{0} year", "{0} years", 1));
         _pushAge.add(registry.getText("Unlimited"));
         _pushAge.select(sel);
         
@@ -1175,7 +1175,7 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         sel = (cnt > 0 ? _nextSyncDelay.getSelectionIndex() : SYNC_DELAY_DEFAULT_INDEX);
         _nextSyncDelay.removeAll();
         for (int i = 0; i < SYNC_DELAY.length; i++) {
-            _nextSyncDelay.add(registry.ngettext("{} hour", "{} hours", SYNC_DELAY[i]));
+            _nextSyncDelay.add(registry.ngettext("{0} hour", "{0} hours", SYNC_DELAY[i]));
         }
         _nextSyncDelay.select(sel);
     }

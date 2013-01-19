@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Syndie\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-01-19 15:04+0000\n"
+"POT-Creation-Date: 2013-01-19 16:20+0000\n"
 "PO-Revision-Date: 2010-06-15 14:09+0100\n"
 "Last-Translator: duck <duck@mail.i2p>\n"
 "Language-Team: duck <duck@mail.i2p>\n"
@@ -824,7 +824,7 @@ msgstr ""
 msgid "Configure"
 msgstr ""
 
-#: src/syndie/gui/Browser.java:2855 src/syndie/gui/MessageTree.java:948
+#: src/syndie/gui/Browser.java:2855 src/syndie/gui/MessageTree.java:952
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1054
 msgid "Advanced"
 msgstr ""
@@ -1228,7 +1228,7 @@ msgstr ""
 msgid "Bans"
 msgstr ""
 
-#: src/syndie/gui/ManageForum.java:1148 src/syndie/gui/MessageTree.java:2385
+#: src/syndie/gui/ManageForum.java:1148 src/syndie/gui/MessageTree.java:2389
 #: src/syndie/gui/ReferenceChooserSearch.java:168
 #: src/syndie/gui/ViewForum.java:845 src/syndie/gui/WebRipPostControl.java:209
 msgid "Tags"
@@ -1363,7 +1363,7 @@ msgid "Only authorized users can post or reply"
 msgstr ""
 
 #: src/syndie/gui/ManageForumAuthPost.java:409
-msgid "Anyone can reply to an authorised post"
+msgid "Anyone can reply to an authorized post"
 msgstr ""
 
 #: src/syndie/gui/ManageForumAuthPost.java:411
@@ -1574,7 +1574,7 @@ msgstr ""
 msgid "Not authorized"
 msgstr ""
 
-#: src/syndie/gui/MessageEditor.java:2469 src/syndie/gui/MessageTree.java:2382
+#: src/syndie/gui/MessageEditor.java:2469 src/syndie/gui/MessageTree.java:2386
 #: src/syndie/gui/MessageView.java:896
 #: src/syndie/gui/ReferenceChooserInfo.java:535
 #: src/syndie/gui/desktop/MessageEditorPanel.java:464
@@ -1877,254 +1877,244 @@ msgstr ""
 msgid "Error parsing date"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:742
+#. translators: you may use "Last {0} day" for the singular if that's better
+#: src/syndie/gui/MessageTree.java:743 src/syndie/gui/MessageTree.java:744
+#, java-format
 msgid "Last day"
-msgstr ""
+msgid_plural "Last {0} days"
+msgstr[0] ""
+msgstr[1] ""
 
-#: src/syndie/gui/MessageTree.java:743
-msgid "Last 2 days"
-msgstr ""
-
-#: src/syndie/gui/MessageTree.java:744
+#. translators: you may use "Last {0} week" for the singular if that's better
+#: src/syndie/gui/MessageTree.java:746 src/syndie/gui/MessageTree.java:747
+#, java-format
 msgid "Last week"
-msgstr ""
+msgid_plural "Last {0} weeks"
+msgstr[0] ""
+msgstr[1] ""
 
-#: src/syndie/gui/MessageTree.java:745
-msgid "Last 2 weeks"
-msgstr ""
-
-#: src/syndie/gui/MessageTree.java:746
-msgid "Last month"
-msgstr ""
-
-#: src/syndie/gui/MessageTree.java:747
-msgid "Last 2 months"
-msgstr ""
-
-#: src/syndie/gui/MessageTree.java:748
-msgid "Last 6 months"
-msgstr ""
-
-#: src/syndie/gui/MessageTree.java:749
-msgid "Last year"
-msgstr ""
-
-#: src/syndie/gui/MessageTree.java:750
-msgid "Last 3 years"
-msgstr ""
-
+#. translators: you may use "Last {0} month" for the singular if that's better
+#: src/syndie/gui/MessageTree.java:749 src/syndie/gui/MessageTree.java:750
 #: src/syndie/gui/MessageTree.java:751
-msgid "Last 5 years"
-msgstr ""
+#, java-format
+msgid "Last month"
+msgid_plural "Last {0} months"
+msgstr[0] ""
+msgstr[1] ""
 
-#: src/syndie/gui/MessageTree.java:752
-msgid "Last 10 years"
-msgstr ""
+#. translators: you may use "Last {0} year" for the singular if that's better
+#: src/syndie/gui/MessageTree.java:753 src/syndie/gui/MessageTree.java:754
+#: src/syndie/gui/MessageTree.java:755 src/syndie/gui/MessageTree.java:756
+#, java-format
+msgid "Last year"
+msgid_plural "Last {0} years"
+msgstr[0] ""
+msgstr[1] ""
 
-#: src/syndie/gui/MessageTree.java:770
+#: src/syndie/gui/MessageTree.java:774
 msgid "Any tags"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:946
+#: src/syndie/gui/MessageTree.java:950
 msgid "Filter"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:946
+#: src/syndie/gui/MessageTree.java:950
 msgid "Since"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:949
+#: src/syndie/gui/MessageTree.java:953
 msgid "Text"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:950
+#: src/syndie/gui/MessageTree.java:954
 msgid "Tag"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:951
+#: src/syndie/gui/MessageTree.java:955
 msgid "Unread only"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:952
+#: src/syndie/gui/MessageTree.java:956
 msgid "Search pages and subjects for the phrase"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:954
+#: src/syndie/gui/MessageTree.java:958
 msgid "All forums"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:955
+#: src/syndie/gui/MessageTree.java:959
 msgid "Bookmarked forums"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:956
+#: src/syndie/gui/MessageTree.java:960
 msgid "Specific forum"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:958
+#: src/syndie/gui/MessageTree.java:962
 msgid "Readable by: anyone"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:959
+#: src/syndie/gui/MessageTree.java:963
 msgid "Readable by: authorized readers"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:960
+#: src/syndie/gui/MessageTree.java:964
 msgid "Readable by: those with a passphrase"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:961
+#: src/syndie/gui/MessageTree.java:965
 msgid "Readable by: forum administrators"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:962
+#: src/syndie/gui/MessageTree.java:966
 msgid "Use local import date instead of (unreliable) message creation date"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:963
+#: src/syndie/gui/MessageTree.java:967
 msgid "Organize results in threads"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:964
+#: src/syndie/gui/MessageTree.java:968
 msgid "Show a preview of the selected message"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:965
+#: src/syndie/gui/MessageTree.java:969
 msgid "Mark messages read when opened"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:966
+#: src/syndie/gui/MessageTree.java:970
 msgid "Mark messages read when previewed"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:967
+#: src/syndie/gui/MessageTree.java:971
 msgid "Messages requiring a new passphrase"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:1547
+#: src/syndie/gui/MessageTree.java:1551
 msgid "Message filtering in progress"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:1650
+#: src/syndie/gui/MessageTree.java:1654
 msgid "No items to display"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:1703
+#: src/syndie/gui/MessageTree.java:1707
 msgid "Page"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:1952
+#: src/syndie/gui/MessageTree.java:1956
 msgid "agelocal"
 msgstr ""
 
 #. message is not locally known
-#: src/syndie/gui/MessageTree.java:1962
+#: src/syndie/gui/MessageTree.java:1966
 msgid "Message is not known locally"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2381
+#: src/syndie/gui/MessageTree.java:2385
 #: src/syndie/gui/ReferenceChooserInfo.java:534
 #: src/syndie/gui/desktop/ResumeablePanel.java:246
 msgid "Subject"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2383 src/syndie/gui/MessageView.java:897
+#: src/syndie/gui/MessageTree.java:2387 src/syndie/gui/MessageView.java:897
 #: src/syndie/gui/desktop/MessageEditorPanel.java:463
 #: src/syndie/gui/desktop/ResumeablePanel.java:244
 msgid "Forum"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2384 src/syndie/gui/MessageView.java:898
+#: src/syndie/gui/MessageTree.java:2388 src/syndie/gui/MessageView.java:898
 #: src/syndie/gui/ReferenceChooserInfo.java:536
 #: src/syndie/gui/desktop/ResumeablePanel.java:245
 msgid "Date"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2393
+#: src/syndie/gui/MessageTree.java:2397
 msgid "View the message"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2394
+#: src/syndie/gui/MessageTree.java:2398
 msgid "Reply to the message"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2395
+#: src/syndie/gui/MessageTree.java:2399
 msgid "View the forum's messages"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2396 src/syndie/gui/NymChannelTree.java:490
+#: src/syndie/gui/MessageTree.java:2400 src/syndie/gui/NymChannelTree.java:490
 msgid "View the forum's profile"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2397
+#: src/syndie/gui/MessageTree.java:2401
 msgid "View the author's blog"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2398
+#: src/syndie/gui/MessageTree.java:2402
 msgid "View the author's profile"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2399
+#: src/syndie/gui/MessageTree.java:2403
 msgid "Bookmark the forum"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2400
+#: src/syndie/gui/MessageTree.java:2404
 msgid "Bookmark the author"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2401
+#: src/syndie/gui/MessageTree.java:2405
 msgid "Expand the thread fully"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2402
+#: src/syndie/gui/MessageTree.java:2406
 msgid "Collapse the thread fully"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2403
+#: src/syndie/gui/MessageTree.java:2407
 msgid "Mark the message as read"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2404
+#: src/syndie/gui/MessageTree.java:2408
 msgid "Mark the thread as read"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2405
+#: src/syndie/gui/MessageTree.java:2409
 msgid "Mark the message as unread"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2406
+#: src/syndie/gui/MessageTree.java:2410
 msgid "Mark the forum as read"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2407
+#: src/syndie/gui/MessageTree.java:2411
 msgid "Delete the message locally"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2408
+#: src/syndie/gui/MessageTree.java:2412
 msgid "Cancel the message (tell others to delete it)"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2410
+#: src/syndie/gui/MessageTree.java:2414
 msgid "Mark Message Read"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2411
+#: src/syndie/gui/MessageTree.java:2415
 msgid "Mark Thread Read"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2412
+#: src/syndie/gui/MessageTree.java:2416
 msgid "Refresh"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2413
+#: src/syndie/gui/MessageTree.java:2417
 msgid "Expand Thread"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2414
+#: src/syndie/gui/MessageTree.java:2418
 msgid "Collapse Thread"
 msgstr ""
 
-#: src/syndie/gui/MessageTree.java:2416
+#: src/syndie/gui/MessageTree.java:2420
 msgid "Page size"
 msgstr ""
 
@@ -2934,55 +2924,44 @@ msgstr ""
 
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1152
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1165
-msgid "1 week"
-msgstr ""
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1166
+#, java-format
+msgid "{0} week"
+msgid_plural "{0} weeks"
+msgstr[0] ""
+msgstr[1] ""
 
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1153
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1167
-msgid "1 month"
-msgstr ""
-
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1154
-msgid "3 months"
-msgstr ""
-
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1155
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1167
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1168
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1169
-msgid "6 months"
-msgstr ""
+#, java-format
+msgid "{0} month"
+msgid_plural "{0} months"
+msgstr[0] ""
+msgstr[1] ""
 
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1156
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1170
-msgid "1 year"
-msgstr ""
-
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1157
-msgid "3 years"
-msgstr ""
-
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1158
-msgid "5 years"
-msgstr ""
-
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1159
-msgid "10 years"
-msgstr ""
-
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1166
-msgid "2 weeks"
-msgstr ""
-
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1168
-msgid "2 months"
-msgstr ""
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1170
+#, java-format
+msgid "{0} year"
+msgid_plural "{0} years"
+msgstr[0] ""
+msgstr[1] ""
 
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1171
 msgid "Unlimited"
 msgstr ""
 
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1178
-msgid "{} hour"
-msgid_plural "{} hours"
+#, java-format
+msgid "{0} hour"
+msgid_plural "{0} hours"
 msgstr[0] ""
 msgstr[1] ""
 
