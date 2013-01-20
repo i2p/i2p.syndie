@@ -93,7 +93,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
     
     private boolean _disposed;
     
-    private boolean _showActions;
+    private final boolean _showActions;
     
     private final Object _pullLock = new Object();
     private final Object _pushLock = new Object();
@@ -1158,7 +1158,9 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
             _colStatus.setText("");
             _colSummary.setText("");
             setMinWidth(_colName, "No archives defined - click 'Add archive' to add one", 0, 300);
-            _add.forceFocus();
+            if (_showActions) {
+                _add.forceFocus();
+            }
         }
         if (_showActions) {
             _add.setText(registry.getText("Add archive"));
