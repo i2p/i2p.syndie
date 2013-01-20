@@ -62,8 +62,11 @@ class HTMLStyleBuilder {
     /** fonts built for ranges that did not match up with the defaults */
     private List _customFonts;
 
-    /** light grey background for quotes */
-    private static Color _bgColorQuote = new Color(Display.getDefault(), 223, 223, 223);
+    /** light grey background for quotes
+     *  FIXME not configurable, themable, ...
+     */
+    //private static Color _bgColorQuote = new Color(Display.getDefault(), 223, 223, 223);
+    private static Color _bgColorQuote = new Color(Display.getDefault(), 233, 233, 233);
     
     private Map _customColors;
     
