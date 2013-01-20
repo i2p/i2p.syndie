@@ -18,24 +18,30 @@ import net.i2p.util.SecureFile;
 import syndie.Constants;
 import syndie.data.SyndieURI;
 
+/**
+ *  Fetcher threads
+ */
 class SyncInboundFetcher {
-    private SyncManager _manager;
-    private static Map _runnerToArchive = new HashMap();
-    private boolean _die;
+    private final SyncManager _manager;
+    private static final Map _runnerToArchive = new HashMap();
+    private volatile boolean _die;
+
+    private static final int THREADS = 3;
     
     public SyncInboundFetcher(SyncManager mgr) {
         _manager = mgr;
     }
     
     public void start() {
-        for (int i = 0; i < 3; i++) {
-            Thread t = new Thread(new Runner(), "InboundFetcher" + i);
+        for (int i = 0; i < THREADS; i++) {
+            Thread t = new Thread(new Runner(), "InboundFetcher" + (i+1) + '/' + THREADS);
             t.setDaemon(true);
             t.start();
         }
     }
 
     public void wakeUp() { synchronized (this) { notifyAll(); } }
+
     public void kill() { _die = true; wakeUp(); }
         
     private class Runner implements Runnable {

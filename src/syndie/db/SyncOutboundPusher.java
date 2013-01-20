@@ -24,24 +24,31 @@ import net.i2p.util.SimpleTimer2;
 import syndie.Constants;
 import syndie.data.SyndieURI;
 
+/**
+ *  Pusher threads
+ */
 public class SyncOutboundPusher {
-    private SyncManager _manager;
-    private static Map _runnerToArchive = new HashMap();
-    private boolean _die;
+    private final SyncManager _manager;
+    private static final Map _runnerToArchive = new HashMap();
+    private volatile boolean _die;
+    
+    /** pushes are bundled so we don't need as many threads as for pulls */
+    private static final int THREADS = 2;
     
     public SyncOutboundPusher(SyncManager mgr) {
         _manager = mgr;
     }
     
     public void start() {
-        for (int i = 0; i < 3; i++) {
-            Thread t = new Thread(new Runner(), "OutboundPusher" + i);
+        for (int i = 0; i < THREADS; i++) {
+            Thread t = new Thread(new Runner(), "OutboundPusher" + (i+1) + '/' + THREADS);
             t.setDaemon(true);
             t.start();
         }
     }
     
     public void wakeUp() { synchronized (this) { notifyAll(); } }
+
     public void kill() { _die = true; wakeUp(); }
     
     private class Runner implements Runnable {
