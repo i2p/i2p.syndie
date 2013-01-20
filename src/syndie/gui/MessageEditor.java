@@ -1892,7 +1892,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _refEditorTabRoot = new Composite(_pageTabs, SWT.NONE);
         _refEditorTabRoot.setLayout(new FillLayout());
         _refEditorTab.setControl(_refEditorTabRoot);
-        _refEditorTab.setImage(ImageUtil.ICON_REF_ARCHIVE);
+        _refEditorTab.setImage(ImageUtil.ICON_LINK_END);
         _refEditor = ComponentBuilder.instance().createMessageReferencesEditor(_refEditorTabRoot);
         
         _threadTab = new CTabItem(_pageTabs, SWT.NONE);

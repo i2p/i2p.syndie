@@ -299,7 +299,7 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
             _tabRoots[off] = new Composite(_tabFolder, SWT.NONE);
             _tabs[off].setControl(_tabRoots[off]);
             _tabs[off].setText(_translationRegistry.getText("References"));
-            _tabs[off].setImage(ImageUtil.ICON_REF_ARCHIVE);
+            _tabs[off].setImage(ImageUtil.ICON_LINK_END);
             _tabRoots[off].setLayout(new FillLayout());
             _refTree = ComponentBuilder.instance().createManageReferenceChooser(_tabRoots[off], false);
             _refTree.setReferences(refs);
