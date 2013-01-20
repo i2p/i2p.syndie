@@ -95,6 +95,8 @@ import syndie.db.UI;
 /**
  *  Contains all the tabs on the post page. The attachments and refs and thread tabs are here,
  *  and the page tabs are in PageEditor.
+ *
+ *  Parent is a MessageEditorTab.
  */
 public class MessageEditor extends BaseComponent implements Themeable, Translatable, ImageBuilderPopup.ImageBuilderSource {
     private final DataCallback _dataCallback;
@@ -103,6 +105,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     private final BookmarkControl _bookmarkControl;
     private final URIControl _uriControl;
     private final Composite _parent;
+    private final BrowserTab _parentTab;
     private Composite _root;
     private Composite _toolbar;
     private Composite _headers;
@@ -210,8 +213,16 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     private LinkBuilderPopup _linkPopup;
     private LinkBuilderPopup _refAddPopup;
     
-    /** Creates a new instance of MessageEditorNew */
-    public MessageEditor(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, DataCallback callback, NavigationControl navControl, BookmarkControl bookmarkControl, BanControl banControl, URIControl uriControl, Composite parent, LocalMessageCallback lsnr, boolean buildToolbar, boolean allowPreview, boolean showActions) {
+    /**
+     * Creates a new instance of MessageEditorNew
+     *
+     * @param tab may be null
+     */
+    public MessageEditor(DBClient client, UI ui, ThemeRegistry themes,
+                         TranslationRegistry trans, DataCallback callback, NavigationControl navControl,
+                         BookmarkControl bookmarkControl, BanControl banControl, URIControl uriControl,
+                         Composite parent, LocalMessageCallback lsnr, boolean buildToolbar,
+                         boolean allowPreview, boolean showActions, BrowserTab tab) {
         super(client, ui, themes, trans);
         _dataCallback = callback;
         _navControl = navControl;
@@ -219,6 +230,8 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _bookmarkControl = bookmarkControl;
         _uriControl = uriControl;
         _parent = parent;
+        // to set the subject
+        _parentTab = tab;
         _pageEditors = new ArrayList(1);
         _pageTypes = new ArrayList();
         _pageTitles = new ArrayList();
@@ -230,12 +243,9 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _parents = new ArrayList();
         //_signAsHashes = new ArrayList();
         _editorStatusListeners = new ArrayList();
-        _modifiedSinceOpen = false;
-        _modifiedSinceSave = false;
         _buildToolbar = buildToolbar;
         _allowPreview = allowPreview;
         _showActions = showActions;
-        _enableSave = false;
         _postponeId = -1;
         _postponeVersion = -1;
         Properties prefs = _client.getNymPrefs();
@@ -250,8 +260,6 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _listeners = new ArrayList();
         if (lsnr != null) _listeners.add(lsnr);
         initComponents();
-        _modifiedSinceOpen = false;
-        _modifiedSinceSave = false;
     }
     
     public void addListener(LocalMessageCallback lsnr) { _listeners.add(lsnr); }
@@ -505,6 +513,14 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             MessageBox confirm = new MessageBox(_root.getShell(), SWT.ICON_QUESTION | SWT.YES | SWT.NO);
             confirm.setText(_translationRegistry.getText("Post empty message?"));
             confirm.setMessage(_translationRegistry.getText("Do you really want to post this empty message?"));
+            
+            if (confirm.open() == SWT.NO)
+                return;
+        }
+        if (_subject.getText().length() <= 0) {
+            MessageBox confirm = new MessageBox(_root.getShell(), SWT.ICON_QUESTION | SWT.YES | SWT.NO);
+            confirm.setText(_translationRegistry.getText("No subject"));
+            confirm.setMessage(_translationRegistry.getText("Do you really want to post a message without a subject?"));
             
             if (confirm.open() == SWT.NO)
                 return;
@@ -969,6 +985,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     private static final String SER_TAGS = "tags";
     private static final String SER_PRIV = "privacy";
     private static final String SER_EXPIRATION = "expiration";
+
     private Properties serializeConfig() {
         Properties rv = new Properties();
         if (_author == null)
@@ -2016,6 +2033,12 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         
         _subject = new Text(header, SWT.BORDER | SWT.SINGLE);
         _subject.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 4, 1));
+        _subject.addModifyListener(new ModifyListener() {
+            public void modifyText(ModifyEvent modifyEvent) {
+                if (_parentTab != null)
+                    _parentTab.setName(_subject.getText());
+            }
+        });
         
         _tagLabel = new Label(header, SWT.NONE);
         _tagLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));

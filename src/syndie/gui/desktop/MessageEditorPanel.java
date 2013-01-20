@@ -99,7 +99,7 @@ public class MessageEditorPanel extends DesktopPanel implements LocalMessageCall
         
         Composite root = getRoot();
         root.setLayout(new FillLayout());
-        _editor = new MessageEditor(_client, _ui, _themeRegistry, _translationRegistry, _desktop.getDataCallback(), _desktop.getNavControl(), _desktop.getBookmarkControl(), _desktop.getBanControl(), URIHelper.instance(), root, this, false, false, false);
+        _editor = new MessageEditor(_client, _ui, _themeRegistry, _translationRegistry, _desktop.getDataCallback(), _desktop.getNavControl(), _desktop.getBookmarkControl(), _desktop.getBanControl(), URIHelper.instance(), root, this, false, false, false, null);
         _editor.addStatusListener(this);
 
         if ( (_postponeId > 0) && (_postponeVersion >= 0) ) {

@@ -8,18 +8,20 @@ import org.eclipse.swt.widgets.MessageBox;
 import syndie.data.SyndieURI;
 
 /**
- *
+ *  Contains a MessageEditor
  */
 public class MessageEditorTab extends BrowserTab implements LocalMessageCallback, Translatable {
     private MessageEditor _editor;
     private Hash _forum;
     private SyndieURI _parent;
     private boolean _asReply;
+    private String _name;
     
     public MessageEditorTab(BrowserControl browser, SyndieURI uri) {
         super(browser, uri);
         _editor.configurationComplete(getURI());
     }
+
     public MessageEditorTab(BrowserControl browser, SyndieURI uri, Hash forum, SyndieURI parent, boolean asReply) {
         super(browser, uri);
         _forum = forum;
@@ -37,7 +39,11 @@ public class MessageEditorTab extends BrowserTab implements LocalMessageCallback
     
     protected void initComponents() {
         getRoot().setLayout(new FillLayout());
-        _editor = new MessageEditor(getBrowser().getClient(), getBrowser().getUI(), getBrowser().getThemeRegistry(), getBrowser().getTranslationRegistry(), getBrowser(), getBrowser().getNavControl(), getBrowser(), getBrowser(), URIHelper.instance(), getRoot(), this, true, true, true);
+        _editor = new MessageEditor(getBrowser().getClient(), getBrowser().getUI(), getBrowser().getThemeRegistry(),
+                                    getBrowser().getTranslationRegistry(), getBrowser(), getBrowser().getNavControl(),
+                                    getBrowser(), getBrowser(), URIHelper.instance(),
+                                    getRoot(), this, true,
+                                    true, true, this);
         
         SyndieURI uri = getURI();
         Long postponeId = uri.getLong("postponeid");
@@ -108,8 +114,31 @@ public class MessageEditorTab extends BrowserTab implements LocalMessageCallback
     
     
     public Image getIcon() { return ImageUtil.ICON_TAB_PAGE; }
-    public String getName() { return getBrowser().getTranslationRegistry().getText("Post"); }
-    public String getDescription() { return getBrowser().getTranslationRegistry().getText("Post a new message"); }
+
+    public String getName() {
+        String post = getText("Post");
+        if (_name != null && _name.length() > 0)
+            post = post + ": " + _name;
+        return post;
+    }
+
+    /** 
+     *  For the MessageEditor to set the subject to the tab
+     *
+     *  @since 1.102b-10
+     */
+    @Override
+    public void setName(String name) {
+        _name = name;
+        reconfigItem();
+    }
+
+    public String getDescription() {
+        String post = getText("Post a new message");
+        if (_name != null && _name.length() > 0)
+            post = post + ": " + _name;
+        return post;
+    }
     
     public boolean canShow(SyndieURI uri) {
         if (uri == null) return false;

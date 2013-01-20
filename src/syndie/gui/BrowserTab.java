@@ -229,7 +229,17 @@ public abstract class BrowserTab extends BaseComponent implements Themeable {
     /** this is the tooltip for the tab, override with a translated string */
     public String getDescription() { return getURI().toString(); }
 
+    /** override with the real name */
     public String getName() { return "tab"; }
+
+    /** 
+     *  Override if you wish to allow others to change your name.
+     *  Does nothing by default.
+     *  Overriders should call reconfigItem()
+     *
+     *  @since 1.102b-10
+     */
+    public void setName(String name) {}
 
     /** this is the icon for the tab, default null, override with an icon */
     public Image getIcon() { return null; }

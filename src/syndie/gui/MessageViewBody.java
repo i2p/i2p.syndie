@@ -228,7 +228,7 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
             if ( (title != null) && (title.trim().length() > 0) ) 
                 _tabs[i].setText(title);
             else
-                _tabs[i].setText(_translationRegistry.getText("Page ") + (i+1));
+                _tabs[i].setText(_translationRegistry.getText("Page") + ' ' + (i+1));
             _tabs[i].setImage(ImageUtil.ICON_MSG_TYPE_NORMAL);
             
             _tabRoots[i].setLayout(new FillLayout());
