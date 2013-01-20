@@ -3,8 +3,10 @@ package syndie.db;
 import java.io.File;
 import java.sql.SQLException;
 import java.util.*;
+
 import net.i2p.I2PAppContext;
 import net.i2p.data.Hash;
+import net.i2p.util.SecureFile;
 
 /**
  *CLI messagelist
@@ -37,7 +39,7 @@ public class MessageList extends CommandImpl {
         try {
             if (args.dbOptsSpecified()) {
                 if (client == null)
-                    client = new DBClient(I2PAppContext.getGlobalContext(), new File(TextEngine.getRootPath()));
+                    client = new DBClient(I2PAppContext.getGlobalContext(), new SecureFile(TextEngine.getRootPath()));
                 else
                     client.close();
                 client.connect(args.getOptValue("db"));

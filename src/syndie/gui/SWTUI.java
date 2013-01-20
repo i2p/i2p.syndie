@@ -3,7 +3,10 @@ package syndie.gui;
 import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
+
 import net.i2p.I2PAppContext;
+import net.i2p.util.SecureFile;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.events.ShellListener;
@@ -15,6 +18,7 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
+
 import syndie.data.Timer;
 import syndie.db.DBClient;
 import syndie.db.TextEngine;
@@ -72,17 +76,38 @@ public class SWTUI {
         if (args.length > 0 && args[0] != null && !args[0].startsWith("-")) 
             root = args[0];
         
-        File rootFile = new File(root);
-        if (rootFile.exists() && !rootFile.isDirectory()) {
+        File rootFile = new SecureFile(root);
+        // create it here, as Splash will do mkdirs() and it won't set the
+        // permissions right
+        rootFile.mkdirs();
+        if (!rootFile.exists()) {
+            System.err.println("Cannot create Syndie data directory: " + rootFile);
+            System.exit(-1);
+        }
+        if (!rootFile.isDirectory()) {
             System.err.println("Syndie data directory is not a directory: " + rootFile);
             System.exit(-1);
         }
         
+        // Debug, wait a few seconds
+        String wait = System.getProperty("SWT_WAIT");
+        if (wait != null) {
+            try {
+                int secs = Integer.parseInt(wait);
+                System.out.println("Waiting " + secs + " for debugger...");
+                Thread.sleep(secs * 1000);
+                System.out.println("Proceeding...");
+            } catch (NumberFormatException nfe) {
+                System.out.println("Bad time " + wait);
+            } catch (InterruptedException ie) {
+            }
+        }
+
         // this way the logs won't go to ./logs/log-#.txt (i2p's default)
         // (this has to be set before the I2PAppContext instantiates the LogManager)
         System.setProperty("loggerFilenameOverride", root + "/logs/syndie-log-#.txt");
         StartupListener lsnr = new StartupListener();
-        DBClient client = new DBClient(I2PAppContext.getGlobalContext(), new File(root));
+        DBClient client = new DBClient(I2PAppContext.getGlobalContext(), rootFile);
         Splash.show(d, client.getTempDir());
         final Browser browser = new Browser(client);
         long now = System.currentTimeMillis();

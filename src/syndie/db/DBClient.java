@@ -31,6 +31,7 @@ import net.i2p.data.SigningPublicKey;
 import net.i2p.data.Signature;
 import net.i2p.data.Hash;
 import net.i2p.util.Log;
+import net.i2p.util.SecureFile;
 import net.i2p.util.SecureFileOutputStream;
 import net.i2p.util.SimpleTimer2;
 
@@ -112,6 +113,9 @@ public class DBClient {
     
     private ExpireEvent _expireEvent;
         
+    /**
+     *  @param rootDir should be a SecureFile
+     */
     public DBClient(I2PAppContext ctx, File rootDir) {
         _context = ctx;
         // we are probably safe with the small exponent size, but asym 
@@ -126,7 +130,7 @@ public class DBClient {
     }
     
     public void restart(String rootDir) {
-        _rootDir = new File(rootDir);
+        _rootDir = new SecureFile(rootDir);
         _shutdownInProgress = false;
         disconnect();
     }
@@ -330,7 +334,7 @@ public class DBClient {
     public long getLoggedInNymId() { return _nymId; }
     
     public File getRootDir() { return _rootDir; }
-    public File getTempDir() { return new File(_rootDir, "tmp"); }
+    public File getTempDir() { return new SecureFile(_rootDir, "tmp"); }
 
     /** used for locally generated messages */
     public File getOutboundDir() { return new File(_rootDir, "outbound"); }
@@ -564,7 +568,7 @@ public class DBClient {
     }
     
     public static void main(String args[]) {
-        DBClient client = new DBClient(I2PAppContext.getGlobalContext(), new File(TextEngine.getRootPath()));
+        DBClient client = new DBClient(I2PAppContext.getGlobalContext(), new SecureFile(TextEngine.getRootPath()));
         try {
             client.connect("jdbc:hsqldb:file:/tmp/testSynDB;hsqldb.nio_data_file=false");
             client.close();

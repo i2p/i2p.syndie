@@ -19,6 +19,7 @@ import net.i2p.data.SigningPrivateKey;
 import net.i2p.data.SigningPublicKey;
 import net.i2p.data.Signature;
 import net.i2p.data.Hash;
+import net.i2p.util.SecureFile;
 import net.i2p.util.SecureFileOutputStream;
 
 import syndie.Constants;
@@ -97,7 +98,7 @@ public class MessageGen extends CommandImpl {
             long nymId = -1;
             if (args.dbOptsSpecified()) {
                 if (client == null)
-                    client = new DBClient(I2PAppContext.getGlobalContext(), new File(TextEngine.getRootPath()));
+                    client = new DBClient(I2PAppContext.getGlobalContext(), new SecureFile(TextEngine.getRootPath()));
                 else
                     client.close();
                 nymId = client.connect(args.getOptValue("db"), args.getOptValue("login"), args.getOptValue("pass"));

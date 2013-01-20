@@ -1109,7 +1109,7 @@ public class TextEngine {
                 if (db == null)
                     db = getDefaultURL();
                 if (client == null)
-                    client = new DBClient(I2PAppContext.getGlobalContext(), new File(_rootFile));
+                    client = new DBClient(I2PAppContext.getGlobalContext(), new SecureFile(_rootFile));
                 client.restore(ui, in, db);
                 return true;
             } else {

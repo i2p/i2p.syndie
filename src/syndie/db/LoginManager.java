@@ -77,7 +77,7 @@ public class LoginManager extends CommandImpl {
                     String root = args.getOptValue("root");
                     if (root == null)
                         root = TextEngine.getRootPath();
-                    client = new DBClient(I2PAppContext.getGlobalContext(), new File(root));
+                    client = new DBClient(I2PAppContext.getGlobalContext(), new SecureFile(root));
                     client.connect(args.getOptValue("db"));
                 } else {
                     //client.close();
@@ -262,7 +262,7 @@ public class LoginManager extends CommandImpl {
 
         DBClient client = null;
         try {
-            client = new DBClient(I2PAppContext.getGlobalContext(), new File(TextEngine.getRootPath()));
+            client = new DBClient(I2PAppContext.getGlobalContext(), new SecureFile(TextEngine.getRootPath()));
             client.connect(args[1]);
             long nymId = client.register(args[2], args[3], args[4]);
             if (DBClient.NYM_ID_LOGIN_ALREADY_EXISTS == nymId)

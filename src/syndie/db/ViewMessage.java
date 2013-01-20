@@ -51,7 +51,7 @@ public class ViewMessage extends CommandImpl {
             long nymId = -1;
             if (args.dbOptsSpecified()) {
                 if (client == null)
-                    client = new DBClient(I2PAppContext.getGlobalContext(), new File(TextEngine.getRootPath()));
+                    client = new DBClient(I2PAppContext.getGlobalContext(), new SecureFile(TextEngine.getRootPath()));
                 else
                     client.close();
                 nymId = client.connect(args.getOptValue("db"), args.getOptValue("login"), args.getOptValue("pass"));

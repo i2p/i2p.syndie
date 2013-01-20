@@ -15,6 +15,7 @@ import net.i2p.data.Hash;
 import net.i2p.data.SessionKey;
 import net.i2p.data.Signature;
 import net.i2p.data.SigningPublicKey;
+import net.i2p.util.SecureFile;
 
 import syndie.Constants;
 import syndie.data.Enclosure;
@@ -78,7 +79,7 @@ public class Importer extends CommandImpl {
             long nymId = -1;
             if (args.dbOptsSpecified()) {
                 if (client == null)
-                    client = new DBClient(I2PAppContext.getGlobalContext(), new File(TextEngine.getRootPath()));
+                    client = new DBClient(I2PAppContext.getGlobalContext(), new SecureFile(TextEngine.getRootPath()));
                 else
                     client.close();
                 client.connect(args.getOptValue("db"));
@@ -148,7 +149,7 @@ public class Importer extends CommandImpl {
             throw new RuntimeException("Usage: Importer $dbURL $login $password $filenameToImport");
         DBClient client = null;
         try {
-            client = new DBClient(I2PAppContext.getGlobalContext(), new File(TextEngine.getRootPath()));
+            client = new DBClient(I2PAppContext.getGlobalContext(), new SecureFile(TextEngine.getRootPath()));
             client.connect(args[0]);
             long nymId = client.getNymId(args[1], args[2]);
             if (DBClient.NYM_ID_LOGIN_UNKNOWN == nymId)
