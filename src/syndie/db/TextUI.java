@@ -64,6 +64,7 @@ public class TextUI implements UI {
     private String readLine() {
         if (!_readStdin) throw new IllegalStateException("no stdin");
         try {
+            // insertMessage() gets stuck here
             return _in.readLine();
         } catch (IOException ioe) {
             errorMessage("Error reading STDIN", ioe);
@@ -93,6 +94,7 @@ public class TextUI implements UI {
                     }
                 } else {
                     if (_insertedCommands.size() == 0) {
+                        // insertMessage() gets stuck here
                         line = readLine(); //DataHelper.readLine(System.in);
                         if ( (line != null) && (!line.startsWith("#")) )
                             debugMessage("command line read [" + line + "]");
@@ -251,6 +253,11 @@ public class TextUI implements UI {
                 readStdin = false;
             else if (!args[i].startsWith("-"))
                 rootDir = args[i];
+        }
+        if (readStdin) {
+            // injectMessage() gets stuck in readLine()
+            statusMessage("Warning, interactive CLI will interfere with bulkimport if running httpserv");
+            statusMessage("Run with --nostdin to disable intactive CLI");
         }
         
         // this way the logs won't go to ./logs/log-#.txt (i2p's default)
