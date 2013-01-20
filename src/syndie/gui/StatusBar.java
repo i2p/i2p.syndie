@@ -314,7 +314,9 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
     public void refreshDisplay(final boolean onlineStateOnly) {
         if (!_enableRefresh) return;
         //_ui.debugMessage("statusbar async queue dorefreshdisplay", new Exception());
-        _root.getDisplay().asyncExec(new Runnable() { public void run() { doRefreshDisplay(onlineStateOnly); } });
+        _root.getDisplay().asyncExec(new Runnable() {
+            public void run() { doRefreshDisplay(onlineStateOnly); }
+        });
     }
 
     public void setEnableRefresh(boolean enable) {
@@ -333,10 +335,15 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         if (_syncNow) return; // don't update the status details during a refresh
        
         if (!_enableRefresh) return;
+        // 1 (threaded)
         refreshNewForums();
+        // 2 (threaded)
         calcUnread();
+        // 3
         int pbe = refreshPBE();
+        // 4
         String priv = refreshPrivateMessages();
+        // 5
         int postpone = refreshPostponed();
         _ui.debugMessage("statusbar dorefreshdisplay all refreshes done");
         
@@ -409,6 +416,9 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
     
     private boolean _unreadCalcInProgress = false;
 
+    /**
+     *  Threaded to JobRunner and then back to UI thread
+     */
     private void calcUnread() {
         _ui.debugMessage("statusbar calcUnread sync wait");
         synchronized (StatusBar.this) {
@@ -418,10 +428,10 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
             }
             _unreadCalcInProgress = true;
         }
-        _ui.debugMessage("statusbar calcUnread begin");
         final SyndieURI uri = _uriControl.createHighlightWatchedURI(_client, true, true, MessageTree.shouldUseImportDate(_client));
         JobRunner.instance().enqueue(new Runnable() {
             public void run() {
+                _ui.debugMessage("statusbar calcUnread begin");
                 ThreadAccumulatorJWZ acc = new ThreadAccumulatorJWZ(_client, _ui);
                 acc.setFilter(uri);
                 acc.gatherThreads();
@@ -445,12 +455,18 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
                     }
                 });
             }
+
+            @Override
+            public String toString() { return "CalcUnread"; }
         });
     }
     
     /** set set of watched forums has changed */
     public void watchesUpdated() { calcUnread(); }
     
+    /**
+     *  UI thread
+     */
     private void renderUnread(Map sortedForums, int threads) {
         MenuItem items[] = _unreadMenu.getItems();
         for (int i = 0; i < items.length; i++)
@@ -719,7 +735,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
             if (_newForumCountLock.getAndSet(true))
                 return;
             try {
-                final Map<String, Long> forums = generateMessageCounts();
+                final Map<String, ChannelData> forums = generateMessageCounts();
                 Display.getDefault().asyncExec(new Runnable() {
                     public void run() {
                         refreshNewForums(forums);
@@ -729,6 +745,19 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
                 _newForumCountLock.set(false);
             }
         }
+
+        @Override
+        public String toString() { return "NewForumCounter"; }
+    }
+
+
+    /** temp for gathering channel stuff in JobRunner thread, then passing to UI thread */
+    private static class ChannelData {
+        private final long id;
+        private final Hash hash;
+        public ChannelData(long id, Hash hash) {
+            this.id = id; this.hash = hash;
+        }
     }
 
     /**
@@ -736,16 +765,17 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
      *
      *  @param forums sorted Map of formatted channel name, including message count, to channel ID
      */
-    private void refreshNewForums(Map<String, Long> forums) {
+    private void refreshNewForums(Map<String, ChannelData> forums) {
         MenuItem items[] = _newForumMenu.getItems();
         for (int i = 0; i < items.length; i++)
             items[i].dispose();
 
-        for (Map.Entry<String, Long> e : forums.entrySet()) {
+        for (Map.Entry<String, ChannelData> e : forums.entrySet()) {
             String name = e.getKey();
-            Long channelId = e.getValue();
+            ChannelData data = e.getValue();
+            long channelId = data.id;
             //ChannelInfo info = _browser.getClient().getChannel(channelId.longValue());
-            Hash channelHash = _client.getChannelHash(channelId.longValue());
+            Hash channelHash = data.hash;
             if (channelHash == null) {
                 _ui.debugMessage("refreshing new forums, channelId " + channelId + " is not known?");
                 continue;
@@ -782,9 +812,9 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
      *
      *  @return new forums, sorted Map of formatted channel name, including message count, to channel ID
      */
-    private Map<String, Long> generateMessageCounts() {
+    private Map<String, ChannelData> generateMessageCounts() {
         _ui.debugMessage("statusbar refreshnewforums start");
-        Map<String, Long> rv = new TreeMap(Collator.getInstance());
+        Map<String, ChannelData> rv = new TreeMap(Collator.getInstance());
         List channelIds = _client.getNewChannelIds();
         // 30 ms per loop
         for (int i = 0; i < channelIds.size(); i++) {
@@ -807,7 +837,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
             String name = _client.getChannelName(channelId.longValue()); //info.getName();
             buf.append(UIUtil.displayName(name, channelHash));
             buf.append(" (").append(msgs).append(')');
-            rv.put(buf.toString(), channelId);
+            rv.put(buf.toString(), new ChannelData(channelId, channelHash));
         }
         
         _ui.debugMessage("statusbar refreshnewforums end");

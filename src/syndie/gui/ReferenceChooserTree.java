@@ -64,12 +64,13 @@ import syndie.db.UI;
  *   - $archive|$ban|$bookmark
  */
 public class ReferenceChooserTree extends BaseComponent implements Translatable, Themeable, DBClient.WatchEventListener {
+    /** unset, always null? */
     protected BanControl _dataControl;
-    protected NavigationControl _navControl;
-    protected URIControl _uriControl;
-    private Composite _parent;
+    protected final NavigationControl _navControl;
+    protected final URIControl _uriControl;
+    private final Composite _parent;
     /** list of NymReferenceNode instances for the roots of the reference trees */
-    private ArrayList _nymRefs;
+    private final ArrayList _nymRefs;
     /** true during nymRef rebuild */
     private volatile boolean _rebuilding;
     /** true if viewOnStartup was called before rebuilding was complete */
@@ -77,8 +78,8 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
     /** organizes the channels the nym can post to or manage */
     private DBClient.ChannelCollector _nymChannels;
     /** list of ReferenceNode instances matching the search criteria */
-    private ArrayList _searchResults;
-    private Map _watchedItemToWatchedChannel;
+    private final ArrayList _searchResults;
+    private final Map _watchedItemToWatchedChannel;
     
     private Composite _root;
     private Tree _tree;
@@ -89,10 +90,10 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
     
     private TreeItem _bookmarkRoot;
     /** map of TreeItem to NymReferenceNode */
-    private Map _bookmarkNodes;
+    private final Map _bookmarkNodes;
     private TreeItem _postRoot;
     /** map of TreeItem to ChannelInfo */
-    private Map _postChannels;
+    private final Map _postChannels;
     private TreeItem _manageRoot;
     /** map of TreeItem to ChannelInfo */
     private Map _manageChannels;
@@ -108,12 +109,15 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
     public ReferenceChooserTree(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl nav, URIControl uriControl, Composite parent, ChoiceListener lsnr, AcceptanceListener accept) {
         this(client, ui, themes, trans, nav, uriControl, parent, lsnr, accept, false, true, null);
     }
+
     public ReferenceChooserTree(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl nav, URIControl uriControl, Composite parent, ChoiceListener lsnr, AcceptanceListener accept, boolean chooseAllStartupItems, boolean showSearchList) {
         this(client, ui, themes, trans, nav, uriControl, parent, lsnr, accept, chooseAllStartupItems, showSearchList, null);
     }    
+
     public ReferenceChooserTree(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl nav, URIControl uriControl, Composite parent, ChoiceListener lsnr, AcceptanceListener accept, Timer timer) {
         this(client, ui, themes, trans, nav, uriControl, parent, lsnr, accept, false, true, timer);
     }
+
     public ReferenceChooserTree(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl nav, URIControl uriControl, Composite parent, ChoiceListener lsnr, AcceptanceListener accept, boolean chooseAllStartupItems, boolean showSearchList, Timer timer) {
         super(client, ui, themes, trans);
         _navControl = nav;
@@ -133,7 +137,9 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
     }
 
     DBClient getClient() { return _client; }
+
     public Control getControl() { return _root; }
+
     /**
      * update the search results to display.  this then redraws the seach result entry in the
      * swt display thread.
@@ -275,10 +281,12 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
         JobRunner.instance().enqueue(new Runnable() {
             public void run() {
                 refetchNymChannels();
+                final ArrayList<ChannelData> minfos = collectManageable();
+                final ArrayList<ChannelData> pinfos = collectPostable();
                 Display.getDefault().asyncExec(new Runnable() {
                    public void run() {
-                       redrawPostable();
-                       redrawManageable();
+                       redrawManageable(minfos);
+                       redrawPostable(pinfos);
                        redrawSearchResults(false);
                    } 
                 });
@@ -446,10 +454,12 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
                 JobRunner.instance().enqueue(new Runnable() {
                     public void run() {
                         refetchNymChannels();
+                        final ArrayList<ChannelData> minfos = collectManageable();
+                        final ArrayList<ChannelData> pinfos = collectPostable();
                         Display.getDefault().asyncExec(new Runnable() {
                            public void run() {
-                               redrawPostable();
-                               redrawManageable();
+                               redrawManageable(minfos);
+                               redrawPostable(pinfos);
                                redrawSearchResults(false);
                                rebuildWatched();
                            } 
@@ -699,76 +709,117 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
         _nymChannels = _client.getNymChannels(); //_client.getChannels(true, true, true, true);
     }
 
+    /** temp for gathering channel stuff in JobRunner thread, then passing to UI thread */
+    private static class ChannelData {
+        private final ChannelInfo info;
+        private final int unread, total;
+        public ChannelData(ChannelInfo info, int unread, int total) {
+            this.info = info; this.unread = unread; this.total = total;
+        }
+    }
+
     /**
      *  Our channels, then other managable channels
+     *
+     *  SLOW at startup!!! (but not as slow as postable, there's a lot less). Run in JobRunner
      */
-    private void redrawManageable() {
-        _manageRoot.removeAll();
-        _manageChannels.clear();
+    private ArrayList<ChannelData> collectManageable() {
+        ArrayList<ChannelInfo> ch = new ArrayList(16);
         for (int i = 0; i < _nymChannels.getIdentityChannelCount(); i++) {
             ChannelInfo info = _nymChannels.getIdentityChannel(i);
-            TreeItem item = new TreeItem(_manageRoot, SWT.NONE);
-            item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
-            //item.setText(_browser.getTranslationRegistry().getText("ident: ") + info.getName());
-            setChannelText(item, info);
-            _manageChannels.put(item, info);
+            ch.add(info);
         }
         for (int i = 0; i < _nymChannels.getManagedChannelCount(); i++) {
             ChannelInfo info = _nymChannels.getManagedChannel(i);
+            ch.add(info);
+        }
+        ArrayList<ChannelData> rv = new ArrayList(ch.size());
+        for (ChannelInfo info : ch) {
+            long id = info.getChannelId();
+            int un = _client.countUnreadMessages(id);
+            int msgs = _client.countMessages(id);
+            rv.add(new ChannelData(info, un, msgs));
+        }
+        return rv;
+    }
+
+    /**
+     *  Our channels, then other managable channels,
+     *
+     *  Run in UI thread
+     *
+     */
+    private void redrawManageable(ArrayList<ChannelData> channels) {
+        _manageRoot.removeAll();
+        _manageChannels.clear();
+        for (ChannelData data : channels) {
             TreeItem item = new TreeItem(_manageRoot, SWT.NONE);
-            item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
-            //item.setText(_browser.getTranslationRegistry().getText("manage: ") + info.getName());
-            setChannelText(item, info);
-            _manageChannels.put(item, info);
+            item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(data.info.getChannelHash())));
+            //item.setText(_browser.getTranslationRegistry().getText("ident: ") + info.getName());
+            setChannelText(item, data);
+            _manageChannels.put(item, data.info);
         }
     }
 
     /**
      *  Our channels, then other managable channels,
      *  then postable channels, then public postable channels
+     *
+     *  SLOW at startup!!! Run in JobRunner
+     *  Note that we do all the work on managable when we just did it above.
      */
-    private void redrawPostable() {
-        _postRoot.removeAll();
-        _postChannels.clear();
+    private ArrayList<ChannelData> collectPostable() {
+        ArrayList<ChannelInfo> ch = new ArrayList(256);
         for (int i = 0; i < _nymChannels.getIdentityChannelCount(); i++) {
             ChannelInfo info = _nymChannels.getIdentityChannel(i);
-            TreeItem item = new TreeItem(_postRoot, SWT.NONE);
-            item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
-            //item.setText(_browser.getTranslationRegistry().getText("ident: ") + info.getName());
-            setChannelText(item, info);
-            _postChannels.put(item, info);
+            ch.add(info);
         }
         for (int i = 0; i < _nymChannels.getManagedChannelCount(); i++) {
             ChannelInfo info = _nymChannels.getManagedChannel(i);
-            TreeItem item = new TreeItem(_postRoot, SWT.NONE);
-            item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
-            //item.setText(_browser.getTranslationRegistry().getText("manage: ") + info.getName());
-            setChannelText(item, info);
-            _postChannels.put(item, info);
+            ch.add(info);
         }
         for (int i = 0; i < _nymChannels.getPostChannelCount(); i++) {
             ChannelInfo info = _nymChannels.getPostChannel(i);
-            TreeItem item = new TreeItem(_postRoot, SWT.NONE);
-            item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
-            //item.setText(_browser.getTranslationRegistry().getText("post: ") + info.getName());
-            setChannelText(item, info);
-            _postChannels.put(item, info);
+            ch.add(info);
         }
         for (int i = 0; i < _nymChannels.getPublicPostChannelCount(); i++) {
             ChannelInfo info = _nymChannels.getPublicPostChannel(i);
+            ch.add(info);
+        }
+        ArrayList<ChannelData> rv = new ArrayList(ch.size());
+        for (ChannelInfo info : ch) {
+            long id = info.getChannelId();
+            int un = _client.countUnreadMessages(id);
+            int msgs = _client.countMessages(id);
+            rv.add(new ChannelData(info, un, msgs));
+        }
+        return rv;
+    }
+
+    /**
+     *  Our channels, then other managable channels,
+     *  then postable channels, then public postable channels
+     *
+     *  Run in UI thread
+     *
+     */
+    private void redrawPostable(ArrayList<ChannelData> channels) {
+        _postRoot.removeAll();
+        _postChannels.clear();
+        for (ChannelData data : channels) {
             TreeItem item = new TreeItem(_postRoot, SWT.NONE);
-            item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
-            //item.setText(_browser.getTranslationRegistry().getText("public: ") + info.getName());
-            setChannelText(item, info);
-            _postChannels.put(item, info);
+            item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(data.info.getChannelHash())));
+            //item.setText(_browser.getTranslationRegistry().getText("ident: ") + info.getName());
+            setChannelText(item, data);
+            _postChannels.put(item, data.info);
         }
     }
 
     /**
      *  Make a nice name for the channel
      */
-    private void setChannelText(TreeItem item, ChannelInfo info) {
-        long id = info.getChannelId();
+    private void setChannelText(TreeItem item, ChannelData cdata) {
+        ChannelInfo info = cdata.info;
         StringBuilder buf = new StringBuilder();
         Font f;
         if (info.getPassphrasePrompt() != null) {
@@ -787,8 +838,8 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
             f = _themeRegistry.getTheme().MSG_UNKNOWN_FONT;
         } else {
             buf.append(info.getName());
-            int un = _client.countUnreadMessages(id);
-            int msgs = _client.countMessages(id);
+            int un = cdata.unread;
+            int msgs = cdata.total;
             if (un > 0) {
                 buf.append(" (").append(un).append('/').append(msgs).append(')');
                 f = _themeRegistry.getTheme().MSG_NEW_UNREAD_FONT;
