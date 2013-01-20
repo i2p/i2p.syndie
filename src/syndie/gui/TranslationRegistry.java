@@ -2,8 +2,11 @@ package syndie.gui;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -28,6 +31,25 @@ public class TranslationRegistry {
     private Map<String, Image> _images;
     private Map<String, Image> _baseImages;
     
+    /**
+     * Two-letter lower-case language codes (NOT country codes).
+     * order not important, UI will sort
+     */
+    private static final String[] SUPPORTED_TRANSLATIONS = {
+        "en", "de", "ru", "sv", "es"
+    };
+
+    private static final List<String> AVAILABLE_TRANSLATIONS;
+
+    static {
+        List<String> avail = new ArrayList(16);
+        avail.addAll(Arrays.asList(SUPPORTED_TRANSLATIONS));
+        String cur = Locale.getDefault().getLanguage();
+        if (!avail.contains(cur))
+            avail.add(cur);
+        AVAILABLE_TRANSLATIONS = Collections.unmodifiableList(avail);
+    }
+
     private static final String BUNDLE = "syndie.locale.messages";
 
     public TranslationRegistry(UI ui, File rootDir) {
@@ -44,6 +66,9 @@ public class TranslationRegistry {
 
     public void unregister(Translatable entry) { _translatable.remove(entry); }
     
+    /**
+     * @return 2-letter lower-case ISO-639 code
+     */
     public String getTranslation() { return Translate.getLanguage(_context); }
 
     /**
@@ -96,6 +121,7 @@ public class TranslationRegistry {
     }
     
     /**
+     * @param newLang 2-letter lower-case ISO-639 code
      * @param newText ignored, to be removed
      */
     private void switchTranslation(String newLang, Properties newText, Map newImages) {
@@ -114,6 +140,9 @@ public class TranslationRegistry {
         }
     }
     
+    /**
+     * @param newLang 2-letter lower-case ISO-639 code
+     */
     public void switchTranslation(String newLang) {
         String lang = getTranslation();
         if (newLang.equals(lang)) {
@@ -123,14 +152,11 @@ public class TranslationRegistry {
         switchTranslation(newLang, null, new HashMap());
     }
     
+    /**
+     * @return 2-letter lower-case ISO-639 codes, unsorted
+     */
     public List<String> getTranslations() {
-        // remove this, or look for class files, or add to Translate API?
-        ArrayList<String> rv = new ArrayList();
-        rv.add("en");
-        rv.add("de");
-        rv.add("ru");
-        rv.add("xx");
-        return rv;
+        return AVAILABLE_TRANSLATIONS;
     }
     
     public void loadTranslations() {}

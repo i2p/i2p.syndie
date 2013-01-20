@@ -11,6 +11,7 @@ import java.net.URISyntaxException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.Collator;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,6 +21,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -169,8 +171,8 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
     private MenuItem _syndicateMenuArchive;
     private Menu _languageMenu;
     private MenuItem _languageMenuRoot;
-    private MenuItem _languageMenuEdit;
-    private MenuItem _languageMenuRefresh;
+    //private MenuItem _languageMenuEdit;
+    //private MenuItem _languageMenuRefresh;
     private Menu _styleMenu;
     private MenuItem _styleMenuRoot;
     private MenuItem _styleMenuChangeFont;
@@ -666,6 +668,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         _languageMenuRoot = new MenuItem(_viewMenu, SWT.CASCADE);
         _languageMenu = new Menu(_languageMenuRoot);
         _languageMenuRoot.setMenu(_languageMenu);
+      /****
         _languageMenuEdit = new MenuItem(_languageMenu, SWT.PUSH);
         _languageMenuEdit.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(URIHelper.instance().createTranslateURI()); }
@@ -677,6 +680,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { populateTranslations(); }
             public void widgetSelected(SelectionEvent selectionEvent) { populateTranslations(); }
         });
+       ****/
         
         // queue it up to run sometime soon, but it has to occur in the swt thread, hence the nest
         JobRunner.instance().enqueue(new Runnable() {
@@ -1279,6 +1283,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
     }
     
     private void populateTranslations() {
+      /****
         int trans = _languageMenu.getItemCount();
         String selected = null;
         // remove the old translations, if any
@@ -1299,15 +1304,24 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         }
         
         new MenuItem(_languageMenu, SWT.SEPARATOR);
-        
+      ****/        
         // now rebuild given what we know
-        List translations = _translation.getTranslations();
-        if (selected == null)
-            selected = _translation.getTranslation();
-        for (int i = 0; i < translations.size(); i++) {
-            final String translation = (String)translations.get(i);
+        List<String> translations = _translation.getTranslations();
+        String curLang = _translation.getTranslation();
+        String selected = curLang;
+        Locale curLocale = new Locale(curLang);
+        // sort by display name
+        Map<String, String> tmap = new TreeMap(Collator.getInstance());
+        for (String translation : translations) {
+            String langName = (new Locale(translation)).getDisplayLanguage(curLocale);
+            if (langName.length() <= 0)
+                langName = translation;
+            tmap.put(langName, translation);
+        }
+        for (Map.Entry<String, String> e : tmap.entrySet()) {
             MenuItem item = new MenuItem(_languageMenu, SWT.RADIO);
-            item.setText(translation);
+            item.setText(e.getKey());
+            final String translation = e.getValue();
             item.setSelection(translation.equals(selected));
             item.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) {
@@ -2846,8 +2860,8 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
 
         _languageMenuRoot.setText(X + registry.getText("Language"));
         _languageMenuRoot.setImage(ImageUtil.ICON_VM_LANGUAGE);
-        _languageMenuEdit.setText(X + registry.getText("Translate"));
-        _languageMenuRefresh.setText(X + registry.getText("Refresh translations"));
+        //_languageMenuEdit.setText(X + registry.getText("Translate"));
+        //_languageMenuRefresh.setText(X + registry.getText("Refresh translations"));
 
         _styleMenuRoot.setText(X + registry.getText("Style"));
         _styleMenuRoot.setImage(ImageUtil.ICON_VM_STYLE);
