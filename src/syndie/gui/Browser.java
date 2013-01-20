@@ -1330,57 +1330,62 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         _bookmarks.localForumCreated();
     }
     
+    /**
+     *   SLOW - run in Job queue
+     */
     private void populatePostMenus() {
         final DBClient.ChannelCollector chans = _client.getNymChannels(); //_client.getChannels(true, true, true, true);
+        final List<ChannelInfo> minfo = collectManageable(chans);
+        final List<ChannelInfo> pinfo = collectPostable(chans);
+        final List<ChannelInfo> ppinfo = collectPublicPostable(chans);
         Display.getDefault().asyncExec(new Runnable() {
             public void run() { 
-                populateManageable(chans); 
-                populatePostable(chans); 
-                populatePublicPostable(chans);
+                populateManageable(minfo); 
+                populatePostable(pinfo); 
+                populatePublicPostable(ppinfo);
             }
         });
     }
 
-    private void populateManageable(DBClient.ChannelCollector chans) {
+    /** Job thread */
+    private List<ChannelInfo> collectManageable(DBClient.ChannelCollector chans) {
+        List<ChannelInfo> rv = new ArrayList(8);
+        for (int i = 0; i < chans.getIdentityChannelCount(); i++) {
+            rv.add(chans.getIdentityChannel(i));
+        }
+        for (int i = 0; i < chans.getManagedChannelCount(); i++) {
+            rv.add(chans.getManagedChannel(i));
+        }
+        return rv;
+    }
+
+    /** Job thread */
+    private List<ChannelInfo> collectPostable(DBClient.ChannelCollector chans) {
+        List<ChannelInfo> rv = new ArrayList(256);
+        for (int i = 0; i < chans.getPostChannelCount(); i++) {
+            rv.add(chans.getPostChannel(i));
+        }
+        return rv;
+    }
+
+    /** Job thread */
+    private List<ChannelInfo> collectPublicPostable(DBClient.ChannelCollector chans) {
+        List<ChannelInfo> rv = new ArrayList(256);
+        for (int i = 0; i < chans.getPublicPostChannelCount(); i++) {
+            rv.add(chans.getPublicPostChannel(i));
+        }
+        return rv;
+    }
+
+    /** UI thread */
+    private void populateManageable(List<ChannelInfo> chans) {
         while (_postMenuManageableMenu.getItemCount() > 0)
             _postMenuManageableMenu.getItem(0).dispose();
         
         while (_forumMenuManageMenu.getItemCount() > 0)
             _forumMenuManageMenu.getItem(0).dispose();
         
-        for (int i = 0; i < chans.getIdentityChannelCount(); i++) {
-            final ChannelInfo info = chans.getIdentityChannel(i);
-            MenuItem item = new MenuItem(_postMenuManageableMenu, SWT.PUSH);
-            item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
-            //item.setText(_browser.getTranslationRegistry().getText("ident: ") + info.getName());
-            String displayName = UIUtil.displayName(info.getName(), info.getChannelHash());
-            item.setText(displayName);
-            
-            item.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent selectionEvent) {
-                    view(URIHelper.instance().createPostURI(info.getChannelHash(), null));
-                }
-                public void widgetSelected(SelectionEvent selectionEvent) {
-                    view(URIHelper.instance().createPostURI(info.getChannelHash(), null));
-                }
-            });
-            
-            item = new MenuItem(_forumMenuManageMenu, SWT.PUSH);
-            item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
-            //item.setText(_browser.getTranslationRegistry().getText("ident: ") + info.getName());
-            item.setText(displayName);
-            
-            item.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent selectionEvent) {
-                    view(URIHelper.instance().createManageURI(info.getChannelHash()));
-                }
-                public void widgetSelected(SelectionEvent selectionEvent) {
-                    view(URIHelper.instance().createManageURI(info.getChannelHash()));
-                }
-            });
-        }
-        for (int i = 0; i < chans.getManagedChannelCount(); i++) {
-            final ChannelInfo info = chans.getManagedChannel(i);
+        for (final ChannelInfo info : chans) {
             MenuItem item = new MenuItem(_postMenuManageableMenu, SWT.PUSH);
             item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
             //item.setText(_browser.getTranslationRegistry().getText("ident: ") + info.getName());
@@ -1415,12 +1420,12 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         _forumMenuManageRoot.setEnabled(_forumMenuManageMenu.getItemCount() > 0);
     }
     
-    private void populatePostable(DBClient.ChannelCollector chans) {
+    /** UI thread */
+    private void populatePostable(List<ChannelInfo> chans) {
         while (_postMenuPostableMenu.getItemCount() > 0)
             _postMenuPostableMenu.getItem(0).dispose();
         
-        for (int i = 0; i < chans.getPostChannelCount(); i++) {
-            final ChannelInfo info = chans.getPostChannel(i);
+        for (final ChannelInfo info : chans) {
             MenuItem item = new MenuItem(_postMenuPostableMenu, SWT.PUSH);
             item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
             //item.setText(_browser.getTranslationRegistry().getText("ident: ") + info.getName());
@@ -1443,12 +1448,12 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         _postMenuPostableRoot.setEnabled(_postMenuPostableMenu.getItemCount() > 0);
     }
     
-    private void populatePublicPostable(DBClient.ChannelCollector chans) {
+    /** UI thread */
+    private void populatePublicPostable(List<ChannelInfo> chans) {
         while (_postMenuPublicMenu.getItemCount() > 0)
             _postMenuPublicMenu.getItem(0).dispose();
         
-        for (int i = 0; i < chans.getPublicPostChannelCount(); i++) {
-            final ChannelInfo info = chans.getPublicPostChannel(i);
+        for (final ChannelInfo info : chans) {
             MenuItem item = new MenuItem(_postMenuPublicMenu, SWT.PUSH);
             item.setImage(ImageUtil.getTypeIcon(SyndieURI.createScope(info.getChannelHash())));
             //item.setText(_browser.getTranslationRegistry().getText("ident: ") + info.getName());
@@ -2579,7 +2584,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
     
     private class BookmarkAcceptListener implements ReferenceChooserTree.AcceptanceListener {
         // fired on bookmark/etc doubleclick/return
-        public void referenceAccepted(SyndieURI uri) { debugMessage("accepted"); view(uri); }
+        public void referenceAccepted(SyndieURI uri) { debugMessage("bookmark accepted " + uri); view(uri); }
         public void referenceChoiceAborted() {}        
     }
 
