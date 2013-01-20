@@ -7,7 +7,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
+
 import net.i2p.data.Hash;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.CTabFolder;
@@ -34,6 +36,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Monitor;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+
 import syndie.Constants;
 import syndie.data.HTMLStateBuilder;
 import syndie.data.HTMLTag;
@@ -44,7 +47,7 @@ import syndie.db.DBClient;
 import syndie.db.UI;
 
 /**
- *
+ *  A tab inside a MessageEditor
  */
 public class PageEditor extends BaseComponent implements Themeable {
     private MessageEditor _editor;
@@ -118,6 +121,7 @@ public class PageEditor extends BaseComponent implements Themeable {
         _root = new Composite(parent, SWT.NONE);
         _root.setLayout(new FillLayout());
         _item.setControl(_root);
+        _item.setImage(ImageUtil.ICON_MSG_TYPE_NORMAL);
         
         _sash = new SashForm(_root, SWT.HORIZONTAL);
         _text = new Text(_sash, SWT.MULTI | SWT.BORDER | SWT.WRAP | SWT.V_SCROLL | SWT.H_SCROLL);

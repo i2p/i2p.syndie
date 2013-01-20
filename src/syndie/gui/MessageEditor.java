@@ -93,7 +93,8 @@ import syndie.db.ThreadMsgId;
 import syndie.db.UI;
 
 /**
- *
+ *  Contains all the tabs on the post page. The attachments and refs and thread tabs are here,
+ *  and the page tabs are in PageEditor.
  */
 public class MessageEditor extends BaseComponent implements Themeable, Translatable, ImageBuilderPopup.ImageBuilderSource {
     private final DataCallback _dataCallback;
@@ -313,6 +314,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     /** save the state of the message so if there is a crash / exit / etc, it is resumeable */
     private static final String SQL_POSTPONE = "INSERT INTO nymMsgPostpone (nymId, postponeId, postponeVersion, encryptedData)  VALUES(?, ?, ?, ?)";
     private static final String SQL_POSTPONE_CLEANUP = "DELETE FROm nymMsgPostpone WHERE nymId = ? AND postponeId = ? AND postponeVersion < ?";
+
     void saveState() {
         if (!_modifiedSinceSave || !_enableSave) return;
         long stateId = _postponeId;
@@ -1890,12 +1892,14 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _refEditorTabRoot = new Composite(_pageTabs, SWT.NONE);
         _refEditorTabRoot.setLayout(new FillLayout());
         _refEditorTab.setControl(_refEditorTabRoot);
+        _refEditorTab.setImage(ImageUtil.ICON_REF_ARCHIVE);
         _refEditor = ComponentBuilder.instance().createMessageReferencesEditor(_refEditorTabRoot);
         
         _threadTab = new CTabItem(_pageTabs, SWT.NONE);
         _threadTabRoot = new Composite(_pageTabs, SWT.NONE);
         _threadTabRoot.setLayout(new FillLayout());
         _threadTab.setControl(_threadTabRoot);
+        _threadTab.setImage(ImageUtil.ICON_REF_FORUM);
         _threadTree = ComponentBuilder.instance().createMessageTree(_threadTabRoot, new MessageTree.MessageTreeListener() {
             public void messageSelected(MessageTree tree, SyndieURI uri, boolean toView, boolean nodelay) {
                 if (toView)
@@ -2562,6 +2566,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         root.setLayout(new FillLayout());
         _attachmentRoots.add(root);
         item.setControl(root);
+        item.setImage(ImageUtil.ICON_MSG_FLAG_HASATTACHMENTS);
         //DBClient client
         AttachmentPreview preview = new AttachmentPreview(_client, _ui, _themeRegistry, _translationRegistry, root);
         preview.showURI(new AttachmentPreview.AttachmentSource() {
