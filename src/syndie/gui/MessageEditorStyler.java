@@ -1,6 +1,7 @@
 package syndie.gui;
 
 import java.util.ArrayList;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.custom.StyledText;
@@ -23,11 +24,12 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
+
 import syndie.db.DBClient;
 import syndie.db.UI;
 
 class MessageEditorStyler extends BaseComponent implements Themeable, Translatable {
-    private MessageEditor _editor;
+    private final MessageEditor _editor;
     
     private Shell _txtShell;
     private StyledText _sampleText;
@@ -49,6 +51,9 @@ class MessageEditorStyler extends BaseComponent implements Themeable, Translatab
     private Group _grpText;
     private Group _grpAlign;
     
+    private static final String DEFAULT_FG = "black";
+    private static final String DEFAULT_BG = "white";
+
     public MessageEditorStyler(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, MessageEditor editor) {
         super(client, ui, themes, trans);
         _editor = editor;
@@ -129,8 +134,8 @@ class MessageEditorStyler extends BaseComponent implements Themeable, Translatab
         _txtFontSize.add("+4");
         _txtFontSize.add("+5");
         _txtFontSize.select(5);
-        _txtFGColor = buildColorCombo(_grpText, "color", "Adjust the fg color", "black", true);
-        _txtBGColor = buildColorCombo(_grpText, "bgcolor", "Adjust the bg color", "white", true);
+        _txtFGColor = buildColorCombo(_grpText, "color", "Adjust the fg color", DEFAULT_FG, true);
+        _txtBGColor = buildColorCombo(_grpText, "bgcolor", "Adjust the bg color", DEFAULT_BG, true);
         
         _grpAlign = new Group(controlBar, SWT.SHADOW_ETCHED_IN);
         _grpAlign.setLayout(new RowLayout(SWT.HORIZONTAL));
@@ -249,8 +254,8 @@ class MessageEditorStyler extends BaseComponent implements Themeable, Translatab
         _txtStrikeout.setSelection(false);
         _txtFont.select(0);
         _txtFontSize.select(5); // +0
-        _txtFGColor.setBackground(null);
-        _txtBGColor.setBackground(null);
+        _txtFGColor.setBackground(ColorUtil.getColor(DEFAULT_FG, null));
+        _txtBGColor.setBackground(ColorUtil.getColor(DEFAULT_BG, null));
         _txtAlignLeft.setSelection(true);
         _txtAlignCenter.setSelection(false);
         _txtAlignRight.setSelection(false);
@@ -338,10 +343,21 @@ class MessageEditorStyler extends BaseComponent implements Themeable, Translatab
     private Button buildColorCombo(Group parent, String name, String tooltip, String defaultColor, boolean enable) {
         return buildColorCombo(parent, name, tooltip, defaultColor, enable, null);
     }
+
     private Button buildColorCombo(Group parent, String name, String tooltip, String defaultColor, boolean enable, Runnable onSelect) {
         final Button rv = new Button(parent, SWT.PUSH);
-        ArrayList names = ColorUtil.getSystemColorNames();
+        ArrayList<String> names = ColorUtil.getSystemColorNames();
         rv.setText(name);
+        Color dcolor = ColorUtil.getColor(defaultColor, null);
+        rv.setBackground(dcolor);
+        if (dcolor == null) {
+            rv.setForeground(ColorUtil.getColor("black", null));
+        } else {
+            if ( (dcolor.getRed() <= 128) && (dcolor.getGreen() <= 128) && (dcolor.getBlue() <= 128) )
+                rv.setForeground(ColorUtil.getColor(DEFAULT_BG, null));
+            else
+                rv.setForeground(ColorUtil.getColor(DEFAULT_FG, null));
+        }
         final Menu colorMenu = new Menu(rv);
         MenuItem none = new MenuItem(colorMenu, SWT.PUSH);
         none.setText(_translationRegistry.getText("default"));
@@ -349,8 +365,8 @@ class MessageEditorStyler extends BaseComponent implements Themeable, Translatab
             none.setSelection(true);
         none.addSelectionListener(new ColorMenuItemListener(rv, null, onSelect));
         for (int i = 0; i < names.size(); i++) {
-            String colorName = (String)names.get(i);
-            Color color = (Color)ColorUtil.getColor(colorName, null);
+            String colorName = names.get(i);
+            Color color = ColorUtil.getColor(colorName, null);
             MenuItem item = new MenuItem(colorMenu, SWT.PUSH);
             item.setText(colorName);
             item.setImage(ColorUtil.getSystemColorSwatch(color));
@@ -369,9 +385,9 @@ class MessageEditorStyler extends BaseComponent implements Themeable, Translatab
     }
 
     private class ColorMenuItemListener implements SelectionListener {
-        private Button _button;
-        private String _color;
-        private Runnable _onSelect;
+        private final Button _button;
+        private final String _color;
+        private final Runnable _onSelect;
         public ColorMenuItemListener(Button button, String color, Runnable onSelect) {
             _button = button;
             _color = color;
@@ -387,9 +403,9 @@ class MessageEditorStyler extends BaseComponent implements Themeable, Translatab
             } else {
                 // not the best heuristic, but it seems to work ok
                 if ( (color.getRed() <= 128) && (color.getGreen() <= 128) && (color.getBlue() <= 128) )
-                    _button.setForeground(ColorUtil.getColor("white", null));
+                    _button.setForeground(ColorUtil.getColor(DEFAULT_BG, null));
                 else
-                    _button.setForeground(ColorUtil.getColor("black", null));
+                    _button.setForeground(ColorUtil.getColor(DEFAULT_FG, null));
             }
             _editor.modified();
             if (_onSelect != null) _onSelect.run();
