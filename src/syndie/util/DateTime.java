@@ -61,11 +61,9 @@ public class DateTime {
     }
 
     private static final DateFormat _dayFmtMediumUTC = DateFormat.getDateInstance(DateFormat.MEDIUM);
-    private static final DateFormat _dateTimeFmtUTC;
+    private static final DateFormat _dateTimeFmtUTC = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
 
     static {
-        String df = ((SimpleDateFormat) DateFormat.getDateInstance(DateFormat.SHORT)).toLocalizedPattern();
-        _dateTimeFmtUTC = new SimpleDateFormat(df + " HH:mm 'UTC'");
         TimeZone utc = TimeZone.getTimeZone("GMT");
         _dayFmtMediumUTC.setTimeZone(utc);
         _dateTimeFmtUTC.setTimeZone(utc);
@@ -83,12 +81,16 @@ public class DateTime {
         if (when < EARLIEST_DATE || when > now + LATEST_DATE)
             return INVALID_DATE;
         DateFormat fmt;
-        if (when > now - 7*24*60*60*1000l)
+        if (when > now - 7*24*60*60*1000l) {
             fmt = _dateTimeFmtUTC;
-        else
+            synchronized (fmt) { 
+                return fmt.format(new Date(when)) + " UTC"; 
+            }
+        } else {
             fmt = _dayFmtMediumUTC;
-        synchronized (fmt) { 
-            return fmt.format(new Date(when)); 
+            synchronized (fmt) { 
+                return fmt.format(new Date(when)); 
+            }
         }
     }
 
