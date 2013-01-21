@@ -2594,6 +2594,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         AttachmentPreview preview = new AttachmentPreview(_client, _ui, _themeRegistry, _translationRegistry, root);
         preview.showURI(new AttachmentPreview.AttachmentSource() {
             public Properties getAttachmentConfig(int attachmentNum) { return cfg; }
+            public long getAttachmentSize(int attachmentNum) { return data.length; }
             public byte[] getAttachmentData(int attachmentNum) { return data; }
         }, SyndieURI.createAttachment(null, -1, _attachmentData.size()));
         _attachmentPreviews.add(preview);
@@ -2697,6 +2698,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         }
         return -1;
     }
+
     public void updateImageAttachment(int imageNum, String contentType, final byte data[]) { 
         modified();
         int cur = 0;
@@ -2712,6 +2714,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                 final int num = i;
                 preview.showURI(new AttachmentPreview.AttachmentSource() {
                     public Properties getAttachmentConfig(int attachmentNum) { return cfg; }
+                    public long getAttachmentSize(int attachmentNum) { return data.length; }
                     public byte[] getAttachmentData(int attachmentNum) { return data; }
                 }, SyndieURI.createAttachment(null, -1, num));
                 rebuildAttachmentSummaries();
@@ -2721,6 +2724,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             cur++;
         }
     }
+
     private void rebuildAttachmentSummaries() {
         _attachmentSummary.clear();
         if (_attachmentData.size() > 0) {

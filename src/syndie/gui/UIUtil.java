@@ -24,8 +24,11 @@ public class UIUtil {
      */
     public static String displayName(String name, Hash hash) {
         StringBuilder buf = new StringBuilder(64);
-        if (name != null)
-            buf.append(truncate(name, MAX_NAME_LEN)).append(' ');
+        if (name != null) {
+            name = name.trim();
+            if (name.length() > 0)
+                buf.append(truncate(name.trim(), MAX_NAME_LEN)).append(' ');
+        }
         buf.append('[');
         if (hash != null)
             buf.append(hash.toBase64().substring(0, 6));
@@ -77,6 +80,7 @@ public class UIUtil {
     public static String truncate(String s, int max) {
         if (s == null)
             return  "";
+        s = s.trim();
         if (s.length() <= max)
             return s;
         return s.substring(0, max - 3) + "...";

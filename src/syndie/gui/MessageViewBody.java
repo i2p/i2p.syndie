@@ -226,7 +226,7 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
             CommandImpl.parseProps(cfg, props);
             String title = props.getProperty(Constants.MSG_PAGE_TITLE, "");
             if ( (title != null) && (title.trim().length() > 0) ) 
-                _tabs[i].setText(title);
+                _tabs[i].setText(UIUtil.truncate(title, 20));
             else
                 _tabs[i].setText(_translationRegistry.getText("Page") + ' ' + (i+1));
             _tabs[i].setImage(ImageUtil.ICON_MSG_TYPE_NORMAL);
@@ -317,7 +317,6 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
                 _tabs[off+i] = new CTabItem(_tabFolder, SWT.NONE);
                 _tabRoots[off+i] = new Composite(_tabFolder, SWT.NONE);
                 _tabs[off+i].setControl(_tabRoots[off+i]);
-                _tabs[off+i].setText(_translationRegistry.getText("Attachment") + ' ' + (i+1));
                 _tabs[off+i].setImage(ImageUtil.ICON_MSG_FLAG_HASATTACHMENTS);
                 _tabRoots[off+i].setLayout(new FillLayout());
     
@@ -327,20 +326,30 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
                 timer.addEvent("initBody attachment preview instantiated");
     
                 final int preview = i;
-                final CTabItem item = _tabs[off];
+                final CTabItem item = _tabs[off + i];
                 final AttachmentPreview attachPreview = _attachmentPreviews[i];
+                final URIAttachmentSource urias = new URIAttachmentSource(uri);
                 if (DEFERRED_ATTACHMENT_PREVIEW) {
                     _tabFolder.addSelectionListener(new FireSelectionListener() {
                         public void fire() {
                             if (_viewState.disposed) return;
                             if (_tabFolder.getSelection() == item) {
-                                attachPreview.showURI(new URIAttachmentSource(uri), uri);
+                                attachPreview.showURI(urias, uri);
                             }
                         }
                     });
                 } else {
-                    _attachmentPreviews[preview].showURI(new URIAttachmentSource(uri), uri);
+                    _attachmentPreviews[preview].showURI(urias, uri);
                 }
+                Properties cfg = urias.getAttachmentConfig(i);
+                String name = cfg.getProperty(Constants.MSG_ATTACH_NAME);
+                if (name != null && name.length() != 0)
+                    _tabs[off+i].setText(UIUtil.truncate(name, 20));
+                else
+                    _tabs[off+i].setText(_translationRegistry.getText("Attachment") + ' ' + (i+1));
+                String desc = cfg.getProperty(Constants.MSG_ATTACH_NAME);
+                if (desc != null && desc.length() > 0 && !desc.equals(_tabs[off+i].getText()))
+                    _tabs[off+i].setToolTipText(desc);
             }
         }
         timer.addEvent("initBody go to configured");
@@ -375,6 +384,7 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
     public void hideThreadTab() { _hideThreadTab = true; }
     public void hideAttachmentTabs() { _hideAttachmentTabs = true; }
     
+    /** hides DBClient details */
     private class URIAttachmentSource implements AttachmentPreview.AttachmentSource {
         private final SyndieURI _attachURI;
 
@@ -383,6 +393,11 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
         public Properties getAttachmentConfig(int attachmentNum) {
             long msgId = _client.getMessageId(_attachURI.getScope(), _attachURI.getMessageId());
             return _client.getMessageAttachmentConfig(msgId, attachmentNum);
+        }
+
+        public long getAttachmentSize(int attachmentNum) {
+            long msgId = _client.getMessageId(_attachURI.getScope(), _attachURI.getMessageId());
+            return _client.getMessageAttachmentSize(msgId, attachmentNum);
         }
 
         public byte[] getAttachmentData(int attachmentNum) {

@@ -3830,6 +3830,7 @@ public class DBClient {
     /** attachment number starts at 0 */
     private static final String SQL_GET_MESSAGE_ATTACHMENT_SIZE = "SELECT LENGTH(dataBinary) FROM messageAttachmentData WHERE msgId = ? AND attachmentNum = ?";
 
+    /** FIXME long */
     public int getMessageAttachmentSize(long internalMessageId, int attachmentNum) {
         ensureLoggedIn();
         PreparedStatement stmt = null;
@@ -3841,6 +3842,7 @@ public class DBClient {
             rs = stmt.executeQuery();
             if (rs.next()) {
                 int val = rs.getInt(1);
+                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! BLOB!!!!!!!!!!!!!!!!!!!!!
                 val /= 2; // hsqldb HEX ENCODES binary data, and LENGTH(dataBinary) returns the string length of the hex encoding
                 return val;
             }
