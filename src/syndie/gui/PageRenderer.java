@@ -1256,7 +1256,7 @@ public class PageRenderer extends BaseComponent implements Themeable {
                 buf.append('\n');
         }
         if (href != null)
-            buf.append('(').append(CommandImpl.strip(href)).append(')');
+            buf.append(CommandImpl.strip(href));
         setTooltip(_text, buf.toString());
     }
 
@@ -1283,9 +1283,10 @@ public class PageRenderer extends BaseComponent implements Themeable {
                 buf.append('\n');
         }
         if (src != null)
-            buf.append('(').append(CommandImpl.strip(src)).append(')');
+            buf.append(CommandImpl.strip(src));
         setTooltip(_text, buf.toString());
     }
+
     private void hoverImageLink(StyleRange imgRange, HTMLTag imgTag, StyleRange linkRange, HTMLTag linkTag, int off) {
         StringBuilder buf = new StringBuilder();
         String alt = imgTag.getAttribValue("alt");
@@ -1299,7 +1300,7 @@ public class PageRenderer extends BaseComponent implements Themeable {
                 buf.append('\n');
         }
         if (src != null)
-            buf.append('(').append(CommandImpl.strip(src)).append(')');
+            buf.append(CommandImpl.strip(src));
         
         if ( (alt != null) || (src != null))
             buf.append('\n');
@@ -1310,7 +1311,7 @@ public class PageRenderer extends BaseComponent implements Themeable {
                 buf.append('\n');
         }
         if (href != null)
-            buf.append('(').append(CommandImpl.strip(href)).append(')');
+            buf.append(CommandImpl.strip(href));
 
         setTooltip(_text, buf.toString());
     }

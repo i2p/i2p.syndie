@@ -3451,27 +3451,7 @@ public class DBClient {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
         
-        stmt = null;
-        rs = null;
-        try {
-            stmt = _con.prepareStatement(SQL_GET_MESSAGE_ATTACHMENT_COUNT);
-            stmt.setLong(1, internalMessageId);
-            rs = stmt.executeQuery();
-            if (rs.next()) {
-                int pages = rs.getInt(1);
-                if (!rs.wasNull())
-                    info.setAttachmentCount(pages);
-            } else {
-                info.setAttachmentCount(0);
-            }
-        } catch (SQLException se) {
-            if (_log.shouldLog(Log.ERROR))
-                _log.error("Error retrieving the message's tags", se);
-            return null;
-        } finally {
-            if (rs != null) try { rs.close(); } catch (SQLException se) {}
-            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
-        }
+        info.setAttachmentCount(getMessageAttachmentCount(internalMessageId));
         
         // get the refs...
         MessageReferenceBuilder builder = new MessageReferenceBuilder(this);
@@ -3487,6 +3467,33 @@ public class DBClient {
         if (_trace)
             _getMsgTime += (end-start);
         return info;
+    }
+
+    /**
+     *  @return 0 on error
+     *  @since 1.102b-11 pulled out of getMessage() above
+     */
+    public int getMessageAttachmentCount(long internalMessageId) {
+        ensureLoggedIn();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_MESSAGE_ATTACHMENT_COUNT);
+            stmt.setLong(1, internalMessageId);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                int count = rs.getInt(1);
+                if (!rs.wasNull())
+                    return count;
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the message's attachment count", se);
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        return 0;
     }
 
     public Set<String> getMessageTags(long chanId, long messageId, boolean includePrivate, boolean includePublic) {

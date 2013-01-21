@@ -2,7 +2,9 @@ package syndie.util;
 
 import java.text.DateFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.TimeZone;
 
 /**
  *  Date / time utilities
@@ -53,6 +55,38 @@ public class DateTime {
             fmt = _dateTimeFmt;
         else
             fmt = _dayFmtMedium;
+        synchronized (fmt) { 
+            return fmt.format(new Date(when)); 
+        }
+    }
+
+    private static final DateFormat _dayFmtMediumUTC = DateFormat.getDateInstance(DateFormat.MEDIUM);
+    private static final DateFormat _dateTimeFmtUTC;
+
+    static {
+        String df = ((SimpleDateFormat) DateFormat.getDateInstance(DateFormat.SHORT)).toLocalizedPattern();
+        _dateTimeFmtUTC = new SimpleDateFormat(df + " HH:mm 'UTC'");
+        TimeZone utc = TimeZone.getTimeZone("GMT");
+        _dayFmtMediumUTC.setTimeZone(utc);
+        _dateTimeFmtUTC.setTimeZone(utc);
+    }
+
+    /**
+     *  Current locale.
+     *  Displays date only if older than a week.
+     *  Returns error string if too old or too far in future.
+     */
+    public static final String getDateTimeUTC(long when) {
+        if (when <= 0)
+            return UNSET_DATE;
+        long now = System.currentTimeMillis();
+        if (when < EARLIEST_DATE || when > now + LATEST_DATE)
+            return INVALID_DATE;
+        DateFormat fmt;
+        if (when > now - 7*24*60*60*1000l)
+            fmt = _dateTimeFmtUTC;
+        else
+            fmt = _dayFmtMediumUTC;
         synchronized (fmt) { 
             return fmt.format(new Date(when)); 
         }

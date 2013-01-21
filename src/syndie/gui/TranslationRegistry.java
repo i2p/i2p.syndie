@@ -108,6 +108,16 @@ public class TranslationRegistry {
         return postprocess(val);
     }
 
+    public String getText(String key, Object o) {
+        String val = Translate.getString(key, o, _context, BUNDLE);
+        return val;
+    }
+
+    public String getText(String key, Object o1, Object o2) {
+        String val = Translate.getString(key, o1, o2, _context, BUNDLE);
+        return val;
+    }
+
     public String ngettext(String s, String p, int n) {
         return Translate.getString(n, s, p, _context, BUNDLE);
     }

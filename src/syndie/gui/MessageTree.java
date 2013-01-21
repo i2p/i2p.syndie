@@ -2140,6 +2140,8 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         long dbEnd = System.currentTimeMillis();
 
         item.setText(0, subj);
+        if (node.getAttachmentCount() > 0)
+            item.setImage(0, ImageUtil.ICON_MSG_FLAG_HASATTACHMENTS);
         item.setText(1, auth);
         item.setText(2, chan);
         item.setText(3, date);

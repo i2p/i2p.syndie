@@ -26,17 +26,15 @@ public class ThreadReferenceNode extends ReferenceNode {
     private long _targetId;
     private String _targetName;
     private Hash _targetHash;
+    private int _attachmentCount;
     
     public ThreadReferenceNode() { this(null); }
     public ThreadReferenceNode(ThreadMsgId id) {
         super(null, null, null, null);
         _msg = id;
         _authorId = -1;
-        _subject = null;
         _targetChannelId = -1;
-        _dummy = false;
         _importDate = -1;
-        _tags = null;
         _messageStatus = -1;
         _scopeId = -1;
     }
@@ -71,6 +69,11 @@ public class ThreadReferenceNode extends ReferenceNode {
     public long getTargetId() { return _targetChannelId; }
     public String getTargetName() { return _targetName; }
     public Hash getTargetHash() { return _targetHash; }
+
+    /** @since 1.102b-11 */
+    public void setAttachmentCount(int cnt) { _attachmentCount = cnt; }
+    /** @since 1.102b-11 */
+    public int getAttachmentCount() { return _attachmentCount; }
     
     public long getThreadTarget() {
         if (_targetChannelId >= 0)

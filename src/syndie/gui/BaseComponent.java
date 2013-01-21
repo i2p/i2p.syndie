@@ -33,6 +33,18 @@ public abstract class BaseComponent {
 
     /**
      *  Helper
+     *  @since 1.102b-11
+     */
+    protected String getText(String text, Object o) { return _translationRegistry.getText(text, o); }
+
+    /**
+     *  Helper
+     *  @since 1.102b-11
+     */
+    protected String getText(String text, Object o1, Object o2) { return _translationRegistry.getText(text, o1, o2); }
+
+    /**
+     *  Helper
      *  @since 1.102b-9
      */
     protected String ngettext(String s, String p, int n) { return _translationRegistry.ngettext(s, p, n); }

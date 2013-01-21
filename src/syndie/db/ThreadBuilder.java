@@ -244,6 +244,8 @@ public class ThreadBuilder {
                     node.setSubject(subject);
                     
                     node.setName(authorName);
+                    // separate sql query
+                    node.setAttachmentCount(client.getMessageAttachmentCount(tmi.msgId));
                 }
             } catch (SQLException se) {
                 client.logError("Internal error populating the node", se);

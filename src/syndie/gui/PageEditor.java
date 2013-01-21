@@ -45,6 +45,7 @@ import syndie.data.SyndieURI;
 import syndie.db.CommandImpl;
 import syndie.db.DBClient;
 import syndie.db.UI;
+import syndie.util.DateTime;
 
 /**
  *  A tab inside a MessageEditor
@@ -1025,10 +1026,12 @@ public class PageEditor extends BaseComponent implements Themeable {
             }
         }
     }
+
     void quote(String content, boolean contentIsHTML, SyndieURI source, Hash authorHash, String authorName) {
         boolean quoteAsHTML = _isHTML; //_isPreviewable;
         insert(getQuotable(content, contentIsHTML, quoteAsHTML, source, authorHash, authorName), true);
     }
+
     private String getQuotable(String src, boolean srcIsHTML, boolean quoteAsHTML, SyndieURI source, Hash authorHash, String authorName) {
         if (src == null) return "";
         boolean autoBR = true;
@@ -1044,18 +1047,16 @@ public class PageEditor extends BaseComponent implements Themeable {
         }
         StringReader in = new StringReader(plainQuote);
         StringBuilder buf = new StringBuilder(plainQuote.length() + 64);
-        String quoteAuthor = "";
-        if (authorName != null)
-            quoteAuthor = authorName;
-        if (authorHash != null) {
-            if (authorName != null)
-                quoteAuthor = quoteAuthor + " ";
-            quoteAuthor = quoteAuthor + "(" + authorHash.toBase64().substring(0,6) + ")";
-        }
+        String quoteAuthor = UIUtil.displayName(authorName, authorHash);
+        Long msgId = source.getMessageId();
+        long id = msgId != null ? msgId.longValue() : 0;
+        String date = DateTime.getDateTimeUTC(id);
+        // translators: arg 1 is a date/time; arg2 is the author
+        String from = getText("On {0}, {1} wrote", date, quoteAuthor);
         if (quoteAsHTML)
-            buf.append("<a href=\"").append(source.toString()).append("\"><b>").append(quoteAuthor).append("</b></a>:\n");
+            buf.append("<a href=\"").append(source.toString()).append("\"><b>").append(from).append("</b></a>:\n");
         else
-            buf.append(quoteAuthor).append(":\n");
+            buf.append(from).append(":\n");
         if (quoteAsHTML)
             buf.append("<quote>");
         
