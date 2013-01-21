@@ -11,6 +11,8 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.events.TraverseEvent;
 import org.eclipse.swt.events.TraverseListener;
+import org.eclipse.swt.events.TreeEvent;
+import org.eclipse.swt.events.TreeListener;
 import org.eclipse.swt.widgets.ScrollBar;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
@@ -19,8 +21,10 @@ import org.eclipse.swt.widgets.TreeItem;
  * encapsulate standard tree interaction functionality - override selected(), 
  * returnHit(), and/or resized() as necessary
  */
-public class SyndieTreeListener implements KeyListener, TraverseListener, SelectionListener, ControlListener, MouseListener {
-    private Tree _tree;
+public class SyndieTreeListener implements KeyListener, TraverseListener, SelectionListener,
+                                           ControlListener, MouseListener, TreeListener {
+
+    private final Tree _tree;
 
     public SyndieTreeListener(Tree tree) { _tree = tree; }
     
@@ -113,7 +117,17 @@ public class SyndieTreeListener implements KeyListener, TraverseListener, Select
         selectionUpdated();
     }
     public void mouseUp(MouseEvent evt) {}
+
+    /** @since 1.102b-10 */
+    public void treeCollapsed(TreeEvent evt) { collapsed(); }
+
+    /** @since 1.102b-10 */
+    public void treeExpanded(TreeEvent evt) { expanded(); }
+
+    /** override to get notified of collapse events */
     public void collapsed() {}
+
+    /** override to get notified of expand events */
     public void expanded() {}
     
     private void scrollHorizontalBeginning() {

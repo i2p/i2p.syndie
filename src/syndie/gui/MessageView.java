@@ -666,6 +666,7 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
         _headerGoToNextInThread = new Button(buttons, SWT.PUSH);
         
         _headerReply = new Button(buttons, SWT.PUSH);
+        _headerReply.setImage(ImageUtil.ICON_REPLYMESSAGE);
         
         _headerReplyMenu = new Menu(_headerReply);
         _headerReplyMenu.addMenuListener(new MenuListener() {

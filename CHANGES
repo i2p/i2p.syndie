@@ -1,5 +1,27 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
+* 2013-01-21 1.102b-10 (kytv, zzz)
+  GUI improvements:
+  - Add expand/collapse-all buttons and menu items to MessageTree;
+    enable/disable expand/collapse-thread/all-buttons/menus as appropriate;
+    add icons to some buttons;  better layout of buttons
+  - Set MessageEditorTab text to the subject
+  - Warn if no subject on post
+  - Fix language picker menu
+  - Make quoted text background lighter
+  - Fix StyledTextChooser initial color button colors, and showing gray-on-gray sample text when changing styles
+  - Change reference tab icon to the link icon
+  - Get more processing off the UI thread so the UI will be respond faster at startup
+  - Add icons to MessageEditor tabs
+  - Set icon on MessageView reply button
+  Fixes:
+  - Fix disable image NPE (again)
+  - Fix Syndicator NPE
+  Other:
+  - Increase JobRunners to 4; decrease SyncOutbundPushers to 2
+  - Restrict permissions on .syndie dir
+  - Add warning about CLI + httpserv
+
 * 2013-01-19 1.102b-9 (kytv, MOSFET, zzz)
   GUI improvements:
   - Clear 'search term' and enable/disable button automatically in NymChannelTree

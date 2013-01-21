@@ -88,10 +88,10 @@ import syndie.db.UI;
  *  See also WatchedMessageTree extension
  */
 public class MessageTree extends BaseComponent implements Translatable, Themeable, DBClient.MessageStatusListener {
-    private NavigationControl _navControl;
-    private DataCallback _dataCallback;
-    private BookmarkControl _bookmarkControl;
-    private Composite _parent;
+    private final NavigationControl _navControl;
+    private final DataCallback _dataCallback;
+    private final BookmarkControl _bookmarkControl;
+    private final Composite _parent;
     private Composite _root;
     private Composite _top;
     private Button _navStart;
@@ -113,6 +113,8 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
     private Button _refreshButton;
     private Button _expandThreadButton;
     private Button _collapseThreadButton;
+    private Button _expandAllThreadButton;
+    private Button _collapseAllThreadButton;
 
     //private FilterBar _filterBar;
     /*
@@ -140,6 +142,8 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
     private MenuItem _bookmarkAuthor;
     private MenuItem _expandThread;
     private MenuItem _collapseThread;
+    private MenuItem _expandAllThread;
+    private MenuItem _collapseAllThread;
     private MenuItem _markRead;
     private MenuItem _markUnread;
     private MenuItem _markThreadRead;
@@ -152,29 +156,29 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
     private boolean _showDate;
     private boolean _showTags;
     private boolean _showFlags;
-    private boolean _expandRoots;
-    private boolean _expandAll;
+    private final boolean _expandRoots;
+    private final boolean _expandAll;
     
     private SyndieURI _highlight;
     
     /** tags applied to the messages being displayed */
-    private Set _tags;
+    private final Set _tags;
 
-    private MessageTreeListener _listener;
-    private Map _itemToURI;
+    private final MessageTreeListener _listener;
+    private final Map<TreeItem, SyndieURI> _itemToURI;
     /** items for messages that are new and unread */
-    private Set _itemsNewUnread;
+    private final Set<TreeItem> _itemsNewUnread;
     /** item to msgId (Long) */
-    private Map _itemToMsgId;
+    private final Map<TreeItem, Long> _itemToMsgId;
     /** msgId (Long) to item */
-    private Map _msgIdToItem;
+    private final Map<Long, TreeItem> _msgIdToItem;
     /** ordered list of ReferenceNode instances describing the tree */
-    private List _threadReferenceNodes;
+    private List<ReferenceNode> _threadReferenceNodes;
     /** TreeItem to ReferenceNode */
-    protected Map _itemToNode;
+    protected final Map<TreeItem, ReferenceNode> _itemToNode;
     
     /** orered list of ReferenceNodes matching the filter - aka all pages of the tree */
-    private List _fullNodes;
+    private List<ReferenceNode> _fullNodes;
     private int _currentPage;
     
     /** column we are sorting on */
@@ -183,7 +187,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
     private int _currentSortDirection;
     
     /** list of FilterBar instances added to this tree */
-    private List _bars;
+    private final List<FilterBar> _bars;
     private boolean _hideFilter;
     
     private boolean _filterable;
@@ -193,13 +197,26 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
     
     private MessageTreePreview _preview;
     
-    private BanControl _banControl;
+    final private BanControl _banControl;
     
-    public MessageTree(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, BanControl ban, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, DataCallback callback, Composite parent, MessageTreeListener lsnr) { this(client, ui, themes, trans, ban, navControl, uriControl, bookmarkControl, callback, parent, lsnr, false); }
-    public MessageTree(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, BanControl ban, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, DataCallback callback, Composite parent, MessageTreeListener lsnr, boolean hideFilter) {
-        this(client, ui, themes, trans, ban, navControl, uriControl, bookmarkControl, callback, parent, lsnr, true, true, true, true, hideFilter, true, true, true);
+    public MessageTree(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, BanControl ban,
+                       NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl,
+                       DataCallback callback, Composite parent, MessageTreeListener lsnr) {
+        this(client, ui, themes, trans, ban, navControl, uriControl, bookmarkControl, callback, parent, lsnr, false);
     }
-    public MessageTree(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, BanControl ban, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, DataCallback callback, Composite parent, MessageTreeListener lsnr, boolean showAuthor, boolean showChannel, boolean showDate, boolean showTags, boolean hideFilter, boolean showFlags, boolean expandRoots, boolean expandAll) {
+
+    public MessageTree(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, BanControl ban,
+                       NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl,
+                       DataCallback callback, Composite parent, MessageTreeListener lsnr, boolean hideFilter) {
+        this(client, ui, themes, trans, ban, navControl, uriControl, bookmarkControl, callback, parent, lsnr, true,
+             true, true, true, hideFilter, true, true, true);
+    }
+
+    public MessageTree(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, BanControl ban,
+                       NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl,
+                       DataCallback callback, Composite parent, MessageTreeListener lsnr, boolean showAuthor,
+                       boolean showChannel, boolean showDate, boolean showTags, boolean hideFilter,
+                       boolean showFlags, boolean expandRoots, boolean expandAll) {
         super(client, ui, themes, trans);
         _banControl = ban;
         _navControl = navControl;
@@ -573,36 +590,26 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             _advancedThreadResults.addSelectionListener(lsnr);
             //_advancedDateImport.addSelectionListener(lsnr);
             
-            _advancedPreview.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
-                public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
-                private void fire() {
+            _advancedPreview.addSelectionListener(new FireSelectionListener() {
+                public void fire() {
                     setShouldShowPreview(_client, _advancedPreview.getSelection());
                     if (_listener != null)
                         _listener.togglePreview(_advancedPreview.getSelection());
                 }
             });
-            _advancedMarkReadOnView.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
-                public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
-                private void fire() {
+            _advancedMarkReadOnView.addSelectionListener(new FireSelectionListener() {
+                public void fire() {
                     setShouldMarkReadOnView(_client, _advancedMarkReadOnView.getSelection());
                 }
             });
-            _advancedMarkReadOnPreview.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
-                public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
-                private void fire() {
+            _advancedMarkReadOnPreview.addSelectionListener(new FireSelectionListener() {
+                public void fire() {
                     setShouldMarkReadOnPreview(_client, _advancedMarkReadOnPreview.getSelection());
                 }
             });
             
-            _advancedDateImport.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent selectionEvent) {
-                    setShouldUseImportDate(_client, _advancedDateImport.getSelection());
-                    _msgTree.applyFilter();
-                }
-                public void widgetSelected(SelectionEvent selectionEvent) {
+            _advancedDateImport.addSelectionListener(new FireSelectionListener() {
+                public void fire() {
                     setShouldUseImportDate(_client, _advancedDateImport.getSelection());
                     _msgTree.applyFilter();
                 }
@@ -621,9 +628,8 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
                 }
             });
             
-            _advancedScopeOther.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickForum(); }
-                public void widgetSelected(SelectionEvent selectionEvent) { pickForum(); }
+            _advancedScopeOther.addSelectionListener(new FireSelectionListener() {
+                public void fire() { pickForum(); }
             });
             
             _translationRegistry.register(this);
@@ -1008,10 +1014,8 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         _navStart = new Button(_top, SWT.PUSH);
         _navStart.setText("<<");
         _navStart.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
-        _navStart.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
-            private void fire() {
+        _navStart.addSelectionListener(new FireSelectionListener() {
+            public void fire() {
                 _currentPage = 0;
                 setMessages(_fullNodes, false);
             }
@@ -1019,10 +1023,8 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         _navPrev = new Button(_top, SWT.PUSH);
         _navPrev.setText("<");
         _navPrev.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
-        _navPrev.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
-            private void fire() {
+        _navPrev.addSelectionListener(new FireSelectionListener() {
+            public void fire() {
                 _currentPage = Math.max(0, _currentPage-1);
                 setMessages(_fullNodes, false);
             }
@@ -1059,10 +1061,8 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         _navNext = new Button(_top, SWT.PUSH);
         _navNext.setText(">");
         _navNext.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
-        _navNext.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
-            private void fire() {
+        _navNext.addSelectionListener(new FireSelectionListener() {
+            public void fire() {
                 _currentPage = Math.max(0, _currentPage+1);
                 setMessages(_fullNodes, false);
             }
@@ -1070,10 +1070,8 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         _navEnd = new Button(_top, SWT.PUSH);
         _navEnd.setText(">>");
         _navEnd.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
-        _navEnd.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { fire(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { fire(); }
-            private void fire() {
+        _navEnd.addSelectionListener(new FireSelectionListener() {
+            public void fire() {
                 int sz = _navPageSize.getSelection();
                 if (sz > 0) {
                     int pages = (_fullNodes.size() + sz-1)/sz;
@@ -1085,6 +1083,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         
         _tree = new Tree(_root, SWT.BORDER | SWT.SINGLE | SWT.FULL_SELECTION);
         _tree.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
+
         /*
         _tree.addListener(SWT.SetData, new Listener() {
             public void handleEvent(Event evt) {
@@ -1145,8 +1144,10 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
                 _bookmarkAuthor.setEnabled(enableMsg);
                 _bookmarkForum.setEnabled(enable);
                 
-                _expandThread.setEnabled(enableMsg);
-                _collapseThread.setEnabled(enableMsg);
+                _expandThread.setEnabled(enableMsg && isExpandable(_tree.getSelection()));
+                _collapseThread.setEnabled(enableMsg && isCollapsible(_tree.getSelection()));
+                _expandAllThread.setEnabled(enable && isExpandable());
+                _collapseAllThread.setEnabled(enable && isCollapsible());
                 _markAllRead.setEnabled(enable);
                 _delete.setEnabled(enableMsg);
                 _cancel.setEnabled(cancellable);
@@ -1230,6 +1231,14 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         _collapseThread = new MenuItem(_menu, SWT.PUSH);
         _collapseThread.setImage(ImageUtil.ICON_COLLAPSE);
         _collapseThread.addSelectionListener(new FireSelectionListener() { public void fire() { collapseThread(); } });
+
+        new MenuItem(_menu, SWT.SEPARATOR);
+        _expandAllThread = new MenuItem(_menu, SWT.PUSH);
+        _expandAllThread.setImage(ImageUtil.ICON_EXPAND);
+        _expandAllThread.addSelectionListener(new FireSelectionListener() { public void fire() { expandAll(); } });
+        _collapseAllThread = new MenuItem(_menu, SWT.PUSH);
+        _collapseAllThread.setImage(ImageUtil.ICON_COLLAPSE);
+        _collapseAllThread.addSelectionListener(new FireSelectionListener() { public void fire() { collapseAll(); } });
         
         new MenuItem(_menu, SWT.SEPARATOR);
         _markRead = new MenuItem(_menu, SWT.PUSH);
@@ -1288,31 +1297,67 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
                 }
                 super.keyReleased(evt);
             }
+
+            /** FIXME the selection isn't always highlighted, and you may expand/collapse without
+             *  moving the selection to that item. Confusing, can we force selection on expand/collapse?
+             */
+            @Override
+            public void collapsed() { updateECButtons(); }
+            @Override
+            public void expanded() { updateECButtons(); }
         };
+
         _tree.addSelectionListener(lsnr);
         _tree.addControlListener(lsnr);
         _tree.addTraverseListener(lsnr);
         _tree.addKeyListener(lsnr);
         _tree.addMouseListener(lsnr);
+        _tree.addTreeListener(lsnr);
         
         _bottom = new Composite(_root, SWT.NONE);
         _bottom.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-        _bottom.setLayout(new FillLayout());
+        _bottom.setLayout(new GridLayout(9, false));
         
+
         _markMessageReadButton = new Button(_bottom, SWT.PUSH);
         _markMessageReadButton.addSelectionListener(new FireSelectionListener() { public void fire() { markRead(); } });
         
         _markThreadReadButton = new Button(_bottom, SWT.PUSH);
         _markThreadReadButton.addSelectionListener(new FireSelectionListener() { public void fire() { markThreadRead(); } });
         
+        Label dummy = new Label(_bottom, SWT.NONE);
+        dummy.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        
         _refreshButton = new Button(_bottom, SWT.PUSH);
         _refreshButton.addSelectionListener(new FireSelectionListener() { public void fire() { applyFilter(); } });
         
+        Label dummy2 = new Label(_bottom, SWT.NONE);
+        dummy2.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+
         _expandThreadButton = new Button(_bottom, SWT.PUSH);
         _expandThreadButton.addSelectionListener(new FireSelectionListener() { public void fire() { expandThread(); } });
+        _expandThreadButton.setImage(ImageUtil.ICON_EXPAND);
         
         _collapseThreadButton = new Button(_bottom, SWT.PUSH);
         _collapseThreadButton.addSelectionListener(new FireSelectionListener() { public void fire() { collapseThread(); } });
+        _collapseThreadButton.setImage(ImageUtil.ICON_COLLAPSE);
+
+        _expandAllThreadButton = new Button(_bottom, SWT.PUSH);
+        _expandAllThreadButton.addSelectionListener(new FireSelectionListener() { public void fire() { expandAll(); } });
+        _expandAllThreadButton.setImage(ImageUtil.ICON_EXPAND);
+        
+        _collapseAllThreadButton = new Button(_bottom, SWT.PUSH);
+        _collapseAllThreadButton.addSelectionListener(new FireSelectionListener() { public void fire() { collapseAll(); } });
+        _collapseAllThreadButton.setImage(ImageUtil.ICON_COLLAPSE);
+
+        // disable all the buttons to start, refreshPageNodes() will enable them
+        _markMessageReadButton.setEnabled(false);
+        _markThreadReadButton.setEnabled(false);
+        _refreshButton.setEnabled(false);
+        _expandThreadButton.setEnabled(false);
+        _collapseThreadButton.setEnabled(false);
+        _expandAllThreadButton.setEnabled(false);
+        _collapseAllThreadButton.setEnabled(false);
         
         _preview = new MessageTreePreview(_client, _ui, _themeRegistry, _translationRegistry, _navControl, _bookmarkControl, URIHelper.instance(), this);
 
@@ -1350,6 +1395,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
     }
     
     protected int getMessageSelectedCount() { return _tree.getSelectionCount(); }
+
     /** 
      * we can generate a cancel message if we created the message, own the channel 
      * its in, manage the channel its in, or are explicitly allowed to post in the
@@ -1543,25 +1589,26 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
     }
     
     private Shell showFilteringWidget() {
-        Shell s = new Shell(_root.getShell(), SWT.NO_TRIM | SWT.APPLICATION_MODAL); // | SWT.ON_TOP);
+        Shell parent = _tree.getShell();  // doesnt help, why? not _root.getShell(), we want it to stay with syndie
+        Shell s = new Shell(parent, SWT.NO_TRIM | SWT.APPLICATION_MODAL); // | SWT.ON_TOP);
         s.setLayout(new FillLayout());
         Composite c = new Composite(s, SWT.BORDER);
         c.setLayout(new RowLayout(SWT.HORIZONTAL));
         Label label = new Label(c, SWT.NONE);
-        label.setText(_translationRegistry.getText("Message filtering in progress"));
+        label.setText(_translationRegistry.getText("Message filtering in progress") + "   ");
         final Label filler = new Label(c, SWT.NONE);
         label.setFont(_themeRegistry.getTheme().SHELL_FONT);
         filler.setFont(_themeRegistry.getTheme().SHELL_FONT);
-        filler.setText("\\");
+        filler.setText("\\   ");
         LivelinessIndicator liv = new LivelinessIndicator(filler);
         liv.run();
         s.pack();
         Point sz = s.computeSize(SWT.DEFAULT, SWT.DEFAULT);
-        Point src = _root.getShell().getSize();
+        Point src = parent.getSize();
         //if (src.x + src.y <= 0)
         //    src = _root.getParent().computeSize(SWT.DEFAULT, SWT.DEFAULT);
         //_ui.debugMessage("show liveliness: sz=" + sz + " src=" + src);
-        Rectangle rect = Display.getDefault().map(_root.getShell(), null, src.x/2-sz.x/2, src.y/2-sz.y/2, sz.x, sz.y);
+        Rectangle rect = Display.getDefault().map(parent, null, src.x/2-sz.x/2, src.y/2-sz.y/2, sz.x, sz.y);
         s.setBounds(rect);
         s.open();
         return s;
@@ -1582,7 +1629,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
                 case 3: c = '-'; break;
             }
             _index++;
-            String str = "" + c;
+            String str = c + "   ";
             if (!_label.isDisposed()) {
                 // race condition between that and this
                 _label.setText(str);
@@ -1646,10 +1693,14 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         return threads;
     }
     
+    /**
+     *  Enables/disables all the buttons
+     */
     private List getCurrentPageNodes(List referenceNodes) {
         if (_root.isDisposed()) return referenceNodes;
         int sz = _navPageSize.getSelection();
         _fullNodes = referenceNodes;
+        _refreshButton.setEnabled(true);
         if (sz <= 0 || referenceNodes.isEmpty()) {
             String msg = _translationRegistry.getText("No items to display");
             _navState.setText(msg);
@@ -1662,6 +1713,8 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             _markThreadReadButton.setEnabled(false);
             _expandThreadButton.setEnabled(false);
             _collapseThreadButton.setEnabled(false);
+            _expandAllThreadButton.setEnabled(false);
+            _collapseAllThreadButton.setEnabled(false);
           /****
             // TODO no method. Have to disable or remove the listeners?
             _colSubject.setEnabled(false);
@@ -1692,8 +1745,8 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         // TODO enable/disable based on selection
         _markMessageReadButton.setEnabled(true);
         _markThreadReadButton.setEnabled(true);
-        _expandThreadButton.setEnabled(true);
-        _collapseThreadButton.setEnabled(true);
+        updateECButtons();
+
       /****
         // TODO enable/disable based if > 1 row
         _colSubject.setEnabled(true);
@@ -1727,6 +1780,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
     }
     
     private Map _uriToNode;
+
     private ReferenceNode getNode(final SyndieURI uri) {
         if (_uriToNode == null) {
             final Map uriToNode = new HashMap();
@@ -1801,13 +1855,111 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         _tree.setSortColumn(_currentSortColumn);
         _tree.setSortDirection(_currentSortDirection);
         _tree.setRedraw(true);
+
+        updateECButtons();
     }
     
+    /**
+     *  Enable/disable the expand/collapse-thread/all buttons
+     *  @since 1.102b-10
+     */
+    private void updateECButtons() {
+        TreeItem selected[] = _tree.getSelection();
+        _expandThreadButton.setEnabled(isExpandable(selected));
+        _collapseThreadButton.setEnabled(isCollapsible(selected));
+        _expandAllThreadButton.setEnabled(isExpandable());
+        _collapseAllThreadButton.setEnabled(isCollapsible());
+    }
+
+    /**
+     *  Is there anything to expand?
+     *  @since 1.102b-10
+     */
+    private boolean isExpandable() {
+        return isExpandable(_tree.getItems());
+    }
+    
+    /**
+     *  Is there anything to expand?
+     *  @since 1.102b-10
+     */
+    private boolean isExpandable(TreeItem[] items) {
+        if (items == null)
+            return false;
+        for (int i = 0; i < items.length; i++) {
+            if (isExpandable(items[i]))
+                return true;
+        }
+        return false;
+    }
+    
+    /**
+     *  Is there anything to expand?
+     *  @since 1.102b-10
+     */
+    private boolean isExpandable(TreeItem item) {
+        if (item.getItemCount() <= 0)
+            return false;
+        if (!item.getExpanded())
+            return true;
+        TreeItem items[] = item.getItems();
+        for (int i = 0; i < items.length; i++) {
+            if (isExpandable(items[i]))
+                return true;
+        }
+        return false;
+    }
+    
+    /**
+     *  Is there anything to collapse?
+     *  @since 1.102b-10
+     */
+    private boolean isCollapsible() {
+        return isCollapsible(_tree.getItems());    
+    }
+
+    /**
+     *  Is there anything to collapse?
+     *  @since 1.102b-10
+     */
+    private boolean isCollapsible(TreeItem[] items) {
+        if (items == null)
+            return false;
+        for (int i = 0; i < items.length; i++) {
+            if (isCollapsible(items[i]))
+                return true;
+        }
+        return false;
+    }
+    
+    /**
+     *  Is there anything to collapse?
+     *  @since 1.102b-10
+     */
+    private boolean isCollapsible(TreeItem item) {
+        if (item.getItemCount() <= 0)
+            return false;
+        if (item.getExpanded())
+            return true;
+        TreeItem items[] = item.getItems();
+        for (int i = 0; i < items.length; i++) {
+            if (isCollapsible(items[i]))
+                return true;
+        }
+        return false;
+    }
+
     public void expandAll() {
         TreeItem items[] = _tree.getItems();
         for (int i = 0; i < items.length; i++)
             expandAll(items[i]);
+        boolean enableCollapse = _tree.getSelectionCount() > 0;
+        _expandThreadButton.setEnabled(false);
+        _collapseThreadButton.setEnabled(isExpandable());
+        _expandAllThreadButton.setEnabled(false);
+        _collapseAllThreadButton.setEnabled(true);
     }
+
     private void expandAll(TreeItem item) {
         if (item.getItemCount() <= 0) return;
         item.setExpanded(true);
@@ -1815,11 +1967,17 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         for (int i = 0; i < items.length; i++)
             expandAll(items[i]);
     }
+
     public void collapseAll() {
         TreeItem items[] = _tree.getItems();
         for (int i = 0; i < items.length; i++)
             collapseAll(items[i]);
+        _expandThreadButton.setEnabled(isCollapsible());
+        _collapseThreadButton.setEnabled(false);
+        _expandAllThreadButton.setEnabled(true);
+        _collapseAllThreadButton.setEnabled(false);
     }
+
     private void collapseAll(TreeItem item) {
         if (item.getItemCount() <= 0) return;
         item.setExpanded(false);
@@ -1855,8 +2013,9 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         ReferenceNode.walk(nodes, idGatherer);
         return idGatherer.getTags();
     }
+
     private static class IDGatherer implements ReferenceNode.Visitor {
-        private Set _tags;
+        private final Set _tags;
         public IDGatherer() { _tags = new HashSet(); }
         public Set getTags() { return _tags; }
         public void visit(ReferenceNode node, int depth, int siblingOrder) {
@@ -2059,7 +2218,9 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
                     _listener.messageSelected(this, uri, toView, nodelay);
             }
         }
+        updateECButtons();
     }
+
     private void viewSelected() {
         TreeItem selected[] = _tree.getSelection();
         if (selected != null) {
@@ -2196,7 +2357,12 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
                 }
             }
         }
+        _expandThreadButton.setEnabled(false);
+        _collapseThreadButton.setEnabled(true);
+        _expandAllThreadButton.setEnabled(isExpandable());
+        _collapseAllThreadButton.setEnabled(isCollapsible());
     }
+
     private void collapseThread() {
         TreeItem selected[] = _tree.getSelection();
         if (selected != null) {
@@ -2206,6 +2372,10 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
                     root.setExpanded(false);
             }
         }
+        _expandThreadButton.setEnabled(true);
+        _collapseThreadButton.setEnabled(false);
+        _expandAllThreadButton.setEnabled(isExpandable());
+        _collapseAllThreadButton.setEnabled(isCollapsible());
     }
     
     private void markRead() {
@@ -2252,12 +2422,14 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
                 _dataCallback.readStatusUpdated();
         }
     }
+
     protected TreeItem getThreadRoot(TreeItem item) {
         TreeItem root = item;
         while (getParentItem(root) != null)
             root = getParentItem(root);
         return root;
     }
+
     private void markThreadRead(TreeItem item) {
         Long msgId = (Long)_itemToMsgId.get(item);
         if (msgId != null) {
@@ -2274,6 +2446,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         for (int i = 0; i < children.length; i++)
             markThreadRead(children[i]);
     }
+
     private void markThreadUnread(TreeItem item) {
         Long msgId = (Long)_itemToMsgId.get(item);
         if (msgId != null) {
@@ -2290,6 +2463,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         for (int i = 0; i < children.length; i++)
             markThreadUnread(children[i]);
     }
+
     private void markAllRead() {
         TreeItem selected[] = _tree.getSelection();
         if ( (selected != null) && (selected.length > 0) ) {
@@ -2330,6 +2504,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
              */
         }
     }
+
     protected long markAllRead(TreeItem item) {
         Long msgId = (Long)_itemToMsgId.get(item);
         if (msgId != null) {
@@ -2404,6 +2579,8 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         _bookmarkAuthor.setText(registry.getText("Bookmark the author"));
         _expandThread.setText(registry.getText("Expand the thread fully"));
         _collapseThread.setText(registry.getText("Collapse the thread fully"));
+        _expandAllThread.setText(registry.getText("Expand all threads fully"));
+        _collapseAllThread.setText(registry.getText("Collapse all threads fully"));
         _markRead.setText(registry.getText("Mark the message as read"));
         _markThreadRead.setText(registry.getText("Mark the thread as read"));
         _markUnread.setText(registry.getText("Mark the message as unread"));
@@ -2411,11 +2588,13 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         _delete.setText(registry.getText("Delete the message locally"));
         _cancel.setText(registry.getText("Cancel the message (tell others to delete it)"));
         
-        _markMessageReadButton.setText(registry.getText("Mark Message Read"));
+        _markMessageReadButton.setText(registry.getText("Mark Read"));
         _markThreadReadButton.setText(registry.getText("Mark Thread Read"));
         _refreshButton.setText(registry.getText("Refresh"));
-        _expandThreadButton.setText(registry.getText("Expand Thread"));
-        _collapseThreadButton.setText(registry.getText("Collapse Thread"));
+        _expandThreadButton.setText(registry.getText("Expand"));
+        _collapseThreadButton.setText(registry.getText("Collapse"));
+        _expandAllThreadButton.setText(registry.getText("Expand All"));
+        _collapseAllThreadButton.setText(registry.getText("Collapse All"));
         
         _navPageSizeLabel.setText(registry.getText("Page size") + ':');
     }
@@ -2454,6 +2633,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             rethemeAncestorsOfUnread();
         }
     }
+
     private void rethemeAncestorsOfUnread() {
         //if (true) return;
         // now readjust the font of read/old message ancestors of unread messages
@@ -2469,6 +2649,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             }
         }
     }
+
     private void rethemeAncestorsOfUnread(TreeItem item) {
         //if (true) return;
         // now readjust the font of read/old message ancestors of unread messages
@@ -2492,6 +2673,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         if (item == null) return null;
         return (TreeItem)item.getData("parent");
     }
+
     protected TreeItem createItem(TreeItem parent, Tree tree) {
         TreeItem item = null;
         if (parent == null)
@@ -2508,12 +2690,14 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         else
             expandThread(); 
     }
+
     public void collapseSelected(boolean all) {
         if (all)
             collapseAll();
         else
             collapseThread(); 
     }
+
     public void toggleRead() { 
         TreeItem selected[] = _tree.getSelection();
         boolean statusWasRead = false;
