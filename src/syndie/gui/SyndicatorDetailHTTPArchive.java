@@ -36,7 +36,6 @@ import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
-import syndie.Constants;
 import syndie.data.NymReferenceNode;
 import syndie.db.DBClient;
 import syndie.db.SharedArchiveEngine;
@@ -44,6 +43,7 @@ import syndie.db.SyncArchive;
 import syndie.db.SyncManager;
 import syndie.db.SyncOutboundPusher;
 import syndie.db.UI;
+import syndie.util.DateTime;
 
 /**
  *
@@ -911,7 +911,7 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         
         long last = _archive.getLastSyncTime();
         if (last > 0)
-            _lastSync.setText(Constants.getDateTime(last));
+            _lastSync.setText(DateTime.getDateTime(last));
         else
             _lastSync.setText(_translationRegistry.getText("Never"));
         
@@ -920,7 +920,7 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
             if (nxt <= System.currentTimeMillis())
                 _nextSync.setText(_translationRegistry.getText("ASAP"));
             else
-                _nextSync.setText(Constants.getDateTime(nxt));
+                _nextSync.setText(DateTime.getDateTime(nxt));
         } else {
             _nextSync.setText(_translationRegistry.getText("Never"));
         }

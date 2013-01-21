@@ -57,6 +57,7 @@ import syndie.data.SyndieURI;
 import syndie.db.DBClient;
 import syndie.db.ManageForumExecutor;
 import syndie.db.UI;
+import syndie.util.DateTime;
 
 /**
  *
@@ -876,7 +877,7 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
             _description.setText(str(info.getDescription()));
             
             if (info.getExpiration() > 0)
-                _expiration.setText(Constants.getDate(info.getExpiration()));
+                _expiration.setText(DateTime.getDate(info.getExpiration()));
             
             _name.setText(str(info.getName()));
             

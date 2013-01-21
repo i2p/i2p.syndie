@@ -14,12 +14,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+
 import net.i2p.data.Base64;
 import net.i2p.data.DataHelper;
 import net.i2p.data.Hash;
 import net.i2p.data.SigningPublicKey;
-import syndie.Constants;
+
 import syndie.data.*;
+import syndie.util.DateTime;
 
 /**
  * revamped thread gathering/filtering, using the ThreadBuilder to wrap them
@@ -1312,9 +1314,9 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         buf.append(" authReplies? ").append(_includeAuthorizedReplies);
         buf.append(" unauthPosts? ").append(_includeUnauthorizedPosts);
         if (_earliestReceiveDate > 0)
-            buf.append(" _earliestReceiveDate? ").append(Constants.getDate(_earliestReceiveDate));
+            buf.append(" _earliestReceiveDate? ").append(DateTime.getDate(_earliestReceiveDate));
         if (_earliestPostDate > 0)
-            buf.append(" _earliestPostDate? ").append(Constants.getDate(_earliestPostDate));
+            buf.append(" _earliestPostDate? ").append(DateTime.getDate(_earliestPostDate));
         buf.append(" applyTagFilterToMessages? ").append(_applyTagFilterToMessages);
         buf.append(" pagesRequired? ").append(_minPages > 0);
         buf.append(" attachmentsRequired? ").append(_minAttachments > 0);

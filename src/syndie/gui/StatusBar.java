@@ -36,7 +36,6 @@ import org.eclipse.swt.widgets.MenuItem;
 import net.i2p.data.DataHelper;
 import net.i2p.data.Hash;
 
-import syndie.Constants;
 import syndie.Version;
 import syndie.data.ChannelInfo;
 import syndie.data.NymReferenceNode;
@@ -49,6 +48,7 @@ import syndie.db.SyncArchive;
 import syndie.db.SyncManager;
 import syndie.db.ThreadAccumulatorJWZ;
 import syndie.db.UI;
+import syndie.util.DateTime;
 
 /**
  *  The bottom strip
@@ -588,7 +588,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
             long when = _client.getMessageImportDate(msgId);
             String subject = _client.getMessageSubject(msgId);
             if (subject == null) subject = "";
-            String str = Constants.getDate(when) + ": " + author + " - " + subject;
+            String str = DateTime.getDate(when) + ": " + author + " - " + subject;
             MenuItem item = new MenuItem(_privMenu, SWT.PUSH);
             item.setText(str);
             item.setImage(ImageUtil.ICON_MSG_TYPE_PRIVATE);
@@ -631,7 +631,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
                 long when = _browser.getClient().getMessageImportDate(msgId);
                 String subject = _browser.getClient().getMessageSubject(msgId);
                 if (subject == null) subject = "";
-                String str = Constants.getDate(when) + ": " + author + " - " + subject;
+                String str = DateTime.getDate(when) + ": " + author + " - " + subject;
                 MenuItem item = new MenuItem(subm, SWT.PUSH);
                 item.setText(str);
                 item.setImage(ImageUtil.ICON_MSG_TYPE_PRIVATE);
@@ -701,7 +701,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
             final Long postponeId = (Long)entry.getKey();
             final Integer rev = (Integer)entry.getValue();
             
-            String str = _translationRegistry.getText("Saved") + ' ' + Constants.getDateTime(postponeId.longValue());
+            String str = _translationRegistry.getText("Saved") + ' ' + DateTime.getDateTime(postponeId.longValue());
             MenuItem item = new MenuItem(_postponeMenu, SWT.PUSH);
             item.setText(str);
             item.addSelectionListener(new SelectionListener() {
@@ -940,7 +940,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
     static NymReferenceNode getParent(UI ui, TranslationRegistry trans, BookmarkControl bookmarkControl, BookmarkDnD bookmark) {
         if (bookmark.uri.getMessageId() == null) return null;
         
-        String wantedName = Constants.getDate(System.currentTimeMillis()) + " " + trans.getText("messages");
+        String wantedName = DateTime.getDate(System.currentTimeMillis()) + " " + trans.getText("messages");
         
         List bookmarks = bookmarkControl.getBookmarks();
         for (int i = 0; i < bookmarks.size(); i++) {

@@ -2,7 +2,9 @@ package syndie.gui.desktop;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import net.i2p.data.Hash;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.dnd.DragSource;
 import org.eclipse.swt.graphics.Color;
@@ -17,7 +19,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Text;
-import syndie.Constants;
+
 import syndie.data.MessageInfo;
 import syndie.data.MessageIterator;
 import syndie.data.ReferenceNode;
@@ -46,6 +48,7 @@ import syndie.gui.Themeable;
 import syndie.gui.Translatable;
 import syndie.gui.TranslationRegistry;
 import syndie.gui.URIHelper;
+import syndie.util.DateTime;
 
 /**
  *
@@ -529,7 +532,7 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
             _authorHash = authorHash;
             _authorNameStr = authorName;
 
-            final String when = Constants.getDate(messageId.longValue()) + " [" + Constants.getDate(importDate) + "]";
+            final String when = DateTime.getDate(messageId.longValue()) + " [" + DateTime.getDate(importDate) + "]";
 
             Display.getDefault().asyncExec(new Runnable() {
                 public void run() {

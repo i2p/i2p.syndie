@@ -5,10 +5,12 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+
 import net.i2p.data.Base64;
 import net.i2p.data.Hash;
-import syndie.Constants;
+
 import syndie.data.*;
+import syndie.util.DateTime;
 
 /**
  *
@@ -838,9 +840,9 @@ AND
         buf.append(" authReplies? ").append(_includeAuthorizedReplies);
         buf.append(" unauthPosts? ").append(_includeUnauthorizedPosts);
         if (_earliestReceiveDate > 0)
-            buf.append(" _earliestReceiveDate? ").append(Constants.getDate(_earliestReceiveDate));
+            buf.append(" _earliestReceiveDate? ").append(DateTime.getDate(_earliestReceiveDate));
         if (_earliestPostDate > 0)
-            buf.append(" _earliestPostDate? ").append(Constants.getDate(_earliestPostDate));
+            buf.append(" _earliestPostDate? ").append(DateTime.getDate(_earliestPostDate));
         buf.append(" applyTagFilterToMessages? ").append(_applyTagFilterToMessages);
         buf.append(" pagesRequired? ").append(_minPages > 0);
         buf.append(" attachmentsRequired? ").append(_minAttachments > 0);

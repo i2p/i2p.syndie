@@ -66,7 +66,6 @@ import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
 
-import syndie.Constants;
 import syndie.data.ChannelInfo;
 import syndie.data.MessageInfo;
 import syndie.data.MessageIterator;
@@ -81,6 +80,7 @@ import syndie.db.ThreadAccumulatorJWZ;
 import syndie.db.TreeMessageIterator;
 import syndie.db.ThreadReferenceNode;
 import syndie.db.UI;
+import syndie.util.DateTime;
 
 /**
  *  Includes page nav buttons at the top, the Tree in the middle, and the message/thread buttons at the bottom.
@@ -480,7 +480,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
                             break;
                     }
                     
-                    //_ui.debugMessage("filter age selected: " + _age + " custom date: " + Constants.getDate(System.currentTimeMillis()-(_age-1)*24l*60l*60l*1000l));
+                    //_ui.debugMessage("filter age selected: " + _age + " custom date: " + DateTime.getDate(System.currentTimeMillis()-(_age-1)*24l*60l*60l*1000l));
                     
                     _msgTree.applyFilter();
                 }
@@ -663,16 +663,16 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             String when = date.getText();
             try {
                 synchronized (_fmt) {
-                    Date val = Constants.parseDateTime(when);
+                    Date val = DateTime.parseDateTime(when);
                     long customDate = val.getTime();
                     
                     // calculate age in days from customDate
                     long diff = System.currentTimeMillis() - customDate;
                     _age = (int)((diff+24*60*60*1000l-1) / (24*60*60*1000l));
                     
-                    String reparsed = Constants.getDate(customDate);
+                    String reparsed = DateTime.getDate(customDate);
                     _msgTree.applyFilter();
-                    String afterApply = Constants.getDate(customDate);
+                    String afterApply = DateTime.getDate(customDate);
                 }
             } catch (ParseException pe) {
                 MessageBox box = new MessageBox(_filterRow.getShell(), SWT.ICON_ERROR | SWT.OK);
@@ -695,7 +695,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
                     days = uri.getLong("agelocal");
             }
             if (days != null)
-                _filterAge.setText(Constants.getDateTime(System.currentTimeMillis()-(days.longValue())*24*60*60*1000l));
+                _filterAge.setText(DateTime.getDateTime(System.currentTimeMillis()-(days.longValue())*24*60*60*1000l));
             String tags[] = null;
             if (uri != null)
                 tags = uri.getStringArray("tagrequire");
@@ -2109,15 +2109,15 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
                 long postDate = messageId; //uri.getMessageId().longValue();
                 if (_appliedFilter == null) {
                     if (MessageTree.shouldUseImportDate(_client))
-                        date = Constants.getDateTime(importDate);
+                        date = DateTime.getDateTime(importDate);
                     else
-                        date = Constants.getDateTime(postDate);
+                        date = DateTime.getDateTime(postDate);
                 } else if (_appliedFilter.getString("agelocal") != null) {
-                    date = Constants.getDateTime(importDate);
-                    //_browser.getUI().debugMessage("using local import date for " + msgId + ": " + date + " (instead of " + Constants.getDate(postDate) + ")");
+                    date = DateTime.getDateTime(importDate);
+                    //_browser.getUI().debugMessage("using local import date for " + msgId + ": " + date + " (instead of " + DateTime.getDate(postDate) + ")");
                 } else {
-                    date = Constants.getDateTime(postDate);
-                    //_browser.getUI().debugMessage("using post date for " + msgId + ": " + date + " (instead of " + Constants.getDate(importDate) + ")");
+                    date = DateTime.getDateTime(postDate);
+                    //_browser.getUI().debugMessage("using post date for " + msgId + ": " + date + " (instead of " + DateTime.getDate(importDate) + ")");
                 }
                 status = node.getMessageStatus(); //_client.getMessageStatus(_client.getLoggedInNymId(), msgId, targetChanId);
             } else {
@@ -2126,7 +2126,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
                 auth = UIUtil.displayName(scopeName, uri.getScope());
                 chan = "";
                 if (messageId >= 0)
-                    date = Constants.getDateTime(uri.getMessageId().longValue());
+                    date = DateTime.getDateTime(uri.getMessageId().longValue());
                 else
                     date = "";
                 tags = "";

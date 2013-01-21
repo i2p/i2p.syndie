@@ -15,6 +15,7 @@ import net.i2p.data.DataHelper;
 
 import syndie.Constants;
 import syndie.data.SyndieURI;
+import syndie.util.DateTime;
 
 /**
  *  The state of a single remote archive
@@ -1031,7 +1032,7 @@ public class SyncArchive {
         if (success)
             setLastSyncTime(System.currentTimeMillis());
         
-        _manager.getUI().debugMessage("updateSchedule(" + success + "): next sync: " + Constants.getDateTime(getNextSyncTime()));
+        _manager.getUI().debugMessage("updateSchedule(" + success + "): next sync: " + DateTime.getDateTime(getNextSyncTime()));
         _manager.getUI().debugMessage("incoming act/tot: " + _incomingActionsInProgress + " / " + _incomingActions.size());
         _manager.getUI().debugMessage("outgoing act/tot: " + _outgoingActionsInProgress + " / " + _outgoingActions.size());
         store();

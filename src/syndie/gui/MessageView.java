@@ -66,6 +66,7 @@ import syndie.db.ThreadAccumulatorJWZ;
 import syndie.db.ThreadBuilder;
 import syndie.db.ThreadMsgId;
 import syndie.db.UI;
+import syndie.util.DateTime;
 
 
 /**
@@ -304,8 +305,8 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
             _headerAuthor.setVisible(showAuthor);
             _headerAuthorAction.setVisible(showAuthor);
             
-            String date = Constants.getDateTime(msg.getMessageId());
-            String impDate = Constants.getDate(_client.getMessageImportDate(msg.getInternalId()));
+            String date = DateTime.getDateTime(msg.getMessageId());
+            String impDate = DateTime.getDate(_client.getMessageImportDate(msg.getInternalId()));
             // fixme translate
             _headerDate.setText(date + "    [Imported " + impDate + "]");
             

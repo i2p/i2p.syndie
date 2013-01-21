@@ -46,6 +46,7 @@ import syndie.data.WatchedChannel;
 import syndie.db.DBClient;
 import syndie.db.JobRunner;
 import syndie.db.UI;
+import syndie.util.DateTime;
 
 /**
  *
@@ -1111,7 +1112,7 @@ public class NymChannelTree implements Themeable, Translatable {
         
         long when = r.lastPostDate;
         if (when > 0)
-            item.setText(4, Constants.getDateTime(when));
+            item.setText(4, DateTime.getDateTime(when));
         else
             item.setText(4, "");
         

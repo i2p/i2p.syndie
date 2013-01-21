@@ -37,12 +37,12 @@ import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
 
-import syndie.Constants;
 import syndie.data.SyndieURI;
 import syndie.db.DBClient;
 import syndie.db.SyncArchive;
 import syndie.db.SyncManager;
 import syndie.db.UI;
+import syndie.util.DateTime;
 
 
 /**
@@ -675,11 +675,11 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
             rootItem.setImage(2, null);
             rootItem.setText(3, _translationRegistry.getText("No syndication scheduled"));
         } else if (!SyncManager.getInstance(_client, _ui).isOnline()) {
-            rootItem.setText(1, Constants.getDateTime(nextTime));
+            rootItem.setText(1, DateTime.getDateTime(nextTime));
             rootItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_SCHEDULED);
             rootItem.setText(3, _translationRegistry.getText("Offline: Set as online to start"));
         } else {
-            rootItem.setText(1, Constants.getDateTime(nextTime));
+            rootItem.setText(1, DateTime.getDateTime(nextTime));
             rootItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_SCHEDULED);
             rootItem.setText(3, _translationRegistry.getText("Syndication scheduled"));
         }
@@ -732,7 +732,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                 buf.append(" / ").append(DataHelper.formatSize(t)).append('B');
             indexItem.setText(3, buf.toString());
         } else if (archive.getLastSyncTime() > 0) {
-            indexItem.setText(1, Constants.getDateTime(archive.getLastSyncTime()));
+            indexItem.setText(1, DateTime.getDateTime(archive.getLastSyncTime()));
             if (archive.getLastIndexFetchErrorMsg() != null) {
                 indexItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
                 indexItem.setText(3, _translationRegistry.getText("Fetch error") + ": " + archive.getLastIndexFetchErrorMsg());
@@ -879,7 +879,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
             bf.append('[').append(scope.toBase64().substring(0,6)).append(']');
             Long id = uri.getMessageId();
             if (id != null)
-                bf.append(' ').append(Constants.getDateTime(id.longValue()));
+                bf.append(' ').append(DateTime.getDateTime(id.longValue()));
             else
                 bf.append(' ').append(getText("Forum info"));
             actionItem.setText(0, bf.toString());
@@ -888,23 +888,23 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                 actionItem.setText(1, _translationRegistry.getText("ASAP"));
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_SCHEDULED);
             } else if (action.isReadKeyUnknown()) {
-                actionItem.setText(1, Constants.getDateTime(action.getCompletionTime()));                    
+                actionItem.setText(1, DateTime.getDateTime(action.getCompletionTime()));                    
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_NOKEY);
                 actionItem.setText(3, _translationRegistry.getText("Read key unknown"));
             } else if (action.getPBEPrompt() != null) {
-                actionItem.setText(1, Constants.getDateTime(action.getCompletionTime()));                    
+                actionItem.setText(1, DateTime.getDateTime(action.getCompletionTime()));                    
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_PBE);
                 actionItem.setText(3, _translationRegistry.getText("Passphrase required") + ": " + action.getPBEPrompt());
             } else if (action.isReplyKeyUnknown()) {
-                actionItem.setText(1, Constants.getDateTime(action.getCompletionTime()));                    
+                actionItem.setText(1, DateTime.getDateTime(action.getCompletionTime()));                    
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_NOKEY);
                 actionItem.setText(3, _translationRegistry.getText("Reply key unknown"));
             } else if (action.isCorrupt()) {
-                actionItem.setText(1, Constants.getDateTime(action.getCompletionTime()));                    
+                actionItem.setText(1, DateTime.getDateTime(action.getCompletionTime()));                    
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
                 actionItem.setText(3, _translationRegistry.getText("Message is corrupt"));
             } else if (action.getFetchErrorMsg() != null) {
-                actionItem.setText(1, Constants.getDateTime(action.getCompletionTime()));
+                actionItem.setText(1, DateTime.getDateTime(action.getCompletionTime()));
                 String msg = action.getFetchErrorMsg();
                 if (action.getFetchError() != null)
                     msg = msg + " - " + action.getFetchError().getMessage();
@@ -943,7 +943,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_SCHEDULED);
                 actionItem.setText(3, _translationRegistry.getText("Queued"));
             } else { // complete
-                actionItem.setText(1, Constants.getDateTime(action.getCompletionTime()));
+                actionItem.setText(1, DateTime.getDateTime(action.getCompletionTime()));
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_OK);
                 StringBuilder buf = new StringBuilder();
                 buf.append(_translationRegistry.getText("Imported"));
@@ -1069,7 +1069,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
             bf.append('[').append(scope.toBase64().substring(0,6)).append(']');
             Long id = uri.getMessageId();
             if (id != null)
-                bf.append(' ').append(Constants.getDateTime(id.longValue()));
+                bf.append(' ').append(DateTime.getDateTime(id.longValue()));
             else
                 bf.append(' ').append(getText("Forum info"));
             actionItem.setText(0, bf.toString());
@@ -1105,11 +1105,11 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                     buf.append(":  ").append(DataHelper.formatSize(t)).append('B');
                 actionItem.setText(3, buf.toString());
             } else if (action.getErrorMsg() != null) {
-                actionItem.setText(1, Constants.getDateTime(action.getCompletionTime()));
+                actionItem.setText(1, DateTime.getDateTime(action.getCompletionTime()));
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
                 actionItem.setText(3, _translationRegistry.getText("Error pushing") + ": " + action.getErrorMsg());
             } else { // complete
-                actionItem.setText(1, Constants.getDateTime(action.getCompletionTime()));
+                actionItem.setText(1, DateTime.getDateTime(action.getCompletionTime()));
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_OK);
                 StringBuilder buf = new StringBuilder();
                 buf.append(_translationRegistry.getText("Pushed"));
