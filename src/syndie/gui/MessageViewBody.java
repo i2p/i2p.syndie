@@ -563,9 +563,10 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
             if (_tabFolder != null) {
                 int idx = _tabFolder.getSelectionIndex();
                 if (idx + 1 < _tabs.length) {
-                    _tabFolder.setSelection(idx+1);
-                    if (idx+1 < _body.length)
+                    if (idx+1 < _body.length) {
+                        _tabFolder.setSelection(idx+1);
                         _body[idx+1].getComposite().forceFocus();
+                   }
                 }
             }
         }
