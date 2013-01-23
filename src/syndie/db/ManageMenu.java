@@ -586,6 +586,7 @@ class ManageMenu implements TextEngine.Menu {
     }
     
     private static final String SQL_LIST_NYMS = "SELECT identKey, name FROM channel ORDER BY name ASC";
+
     /** listnyms [--name $namePrefix] [--channel $hashPrefix] */
     private void processListNyms(DBClient client, UI ui, Opts opts) {
         if (_currentChannel == null) {
@@ -628,13 +629,16 @@ class ManageMenu implements TextEngine.Menu {
                                      " (" + chan.toBase64() + ")");
                 }
             }
+            ui.commandComplete(0, null);
         } catch (SQLException se) {
             ui.errorMessage("Internal error listing nyms", se);
+            ui.commandComplete(-1, null);
         } finally {
             if (rs != null) try { rs.close(); } catch (SQLException se) {}
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
     }
+
     /** addnym (--nym $index | --key $base64(pubKey)) --action (manage|post) */
     private void processAddNym(DBClient client, UI ui, Opts opts) {
         if (_currentChannel == null) {
@@ -690,6 +694,7 @@ class ManageMenu implements TextEngine.Menu {
         }
         ui.commandComplete(0, null);
     }
+
     /** removenym (--nym $index | --key $base64(pubKey)) --action (manage|post) */
     private void processRemoveNym(DBClient client, UI ui, Opts opts) {
         
