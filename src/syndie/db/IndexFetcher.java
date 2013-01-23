@@ -113,7 +113,7 @@ class IndexFetcher {
             if (archive.getPostKey() != null) {
                 // fake it
                 SharedArchive shared = new SharedArchive();
-                SharedArchiveEngine.PullStrategy strategy = archive.getPullStrategy();
+                PullStrategy strategy = archive.getPullStrategy();
                 if (strategy == null)
                     strategy = _manager.getDefaultPullStrategy();
                 shared.setAbout(LocalArchiveManager.getLocalAbout(_manager.getClient(), strategy));

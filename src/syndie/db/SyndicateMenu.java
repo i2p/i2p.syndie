@@ -297,7 +297,7 @@ class SyndicateMenu implements TextEngine.Menu {
             ui.commandComplete(-1, null);
             return;
         }
-        SharedArchiveEngine.PullStrategy strategy = new SharedArchiveEngine.PullStrategy();
+        PullStrategy strategy = new PullStrategy();
         strategy.includeDupForPIR = false;
         strategy.includePBEMessages = true;
         strategy.includePrivateMessages = true;
@@ -386,7 +386,7 @@ class SyndicateMenu implements TextEngine.Menu {
         String style = opts.getOptValue("style");
         if (style == null)
             style = "diff";
-        SharedArchiveEngine.PullStrategy strategy = new SharedArchiveEngine.PullStrategy();
+        PullStrategy strategy = new PullStrategy();
         List uris = null;
         if ("known".equalsIgnoreCase(style)) {
             strategy.includePrivateMessages = includeReplies;
@@ -705,7 +705,7 @@ class SyndicateMenu implements TextEngine.Menu {
         }
     }
     
-    private void processBuildIndex(DBClient client, UI ui, Opts opts, SharedArchiveEngine.PullStrategy pullStrategy) {
+    private void processBuildIndex(DBClient client, UI ui, Opts opts, PullStrategy pullStrategy) {
         //long maxSize = opts.getOptLong("maxSize", ArchiveIndex.DEFAULT_MAX_SIZE);
         LocalArchiveManager.buildIndex(client, ui, pullStrategy); //, maxSize);
         ui.commandComplete(0, null);

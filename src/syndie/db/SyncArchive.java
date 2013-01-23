@@ -43,8 +43,8 @@ public class SyncArchive {
     private final List<OutgoingAction> _outgoingActions;
     private final List<SyncArchiveListener> _listeners;
     private long _whitelistGroupId;
-    private SharedArchiveEngine.PullStrategy _pullStrategy;
-    private SharedArchiveEngine.PushStrategy _pushStrategy;
+    private PullStrategy _pullStrategy;
+    private PushStrategy _pushStrategy;
     
     private boolean _indexFetching;
     private boolean _indexFetchComplete;
@@ -126,7 +126,7 @@ public class SyncArchive {
             return;
         }
 
-        SharedArchiveEngine.PullStrategy pullStrategy = getPullStrategy();
+        PullStrategy pullStrategy = getPullStrategy();
         if (pullStrategy == null)
             pullStrategy = SyncManager.getInstance(_client, ui).getDefaultPullStrategy();
         ui.debugMessage("index fetched, pull strategy: " + pullStrategy);
@@ -135,7 +135,7 @@ public class SyncArchive {
         
         List pushURIs;
         if (isNew) {
-            SharedArchiveEngine.PushStrategy pushStrategy = getPushStrategy();
+            PushStrategy pushStrategy = getPushStrategy();
             if (pushStrategy == null)
                 pushStrategy = SyncManager.getInstance(_client, ui).getDefaultPushStrategy();
             ui.debugMessage("index fetched, push strategy: " + pushStrategy);
@@ -624,8 +624,8 @@ public class SyncArchive {
                     last = lastPush.getTime();
                 _lastSyncTime = last;
                 
-                _pullStrategy = new SharedArchiveEngine.PullStrategy(pullPolicy);
-                _pushStrategy = new SharedArchiveEngine.PushStrategy(pushPolicy);
+                _pullStrategy = new PullStrategy(pullPolicy);
+                _pushStrategy = new PushStrategy(pushPolicy);
                 
                 _nextSyncDelayHours = nextSyncDelayHours;
                 _whitelistGroupId = whitelistGroupId;
@@ -828,10 +828,10 @@ public class SyncArchive {
     /** TODO proper state tracking */
     public boolean getSyncInProgress() { return getIndexFetchInProgress() || _incomingActionsInProgress > 0 || _outgoingActionsInProgress > 0; }
 
-    public SharedArchiveEngine.PullStrategy getPullStrategy() { return _pullStrategy; }
-    public void setPullStrategy(SharedArchiveEngine.PullStrategy strategy) { _pullStrategy = strategy; }
-    public SharedArchiveEngine.PushStrategy getPushStrategy() { return _pushStrategy; }
-    public void setPushStrategy(SharedArchiveEngine.PushStrategy strategy) { _pushStrategy = strategy; }
+    public PullStrategy getPullStrategy() { return _pullStrategy; }
+    public void setPullStrategy(PullStrategy strategy) { _pullStrategy = strategy; }
+    public PushStrategy getPushStrategy() { return _pushStrategy; }
+    public void setPushStrategy(PushStrategy strategy) { _pushStrategy = strategy; }
     public void setNextSyncDelay(int hours) { _nextSyncDelayHours = hours; }
     public int getNextSyncDelay() { return _nextSyncDelayHours; }
     public long getWhitelistGroupId() { return _whitelistGroupId; }

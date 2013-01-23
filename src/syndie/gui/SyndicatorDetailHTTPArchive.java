@@ -38,6 +38,8 @@ import org.eclipse.swt.widgets.Text;
 
 import syndie.data.NymReferenceNode;
 import syndie.db.DBClient;
+import syndie.db.PullStrategy;
+import syndie.db.PushStrategy;
 import syndie.db.SharedArchiveEngine;
 import syndie.db.SyncArchive;
 import syndie.db.SyncManager;
@@ -719,10 +721,10 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         _archive.setHTTPProxyHost(host);
         _archive.setHTTPProxyPort(port);
         
-        SharedArchiveEngine.PullStrategy pullStrategy = createPullStrategy();
+        PullStrategy pullStrategy = createPullStrategy();
         _archive.setPullStrategy(pullStrategy);
         
-        SharedArchiveEngine.PushStrategy pushStrategy = createPushStrategy();
+        PushStrategy pushStrategy = createPushStrategy();
         _archive.setPushStrategy(pushStrategy);
         
         _archive.setURL(_location.getText().trim());
@@ -741,8 +743,8 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         return true;
     }
     
-    private SharedArchiveEngine.PullStrategy createPullStrategy() {
-        SharedArchiveEngine.PullStrategy pullStrategy = new SharedArchiveEngine.PullStrategy();
+    private PullStrategy createPullStrategy() {
+        PullStrategy pullStrategy = new PullStrategy();
         
         pullStrategy.discoverArchives = true;
         pullStrategy.includePBEMessages = _pullPBE.getSelection();
@@ -792,8 +794,8 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         return pullStrategy;
     }
     
-    private SharedArchiveEngine.PushStrategy createPushStrategy() {
-        SharedArchiveEngine.PushStrategy pushStrategy = new SharedArchiveEngine.PushStrategy();
+    private PushStrategy createPushStrategy() {
+        PushStrategy pushStrategy = new PushStrategy();
         
         pushStrategy.maxKBPerMessage = SIZES[_pushMaxSize.getSelectionIndex()];
         pushStrategy.sendMaxAge = SENDAGEDAYS[_pushAge.getSelectionIndex()];
@@ -817,15 +819,15 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
     
     private static final String str(String str) { return str != null ? str : ""; }
     
-    private SharedArchiveEngine.PushStrategy getPushStrategy() {
-        SharedArchiveEngine.PushStrategy rv = _archive.getPushStrategy();
+    private PushStrategy getPushStrategy() {
+        PushStrategy rv = _archive.getPushStrategy();
         if (rv == null)
             rv = SyncManager.getInstance(_client, _ui).getDefaultPushStrategy();
         return rv;
     }
     
-    private SharedArchiveEngine.PullStrategy getPullStrategy() {
-        SharedArchiveEngine.PullStrategy rv = _archive.getPullStrategy();
+    private PullStrategy getPullStrategy() {
+        PullStrategy rv = _archive.getPullStrategy();
         if (rv == null)
             rv = SyncManager.getInstance(_client, _ui).getDefaultPullStrategy();
         return rv;
@@ -838,7 +840,7 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         _proxyHost.setText(str(_archive.getHTTPProxyHost()));
         _proxyPort.setText(_archive.getHTTPProxyPort() > 0 ? _archive.getHTTPProxyPort()+"" : "");
         
-        SharedArchiveEngine.PushStrategy push = getPushStrategy();
+        PushStrategy push = getPushStrategy();
         if (push.sendLocalNewOnly)
             _pushPolicy.select(PUSH_POLICY_LOCAL_DELTA);
         else if (push.sendNothing)
@@ -853,7 +855,7 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
             }
         }
         
-        SharedArchiveEngine.PullStrategy pull = getPullStrategy();
+        PullStrategy pull = getPullStrategy();
         if (pull.includeDupForPIR) {
             _pullPolicy.select(PULL_POLICY_PIR);
         } else if (pull.pullNothing) {

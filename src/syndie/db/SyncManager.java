@@ -32,8 +32,8 @@ public class SyncManager {
     private boolean _archivesLoaded;
     private final List<SyncListener> _listeners;
     private boolean _online;
-    private SharedArchiveEngine.PullStrategy _defaultPullStrategy;
-    private SharedArchiveEngine.PushStrategy _defaultPushStrategy;
+    private PullStrategy _defaultPullStrategy;
+    private PushStrategy _defaultPushStrategy;
     
     private IndexFetcher _indexFetcher;
     private SyncInboundFetcher _inboundFetcher;
@@ -157,21 +157,21 @@ public class SyncManager {
     public int getArchiveCount() { return _archives.size(); }
     public SyncArchive getArchive(int idx) { return (SyncArchive)_archives.get(idx); }
     
-    public SharedArchiveEngine.PullStrategy getDefaultPullStrategy() { return _defaultPullStrategy; }
-    public SharedArchiveEngine.PushStrategy getDefaultPushStrategy() { return _defaultPushStrategy; }
-    public void setDefaultPullStrategy(SharedArchiveEngine.PullStrategy strategy) { _defaultPullStrategy = strategy; saveDefaultStrategies(); }
-    public void setDefaultPushStrategy(SharedArchiveEngine.PushStrategy strategy) { _defaultPushStrategy = strategy; saveDefaultStrategies(); }
+    public PullStrategy getDefaultPullStrategy() { return _defaultPullStrategy; }
+    public PushStrategy getDefaultPushStrategy() { return _defaultPushStrategy; }
+    public void setDefaultPullStrategy(PullStrategy strategy) { _defaultPullStrategy = strategy; saveDefaultStrategies(); }
+    public void setDefaultPushStrategy(PushStrategy strategy) { _defaultPushStrategy = strategy; saveDefaultStrategies(); }
     
     private void loadDefaultStrategies() {
        if (!_client.isLoggedIn()) return;
         Properties prefs = _client.getNymPrefs();
         String strat = prefs.getProperty("syndicate.pullStrategy");
-        SharedArchiveEngine.PullStrategy pull = new SharedArchiveEngine.PullStrategy(strat);
+        PullStrategy pull = new PullStrategy(strat);
         _ui.debugMessage("db pull strategy: " + pull);
         _defaultPullStrategy = pull;
         
         strat = prefs.getProperty("syndicate.pushStrategy");
-        SharedArchiveEngine.PushStrategy push = new SharedArchiveEngine.PushStrategy(strat);
+        PushStrategy push = new PushStrategy(strat);
         _ui.debugMessage("db push strategy: " + push);
         _defaultPushStrategy = push;
     }
@@ -232,8 +232,8 @@ public class SyncManager {
         long nextPush = System.currentTimeMillis() + 60*1000*5;
         String readKey = null;
         String postKey = null;
-        SharedArchiveEngine.PullStrategy pullStrategy = null;
-        SharedArchiveEngine.PushStrategy pushStrategy = null;
+        PullStrategy pullStrategy = null;
+        PushStrategy pushStrategy = null;
         
         SyncArchive archive = new SyncArchive(_client, name);
         archive.setConsecutiveFailures(0);

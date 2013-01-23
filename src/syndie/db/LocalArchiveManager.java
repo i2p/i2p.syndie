@@ -41,7 +41,7 @@ public class LocalArchiveManager {
 
     private static final int DEFAULT_REBUILD_DELAY_HOURS = 1;
 
-    public static SharedArchive.About getLocalAbout(DBClient client, SharedArchiveEngine.PullStrategy pullStrategy) {
+    public static SharedArchive.About getLocalAbout(DBClient client, PullStrategy pullStrategy) {
         SharedArchive.About about = new SharedArchive.About();
         about.setAdminChannel(SharedArchive.ABOUT_NO_ADMIN_CHANNEL);
         
@@ -115,7 +115,7 @@ public class LocalArchiveManager {
     /**
      *  @return success
      */
-    public static boolean buildIndex(DBClient client, UI ui, SharedArchiveEngine.PullStrategy pullStrategy) {
+    public static boolean buildIndex(DBClient client, UI ui, PullStrategy pullStrategy) {
         return buildIndex(client, ui, pullStrategy, new File(client.getWebDir(), SHARED_INDEX_FILE));
     }
 
@@ -123,7 +123,7 @@ public class LocalArchiveManager {
      *  TODO force-rebuild parameter
      *  @return success
      */
-    public static boolean buildIndex(DBClient client, UI ui, SharedArchiveEngine.PullStrategy pullStrategy, File targetFile) {
+    public static boolean buildIndex(DBClient client, UI ui, PullStrategy pullStrategy, File targetFile) {
         if (!client.isLoggedIn()) return false;
         SharedArchiveBuilder builder = new SharedArchiveBuilder(client, ui, getLocalAbout(client, pullStrategy));
         SharedArchive archive = builder.buildSharedArchive();

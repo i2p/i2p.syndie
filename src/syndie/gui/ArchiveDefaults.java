@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
+
 import net.i2p.data.DataHelper;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
@@ -26,8 +28,11 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
+
 import syndie.Constants;
 import syndie.db.DBClient;
+import syndie.db.PullStrategy;
+import syndie.db.PushStrategy;
 import syndie.db.SharedArchiveEngine;
 import syndie.db.SyncArchive;
 import syndie.db.SyncManager;
@@ -512,9 +517,9 @@ public class ArchiveDefaults extends Composite implements Themeable, Translatabl
             archive.setHTTPProxyPort(proxyPort);
             //_archives.add(archive);
             if (pullPolicy != null)
-                archive.setPullStrategy(new SharedArchiveEngine.PullStrategy(pullPolicy));
+                archive.setPullStrategy(new PullStrategy(pullPolicy));
             if (pushPolicy != null)
-                archive.setPushStrategy(new SharedArchiveEngine.PushStrategy(pushPolicy));
+                archive.setPushStrategy(new PushStrategy(pushPolicy));
             if (syncByDefault)
                 archive.setNextSyncTime(System.currentTimeMillis());
             else
