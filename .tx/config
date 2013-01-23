@@ -1,6 +1,9 @@
 [I2P.Syndie]
 source_file = locale/messages_en.po
 source_lang = en
+trans.de = locale/messages_de.po
+trans.es = locale/messages_es.po
+trans.sv_SE = locale/messages_se.po
 type = PO
 
 [main]
