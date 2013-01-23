@@ -508,10 +508,7 @@
         <mkdir dir="plugin/lib" />
         <buildnumber file="scripts/build.number" />
 
-        <!-- make the update linux xpi2p, this is for both 32 and 64 bit -->
-        <ant dir="swt" target="ensure-lin32-swt" />
-        <ant dir="swt" target="ensure-lin64-swt" />
-        <ant dir="swt" target="ensure-win32-swt" />
+        <!-- make the update linux/mac xpi2p, this is for both 32 and 64 bit -->
 
         <delete file="plugin/lib/hsqldb.jar.pack" />
         <delete file="plugin/lib/swt.jar.pack" />
@@ -536,7 +533,7 @@
         </exec>
         <move file="syndie.xpi2p" tofile="syndie-linux-i386-update.xpi2p" />
 
-        <!-- make the windows update xpi2p -->
+        <!-- make the windows update xpi2p (32/64) -->
         <copy file="scripts/plugin-windows.config" tofile="plugin/plugin.config" overwrite="true" />
         <exec executable="echo" osfamily="unix" failonerror="true" output="plugin/plugin.config" append="true">
             <arg value="version=${release.number}-b${build.number}" />
@@ -550,7 +547,8 @@
         </exec>
         <move file="syndie.xpi2p" tofile="syndie-win32-update.xpi2p" />
 
-        <!-- make the install xpi2p -->
+        <!-- make the 32 bit linux install xpi2p -->
+        <ant dir="swt" target="ensure-lin32-swt" />
         <copy file="lib/hsqldb_lic.txt" todir="plugin" />
         <copy file="scripts/LICENSE-swt.txt" todir="plugin" />
         <copy file="scripts/plugin-linux.config" tofile="plugin/plugin.config" overwrite="true" />
@@ -574,6 +572,7 @@
         <move file="syndie.xpi2p" tofile="syndie-linux-i386.xpi2p" />
 
         <!-- make the 64 bit linux install xpi2p -->
+        <ant dir="swt" target="ensure-lin64-swt" />
         <exec executable="${java.home}/bin/pack200" failonerror="true">
             <arg value="-g" />
             <arg value="plugin/lib/swt.jar.pack" />
@@ -584,7 +583,33 @@
         </exec>
         <move file="syndie.xpi2p" tofile="syndie-linux-x86-64.xpi2p" />
 
-        <!-- make the windows install xpi2p -->
+        <!-- macs use the linux plugin config and clients config files -->
+        <!-- make the 32 bit mac install xpi2p -->
+        <ant dir="swt" target="ensure-mac32-swt" />
+        <exec executable="${java.home}/bin/pack200" failonerror="true">
+            <arg value="-g" />
+            <arg value="plugin/lib/swt.jar.pack" />
+            <arg value="${swt.mac32}" />
+        </exec>
+        <exec executable="scripts/makeplugin.sh" failonerror="true">
+            <arg value="plugin" />
+        </exec>
+        <move file="syndie.xpi2p" tofile="syndie-mac32.xpi2p" />
+
+        <!-- make the 64 bit mac install xpi2p -->
+        <ant dir="swt" target="ensure-mac64-swt" />
+        <exec executable="${java.home}/bin/pack200" failonerror="true">
+            <arg value="-g" />
+            <arg value="plugin/lib/swt.jar.pack" />
+            <arg value="${swt.mac64}" />
+        </exec>
+        <exec executable="scripts/makeplugin.sh" failonerror="true">
+            <arg value="plugin" />
+        </exec>
+        <move file="syndie.xpi2p" tofile="syndie-mac64.xpi2p" />
+
+        <!-- make the 32 bit windows install xpi2p -->
+        <ant dir="swt" target="ensure-win32-swt" />
         <copy file="scripts/plugin-windows.config" tofile="plugin/plugin.config" overwrite="true" />
         <copy file="scripts/clients-windows.config" tofile="plugin/clients.config" overwrite="true" />
         <exec executable="echo" osfamily="unix" failonerror="true" output="plugin/plugin.config" append="true">
@@ -599,6 +624,18 @@
             <arg value="plugin" />
         </exec>
         <move file="syndie.xpi2p" tofile="syndie-win32.xpi2p" />
+
+        <!-- make the 64 bit windows install xpi2p -->
+        <ant dir="swt" target="ensure-win64-swt" />
+        <exec executable="${java.home}/bin/pack200" failonerror="true">
+            <arg value="-g" />
+            <arg value="plugin/lib/swt.jar.pack" />
+            <arg value="${swt.win64}" />
+        </exec>
+        <exec executable="scripts/makeplugin.sh" failonerror="true">
+            <arg value="plugin" />
+        </exec>
+        <move file="syndie.xpi2p" tofile="syndie-win64.xpi2p" />
 
     </target>
 
