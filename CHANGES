@@ -1,5 +1,27 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
+* 2013-01-24 1.102b-11 (kytv, zzz)
+  GUI improvements:
+  - Partial translations for German, Spanish, Swedish
+  - Improve attachment tab layout
+  - Show attachment icon in MessageTree for those with attachments
+  - Improve quote message
+  - Set MessageEditorTab text to the subject
+  - Warn if no subject on post
+  - Clean up tooltips for links
+  - Fix language picker menu
+  Fixes:
+  - Fix bug requiring click on attachment 1 to load any attachment
+  - Fix page down button in last page of message switching to blank thread tab
+  - Hopefully fix error on view plain text on windows
+  - Fix listynms hanging CLI
+  Build:
+  - Plugin and translation build fixes
+  Other:
+  - Add warning about CLI + httpserv
+  - Don't load attachments into memory unless displayable
+  - Don't keep attachment data in memory; reload if saving
+
 * 2013-01-21 1.102b-10 (kytv, zzz)
   GUI improvements:
   - Add expand/collapse-all buttons and menu items to MessageTree;
