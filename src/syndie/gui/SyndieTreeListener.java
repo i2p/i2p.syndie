@@ -132,7 +132,7 @@ public class SyndieTreeListener implements KeyListener, TraverseListener, Select
     
     private void scrollHorizontalBeginning() {
         ScrollBar bar = _tree.getHorizontalBar();
-        if (bar != null)
+        if (bar != null && !bar.isDisposed())
             bar.setSelection(bar.getMinimum());
     }
     
