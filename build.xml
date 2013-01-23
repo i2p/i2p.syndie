@@ -31,10 +31,10 @@
     <property name="swt.win64" value="${swt.dir}/swt-win64.jar" />
     <property name="swt.mac32" value="${swt.dir}/swt-mac32.jar" />
     <property name="swt.mac64" value="${swt.dir}/swt-mac64.jar" />
+    <property name="require.gettext" value="true" />
     <condition property="no.bundle">
         <isfalse value="${require.gettext}" />
     </condition>
-    <property name="require.gettext" value="true" />
 
     <!-- allow lib locations to be overridden -->
     <property name="hsqldb.jar" value="${lib.dir}/hsqldb.jar" />

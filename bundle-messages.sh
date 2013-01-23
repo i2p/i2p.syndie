@@ -47,8 +47,8 @@ do
 		find $JPATHS -name *.java -newer $i > $TMPFILE
 	fi
 
-	if [ -s build/obj/syndie/messages/messages_$LG.class -a \
-	     build/obj/syndie/messages/messages_$LG.class -nt $i -a \
+	if [ -s build/obj/syndie/locale/messages_$LG.class -a \
+	     build/obj/syndie/locale/messages_$LG.class -nt $i -a \
 	     ! -s $TMPFILE ]
 	then
 		continue
