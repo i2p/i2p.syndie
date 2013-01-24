@@ -5,6 +5,7 @@ import java.io.File;
 import net.i2p.util.SystemVersion;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.SWTError;
 import org.eclipse.swt.browser.Browser;
 import org.eclipse.swt.browser.TitleEvent;
 import org.eclipse.swt.browser.TitleListener;
@@ -58,14 +59,28 @@ public class RealBrowserTab extends BrowserTab implements Translatable, Themeabl
         if (SystemVersion.isWindows() || SystemVersion.isMac()) {
             // sorry
         } else {
-            _browser = new org.eclipse.swt.browser.Browser(getRoot(), SWT.WEBKIT);
-            _browser.setJavascriptEnabled(false);
-            _browser.addTitleListener(new TitleListener() {
-                public void changed(TitleEvent event) {
-                    _name = event.title;
-                    reconfigItem();
+            // TODO add location bar, back/forward/stop/reload buttons, progress bar
+            // TODO save/restore cookies
+            try {
+                _browser = new org.eclipse.swt.browser.Browser(getRoot(), SWT.WEBKIT);
+                _ui.debugMessage("Browser using webkit");
+            } catch (SWTError e1) {
+                try {
+                    _browser = new org.eclipse.swt.browser.Browser(getRoot(), SWT.MOZILLA);
+                    _ui.debugMessage("Browser using mozilla");
+                } catch (SWTError e2) {
+                    _ui.debugMessage("No browser available");
                 }
-            });
+            }
+            if (_browser != null) {
+                _browser.setJavascriptEnabled(false);
+                _browser.addTitleListener(new TitleListener() {
+                    public void changed(TitleEvent event) {
+                        _name = event.title;
+                        reconfigItem();
+                    }
+                });
+            }
         }
         getBrowser().getThemeRegistry().register(this);
         getBrowser().getTranslationRegistry().register(this);
@@ -73,16 +88,16 @@ public class RealBrowserTab extends BrowserTab implements Translatable, Themeabl
 
     @Override
     public void show(SyndieURI uri) {
-        if (SystemVersion.isWindows() || SystemVersion.isMac()) {
+        if (_browser == null) {
             MessageBox box = new MessageBox(getRoot().getShell(), SWT.ICON_INFORMATION | SWT.OK);
-            box.setText("Sorry, Linux only");
-            box.setMessage("Not secure on Windows or Mac");
+            box.setText("Not supported");
+            box.setMessage("Sorry, the Syndie web browser is not supported on your system");
             getBrowser().getNavControl().unview(getURI());
             box.open();
             return;
         }    
         String url = uri.getURL();
-        if (url != null) {
+        if (url != null && url.startsWith("http://")) {
             _browser.setUrl(url);
         } else {
             MessageBox box = new MessageBox(getRoot().getShell(), SWT.ICON_INFORMATION | SWT.OK);

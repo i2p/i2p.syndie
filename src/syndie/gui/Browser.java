@@ -1657,7 +1657,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
                 public void fire() { shell.dispose(); }
             });
             
-            if (valid && !urlStr.startsWith("https") &&
+            if (valid && urlStr.startsWith("http://") &&
                 !(SystemVersion.isWindows() || SystemVersion.isMac())) {
                 b = new Button(buttons, SWT.PUSH);
                 b.setText(getTranslationRegistry().getText("Open in Syndie using I2P proxy"));
