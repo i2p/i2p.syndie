@@ -6,7 +6,7 @@ import java.util.*;
 import net.i2p.data.DataHelper;
 import net.i2p.util.SecureFileOutputStream;
 
-import syndie.Constants;
+import syndie.util.StringUtil;
 
 /**
  * Main scriptable text UI
@@ -136,7 +136,7 @@ public class TextUI implements UI {
     }
 
     public void statusMessage(String msg) {
-        String lines[] = Constants.split('\n', msg); //msg.split("\n");
+        String lines[] = StringUtil.split('\n', msg); //msg.split("\n");
         if (lines != null) {
             for (int i = 0; i < lines.length; i++) {
                 beforeDisplayLine();

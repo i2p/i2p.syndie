@@ -1,9 +1,10 @@
 package syndie.data;
 
 import java.util.*;
-import syndie.Constants;
+
 import syndie.db.NullUI;
 import syndie.db.UI;
+import syndie.util.StringUtil;
 //import syndie.gui.*;
 
 /**
@@ -73,7 +74,7 @@ public class HTMLStateBuilder {
         
         // heuristic to check for html formatted pages that assume <html><body>
         // this isn't perfect, since the body could be in a comment, but, well...
-        String lowerHTML = Constants.lowercase(_html);
+        String lowerHTML = StringUtil.lowercase(_html);
         boolean assumeBody = ( (lowerHTML.indexOf("<body>") == -1) && (lowerHTML.indexOf("<body ") == -1));
         
         //System.out.println("unparsed html:\n" + _html);

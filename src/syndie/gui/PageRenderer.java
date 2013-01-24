@@ -55,6 +55,7 @@ import syndie.db.CommandImpl;
 import syndie.db.DBClient;
 import syndie.db.NullUI;
 import syndie.db.UI;
+import syndie.util.StringUtil;
 
 /**
  * Creates a new StyledText component for rendering pages.  Supports plain
@@ -1703,7 +1704,7 @@ public class PageRenderer extends BaseComponent implements Themeable {
                 Properties props = _source.getMessageAttachmentConfig(internalMsgId, attachmentId.intValue());
                 String name = props.getProperty(Constants.MSG_ATTACH_NAME);
                 if (name != null)
-                    return Constants.stripFilename(name, false);
+                    return StringUtil.stripFilename(name, false);
                 else
                     return "attachment" + attachmentId.intValue() + ".png";
             }

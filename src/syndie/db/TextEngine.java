@@ -21,6 +21,7 @@ import net.i2p.util.SecureFileOutputStream;
 import syndie.Constants;
 import syndie.Version;
 import syndie.data.SyndieURI;
+import syndie.util.StringUtil;
 
 /**
  *  CLI and startup
@@ -720,7 +721,7 @@ public class TextEngine {
                 orig = cmd.substring(1, searchEnd);
                 replacement = cmd.substring(searchEnd+1);
             }
-            String newVal = Constants.replace(prev, orig, replacement, 1);
+            String newVal = StringUtil.replace(prev, orig, replacement, 1);
             _ui.insertCommand(newVal);
         } else {
             _ui.errorMessage("No history to mangle");
@@ -784,7 +785,7 @@ public class TextEngine {
     }
     
     private void executeAlias(String aliasedValue) {
-        String cmds[] = Constants.split(';', aliasedValue);
+        String cmds[] = StringUtil.split(';', aliasedValue);
         for (int i = 0; i < cmds.length; i++) {
             _ui.debugMessage("aliased command " + i + ": " + cmds[i]);
             _ui.insertCommand(cmds[i]);

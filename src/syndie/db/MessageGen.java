@@ -27,6 +27,7 @@ import syndie.data.EnclosureBody;
 import syndie.data.NymKey;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
+import syndie.util.StringUtil;
 
 /**
  *CLI messagegen
@@ -551,7 +552,7 @@ public class MessageGen extends CommandImpl {
         String referenceStrings = args.getOptValue("references");
         if (referenceStrings != null) {
             StringBuilder refs = new StringBuilder();
-            String refList[] = Constants.split(',', referenceStrings);
+            String refList[] = StringUtil.split(',', referenceStrings);
             for (int i = 0; i < refList.length; i++) {
                 try {
                     SyndieURI uri = new SyndieURI(refList[i]);

@@ -16,7 +16,7 @@ import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.GlyphMetrics;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Display;
-import syndie.Constants;
+
 import syndie.data.HTMLStateBuilder;
 import syndie.data.HTMLTag;
 import syndie.data.MessageInfo;
@@ -25,6 +25,7 @@ import syndie.db.CommandImpl;
 import syndie.db.DBClient;
 import syndie.db.NullUI;
 import syndie.db.UI;
+import syndie.util.StringUtil;
 
 /**
  *
@@ -721,7 +722,7 @@ class HTMLStyleBuilder {
     private Font buildFont(Font oldFont, String config, Font defaultFont) {
         if ( (oldFont != null) && (!oldFont.isDisposed()) ) oldFont.dispose();
         if (config == null) return defaultFont;
-        String cfg[] = Constants.split(';', config);
+        String cfg[] = StringUtil.split(';', config);
         if ( (cfg == null) || (cfg.length != 3) ) return defaultFont;
         String fontName = cfg[0].trim();
         int fontHeight = 12;
@@ -731,7 +732,7 @@ class HTMLStyleBuilder {
             // ignore
         }
         int fontStyle = SWT.NORMAL;
-        String styleLower = Constants.lowercase(cfg[2]);
+        String styleLower = StringUtil.lowercase(cfg[2]);
         if (styleLower.indexOf("bold") >= 0)
             fontStyle |= SWT.BOLD;
         if (styleLower.indexOf("italic") >= 0)

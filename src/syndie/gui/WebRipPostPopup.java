@@ -4,15 +4,17 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
 import net.i2p.data.Hash;
 import net.i2p.data.SessionKey;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.events.ShellListener;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
-import syndie.Constants;
+
 import syndie.data.SyndieURI;
 import syndie.data.WebRipRunner;
 import syndie.db.DBClient;
@@ -21,6 +23,7 @@ import syndie.db.MessageCreator;
 import syndie.db.MessageCreatorDirect;
 import syndie.db.MessageCreatorSource;
 import syndie.db.UI;
+import syndie.util.StringUtil;
 
 /**
  *
@@ -208,7 +211,7 @@ public class WebRipPostPopup extends BaseComponent implements Themeable, Transla
             public byte[] getAvatarModifiedData() { return null; }
             public boolean getPrivacyReply() { return false; }
             public String[] getPublicTags() { return new String[0]; }
-            public String[] getPrivateTags() { return Constants.split(" ,\t\n\r", tags, false); }
+            public String[] getPrivateTags() { return StringUtil.split(" ,\t\n\r", tags, false); }
             public List getReferenceNodes() { return Collections.EMPTY_LIST; }
             public int getParentCount() { return 0; }
             public SyndieURI getParent(int depth) { return null; }

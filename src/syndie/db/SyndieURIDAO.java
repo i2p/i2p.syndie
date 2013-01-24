@@ -5,7 +5,7 @@ import java.sql.*;
 import java.util.*;
 
 import syndie.data.SyndieURI;
-import syndie.Constants;
+import syndie.util.StringUtil;
 
 import net.i2p.util.Log;
 
@@ -50,7 +50,7 @@ public class SyndieURIDAO {
                         } else {
                             String valStrings = rs.getString(5);
                             if (!rs.wasNull()) {
-                                String vals[] = Constants.split('\n', valStrings); //valStrings.split("\n");
+                                String vals[] = StringUtil.split('\n', valStrings); //valStrings.split("\n");
                                 attribs.put(key, vals);
                             } else {
                                 // all null

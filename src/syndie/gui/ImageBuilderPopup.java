@@ -7,7 +7,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.Properties;
+
 import net.i2p.data.DataHelper;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.SWTException;
 import org.eclipse.swt.custom.ScrolledComposite;
@@ -43,9 +45,10 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Text;
-import syndie.Constants;
+
 import syndie.data.SyndieURI;
 import syndie.data.WebRipRunner;
+import syndie.util.StringUtil;
 
 /**
  *
@@ -362,7 +365,7 @@ public class ImageBuilderPopup {
                 }
             }
             
-            attachment = _page.addAttachment(type, Constants.stripFilename(fname.getName(), false), data);
+            attachment = _page.addAttachment(type, StringUtil.stripFilename(fname.getName(), false), data);
             if (attachment < 0) return;
             //System.out.println("Adding image attachment of size " + data.length + " at attachment " + attachment);
         } else if (_choiceAttach.getSelection()) {

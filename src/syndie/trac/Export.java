@@ -33,6 +33,7 @@ import syndie.db.DBClient;
 import syndie.db.TextEngine;
 import syndie.db.TextUI;
 import syndie.db.ThreadAccumulatorJWZ;
+import syndie.util.StringUtil;
 
 /**
  * Export the Syndie bug reports into a trac database.
@@ -491,7 +492,7 @@ public class Export {
                 continue;
             } else {
                 // only allows ascii alphanum + a few symbols
-                val = Constants.stripFilename(val, false);
+                val = StringUtil.stripFilename(val, false);
                 if (val.length() > 0)
                     buf.append(val).append(" ");
             }

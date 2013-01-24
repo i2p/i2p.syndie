@@ -10,11 +10,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import net.i2p.data.Hash;
 import net.i2p.data.PrivateKey;
 import net.i2p.data.SessionKey;
 import net.i2p.data.SigningPrivateKey;
 import net.i2p.data.SigningPublicKey;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.SWTException;
 import org.eclipse.swt.events.ControlEvent;
@@ -48,6 +50,7 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
+
 import syndie.Constants;
 import syndie.data.ArchiveInfo;
 import syndie.data.ChannelInfo;
@@ -58,6 +61,7 @@ import syndie.db.DBClient;
 import syndie.db.ManageForumExecutor;
 import syndie.db.UI;
 import syndie.util.DateTime;
+import syndie.util.StringUtil;
 
 /**
  *
@@ -502,7 +506,7 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
             }
             public Set getPublicTags() { return Collections.EMPTY_SET; }
             public Set getPrivateTags() { 
-                String tags[] = Constants.split(" \t\r\n,", _tags.getText(), false);
+                String tags[] = StringUtil.split(" \t\r\n,", _tags.getText(), false);
                 Set rv = new HashSet(tags.length);
                 for (int i = 0; i < tags.length; i++)
                     rv.add(tags[i]);

@@ -91,6 +91,7 @@ import syndie.db.ThreadAccumulatorJWZ;
 import syndie.db.ThreadBuilder;
 import syndie.db.ThreadMsgId;
 import syndie.db.UI;
+import syndie.util.StringUtil;
 
 /**
  *  Contains all the tabs on the post page. The attachments and refs and thread tabs are here,
@@ -463,7 +464,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                     } else if ( (parentURIs != null) && (parentURIs.size() > 0) ) {
                         SyndieURI parent = (SyndieURI)parentURIs.get(0);
                         String parentSubject = MessageView.calculateSubject(client, ui, trans, parent).trim();
-                        if ( (parentSubject.length() > 0) && (!Constants.lowercase(parentSubject).startsWith("re:")) ) {
+                        if ( (parentSubject.length() > 0) && (!StringUtil.lowercase(parentSubject).startsWith("re:")) ) {
                             summary.subject = "re: " + parentSubject;
                         } else {
                             summary.subject = parentSubject;
@@ -672,7 +673,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         public String[] getPublicTags() { return new String[0]; }
         public String[] getPrivateTags() {
             String src = _tag.getText().trim();
-            return Constants.split(" \t\r\n", src, false);
+            return StringUtil.split(" \t\r\n", src, false);
         }
         public List getReferenceNodes() { return _refEditor.getReferenceNodes(); }
         public int getParentCount() { return _parents.size(); }
@@ -1090,7 +1091,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         } else if ( (_parents != null) && (_parents.size() > 0) ) {
             SyndieURI parent = (SyndieURI)_parents.get(0);
             String parentSubject = MessageView.calculateSubject(_client, _ui, _translationRegistry, parent).trim();
-            if ( (parentSubject.length() > 0) && (!Constants.lowercase(parentSubject).startsWith("re:")) ) {
+            if ( (parentSubject.length() > 0) && (!StringUtil.lowercase(parentSubject).startsWith("re:")) ) {
                 _subject.setText("re: " + parentSubject);
             } else {
                 _subject.setText(parentSubject);
@@ -1818,7 +1819,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                 
                 if (_subject.getText().trim().length() <= 0) {
                     String parentSubject = MessageView.calculateSubject(_client, _ui, _translationRegistry, uri).trim();
-                    if ( (parentSubject.length() > 0) && (!Constants.lowercase(parentSubject).startsWith("re:")) ) {
+                    if ( (parentSubject.length() > 0) && (!StringUtil.lowercase(parentSubject).startsWith("re:")) ) {
                         _subject.setText("re: " + parentSubject);
                         _abbrSubject.setText(_subject.getText());
                     } else {
@@ -2549,7 +2550,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         saveState();
         modified();
         String fname = file.getName();
-        String name = Constants.stripFilename(fname, false);
+        String name = StringUtil.stripFilename(fname, false);
         String type = WebRipRunner.guessContentType(fname);
 
         _ui.debugMessage("add attachment(" + fname + ") sz= " + file.length());

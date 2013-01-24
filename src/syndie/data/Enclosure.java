@@ -7,7 +7,6 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 import gnu.crypto.hash.Sha256Standalone;
-import syndie.Constants;
 
 import net.i2p.I2PAppContext;
 import net.i2p.data.Base64;
@@ -18,6 +17,9 @@ import net.i2p.data.SessionKey;
 import net.i2p.data.Signature;
 import net.i2p.data.SigningPublicKey;
 import net.i2p.util.SecureFileOutputStream;
+
+import syndie.Constants;
+import syndie.util.StringUtil;
 
 /**
  *  Handle the parsing of a raw message, i.e. a meta.syndie or xxx.syndie file.
@@ -105,7 +107,7 @@ public class Enclosure {
         if (val == null) {
             return null;
         } else {
-            String str[] = Constants.split('\t', val); // val.split("\t");
+            String str[] = StringUtil.split('\t', val); // val.split("\t");
             if (str != null) {
                 SyndieURI uris[] = new SyndieURI[str.length];
                 int invalid = 0;
@@ -152,9 +154,9 @@ public class Enclosure {
         if (val == null)
             return null;
         else if (!splitByCommaToo)
-            return Constants.split("\t", val); //val.split("\t");
+            return StringUtil.split("\t", val); //val.split("\t");
         else {
-            return Constants.split("\t,", val);
+            return StringUtil.split("\t,", val);
         }
     }
     public Boolean getHeaderBoolean(String key) {
@@ -218,7 +220,7 @@ public class Enclosure {
         if (val == null) {
             return null;
         } else {
-            String str[] = Constants.split('\t', val); //val.split("\t");
+            String str[] = StringUtil.split('\t', val); //val.split("\t");
             if (str != null) {
                 SessionKey keys[] = new SessionKey[str.length];
                 int invalid = 0;

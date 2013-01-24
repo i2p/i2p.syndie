@@ -26,6 +26,7 @@ import syndie.Constants;
 import syndie.db.JobRunner;
 import syndie.db.NullUI;
 import syndie.db.UI;
+import syndie.util.StringUtil;
 
 /**
  *
@@ -88,7 +89,7 @@ public class WebRipRunner implements EepGet.StatusListener {
         _extensionToType.put("syndie", "application/x-syndie");
     }
     public static final String guessContentType(String filename) {
-        filename = Constants.lowercase(filename);
+        filename = StringUtil.lowercase(filename);
         int split = filename.lastIndexOf('.');
         if ( (split >= 0) && (split + 1 < filename.length()) ) {
             String type = (String)_extensionToType.get(filename.substring(split+1));
@@ -241,7 +242,7 @@ public class WebRipRunner implements EepGet.StatusListener {
             SyndieURI uri = SyndieURI.createRelativeAttachment(_existingAttachments + 1 + i);
             String uriStr = uri.toString();
             // replace all instances of $ref with $uriStr
-            html = Constants.replace(html, ref, uriStr);
+            html = StringUtil.replace(html, ref, uriStr);
         }
         // rewrite all refs that aren't bundled as attachments as absolute links
         for (int i = 0; i < _otherURLRefs.size(); i++) {
@@ -249,7 +250,7 @@ public class WebRipRunner implements EepGet.StatusListener {
             SyndieURI uri = SyndieURI.createURL(getAbsolute(ref));
             String uriStr = uri.toString();
             // replace all instances of $ref with $uriStr
-            html = Constants.replace(html, ref, uriStr);
+            html = StringUtil.replace(html, ref, uriStr);
         }
         FileOutputStream fos = null;
         try {
@@ -426,7 +427,7 @@ public class WebRipRunner implements EepGet.StatusListener {
         scheduleFetch(absoluteRef, ref, guessContentType(ref));
     }
     private boolean shouldFetchLink(String ref) {
-        String lc = Constants.lowercase(ref);
+        String lc = StringUtil.lowercase(ref);
         String suffix = null;
         int point = lc.lastIndexOf('.');
         if ( (point > 0) && (point + 1 < lc.length()) )
@@ -552,7 +553,7 @@ public class WebRipRunner implements EepGet.StatusListener {
         //NO_REENCODE_ENCODINGS.add("iso-latin-1"); // == 8859-1
     }
     private static File reencodeHTML(File src, String sourceEncoding, UI ui) {
-        if ( (sourceEncoding == null) || (NO_REENCODE_ENCODINGS.contains(Constants.lowercase(sourceEncoding))) )
+        if ( (sourceEncoding == null) || (NO_REENCODE_ENCODINGS.contains(StringUtil.lowercase(sourceEncoding))) )
             return src;
         try {
             File out = SecureFile.createTempFile("webripReencde", ".html", src.getParentFile());

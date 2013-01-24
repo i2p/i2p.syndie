@@ -47,6 +47,7 @@ import syndie.data.NymReferenceNode;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.data.WatchedChannel;
+import syndie.util.StringUtil;
 
 
 /**
@@ -820,7 +821,7 @@ public class DBClient {
         ResultSet rs = null;
         try {
             stmt = _con.prepareStatement(query);
-            String lc = Constants.lowercase(query);
+            String lc = StringUtil.lowercase(query);
             if (!lc.startsWith("select") && !lc.startsWith("call")) {
                 int rows = stmt.executeUpdate();
                 ui.statusMessage("Command completed, updating " + rows + " rows");

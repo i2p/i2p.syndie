@@ -67,6 +67,7 @@ import syndie.db.ThreadBuilder;
 import syndie.db.ThreadMsgId;
 import syndie.db.UI;
 import syndie.util.DateTime;
+import syndie.util.StringUtil;
 
 
 /**
@@ -354,7 +355,7 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
                 if (msgId >= 0) {
                     String ancestorSubject = client.getMessageSubject(msgId);
                     if ( (ancestorSubject != null) && (ancestorSubject.trim().length() > 0) ) {
-                        if (Constants.lowercase(ancestorSubject).startsWith("re:"))
+                        if (StringUtil.lowercase(ancestorSubject).startsWith("re:"))
                             return ancestorSubject;
                         else // TODO translate "re" ?
                             return "re: " + ancestorSubject.trim();
@@ -393,7 +394,7 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
                     if (id.msgId >= 0) {
                         subject = client.getMessageSubject(id.msgId);
                         if ( (subject != null) && (subject.trim().length() > 0) ) {
-                            if (Constants.lowercase(subject).startsWith("re:"))
+                            if (StringUtil.lowercase(subject).startsWith("re:"))
                                 return subject;
                             else
                                 return "re: " + subject.trim();

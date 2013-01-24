@@ -46,6 +46,7 @@ import syndie.db.CommandImpl;
 import syndie.db.DBClient;
 import syndie.db.UI;
 import syndie.util.DateTime;
+import syndie.util.StringUtil;
 
 /**
  *  A tab inside a MessageEditor
@@ -1153,9 +1154,9 @@ public class PageEditor extends BaseComponent implements Themeable {
         buf.append(">");
     }
     private String getSourceToQuoteFromText(String src) {
-        src = Constants.replace(src, "&", "&amp;");
-        src = Constants.replace(src, ">", "&gt;");
-        src = Constants.replace(src, "<", "&lt;");
+        src = StringUtil.replace(src, "&", "&amp;");
+        src = StringUtil.replace(src, ">", "&gt;");
+        src = StringUtil.replace(src, "<", "&lt;");
         return "<pre>" + src + "</pre>";
     }
     

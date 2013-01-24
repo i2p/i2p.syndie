@@ -3,7 +3,8 @@ package syndie.data;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.Properties;
-import syndie.Constants;
+
+import syndie.util.StringUtil;
 
 public class HTMLTag {
     /** tag name, lower case */
@@ -43,7 +44,7 @@ public class HTMLTag {
                 if (this.name == null) {
                     if (i == 0)
                         this.name = "";
-                    this.name = Constants.lowercase(tagBody.substring(0, i));
+                    this.name = StringUtil.lowercase(tagBody.substring(0, i));
                 } else {
                     if (quoteChar != -1) {
                         // keep going, we are inside a quote
@@ -58,7 +59,7 @@ public class HTMLTag {
                         } else {
                             // whitespace does terminate an unquoted attribute value though
                             quoteChar = -1;
-                            String lname = Constants.lowercase(tagBody.substring(attribNameStart, attribNameEnd));
+                            String lname = StringUtil.lowercase(tagBody.substring(attribNameStart, attribNameEnd));
                             String val = tagBody.substring(attribValueStart, i);
                             attributes.setProperty(lname, val);
                             attribNameStart = -1;
@@ -69,7 +70,7 @@ public class HTMLTag {
                 }
             }  else if ((quoteChar != -1) && (quoteChar == c) && (attribValueStart != -1)) {
                 quoteChar = -1;
-                String lname = Constants.lowercase(tagBody.substring(attribNameStart, attribNameEnd));
+                String lname = StringUtil.lowercase(tagBody.substring(attribNameStart, attribNameEnd));
                 String val = tagBody.substring(attribValueStart, i);
                 attributes.setProperty(lname, val);
                 attribNameStart = -1;
@@ -101,7 +102,7 @@ public class HTMLTag {
         
         if (attribValueStart > 0) {
             // eg <a href=foo>
-            String lname = Constants.lowercase(tagBody.substring(attribNameStart, attribNameEnd));
+            String lname = StringUtil.lowercase(tagBody.substring(attribNameStart, attribNameEnd));
             String val = tagBody.substring(attribValueStart).trim();
             attributes.setProperty(lname, val);
             attribNameStart = -1;
@@ -111,16 +112,16 @@ public class HTMLTag {
         
         if ((name == null) || (name.trim().length() <= 0)) {
             //System.out.println("name is empty for tag [" + tagBody + "] @ " + startIndex);
-            name = Constants.lowercase(tagBody);
+            name = StringUtil.lowercase(tagBody);
         }
         if ( (name != null) && name.endsWith("/") && (name.length() > 1) )
             name = name.substring(0, name.length()-1);
     }
     
-    public String getAttribValue(String name) { return attributes.getProperty(Constants.lowercase(name)); }
+    public String getAttribValue(String name) { return attributes.getProperty(StringUtil.lowercase(name)); }
     public String getAttribValueLC(String name) { return attributes.getProperty(name); }
-    public void setAttribValue(String name, String value) { attributes.setProperty(Constants.lowercase(name), value); }
-    public void removeAttribValue(String name) { attributes.remove(Constants.lowercase(name)); }
+    public void setAttribValue(String name, String value) { attributes.setProperty(StringUtil.lowercase(name), value); }
+    public void removeAttribValue(String name) { attributes.remove(StringUtil.lowercase(name)); }
     public boolean wasConsumed() { return consumed; }
     public void consume() { consumed = true; }
     

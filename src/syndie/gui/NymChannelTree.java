@@ -834,7 +834,7 @@ public class NymChannelTree implements Themeable, Translatable {
                 long chanId = rs.getLong(2);
                 
                 Record r = (Record)chanIdToRecord.get(new Long(chanId));
-                // FIXME what date is this?
+                // FIXME what date is this? and why is the time always 12:00?
                 r.lastPostDate = (when != null ? when.getTime() : -1);
             }
         } catch (SQLException se) {

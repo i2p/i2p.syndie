@@ -29,7 +29,6 @@ import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
 
-import syndie.Constants;
 import syndie.db.DBClient;
 import syndie.db.PullStrategy;
 import syndie.db.PushStrategy;
@@ -37,6 +36,7 @@ import syndie.db.SharedArchiveEngine;
 import syndie.db.SyncArchive;
 import syndie.db.SyncManager;
 import syndie.db.UI;
+import syndie.util.StringUtil;
 
 /**
  *
@@ -167,7 +167,7 @@ public class ArchiveDefaults extends Composite implements Themeable, Translatabl
             String proxyHost = null;
             int proxyPort = -1;
             if (proxy != null) {
-                String str[] = Constants.split(':', proxy);
+                String str[] = StringUtil.split(':', proxy);
                 if ( (str != null) && (str.length == 2) ) {
                     try {
                         int port = Integer.parseInt(str[1]);
@@ -368,7 +368,7 @@ public class ArchiveDefaults extends Composite implements Themeable, Translatabl
         String proxyHost = null;
         int proxyPort = -1;
         if ( (proxy != null) || (proxy.indexOf(':') > 0) ) {
-            String str[] = Constants.split(':', proxy);
+            String str[] = StringUtil.split(':', proxy);
             if ( (str != null) && (str.length == 2) ) {
                 try {
                     int port = Integer.parseInt(str[1]);
@@ -478,7 +478,7 @@ public class ArchiveDefaults extends Composite implements Themeable, Translatabl
             String proxyHost = null;
             int proxyPort = -1;
             if (proxy != null) {
-                String str[] = Constants.split(':', proxy);
+                String str[] = StringUtil.split(':', proxy);
                 if ( (str != null) && (str.length == 2) ) {
                     try {
                         int port = Integer.parseInt(str[1]);
