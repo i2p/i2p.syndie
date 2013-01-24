@@ -58,6 +58,7 @@ public abstract class BrowserTab extends BaseComponent implements Themeable {
     public static final String TYPE_CANCEL = "cancel";
     static final String TYPE_SYNC = "sync";
     static final String TYPE_HELP = "help";
+    static final String TYPE_REAL_BROWSER = "browser";
     
     private static final String PARENT = "parent";
 
@@ -137,7 +138,11 @@ public abstract class BrowserTab extends BaseComponent implements Themeable {
         } else if (TYPE_CANCEL.equals(uri.getType())) {
             return new CancelManagerTab(browser, uri);
         } else if (TYPE_HELP.equals(uri.getType())) {
+            // TEST
             return new HelpTab(browser, uri);
+        } else if (TYPE_REAL_BROWSER.equals(uri.getType())) {
+            // TEST
+            return new RealBrowserTab(browser, uri);
         }
         
         return null;

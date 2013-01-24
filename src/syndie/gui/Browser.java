@@ -31,6 +31,7 @@ import java.util.zip.ZipInputStream;
 
 import net.i2p.data.Hash;
 import net.i2p.util.SecureFileOutputStream;
+import net.i2p.util.SystemVersion;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.SWTError;
@@ -1642,20 +1643,39 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             Text url = new Text(shell, SWT.BORDER | SWT.SINGLE);
             url.setText(urlStr);
             gd = new GridData(GridData.FILL, GridData.FILL, true, false);
-            gd.widthHint = 400;
+            gd.widthHint = 500;
             url.setLayoutData(gd);
             
             Composite buttons = new Composite(shell, SWT.NONE);
-            buttons.setLayout(new GridLayout(2, true));
+            buttons.setLayout(new GridLayout(3, true));
             buttons.setLayoutData(new GridData(GridData.END, GridData.END, true, true));
             Button b = new Button(buttons, SWT.PUSH);
             b.setText(getTranslationRegistry().getText("Cancel"));
-            gd = new GridData(GridData.END, GridData.FILL, false, false);
+            gd = new GridData(GridData.BEGINNING, GridData.FILL, false, false);
             b.setLayoutData(gd);
             b.addSelectionListener(new FireSelectionListener() {
                 public void fire() { shell.dispose(); }
             });
             
+            if (valid && !urlStr.startsWith("https") &&
+                !(SystemVersion.isWindows() || SystemVersion.isMac())) {
+                b = new Button(buttons, SWT.PUSH);
+                b.setText(getTranslationRegistry().getText("Open in Syndie using I2P proxy"));
+                gd = new GridData(GridData.CENTER, GridData.FILL, false, false);
+                b.setLayoutData(gd);
+                b.addSelectionListener(new FireSelectionListener() {
+                    public void fire() {
+                        String newurl = "browser:d3:url" + urlStr.length() + ':' + urlStr + 'e';
+                        try {
+                            SyndieURI newuri = new SyndieURI(newurl);
+                            view(newuri);
+                        } catch (URISyntaxException use) {
+                            errorMessage("bad", use);
+                        }
+                        shell.dispose();
+                    }
+                });
+            }
             if (valid) {
                 b = new Button(buttons, SWT.PUSH);
                 b.setText(getTranslationRegistry().getText("Open in browser"));
