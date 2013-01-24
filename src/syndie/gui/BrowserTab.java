@@ -201,7 +201,7 @@ public abstract class BrowserTab extends BaseComponent implements Themeable {
     }
 
     protected void reconfigItem() {
-        debug("reconfiguring item: begin");
+        //debug("reconfiguring item: begin");
         Image old = _item.getImage();
         Image icon = getIcon();
         if ( (icon != null) && (!icon.isDisposed()) ) {
@@ -219,7 +219,7 @@ public abstract class BrowserTab extends BaseComponent implements Themeable {
         String title = UIUtil.truncate(getName(), MAX_TAB_NAME_LEN);
         _item.setText(title);
         _item.setToolTipText((null != getDescription() ? getDescription() : ""));
-        debug("reconfiguring item: complete");
+        //debug("reconfiguring item: complete");
     }
     
     protected Composite getRoot() { return _root; }

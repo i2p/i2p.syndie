@@ -82,7 +82,7 @@ public class RealBrowserTab extends BrowserTab implements Translatable, Themeabl
             GridData gd = new GridData(GridData.FILL, GridData.FILL, true, true);
             all.setLayoutData(gd);
             Composite top = new Composite(all, SWT.NONE);
-            top.setLayout(new GridLayout(6, false));
+            top.setLayout(new GridLayout(7, false));
             gd = new GridData(GridData.FILL, GridData.BEGINNING, true, false);
             top.setLayoutData(gd);
 
@@ -105,6 +105,12 @@ public class RealBrowserTab extends BrowserTab implements Translatable, Themeabl
                     if (evt.detail == SWT.TRAVERSE_RETURN)
                         go(_loc.getText());
                 }
+            });
+            _go = new Button(top, SWT.PUSH);
+            _go.setLayoutData(new GridData(GridData.BEGINNING, GridData.FILL, false, false));
+            _go.setImage(ImageUtil.ICON_ARCHIVE_TYPE_URL);
+            _go.addSelectionListener(new FireSelectionListener() {
+                public void fire() { go(_loc.getText()); }
             });
             _stop = new Button(top, SWT.PUSH);
             _stop.setLayoutData(new GridData(GridData.BEGINNING, GridData.FILL, false, false));
@@ -230,6 +236,7 @@ public class RealBrowserTab extends BrowserTab implements Translatable, Themeabl
         _back.setEnabled(_browser != null && _browser.isBackEnabled());
         _next.setEnabled(_browser != null && _browser.isForwardEnabled());
         _stop.setEnabled(_browser != null && _inProgress);
+        _go.setEnabled(_browser != null && !_inProgress);
         _reload.setEnabled(_browser != null && !_inProgress);
         _loc.setEnabled(_browser != null && !_inProgress);
         _bar.setEnabled(_browser != null && _inProgress);
@@ -284,6 +291,7 @@ public class RealBrowserTab extends BrowserTab implements Translatable, Themeabl
     public void translate(TranslationRegistry registry) {
         _back.setText(getText("Back"));
         _next.setText(getText("Forward"));
+        _go.setText(getText("Go"));
         _stop.setText(getText("Stop"));
         _reload.setText(getText("Reload"));
     }
