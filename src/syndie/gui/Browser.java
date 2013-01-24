@@ -7,6 +7,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -1629,8 +1630,14 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             gd.widthHint = 400;
             msg.setLayoutData(gd);
             
-            String urlStr = uri.getURL();
-            if (urlStr == null) urlStr = "";
+            boolean valid = true;
+            String surl = uri.getURL();
+            if (surl == null) {
+                msg.setText(getTranslationRegistry().getText("URL is invalid and cannot be opened"));
+                surl = uri.toString();
+                valid = false;
+            }
+            final String urlStr = surl;
             
             Text url = new Text(shell, SWT.BORDER | SWT.SINGLE);
             url.setText(urlStr);
@@ -1638,23 +1645,39 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             gd.widthHint = 400;
             url.setLayoutData(gd);
             
-            // TODO add button to view in browser, using systray URLLauncher
-
-            Button b = new Button(shell, SWT.PUSH);
-            b.setText(getTranslationRegistry().getText("Close"));
-            gd = new GridData(GridData.FILL, GridData.FILL, true, false);
-            gd.widthHint = 400;
+            Composite buttons = new Composite(shell, SWT.NONE);
+            buttons.setLayout(new GridLayout(2, true));
+            buttons.setLayoutData(new GridData(GridData.END, GridData.END, true, true));
+            Button b = new Button(buttons, SWT.PUSH);
+            b.setText(getTranslationRegistry().getText("Cancel"));
+            gd = new GridData(GridData.END, GridData.FILL, false, false);
             b.setLayoutData(gd);
-            b.addSelectionListener(new SelectionListener() {
-                public void widgetDefaultSelected(SelectionEvent selectionEvent) { shell.dispose(); }
-                public void widgetSelected(SelectionEvent selectionEvent) { shell.dispose(); }
+            b.addSelectionListener(new FireSelectionListener() {
+                public void fire() { shell.dispose(); }
             });
+            
+            if (valid) {
+                b = new Button(buttons, SWT.PUSH);
+                b.setText(getTranslationRegistry().getText("Open in browser"));
+                gd = new GridData(GridData.END, GridData.FILL, false, false);
+                b.setLayoutData(gd);
+                b.addSelectionListener(new FireSelectionListener() {
+                    public void fire() {
+                        try {
+                            UrlLauncher.backgroundOpenUrl(urlStr);
+                        } catch (MalformedURLException mue) {
+                            // shouldn't happen?
+                        }
+                        shell.dispose();
+                    }
+                });
+            }
             
             //shell.setSize(shell.computeSize(400, SWT.DEFAULT));
             shell.pack(true);
             shell.open();
             //url.selectAll()
-            url.forceFocus();
+            b.forceFocus();
         } else {
             MessageBox box = new MessageBox(_shell, SWT.ICON_ERROR | SWT.OK);
             box.setText(getTranslationRegistry().getText("Invalid URI"));

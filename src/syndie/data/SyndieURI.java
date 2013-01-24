@@ -50,11 +50,17 @@ public class SyndieURI {
     
     /*
      *  Accepts urn:syndie:type:, syndie:type:, type:, http:, and https:
-     *
+     *  And magnet:, www.*
+     *  And both bencoded and uri encoded.
      */
     public SyndieURI(String encoded) throws URISyntaxException {
         if (encoded == null) throw new URISyntaxException("null URI", "no uri");
         if (encoded.length() == 0) throw new URISyntaxException("", "no uri");
+        // if dot and no colon or dot before colon, assume http
+        int dot = encoded.indexOf(".");
+        int colon = encoded.indexOf(":");
+        if (dot > 0 && (colon < 0 || dot < colon))
+            encoded = "http://" + encoded;
         if (encoded.startsWith(PREFIX))
             encoded = encoded.substring(PREFIX.length());
         else if (encoded.startsWith(PREFIX_SHORT))
@@ -622,6 +628,17 @@ public class SyndieURI {
         return _stringified;
     }
     
+    /**
+     *  Create a URI encoded in the standard manner, prefixed with "syndie:".
+     *  Safe for use in browsers and email.
+     *
+     *  @throws IllegalArgumentException
+     *  @since 1.102b-12
+     */
+    public String toStandardURI() {
+        return PREFIX_SHORT + _type + ":" + uriEncode(_attributes);
+    }
+    
     private static final Set SENSITIVE_ATTRIBUTES = new HashSet();
 
     static {
@@ -954,6 +971,7 @@ public class SyndieURI {
     /**
      *  Can only handle Integers, Longs, and Strings as values
      *
+     *  @throws IllegalArgumentException
      *  @since 1.102b-9 adapted from i2ptunnel LocalHTTPServer
      */
     private static String uriEncode(SortedMap<String, Object> attributes) {
