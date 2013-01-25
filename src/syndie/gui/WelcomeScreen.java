@@ -36,9 +36,8 @@ import syndie.gui.Wizard.Page;
  *
  */
 public class WelcomeScreen extends Wizard {
-    private Display _display;
-    private Browser _browser;
-    private CompleteListener _lsnr;
+    private final Browser _browser;
+    private final CompleteListener _lsnr;
     
     private Page _welcomePage;
     private Label _welcomeMessage;
@@ -72,7 +71,6 @@ public class WelcomeScreen extends Wizard {
     
     public WelcomeScreen(Display display, Browser browser, CompleteListener lsnr, Timer timer) {
         super(display);
-        _display = display;
         _browser = browser;
         _lsnr = lsnr;
         _avatarImages = new ArrayList();
@@ -148,6 +146,7 @@ public class WelcomeScreen extends Wizard {
     }
     
     private void initComponents() {
+        _shell.setImage(ImageUtil.ICON_SHELL);
         // Create welcome page
         _welcomePage = new Page();
         _welcomeMessage = new Label(_welcomePage, SWT.WRAP);

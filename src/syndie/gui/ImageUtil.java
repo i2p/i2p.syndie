@@ -237,6 +237,10 @@ public class ImageUtil {
     public static final Cursor CURSOR_WAIT = Display.getDefault().getSystemCursor(SWT.CURSOR_WAIT);
     
     private static boolean _initialized = false;
+
+    /**
+     *  MUST be called before accessing any static Image fields.
+     */
     public static void init(File tmpDir, Timer timer) {
         _timer = timer;
         _timer.addEvent("init begin");

@@ -19,22 +19,22 @@ import org.eclipse.swt.widgets.Shell;
  *  Used for WelcomeScreen
  */
 abstract public class Wizard implements Themeable, Translatable {
-    private Display _display;
-    private Shell _shell;
+    protected final Display _display;
+    protected final Shell _shell;
     
-    private Composite _stack;
-    private StackLayout _stackLayout;
-    private Label _separator;
-    private Button _back;
-    private GridData _backData;
-    private Button _next;
-    private GridData _nextData;
-    private Button _finish;
-    private GridData _finishData;
-    private Button _cancel;
-    private GridData _cancelData;
+    private final Composite _stack;
+    private final StackLayout _stackLayout;
+    private final Label _separator;
+    private final Button _back;
+    private final GridData _backData;
+    private final Button _next;
+    private final GridData _nextData;
+    private final Button _finish;
+    private final GridData _finishData;
+    private final Button _cancel;
+    private final GridData _cancelData;
     
-    private ArrayList _pages;
+    private final ArrayList<Page> _pages;
     private int currentPage = 0;
     
     private static final int _buttonWidth = 100;
@@ -55,7 +55,6 @@ abstract public class Wizard implements Themeable, Translatable {
             public void shellIconified(ShellEvent shellEvent) {}
         });
         _shell.setLayout(new GridLayout(numColumns, false));
-        _shell.setImage(ImageUtil.ICON_SHELL);
 
         _stack = new Composite(_shell, SWT.NONE);
         _stack.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, numColumns, 1));
@@ -145,7 +144,7 @@ abstract public class Wizard implements Themeable, Translatable {
             _finish.forceFocus();
         
         Page pp = (Page) _stackLayout.topControl;
-        Page cp = (Page) _pages.get(currentPage);
+        Page cp = _pages.get(currentPage);
         
         if (pp != cp) {
             _stackLayout.topControl = cp;
@@ -174,21 +173,22 @@ abstract public class Wizard implements Themeable, Translatable {
         _cancel.setText(registry.getText("Cancel"));
     }
     
-    class Page extends Composite {
-        private ArrayList _listeners;
+    protected class Page extends Composite {
+        private final ArrayList<PageListener> _listeners;
         
         Page() {
             super(_stack, SWT.NONE);
+            _listeners = new ArrayList();
             constructor(5, 5);
         }
         
         Page(int marginWidth, int marginHeight) {
             super(_stack, SWT.NONE);
+            _listeners = new ArrayList();
             constructor(marginWidth, marginHeight);
         }
         
         private void constructor(int marginWidth, int marginHeight) {
-            _listeners = new ArrayList();
             
             FillLayout pageLayout = new FillLayout();
             pageLayout.marginWidth = marginWidth;
@@ -209,13 +209,13 @@ abstract public class Wizard implements Themeable, Translatable {
         public void shown() {
             int length = _listeners.size();
             for (int c = 0; c < length; c++)
-                ((PageListener) _listeners.get(c)).shown();
+                _listeners.get(c).shown();
         }
         
         public void hidden() {
             int length = _listeners.size();
             for (int c = 0; c < length; c++)
-                ((PageListener) _listeners.get(c)).hidden();
+                _listeners.get(c).hidden();
         }
     }
     
