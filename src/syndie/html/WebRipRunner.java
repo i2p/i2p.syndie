@@ -1,4 +1,4 @@
-package syndie.data;
+package syndie.html;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -23,6 +23,7 @@ import net.i2p.util.SecureFile;
 import net.i2p.util.SecureFileOutputStream;
 
 import syndie.Constants;
+import syndie.data.SyndieURI;
 import syndie.db.JobRunner;
 import syndie.db.NullUI;
 import syndie.db.UI;

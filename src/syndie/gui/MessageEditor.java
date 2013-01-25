@@ -80,7 +80,6 @@ import syndie.data.ChannelInfo;
 import syndie.data.NymKey;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
-import syndie.data.WebRipRunner;
 import syndie.db.CommandImpl;
 import syndie.db.DBClient;
 import syndie.db.JobRunner;
@@ -91,6 +90,7 @@ import syndie.db.ThreadAccumulatorJWZ;
 import syndie.db.ThreadBuilder;
 import syndie.db.ThreadMsgId;
 import syndie.db.UI;
+import syndie.html.WebRipRunner;
 import syndie.util.StringUtil;
 
 /**

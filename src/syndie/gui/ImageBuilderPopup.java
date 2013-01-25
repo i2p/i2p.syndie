@@ -47,7 +47,7 @@ import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Text;
 
 import syndie.data.SyndieURI;
-import syndie.data.WebRipRunner;
+import syndie.html.WebRipRunner;
 import syndie.util.StringUtil;
 
 /**

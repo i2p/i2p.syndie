@@ -35,13 +35,13 @@ import syndie.data.BugConfig;
 import syndie.data.ChannelInfo;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
-import syndie.data.WebRipRunner;
 import syndie.db.CommandImpl;
 import syndie.db.DBClient;
 import syndie.db.MessageCreator;
 import syndie.db.MessageCreatorDirect;
 import syndie.db.MessageCreatorSource;
 import syndie.db.UI;
+import syndie.html.WebRipRunner;
 
 /**
  *

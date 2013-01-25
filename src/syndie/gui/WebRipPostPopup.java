@@ -16,13 +16,13 @@ import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 
 import syndie.data.SyndieURI;
-import syndie.data.WebRipRunner;
 import syndie.db.DBClient;
 import syndie.db.JobRunner;
 import syndie.db.MessageCreator;
 import syndie.db.MessageCreatorDirect;
 import syndie.db.MessageCreatorSource;
 import syndie.db.UI;
+import syndie.html.WebRipRunner;
 import syndie.util.StringUtil;
 
 /**

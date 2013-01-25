@@ -47,14 +47,14 @@ import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.*;
 
 import syndie.Constants;
-import syndie.data.HTMLStateBuilder;
-import syndie.data.HTMLTag;
 import syndie.data.MessageInfo;
 import syndie.data.SyndieURI;
 import syndie.db.CommandImpl;
 import syndie.db.DBClient;
 import syndie.db.NullUI;
 import syndie.db.UI;
+import syndie.html.HTMLStateBuilder;
+import syndie.html.HTMLTag;
 import syndie.util.StringUtil;
 
 /**

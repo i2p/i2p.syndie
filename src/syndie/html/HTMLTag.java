@@ -1,4 +1,4 @@
-package syndie.data;
+package syndie.html;
 
 import java.util.Iterator;
 import java.util.Locale;

@@ -38,13 +38,13 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
 import syndie.Constants;
-import syndie.data.HTMLStateBuilder;
-import syndie.data.HTMLTag;
 import syndie.data.MessageInfo;
 import syndie.data.SyndieURI;
 import syndie.db.CommandImpl;
 import syndie.db.DBClient;
 import syndie.db.UI;
+import syndie.html.HTMLStateBuilder;
+import syndie.html.HTMLTag;
 import syndie.util.DateTime;
 import syndie.util.StringUtil;
 
