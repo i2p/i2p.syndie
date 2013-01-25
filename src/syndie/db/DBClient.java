@@ -4366,17 +4366,19 @@ public class DBClient {
 
     private static final String SQL_GET_NYMPREFS = "SELECT prefName, prefValue FROM nymPref WHERE nymId = ?";
 
+    /**
+     *  Current nymId. Cached.
+     */
     public Properties getNymPrefs() { 
-        if (_nymPrefsCached == null) 
-            _nymPrefsCached = getNymPrefs(_nymId);
-        return _nymPrefsCached;
+        return getNymPrefs(_nymId);
     }
 
     /**
-     *  NOT cached.
-     *  You probably want the no-arg version.
+     *  Cached if nymId == getNymId()
      */
     public Properties getNymPrefs(long nymId) {
+        if (_nymId == nymId && _nymPrefsCached != null) 
+            return _nymPrefsCached;
         ensureLoggedIn();
         Properties rv = new Properties();
         PreparedStatement stmt = null;
@@ -4403,17 +4405,19 @@ public class DBClient {
     private static final String SQL_SET_NYMPREFS = "INSERT INTO nymPref (nymId, prefName, prefValue) VALUES (?, ?, ?)";
     private static final String SQL_DELETE_NYMPREFS = "DELETE FROM nymPref WHERE nymId = ?";
 
+    /**
+     *  Current nymId. Cached.
+     */
     public void setNymPrefs(Properties prefs) { 
-        _nymPrefsCached = (Properties)prefs.clone();
         setNymPrefs(_nymId, prefs);
     }
 
     /**
-     *  NOT cached.
-     *  You probably want the no-arg version.
-     *  Your changes will be lost if somebody else does p = getNymPrefs() / mod / setNymPrefs(p);
+     *  Cached if nymId == getNymId()
      */
     public void setNymPrefs(long nymId, Properties prefs) {
+        if (_nymId == nymId) 
+            _nymPrefsCached = (Properties)prefs.clone();
         ensureLoggedIn();
         PreparedStatement stmt = null;
         try {
