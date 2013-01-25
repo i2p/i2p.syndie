@@ -178,7 +178,11 @@ public abstract class BrowserTab extends BaseComponent implements Themeable {
 
     protected boolean allowClose() { return true; }
 
-    /** may be called multiple times */
+    /**
+     * May be called multiple times.
+     * Will be called after show(uri).
+     * You may close() from here.
+     */
     public void tabShown() { _root.layout(true); }
 
     protected void configItem() {
@@ -223,12 +227,24 @@ public abstract class BrowserTab extends BaseComponent implements Themeable {
     }
     
     protected Composite getRoot() { return _root; }
+
+    /** you may also access protected final _client directly */
     protected DBClient getClient() { return _client; }
+
     protected BrowserControl getBrowser() { return _browser; }
+
     /** ask the browser to close us (call this internally - do not use close()) */
     protected void closeTab() { _browser.getNavControl().unview(getURI()); }
     
+    /** this tab (final) */
     public CTabItem getTabItem() { return _item; }
+
+    /**
+     *  The original URI that the tab was created with.
+     *  Override if you may change to a different URI.
+     *  HOWEVER, note that Browser.doView() may again call show(uri)
+     *  with the original uri.
+     */
     public SyndieURI getURI() { return _uri; }
 
     /** this is the tooltip for the tab, override with a translated string */
@@ -258,6 +274,8 @@ public abstract class BrowserTab extends BaseComponent implements Themeable {
      * Note that this calls _themeRegistry.unregister(this) for you, but you must do
      * _translationRegistry.unregister(this) yourself
      */
+
+    /** do not call this yourself */
     public boolean close() { dispose(); return true; }
 
     /** 
@@ -276,6 +294,10 @@ public abstract class BrowserTab extends BaseComponent implements Themeable {
 
     protected abstract void disposeDetails();
     
+    /**
+     *  Returns true if uri == getURI().
+     *  Override to show additional URIs.
+     */
     public boolean canShow(SyndieURI uri) { 
         if (uri == null) return false;
         boolean eq = getURI().equals(uri);
@@ -283,10 +305,18 @@ public abstract class BrowserTab extends BaseComponent implements Themeable {
             _ui.debugMessage("tab is equal to the uri: " + getClass().getName() + " uri=" + getURI() + " newURI=" + uri);
         return eq;
     }
+
     public void resized() {}
     
-    /** should only be called once */
+    /**
+     * Normally is only be called once.
+     * HOWEVER, may be called again after user action, if canShow(uri) returns true,
+     * OR the uri matches the original one when the tab was constructed.
+     * See Browser.doView().
+     * Do NOT close() from here.
+     */
     public void show(SyndieURI uri) {}
+
     public void refresh() {}
     
     public void toggleMaxView() {}

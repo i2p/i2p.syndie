@@ -42,6 +42,7 @@ public class RealBrowserTab extends BrowserTab implements Translatable, Themeabl
     private ProgressBar _bar;
     private Text _loc;
     private boolean _inProgress;
+    private boolean _badURLPopupShown;
 
     /*
      *   http://www.eclipse.org/swt/faq.php#browserproxy
@@ -135,14 +136,19 @@ public class RealBrowserTab extends BrowserTab implements Translatable, Themeabl
             //bottom.setLayoutData(gd);
 
             try {
-                _browser = new org.eclipse.swt.browser.Browser(bottom, SWT.WEBKIT);
-                _ui.debugMessage("Browser using webkit");
+                _browser = new org.eclipse.swt.browser.Browser(bottom, SWT.NONE);
+                _ui.debugMessage("Browser using default");
             } catch (SWTError e1) {
                 try {
-                    _browser = new org.eclipse.swt.browser.Browser(bottom, SWT.MOZILLA);
-                    _ui.debugMessage("Browser using mozilla");
+                    _browser = new org.eclipse.swt.browser.Browser(bottom, SWT.WEBKIT);
+                    _ui.debugMessage("Browser using webkit");
                 } catch (SWTError e2) {
-                    _ui.debugMessage("No browser available");
+                    try {
+                        _browser = new org.eclipse.swt.browser.Browser(bottom, SWT.MOZILLA);
+                        _ui.debugMessage("Browser using mozilla");
+                    } catch (SWTError e3) {
+                        _ui.debugMessage("No browser available");
+                    }
                 }
             }
             if (_browser != null) {
@@ -153,14 +159,14 @@ public class RealBrowserTab extends BrowserTab implements Translatable, Themeabl
                         _name = event.location;
                         _loc.setText(event.location);
                         _inProgress = true;
-                        //_ui.debugMessage("LL changing");
+                        _ui.debugMessage("LL changing " + event.location);
                         reconfigItem();
                     }
                     public void changed(LocationEvent event) {
                         _name = event.location;
                         _loc.setText(event.location);
                         _inProgress = false;
-                        //_ui.debugMessage("LL changed");
+                        //_ui.debugMessage("LL changed " + event.location);
                         reconfigItem();
                     }
                 });
@@ -253,23 +259,29 @@ public class RealBrowserTab extends BrowserTab implements Translatable, Themeabl
 
     @Override
     public void show(SyndieURI uri) {
+        String url = uri.getURL();
+        if (url != null && url.startsWith("http://"))
+            go(url);
+        super.show(uri);
+    }
+
+    @Override
+    public void tabShown() {
         updateButtons();
         if (_browser == null) {
             MessageBox box = new MessageBox(getRoot().getShell(), SWT.ICON_INFORMATION | SWT.OK);
             box.setText("Not supported");
             box.setMessage("Sorry, the Syndie web browser is not supported on your system");
-            getBrowser().getNavControl().unview(getURI());
             box.open();
+            closeTab();
             return;
         }    
-        String url = uri.getURL();
-        if (url != null && url.startsWith("http://")) {
-            go(url);
-        } else {
+        String url = getURI().getURL();
+        if ((!_badURLPopupShown) && (url == null || !url.startsWith("http://"))) {
+            _badURLPopupShown = true;
             MessageBox box = new MessageBox(getRoot().getShell(), SWT.ICON_INFORMATION | SWT.OK);
             box.setText("Bad URL");
             box.setMessage("Bad URL");
-            getBrowser().getNavControl().unview(getURI());
             box.open();
             return;
         }    
