@@ -16,7 +16,6 @@
     <property name="dist.dir" value="dist" />
     <property name="lib.dir" value="lib" />
     <property name="pkgtemp.dir" value="pkg-temp" />
-    <property name="dist.lib.jar" value="${dist.dir}/syndie.jar" />
     <property name="pkgtemp.lib" value="${pkgtemp.dir}/lib" />
     <property name="i2p.src.dir" value="../i2p.i2p" />
     <property name="launch4j.dir" value="${i2p.src.dir}/installer/lib/launch4j" />
@@ -31,6 +30,7 @@
     <property name="swt.win64" value="${swt.dir}/swt-win64.jar" />
     <property name="swt.mac32" value="${swt.dir}/swt-mac32.jar" />
     <property name="swt.mac64" value="${swt.dir}/swt-mac64.jar" />
+    <property name="tab" value="    " />
     <property name="require.gettext" value="true" />
     <condition property="no.bundle">
         <isfalse value="${require.gettext}" />
@@ -58,19 +58,50 @@
         <fileset dir="${data.dir}" />
     </path>
 
+    <path id="cli.resources.path">
+        <fileset dir="${data.dir}" excludes="syndie/gui/** syndie/html/** syndie/trac/** com/** syndie/locale/** imports/Browser/** imports/DesktopUI/**" />
+    </path>
+
     <target name="help" depends="usage" />
     <target name="usage">
-        <property name="tab" value="    " />
         <echo message="Useful targets:" />
         <echo message="       clean: ${tab}Clean up the workspace" />
-        <echo message="        dist: ${tab}Create ${basedir}/syndie.jar containing dependencies for YOUR system"/>
         <echo message="   distclean: ${tab}Clean up all generated files" />
         <echo message="         jar: ${tab}Create syndie.jar in build/ without the dependencies"/>
+        <echo message="     jar-cli: ${tab}Create syndie-cli.jar in build/ without the dependencies"/>
         <echo message="    javadocs: ${tab}Generate javadocs for ${ant.project.name}" />
+        <echo message="  maintainer: ${tab}Display targets for building installers/packages for ${ant.project.name}" />
         <echo message="         pkg: ${tab}Generate jar files and copy docs to ./dist" />
         <echo message="     pkg-exe: ${tab}Same as pkg but also wraps jar files with launch4j into EXE files" />
+        <echo message="    poupdate: ${tab}Update PO files for translators" />
         <echo message="         run: ${tab}Run ${ant.project.name} with the 'Tabs' interface" />
         <echo message=" run-desktop: ${tab}Run ${ant.project.name} with the alternative 'Desktop' interface" />
+        <echo message="   singlejar: ${tab}Create a single syndie.jar in ${basedir} containing dependencies for YOUR system"/>
+        <echo message="totallyclean: ${tab}Clean up all generated files and any files downloaded during the build (e.g. SWT)" />
+    </target>
+
+    <target name="maintainer">
+        <echo message="Useful targets for ${ant.project.name} maintainers:" />
+        <echo message="              clean: ${tab}Clean up the workspace" />
+        <echo message="          distclean: ${tab}Clean up all generated files" />
+        <echo message="      installer-all: ${tab}Create 32- and 64-bit installers for all supported OSes"/>
+        <echo message="    installer-linux: ${tab}Create 32- and 64-bit installers for Linux"/>
+        <echo message="  installer-linux32: ${tab}Create 32-bit Linux installer"/>
+        <echo message="  installer-linux64: ${tab}Create 64-bit Linux installer"/>
+        <echo message="      installer-osx: ${tab}Create 32- and 64-bit installers for OSX"/>
+        <echo message="    installer-osx32: ${tab}Create 32-bit OSX installer"/>
+        <echo message="    installer-osx64: ${tab}Create 64-bit OSX installer"/>
+        <echo message="  installer-windows: ${tab}Create 32- and 64-bit installers for Windows, wrapped with launch4j (if available)"/>
+        <echo message="installer-windows32: ${tab}Create 32-bit Windows installer (add -exe to use launch4j, if available)"/>
+        <echo message="installer-windows64: ${tab}Create 64-bit Windows installer (add -exe to use launch4j, if available)"/>
+        <echo message="            pkg-all: ${tab}Create installers and packages for all supported systems" />
+        <echo message="            pkg-osx: ${tab}Create 32- and 64-bit Application Bundles for OSX" />
+        <echo message="          pkg-osx32: ${tab}Create 32-bit OSX Application Bundle" />
+        <echo message="          pkg-osx64: ${tab}Create 64-bit OSX Application Bundle" />
+        <echo message="             plugin: ${tab}Create signed I2P plugins for all supported systems" />
+        <echo message="            release: ${tab}Create all pkgs/installers with the &quot;pkg-all&quot; target, sign with gpg, generate sha256 checksum files, and update files in doc/web" />
+        <echo message="     source-tarball: ${tab}Create source tarball" />
+        <echo message="       totallyclean: ${tab}Clean up all generated files and any files downloaded during the build (e.g. SWT)" />
     </target>
 
     <macrodef name="make-stub-jar">
@@ -160,6 +191,19 @@
 
             <launch4j configFile="${launch4j.config}" />
             <delete file="syndie-installer-${extended.version}.bin.win@{bits}.jar" />
+        </sequential>
+    </macrodef>
+
+    <macrodef name="sign-and-sum">
+        <attribute name="file" />
+        <sequential>
+            <exec executable="gpg" failonerror="true">
+                <arg value="-b" />
+                <arg value="-u" />
+                <arg value="${gpg.key}" />
+                <arg value="@{file}" />
+            </exec>
+            <checksum format="MD5SUM" file="@{file}" algorithm="sha-256" fileext=".sha256"/>
         </sequential>
     </macrodef>
 
@@ -334,19 +378,9 @@
                 </not>
             </condition>
         </fail>
-        <available property="have.swt" file="${swt.jar}" type="file" />
-        <fail message="Cannot find ${swt.jar}. Please read INSTALL and build.properties for advice.">
-            <condition>
-                <not>
-                    <istrue value="${have.swt}" />
-                </not>
-            </condition>
-        </fail>
-        <tstamp>
-            <format property="build.timestamp" pattern="yyyy-MM-dd HH:mm:ss z" timezone="UTC" locale="en" />
-        </tstamp>
         <mkdir dir="${dist.dir}" />
         <mkdir dir="${build.dir}/obj" />
+        <mkdir dir="${build.dir}/cli-obj" />
     </target>
 
     <condition property="depend.available">
@@ -365,10 +399,31 @@
     </target>
 
     <target name="compile" depends="init, -depend" description="compile the source">
+        <available property="have.swt" file="${swt.jar}" type="file" />
+        <fail message="Cannot find ${swt.jar}. Please read INSTALL and build.properties for advice.">
+            <condition>
+                <not>
+                    <istrue value="${have.swt}" />
+                </not>
+            </condition>
+        </fail>
         <javac srcdir="${src.dir}" destdir="${build.dir}/obj" debug="true" source="1.5" target="1.5"
                deprecation="on" includeAntRuntime="false">
             <classpath>
                 <path refid="classpath.build" />
+            </classpath>
+        </javac>
+    </target>
+
+    <target name="compile-cli" depends="init" description="compile just the cli">
+        <delete dir="${build.dir}/cli-obj" />
+        <mkdir dir="${build.dir}/cli-obj" />
+        <javac srcdir="${src.dir}" destdir="${build.dir}/cli-obj" debug="true" source="1.5" target="1.5"
+               excludes="syndie/gui/** syndie/trac/** com/** syndie/locale/** imports/Browser/** imports/DesktopUI/**"
+               deprecation="on" includeAntRuntime="false">
+            <classpath>
+                <pathelement location="${i2p.jar}" />
+                <pathelement location="${hsqldb.jar}" />
             </classpath>
         </javac>
     </target>
@@ -415,10 +470,11 @@
         </jar>
     </target>
 
-    <target name="jar-cli" depends="compile,jar" description="Build jar with only the cli in ./build">
+    <target name="jar-cli" depends="compile-cli" description="Build jar with only the cli in ./build">
         <property name="build.built-by" value="unknown" />
         <jar jarfile="${build.dir}/syndie-cli.jar">
-            <zipfileset src="${build.dir}/syndie.jar" excludes="syndie/gui/** syndie/trac/** com/** syndie/locale/** syndie/html/** imports/Browser/** imports/DesktopUI/**" />
+            <fileset dir="${build.dir}/cli-obj" />
+            <path refid="cli.resources.path" />
             <manifest>
                 <attribute name="Class-Path" value="../lib/i2p.jar ../lib/hsqldb.jar" />
                 <attribute name="Built-By" value="${build.built-by}" />
@@ -429,7 +485,8 @@
         </jar>
     </target>
 
-    <target name="dist" depends="jar" description="Combine all jars">
+    <target name="dist" depends="pkg" />
+    <target name="singlejar" depends="jar" description="Combine all jars">
         <copy file="${swt.jar}" tofile="${pkgtemp.lib}/swt.jar" />
         <copy file="${i2p.jar}" todir="${pkgtemp.lib}" />
         <copy file="${hsqldb.jar}" todir="${pkgtemp.lib}" />
@@ -651,6 +708,10 @@
     </target>
 
     <target name="buildProperties" depends="-getMtnRev, -trimMtnRev, getReleaseNumber, getBuildNumber">
+        <tstamp>
+            <format property="build.timestamp" pattern="yyyy-MM-dd HH:mm:ss z" timezone="UTC" locale="en" />
+            <format property="files.date" pattern="yyyy/MM/dd" timezone="UTC" locale="en" />
+        </tstamp>
         <!-- default if not set above -->
         <property name="workspace.version" value="unknown" />
         <property name="full.version" value="${release.number}-${syndie.build.number}" />
@@ -791,6 +852,7 @@
     </target>
 
     <target name="pkg" depends="clean, prep-launch4j-license, prep-swt-licenses, stub-jars, jar, preppkg">
+        <delete dir="${dist.dir}" />
         <move todir="${dist.dir}">
             <fileset dir="${pkgtemp.dir}" />
         </move>
@@ -929,7 +991,7 @@
         <delete file="syndie.xpi2p" />
         <delete dir="${dist.dir}" />
         <delete quiet="true">
-            <fileset dir="." includes="syndie-installer* syndie*tar.bz2" />
+            <fileset dir="." includes="syndie-installer* syndie*tar.bz2 *.sha256 *.sig" />
         </delete>
         <delete file="syndie-installer*.jar" />
         <delete file="syndie-installer*.exe" />
@@ -947,7 +1009,7 @@
         <ant dir="swt" target="totallyclean" />
     </target>
 
-    <target name="debug" description="Print properties">
+    <target name="debug" depends="buildProperties" description="Print properties">
         <echoproperties/>
     </target>
 
@@ -1178,5 +1240,46 @@ exec java -d64 -XstartOnFirstThread -cp $CP syndie.gui.SWTUI
     </target>
 
     <target name="pkg-all" depends="distclean, installer-all, pkg-osx, source-tarball, pkg-cli" description="Create packages/installers for all supported systems." />
+
+    <target name="-check-gpgkey">
+        <fail message="ERROR: Please specify your signing key with -Dgpg.key=YOURKEY!">
+            <condition>
+                <not>
+                    <isset property="gpg.key" />
+                </not>
+            </condition>
+        </fail>
+    </target>
+
+    <target name="release" depends="-check-gpgkey, pkg-all, update-site" description="build, sign, and checksum files then update site">
+        <delete dir="./dist" />
+        <mkdir dir="./dist" />
+        <sign-and-sum file="syndie-installer-${extended.version}.bin.linux32.jar" />
+        <sign-and-sum file="syndie-installer-${extended.version}.bin.linux64.jar" />
+        <sign-and-sum file="syndie-installer-${extended.version}.bin.win32.exe" />
+        <sign-and-sum file="syndie-installer-${extended.version}.bin.win64.exe" />
+        <sign-and-sum file="syndie-installer-${extended.version}.bin.osx32.jar" />
+        <sign-and-sum file="syndie-installer-${extended.version}.bin.osx64.jar" />
+        <sign-and-sum file="syndie-cli-${extended.version}.bin.tar.bz2" />
+        <sign-and-sum file="syndie-${extended.version}.src.tar.bz2" />
+        <sign-and-sum file="syndie-${extended.version}.bin.osx32.tar.bz2" />
+        <sign-and-sum file="syndie-${extended.version}.bin.osx64.tar.bz2" />
+        <move todir="./dist">
+            <fileset dir="." includes="*.exe *.sha256 *.sig *.bz2 *.jar"/>
+        </move>
+    </target>
+
+    <target name="update-site" depends="buildProperties" if="do.update.site">
+        <replaceregexp flags="g" byline="false"
+            match="[0-9]\.[0-9]+b-[0-9]+(-[a-z0-9]{8})?"
+            replace="${extended.version}">
+            <fileset dir="doc/web" includes="download.html index.html" />
+        </replaceregexp>
+        <replaceregexp file="doc/web/index.html" flags="g" byline="false"
+            match="\([0-9]{4}/[0-9]{2}/[0-9]{2}\)"
+            replace="(${files.date})">
+        </replaceregexp>
+        <echo>Release date set to ${files.date}. Edit doc/web/index.html is this is incorrect.</echo>
+    </target>
 </project>
 <!-- vim: set ft=xml ts=4 sw=4 et: -->
