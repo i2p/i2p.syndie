@@ -95,13 +95,12 @@ public class UrlLauncher implements Runnable {
      * to launch the given URL using the default browser for that platform; if
      * unsuccessful, an attempt is made to launch the URL using the most common
      * browsers.
-     * 
-     * @param  url The URL to open.
+     *
      * @return     <code>true</code> if the operation was successful, otherwise
      *             <code>false</code>.
-     * 
+     *
      * @throws Exception
-     */ 
+     */
     public boolean openUrl() throws Exception {
         String url = _url;
         String osName = System.getProperty("os.name");
@@ -167,8 +166,7 @@ public class UrlLauncher implements Runnable {
 
     /**
      * Opens the given URL with the given browser.
-     * 
-     * @param  url     The URL to open.
+     *
      * @param  browser The browser to use.
      * @return         <code>true</code> if the operation was successful,
      *                 otherwise <code>false</code>.
