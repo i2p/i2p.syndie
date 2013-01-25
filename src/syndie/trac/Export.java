@@ -24,7 +24,7 @@ import net.i2p.util.SecureFile;
 import net.i2p.util.SecureFileOutputStream;
 
 import syndie.Constants;
-import syndie.data.HTMLStateBuilder;
+import syndie.html.HTMLStateBuilder;
 import syndie.data.MessageInfo;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
