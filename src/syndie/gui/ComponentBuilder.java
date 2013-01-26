@@ -70,10 +70,11 @@ public class ComponentBuilder {
         return new StatusBar(_client, _ui, _themes, _trans, _bookmarkControl, _navControl, _uriControl, browser, _dataCallback, parent, timer);
     }
     
-    public PageRenderer createPageRenderer(Composite parent, boolean scrollbars) {
-        return new PageRenderer(_client, _ui, _themes, _trans, parent, scrollbars, _dataCallback);
+    public PageRenderer createPageRenderer(Composite parent, boolean scrollbars, boolean showForumMenu) {
+        return new PageRenderer(_client, _ui, _themes, _trans, parent, scrollbars, showForumMenu, _dataCallback);
     }
     
+    /** @deprecated unused */
     public MessagePreview createMessagePreview(Composite parent) {
         return new MessagePreview(_client, _ui, _themes, _trans, _navControl, _bookmarkControl, _uriControl, parent);
     }

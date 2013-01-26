@@ -60,13 +60,16 @@ import syndie.util.StringUtil;
 /**
  * Creates a new StyledText component for rendering pages.  Supports plain
  * text pages as well as html, offering a simple listener interface to receive
- * hover/menu/selection events for html elements
+ * hover/menu/selection events for html elements.
+ *
+ * Used for both the MessageViewBody and the PageEditor preview.
  *
  */
 public class PageRenderer extends BaseComponent implements Themeable {
     private final DataCallback _dataCallback;
     private final Composite _parent;
     private final StyledText _text;
+    private final boolean _showForumMenu;
     private PageRendererSource _source;
     private MessageInfo _msg;
     private int _page;
@@ -162,10 +165,19 @@ public class PageRenderer extends BaseComponent implements Themeable {
     
     private Caret _defaultCaret;
     
-    public PageRenderer(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Composite parent, DataCallback callback) { this(client, ui, themes, trans, parent, false, callback); }
-    public PageRenderer(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Composite parent, boolean scrollbars, DataCallback callback) {
+    /**
+     * no scrollbars, no forum menu
+     * @deprecated unused
+     */
+    public PageRenderer(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Composite parent, DataCallback callback) {
+        this(client, ui, themes, trans, parent, false, false, callback);
+    }
+
+    public PageRenderer(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Composite parent,
+                        boolean scrollbars, boolean showForumMenu, DataCallback callback) {
         super(client, ui, themes, trans);
         _parent = parent;
+        _showForumMenu = showForumMenu;
         _dataCallback = callback;
         if (scrollbars)
             _text = new CustomStyledText(_ui, parent, SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER | SWT.MULTI | SWT.WRAP | SWT.READ_ONLY);
@@ -722,7 +734,7 @@ public class PageRenderer extends BaseComponent implements Themeable {
          */
         
         int bodySize = _text.getCharCount();
-        Map bulletLists = new HashMap();
+        Map<HTMLTag, Bullet> bulletLists = new HashMap();
         long times[] = new long[lines];
         long timesOff[] = new long[lines];
         long timesGetTags[] = new long[lines];
@@ -809,7 +821,7 @@ public class PageRenderer extends BaseComponent implements Themeable {
                 } else if ("ol".equals(tag.name) && liFound) {
                     if ( (olLevel == 0) && (ulLevel == 0) ) {
                         bulletOrdered = true;
-                        bullet = (Bullet)bulletLists.get(tag);
+                        bullet = bulletLists.get(tag);
                         if (bullet == null) {
                             StyleRange bulletRange = new StyleRange();
                             bulletRange.metrics = new GlyphMetrics(0, 0, 0);
@@ -822,7 +834,7 @@ public class PageRenderer extends BaseComponent implements Themeable {
                 } else if ("ul".equals(tag.name) && liFound) {
                     if ( (olLevel == 0) && (ulLevel == 0) ) {
                         bulletOrdered = false;
-                        bullet = (Bullet)bulletLists.get(tag);
+                        bullet = bulletLists.get(tag);
                         if (bullet == null) {
                             StyleRange bulletRange = new StyleRange();
                             bulletRange.metrics = new GlyphMetrics(0, 0, 0);
@@ -1037,13 +1049,15 @@ public class PageRenderer extends BaseComponent implements Themeable {
             _imgLinkBookmarkLink.setEnabled(false);
             _imgLinkDisable.setEnabled(false);
             _imgLinkEnable.setEnabled(false);
-            _imgLinkIgnoreAuthor.setEnabled(false);
-            _imgLinkIgnoreForum.setEnabled(false);
-            _imgLinkImportArchiveKey.setEnabled(false);
-            _imgLinkImportManageKey.setEnabled(false);
-            _imgLinkImportPostKey.setEnabled(false);
-            _imgLinkImportReadKey.setEnabled(false);
-            _imgLinkImportReplyKey.setEnabled(false);
+            if (_showForumMenu) {
+                _imgLinkIgnoreAuthor.setEnabled(false);
+                _imgLinkIgnoreForum.setEnabled(false);
+                _imgLinkImportArchiveKey.setEnabled(false);
+                _imgLinkImportManageKey.setEnabled(false);
+                _imgLinkImportPostKey.setEnabled(false);
+                _imgLinkImportReadKey.setEnabled(false);
+                _imgLinkImportReplyKey.setEnabled(false);
+            }
             _imgLinkSave.setEnabled(false);
             _imgLinkSaveAll.setEnabled(false);
             _imgLinkViewImg.setEnabled(false);
@@ -1081,20 +1095,22 @@ public class PageRenderer extends BaseComponent implements Themeable {
             _imgLinkDisable.setEnabled(_enableImages);
             _imgLinkEnable.setEnabled(!_enableImages);
             
-            long targetId = _msg.getTargetChannelId();
-            long authorId = _msg.getAuthorChannelId();
-            if ( (targetId == authorId) || (authorId < 0) ) {
-                _imgLinkIgnoreAuthor.setEnabled(false);
-            } else {
-                _imgLinkIgnoreAuthor.setEnabled(true);
+            if (_showForumMenu) {
+                long targetId = _msg.getTargetChannelId();
+                long authorId = _msg.getAuthorChannelId();
+                if ( (targetId == authorId) || (authorId < 0) ) {
+                    _imgLinkIgnoreAuthor.setEnabled(false);
+                } else {
+                    _imgLinkIgnoreAuthor.setEnabled(true);
+                }
+
+                _imgLinkIgnoreForum.setEnabled(true);
+                _imgLinkImportArchiveKey.setEnabled(uri.getArchiveKey() != null);
+                _imgLinkImportManageKey.setEnabled(uri.getManageKey() != null);
+                _imgLinkImportPostKey.setEnabled(uri.getPostKey() != null);
+                _imgLinkImportReadKey.setEnabled(uri.getReadKey() != null);
+                _imgLinkImportReplyKey.setEnabled(uri.getReplyKey() != null);
             }
-            
-            _imgLinkIgnoreForum.setEnabled(true);
-            _imgLinkImportArchiveKey.setEnabled(uri.getArchiveKey() != null);
-            _imgLinkImportManageKey.setEnabled(uri.getManageKey() != null);
-            _imgLinkImportPostKey.setEnabled(uri.getPostKey() != null);
-            _imgLinkImportReadKey.setEnabled(uri.getReadKey() != null);
-            _imgLinkImportReplyKey.setEnabled(uri.getReplyKey() != null);
             _imgLinkSave.setEnabled(true);
             _imgLinkSaveAll.setEnabled(true);
             _imgLinkViewImg.setEnabled(true);
@@ -1112,11 +1128,13 @@ public class PageRenderer extends BaseComponent implements Themeable {
         if ( (_msg == null) || (linkTag == null) || (uri == null) ) {
             _linkView.setEnabled(false);
             _linkBookmark.setEnabled(false);
-            _linkImportArchiveKey.setEnabled(false);
-            _linkImportManageKey.setEnabled(false);
-            _linkImportPostKey.setEnabled(false);
-            _linkImportReadKey.setEnabled(false);
-            _linkImportReplyKey.setEnabled(false);
+            if (_showForumMenu) {
+                _linkImportArchiveKey.setEnabled(false);
+                _linkImportManageKey.setEnabled(false);
+                _linkImportPostKey.setEnabled(false);
+                _linkImportReadKey.setEnabled(false);
+                _linkImportReplyKey.setEnabled(false);
+            }
             _currentEventURI = null;
             _currentEventLinkTag = null;
             _currentEventImage = null;
@@ -1136,15 +1154,19 @@ public class PageRenderer extends BaseComponent implements Themeable {
             _currentEventLinkTag = linkTag;
             _currentEventImage = null;
             
-            _linkImportManageKey.setEnabled(uri.getManageKey() != null);
-            _linkImportPostKey.setEnabled(uri.getPostKey() != null);
-            _linkImportReadKey.setEnabled(uri.getReadKey() != null);
-            _linkImportReplyKey.setEnabled(uri.getReplyKey() != null);
-            
-            _linkImportArchiveKey.setEnabled(uri.getArchiveKey() != null);
+            if (_showForumMenu) {
+                _linkImportManageKey.setEnabled(uri.getManageKey() != null);
+                _linkImportPostKey.setEnabled(uri.getPostKey() != null);
+                _linkImportReadKey.setEnabled(uri.getReadKey() != null);
+                _linkImportReplyKey.setEnabled(uri.getReplyKey() != null);
+                _linkImportArchiveKey.setEnabled(uri.getArchiveKey() != null);
+            }
         }
     }
     
+    /**
+     *  _showForumMenu controls whether to show author/forum choices
+     */
     private void pickBodyMenu() {
         if (_bodyMenu == null)
             buildBodyMenu();
@@ -1156,52 +1178,43 @@ public class PageRenderer extends BaseComponent implements Themeable {
         _currentEventImage = null;
             
         if (_msg == null) {
-            _bodyBanAuthor.setEnabled(false);
-            _bodyBanForum.setEnabled(false);
-            _bodyBookmarkAuthor.setEnabled(false);
-            _bodyBookmarkForum.setEnabled(false);
-            _bodyReplyToForum.setEnabled(false);
-            _bodyReplyToAuthor.setEnabled(false);
-            _bodyViewAuthorForum.setEnabled(false);
-            _bodyViewAuthorMetadata.setEnabled(false);
-            _bodyViewForum.setEnabled(false);
-            _bodyViewForumMetadata.setEnabled(false);
+            if (_showForumMenu) {
+                _bodyBanAuthor.setEnabled(false);
+                _bodyBanForum.setEnabled(false);
+                _bodyBookmarkAuthor.setEnabled(false);
+                _bodyBookmarkForum.setEnabled(false);
+                _bodyReplyToForum.setEnabled(false);
+                _bodyReplyToAuthor.setEnabled(false);
+                _bodyViewAuthorForum.setEnabled(false);
+                _bodyViewAuthorMetadata.setEnabled(false);
+                _bodyViewForum.setEnabled(false);
+                _bodyViewForumMetadata.setEnabled(false);
+                _bodySaveAll.setEnabled(false);
+            }
             _bodyEnable.setEnabled(false);
             _bodyDisable.setEnabled(false);
             //_bodyViewAsText.setEnabled(false);
             _bodyViewUnstyled.setEnabled(false);
             _bodyViewStyled.setEnabled(false);
-            _bodySaveAll.setEnabled(false);
         } else {
             _bodyDisable.setEnabled(_enableImages);
             _bodyEnable.setEnabled(!_enableImages);
-            _bodySaveAll.setEnabled(true);
             _bodyViewAsText.setSelection(_viewAsText || !_canViewAsHTML);
             _bodyViewAsText.setEnabled(true);
             _bodyViewUnstyled.setEnabled(_canViewAsHTML);
             _bodyViewStyled.setEnabled(_canViewAsHTML);
             
-            long targetId = _msg.getTargetChannelId();
-            long authorId = _msg.getAuthorChannelId();
-            boolean isPM = _msg.getWasPrivate();
-            if ( (targetId == authorId) || (authorId < 0) ) {
-                // author == target, so no need for a separate set of author commands
-                _bodyBanAuthor.setEnabled(false);
-                _bodyBookmarkAuthor.setEnabled(false);
-                _bodyViewAuthorForum.setEnabled(false);
-                _bodyViewAuthorMetadata.setEnabled(false);
-                _bodyReplyToForum.setEnabled(!isPM);
-                _bodyReplyToAuthor.setEnabled(true);
-                _bodyBanForum.setEnabled(true);
-                _bodyBookmarkForum.setEnabled(true);
-                _bodyViewForum.setEnabled(true);
-                _bodyViewForumMetadata.setEnabled(true);
-            } else {
-                // author != target
-                _bodyBanAuthor.setEnabled(true);
-                _bodyBookmarkAuthor.setEnabled(true);
-                _bodyViewAuthorForum.setEnabled(true);
-                _bodyViewAuthorMetadata.setEnabled(true);
+            if (_showForumMenu) {
+                _bodySaveAll.setEnabled(true);
+                long targetId = _msg.getTargetChannelId();
+                long authorId = _msg.getAuthorChannelId();
+                boolean isPM = _msg.getWasPrivate();
+                // If author == target, so no need for a separate set of author commands
+                boolean hasAuthor = targetId != authorId && authorId >= 0;
+                _bodyBanAuthor.setEnabled(hasAuthor);
+                _bodyBookmarkAuthor.setEnabled(hasAuthor);
+                _bodyViewAuthorForum.setEnabled(hasAuthor);
+                _bodyViewAuthorMetadata.setEnabled(hasAuthor);
                 _bodyReplyToForum.setEnabled(!isPM);
                 _bodyReplyToAuthor.setEnabled(true);
                 _bodyBanForum.setEnabled(true);
@@ -1237,8 +1250,10 @@ public class PageRenderer extends BaseComponent implements Themeable {
         if (_msg == null) {
             _imgDisable.setEnabled(false);
             _imgEnable.setEnabled(false);
-            _imgIgnoreAuthor.setEnabled(false);
-            _imgIgnoreForum.setEnabled(false);
+            if (_showForumMenu) {
+                _imgIgnoreAuthor.setEnabled(false);
+                _imgIgnoreForum.setEnabled(false);
+            }
             /*_imgSave.setEnabled(false);
             _imgSaveAll.setEnabled(false);
             _imgView.setEnabled(false);
@@ -1250,14 +1265,16 @@ public class PageRenderer extends BaseComponent implements Themeable {
             _imgSaveAll.setEnabled(true);
             _imgView.setEnabled(true);
              */
-            _imgIgnoreForum.setEnabled(true);
-            
-            long targetId = _msg.getTargetChannelId();
-            long authorId = _msg.getAuthorChannelId();
-            if ( (targetId == authorId) || (authorId < 0) ) {
-                _imgIgnoreAuthor.setEnabled(false);
-            } else {
-                _imgIgnoreAuthor.setEnabled(true);
+            if (_showForumMenu) {
+                _imgIgnoreForum.setEnabled(true);
+
+                long targetId = _msg.getTargetChannelId();
+                long authorId = _msg.getAuthorChannelId();
+                if ( (targetId == authorId) || (authorId < 0) ) {
+                    _imgIgnoreAuthor.setEnabled(false);
+                } else {
+                    _imgIgnoreAuthor.setEnabled(true);
+                }
             }
         }
     }
@@ -1380,26 +1397,27 @@ public class PageRenderer extends BaseComponent implements Themeable {
         }
     }
     
-    private abstract class FireEventListener implements SelectionListener {
-        public void widgetSelected(SelectionEvent selectionEvent) { fireEvent(); }
-        public void widgetDefaultSelected(SelectionEvent selectionEvent) { fireEvent(); }
-        public abstract void fireEvent();
-    }
-    private abstract class FireLinkEventListener extends FireEventListener {
-        public void fireEvent() { 
+    private abstract class FireLinkEventListener extends FireSelectionListener {
+        public void fire() { 
             _ui.debugMessage("fireLinkEvent for uri: " + _currentEventURI + " tag: " + _currentEventLinkTag);
             fireEvent(_currentEventLinkTag, _currentEventURI);
         }
         public abstract void fireEvent(HTMLTag tag, SyndieURI uri);
     }
     
-    /** menu shown when right clicking on anything that isn't a link or image */
+    /**
+     *  Menu shown when right clicking on anything that isn't a link or image.
+     *
+     *  _showForumMenu controls whether to show author/forum choices
+     */
     private void buildBodyMenu() {
         _bodyMenu = new Menu(_text);
         _bodyMenu.setEnabled(true);
         _bodyMenu.addMenuListener(new MenuListener() {
             public void menuHidden(MenuEvent menuEvent) {}
             public void menuShown(MenuEvent menuEvent) {
+                if (!_showForumMenu)
+                    return;
                 // if the user isn't authorized to post a reply to the forum, don't offer to let them
                 long msgId = _msg != null ? _msg.getInternalId() : -1;
                 if (_bodyReplyToForum.getEnabled() && MessagePreview.allowedToReply(_client, msgId))
@@ -1409,173 +1427,177 @@ public class PageRenderer extends BaseComponent implements Themeable {
             }
         });
 
-        _bodyViewForum = new MenuItem(_bodyMenu, SWT.PUSH);
-        _bodyViewForum.setText("View forum");
-        _bodyViewForum.addSelectionListener(new FireEventListener() { 
-            public void fireEvent() { 
-                if ( (_listener != null) && (_msg != null) )
-                    _listener.viewScopeMessages(PageRenderer.this, _msg.getTargetChannel()); 
-            }
-        });
-        _bodyViewForumMetadata = new MenuItem(_bodyMenu, SWT.PUSH);
-        _bodyViewForumMetadata.setText("View forum profile");
-        _bodyViewForumMetadata.addSelectionListener(new FireEventListener() { 
-            public void fireEvent() { 
-                if ( (_listener != null) && (_msg != null) )
-                    _listener.viewScopeMetadata(PageRenderer.this, _msg.getTargetChannel()); 
-            }
-        });
-        new MenuItem(_bodyMenu, SWT.SEPARATOR);
-        _bodyViewAuthorForum = new MenuItem(_bodyMenu, SWT.PUSH);
-        _bodyViewAuthorForum.setText("View author");
-        _bodyViewAuthorForum.addSelectionListener(new FireEventListener() { 
-            public void fireEvent() { 
-                if ( (_listener != null) && (_msg != null) )
-                    _listener.viewScopeMessages(PageRenderer.this, _msg.getScopeChannel()); 
-            }
-        });
-        _bodyViewAuthorMetadata = new MenuItem(_bodyMenu, SWT.PUSH);
-        _bodyViewAuthorMetadata.setText("View author profile");
-        _bodyViewAuthorMetadata.addSelectionListener(new FireEventListener() { 
-            public void fireEvent() { 
-                if ( (_listener != null) && (_msg != null) )
-                    _listener.viewScopeMetadata(PageRenderer.this, _msg.getScopeChannel()); 
-            }
-        });
-        new MenuItem(_bodyMenu, SWT.SEPARATOR);
-        _bodyBookmarkForum = new MenuItem(_bodyMenu, SWT.PUSH);
-        _bodyBookmarkForum.setImage(ImageUtil.ICON_ADDBOOKMARK);
-        _bodyBookmarkForum.setText("Bookmark forum");
-        _bodyBookmarkForum.addSelectionListener(new FireEventListener() { 
-            public void fireEvent() { 
-                if ( (_listener != null) && (_msg != null) )
-                    _listener.bookmark(PageRenderer.this, SyndieURI.createScope(_msg.getTargetChannel()));
-            }
-        });
-        _bodyBookmarkAuthor = new MenuItem(_bodyMenu, SWT.PUSH);
-        _bodyBookmarkAuthor.setText("Bookmark author");
-        _bodyBookmarkAuthor.addSelectionListener(new FireEventListener() { 
-            public void fireEvent() { 
-                if ( (_listener != null) && (_msg != null) )
-                    _listener.bookmark(PageRenderer.this, SyndieURI.createScope(_msg.getScopeChannel()));
-            }
-        });
-        
-        new MenuItem(_bodyMenu, SWT.SEPARATOR);
-        
-        _bodyMarkAsRead = new MenuItem(_bodyMenu, SWT.PUSH);
-        _bodyMarkAsRead.setText("Mark as read");
-        _bodyMarkAsRead.addSelectionListener(new FireEventListener() { 
-            public void fireEvent() { 
-                _client.markMessageRead(_msg.getInternalId());
-                _dataCallback.readStatusUpdated();
-            }
-        });
-        
-        _bodyMarkAsUnread = new MenuItem(_bodyMenu, SWT.PUSH);
-        _bodyMarkAsUnread.setText("Mark as unread");
-        _bodyMarkAsUnread.addSelectionListener(new FireEventListener() { 
-            public void fireEvent() { 
-                _client.markMessageUnread(_msg.getInternalId());
-                _dataCallback.readStatusUpdated();
-            }
-        });
-        
-        new MenuItem(_bodyMenu, SWT.SEPARATOR);
-        
-        _bodyReplyToForum = new MenuItem(_bodyMenu, SWT.PUSH);
-        _bodyReplyToForum.setText("Reply to forum");
-        _bodyReplyToForum.addSelectionListener(new FireEventListener() {
-            public void fireEvent() {
-                if ( (_listener != null) && (_msg != null) )
-                    _listener.replyToForum(PageRenderer.this, _msg.getTargetChannel(), _msg.getURI());
-            }
-        });
-        _bodyReplyToAuthor = new MenuItem(_bodyMenu, SWT.PUSH);
-        _bodyReplyToAuthor.setText("Private reply to author");
-        _bodyReplyToAuthor.addSelectionListener(new FireEventListener() {
-            public void fireEvent() {
-                if ( (_listener != null) && (_msg != null) )
-                    _listener.privateReply(PageRenderer.this, getAuthorHash(), _msg.getURI());
-            }
-        });
-        
-        new MenuItem(_bodyMenu, SWT.SEPARATOR);
-        
-        _bodySaveAll = new MenuItem(_bodyMenu, SWT.PUSH);
-        _bodySaveAll.setText("Save all images");
-        _bodySaveAll.addSelectionListener(new FireEventListener() {
-            public void fireEvent() {
-                saveAllImages();
-            }
-        });
+        if (_showForumMenu) {
+            _bodyViewForum = new MenuItem(_bodyMenu, SWT.PUSH);
+            _bodyViewForum.setText(getText("View forum"));
+            _bodyViewForum.addSelectionListener(new FireSelectionListener() { 
+                public void fire() { 
+                    if ( (_listener != null) && (_msg != null) )
+                        _listener.viewScopeMessages(PageRenderer.this, _msg.getTargetChannel()); 
+                }
+            });
+            _bodyViewForumMetadata = new MenuItem(_bodyMenu, SWT.PUSH);
+            _bodyViewForumMetadata.setText(getText("View forum profile"));
+            _bodyViewForumMetadata.addSelectionListener(new FireSelectionListener() { 
+                public void fire() { 
+                    if ( (_listener != null) && (_msg != null) )
+                        _listener.viewScopeMetadata(PageRenderer.this, _msg.getTargetChannel()); 
+                }
+            });
+            new MenuItem(_bodyMenu, SWT.SEPARATOR);
+            _bodyViewAuthorForum = new MenuItem(_bodyMenu, SWT.PUSH);
+            _bodyViewAuthorForum.setText(getText("View author"));
+            _bodyViewAuthorForum.addSelectionListener(new FireSelectionListener() { 
+                public void fire() { 
+                    if ( (_listener != null) && (_msg != null) )
+                        _listener.viewScopeMessages(PageRenderer.this, _msg.getScopeChannel()); 
+                }
+            });
+            _bodyViewAuthorMetadata = new MenuItem(_bodyMenu, SWT.PUSH);
+            _bodyViewAuthorMetadata.setText(getText("View author profile"));
+            _bodyViewAuthorMetadata.addSelectionListener(new FireSelectionListener() { 
+                public void fire() { 
+                    if ( (_listener != null) && (_msg != null) )
+                        _listener.viewScopeMetadata(PageRenderer.this, _msg.getScopeChannel()); 
+                }
+            });
+            new MenuItem(_bodyMenu, SWT.SEPARATOR);
+            _bodyBookmarkForum = new MenuItem(_bodyMenu, SWT.PUSH);
+            _bodyBookmarkForum.setImage(ImageUtil.ICON_ADDBOOKMARK);
+            _bodyBookmarkForum.setText(getText("Bookmark forum"));
+            _bodyBookmarkForum.addSelectionListener(new FireSelectionListener() { 
+                public void fire() { 
+                    if ( (_listener != null) && (_msg != null) )
+                        _listener.bookmark(PageRenderer.this, SyndieURI.createScope(_msg.getTargetChannel()));
+                }
+            });
+            _bodyBookmarkAuthor = new MenuItem(_bodyMenu, SWT.PUSH);
+            _bodyBookmarkAuthor.setText(getText("Bookmark author"));
+            _bodyBookmarkAuthor.addSelectionListener(new FireSelectionListener() { 
+                public void fire() { 
+                    if ( (_listener != null) && (_msg != null) )
+                        _listener.bookmark(PageRenderer.this, SyndieURI.createScope(_msg.getScopeChannel()));
+                }
+            });
+
+            new MenuItem(_bodyMenu, SWT.SEPARATOR);
+
+            _bodyMarkAsRead = new MenuItem(_bodyMenu, SWT.PUSH);
+            _bodyMarkAsRead.setText(getText("Mark as read"));
+            _bodyMarkAsRead.addSelectionListener(new FireSelectionListener() { 
+                public void fire() { 
+                    _client.markMessageRead(_msg.getInternalId());
+                    _dataCallback.readStatusUpdated();
+                }
+            });
+
+            _bodyMarkAsUnread = new MenuItem(_bodyMenu, SWT.PUSH);
+            _bodyMarkAsUnread.setText(getText("Mark as unread"));
+            _bodyMarkAsUnread.addSelectionListener(new FireSelectionListener() { 
+                public void fire() { 
+                    _client.markMessageUnread(_msg.getInternalId());
+                    _dataCallback.readStatusUpdated();
+                }
+            });
+
+            new MenuItem(_bodyMenu, SWT.SEPARATOR);
+
+            _bodyReplyToForum = new MenuItem(_bodyMenu, SWT.PUSH);
+            _bodyReplyToForum.setText(getText("Reply to forum"));
+            _bodyReplyToForum.addSelectionListener(new FireSelectionListener() {
+                public void fire() {
+                    if ( (_listener != null) && (_msg != null) )
+                        _listener.replyToForum(PageRenderer.this, _msg.getTargetChannel(), _msg.getURI());
+                }
+            });
+            _bodyReplyToAuthor = new MenuItem(_bodyMenu, SWT.PUSH);
+            _bodyReplyToAuthor.setText(getText("Private reply to author"));
+            _bodyReplyToAuthor.addSelectionListener(new FireSelectionListener() {
+                public void fire() {
+                    if ( (_listener != null) && (_msg != null) )
+                        _listener.privateReply(PageRenderer.this, getAuthorHash(), _msg.getURI());
+                }
+            });
+
+            new MenuItem(_bodyMenu, SWT.SEPARATOR);
+
+            _bodySaveAll = new MenuItem(_bodyMenu, SWT.PUSH);
+            _bodySaveAll.setText(getText("Save all images"));
+            _bodySaveAll.addSelectionListener(new FireSelectionListener() {
+                public void fire() {
+                    saveAllImages();
+                }
+            });
+        }
         
         _bodyDisable = new MenuItem(_bodyMenu, SWT.PUSH);
-        _bodyDisable.setText("Disable images");
-        _bodyDisable.addSelectionListener(new FireEventListener() {
-            public void fireEvent() {
+        _bodyDisable.setText(getText("Disable images"));
+        _bodyDisable.addSelectionListener(new FireSelectionListener() {
+            public void fire() {
                 toggleImages();
             }
         });
         _bodyEnable = new MenuItem(_bodyMenu, SWT.PUSH);
-        _bodyEnable.setText("Enable images");
-        _bodyEnable.addSelectionListener(new FireEventListener() {
-            public void fireEvent() {
+        _bodyEnable.setText(getText("Enable images"));
+        _bodyEnable.addSelectionListener(new FireSelectionListener() {
+            public void fire() {
                 toggleImages();
             }
         });
         _bodyViewAsText = new MenuItem(_bodyMenu, SWT.RADIO);
-        _bodyViewAsText.setText("View as plain text");
-        _bodyViewAsText.addSelectionListener(new FireEventListener() {
-            public void fireEvent() { toggleViewAsText(); }
+        _bodyViewAsText.setText(getText("View as plain text"));
+        _bodyViewAsText.addSelectionListener(new FireSelectionListener() {
+            public void fire() { toggleViewAsText(); }
         });
         _bodyViewUnstyled = new MenuItem(_bodyMenu, SWT.RADIO);
-        _bodyViewUnstyled.setText("View as unstyled HTML");
-        _bodyViewUnstyled.addSelectionListener(new FireEventListener() {
-            public void fireEvent() { toggleViewUnstyled(); }
+        _bodyViewUnstyled.setText(getText("View as unstyled HTML"));
+        _bodyViewUnstyled.addSelectionListener(new FireSelectionListener() {
+            public void fire() { toggleViewUnstyled(); }
         });
         _bodyViewStyled = new MenuItem(_bodyMenu, SWT.RADIO);
-        _bodyViewStyled.setText("View as styled HTML");
-        _bodyViewStyled.addSelectionListener(new FireEventListener() {
-            public void fireEvent() { toggleViewStyled(); }
+        _bodyViewStyled.setText(getText("View as styled HTML"));
+        _bodyViewStyled.addSelectionListener(new FireSelectionListener() {
+            public void fire() { toggleViewStyled(); }
         });
         _bodyViewStyled.setSelection(true);
         
-        new MenuItem(_bodyMenu, SWT.SEPARATOR);
-        
-        _bodyDelete = new MenuItem(_bodyMenu, SWT.PUSH);
-        _bodyDelete.setText("Delete this message locally");
-        _bodyDelete.addSelectionListener(new FireEventListener() {
-            public void fireEvent() {
-                deleteMessage();
-            }
-        });
-        
-        _bodyCancel = new MenuItem(_bodyMenu, SWT.PUSH);
-        _bodyCancel.setText("Cancel the message (tell others to delete it)");
-        _bodyCancel.addSelectionListener(new FireEventListener() {
-            public void fireEvent() {
-                cancelMessage();
-            }
-        });
-        
-        new MenuItem(_bodyMenu, SWT.SEPARATOR);
-        _bodyBanForum = new MenuItem(_bodyMenu, SWT.PUSH);
-        _bodyBanForum.setText("Ban forum");
-        _bodyBanForum.addSelectionListener(new FireEventListener() { 
-            public void fireEvent() { 
-                if ( (_listener != null) && (_msg != null) )
-                    _listener.banScope(PageRenderer.this, _msg.getTargetChannel());
-            }
-        });
-        _bodyBanAuthor = new MenuItem(_bodyMenu, SWT.PUSH);
-        _bodyBanAuthor.setText("Ban author");
-        _bodyBanAuthor.addSelectionListener(new FireEventListener() { 
-            public void fireEvent() { 
-                if ( (_listener != null) && (_msg != null) )
-                    _listener.banScope(PageRenderer.this, _msg.getScopeChannel());
-            }
-        });
+        if (_showForumMenu) {
+            new MenuItem(_bodyMenu, SWT.SEPARATOR);
+
+            _bodyDelete = new MenuItem(_bodyMenu, SWT.PUSH);
+            _bodyDelete.setText(getText("Delete this message locally"));
+            _bodyDelete.addSelectionListener(new FireSelectionListener() {
+                public void fire() {
+                    deleteMessage();
+                }
+            });
+
+            _bodyCancel = new MenuItem(_bodyMenu, SWT.PUSH);
+            _bodyCancel.setText(getText("Cancel the message (tell others to delete it)"));
+            _bodyCancel.addSelectionListener(new FireSelectionListener() {
+                public void fire() {
+                    cancelMessage();
+                }
+            });
+
+            new MenuItem(_bodyMenu, SWT.SEPARATOR);
+            _bodyBanForum = new MenuItem(_bodyMenu, SWT.PUSH);
+            _bodyBanForum.setText(getText("Ban forum"));
+            _bodyBanForum.addSelectionListener(new FireSelectionListener() { 
+                public void fire() { 
+                    if ( (_listener != null) && (_msg != null) )
+                        _listener.banScope(PageRenderer.this, _msg.getTargetChannel());
+                }
+            });
+            _bodyBanAuthor = new MenuItem(_bodyMenu, SWT.PUSH);
+            _bodyBanAuthor.setText(getText("Ban author"));
+            _bodyBanAuthor.addSelectionListener(new FireSelectionListener() { 
+                public void fire() { 
+                    if ( (_listener != null) && (_msg != null) )
+                        _listener.banScope(PageRenderer.this, _msg.getScopeChannel());
+                }
+            });
+        }
     }
     
     /** menu shown when right clicking on a link */
@@ -1584,7 +1606,7 @@ public class PageRenderer extends BaseComponent implements Themeable {
         _linkMenu.setEnabled(true);
         
         _linkView = new MenuItem(_linkMenu, SWT.PUSH);
-        _linkView.setText("View link");
+        _linkView.setText(getText("View link"));
         _linkView.addSelectionListener(new FireLinkEventListener() { 
             public void fireEvent(HTMLTag tag, SyndieURI uri) { 
                 if ( (_listener != null) && (_msg != null) && (uri != null) ) {
@@ -1594,7 +1616,7 @@ public class PageRenderer extends BaseComponent implements Themeable {
         });
         new MenuItem(_linkMenu, SWT.SEPARATOR);
         _linkBookmark = new MenuItem(_linkMenu, SWT.PUSH);
-        _linkBookmark.setText("Bookmark link");
+        _linkBookmark.setText(getText("Bookmark link"));
         _linkBookmark.addSelectionListener(new FireLinkEventListener() { 
             public void fireEvent(HTMLTag tag, SyndieURI uri) { 
                 if ( (_listener != null) && (_msg != null) && (uri != null) ) {
@@ -1602,52 +1624,54 @@ public class PageRenderer extends BaseComponent implements Themeable {
                 }
             }
         });
-        new MenuItem(_linkMenu, SWT.SEPARATOR);
-        _linkImportReadKey = new MenuItem(_linkMenu, SWT.PUSH);
-        _linkImportReadKey.setText("Import read key");
-        _linkImportReadKey.addSelectionListener(new FireLinkEventListener() { 
-            public void fireEvent(HTMLTag tag, SyndieURI uri) { 
-                if ( (_listener != null) && (_msg != null) && (uri != null) ) {
-                    _listener.importReadKey(PageRenderer.this, getAuthorHash(), uri.getScope(), uri.getReadKey());
+        if (_showForumMenu) {
+            new MenuItem(_linkMenu, SWT.SEPARATOR);
+            _linkImportReadKey = new MenuItem(_linkMenu, SWT.PUSH);
+            _linkImportReadKey.setText(getText("Import read key"));
+            _linkImportReadKey.addSelectionListener(new FireLinkEventListener() { 
+                public void fireEvent(HTMLTag tag, SyndieURI uri) { 
+                    if ( (_listener != null) && (_msg != null) && (uri != null) ) {
+                        _listener.importReadKey(PageRenderer.this, getAuthorHash(), uri.getScope(), uri.getReadKey());
+                    }
                 }
-            }
-        });
-        _linkImportPostKey = new MenuItem(_linkMenu, SWT.PUSH);
-        _linkImportPostKey.setText("Import post key");
-        _linkImportPostKey.addSelectionListener(new FireLinkEventListener() { 
-            public void fireEvent(HTMLTag tag, SyndieURI uri) { 
-                if ( (_listener != null) && (_msg != null) && (uri != null) ) {
-                    _listener.importPostKey(PageRenderer.this, getAuthorHash(), uri.getScope(), uri.getPostKey());
+            });
+            _linkImportPostKey = new MenuItem(_linkMenu, SWT.PUSH);
+            _linkImportPostKey.setText(getText("Import post key"));
+            _linkImportPostKey.addSelectionListener(new FireLinkEventListener() { 
+                public void fireEvent(HTMLTag tag, SyndieURI uri) { 
+                    if ( (_listener != null) && (_msg != null) && (uri != null) ) {
+                        _listener.importPostKey(PageRenderer.this, getAuthorHash(), uri.getScope(), uri.getPostKey());
+                    }
                 }
-            }
-        });
-        _linkImportManageKey = new MenuItem(_linkMenu, SWT.PUSH);
-        _linkImportManageKey.setText("Import manage key");
-        _linkImportManageKey.addSelectionListener(new FireLinkEventListener() { 
-            public void fireEvent(HTMLTag tag, SyndieURI uri) { 
-                if ( (_listener != null) && (_msg != null) && (uri != null) ) {
-                    _listener.importManageKey(PageRenderer.this, getAuthorHash(), uri.getScope(), uri.getManageKey());
+            });
+            _linkImportManageKey = new MenuItem(_linkMenu, SWT.PUSH);
+            _linkImportManageKey.setText(getText("Import manage key"));
+            _linkImportManageKey.addSelectionListener(new FireLinkEventListener() { 
+                public void fireEvent(HTMLTag tag, SyndieURI uri) { 
+                    if ( (_listener != null) && (_msg != null) && (uri != null) ) {
+                        _listener.importManageKey(PageRenderer.this, getAuthorHash(), uri.getScope(), uri.getManageKey());
+                    }
                 }
-            }
-        });
-        _linkImportReplyKey = new MenuItem(_linkMenu, SWT.PUSH);
-        _linkImportReplyKey.setText("Import reply key");
-        _linkImportReplyKey.addSelectionListener(new FireLinkEventListener() { 
-            public void fireEvent(HTMLTag tag, SyndieURI uri) { 
-                if ( (_listener != null) && (_msg != null) && (uri != null) ) {
-                    _listener.importReplyKey(PageRenderer.this, getAuthorHash(), uri.getScope(), uri.getReplyKey());
+            });
+            _linkImportReplyKey = new MenuItem(_linkMenu, SWT.PUSH);
+            _linkImportReplyKey.setText(getText("Import reply key"));
+            _linkImportReplyKey.addSelectionListener(new FireLinkEventListener() { 
+                public void fireEvent(HTMLTag tag, SyndieURI uri) { 
+                    if ( (_listener != null) && (_msg != null) && (uri != null) ) {
+                        _listener.importReplyKey(PageRenderer.this, getAuthorHash(), uri.getScope(), uri.getReplyKey());
+                    }
                 }
-            }
-        });
-        _linkImportArchiveKey = new MenuItem(_linkMenu, SWT.PUSH);
-        _linkImportArchiveKey.setText("Import archive key");
-        _linkImportArchiveKey.addSelectionListener(new FireLinkEventListener() { 
-            public void fireEvent(HTMLTag tag, SyndieURI uri) { 
-                if ( (_listener != null) && (_msg != null) && (uri != null) ) {
-                    _listener.importArchiveKey(PageRenderer.this, getAuthorHash(), uri, uri.getArchiveKey());
+            });
+            _linkImportArchiveKey = new MenuItem(_linkMenu, SWT.PUSH);
+            _linkImportArchiveKey.setText(getText("Import archive key"));
+            _linkImportArchiveKey.addSelectionListener(new FireLinkEventListener() { 
+                public void fireEvent(HTMLTag tag, SyndieURI uri) { 
+                    if ( (_listener != null) && (_msg != null) && (uri != null) ) {
+                        _listener.importArchiveKey(PageRenderer.this, getAuthorHash(), uri, uri.getArchiveKey());
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     private Hash getAuthorHash() {
@@ -1742,62 +1766,64 @@ public class PageRenderer extends BaseComponent implements Themeable {
         /*
         _imgView = new MenuItem(_imageMenu, SWT.PUSH);
         _imgView.setText("View image");
-        _imgView.addSelectionListener(new FireEventListener() {
-            public void fireEvent() {
+        _imgView.addSelectionListener(new FireSelectionListener() {
+            public void fire() {
                 if ( (_listener != null) && (_msg != null) && (_currentEventImage != null) )
                     _listener.viewImage(PageRenderer.this, _currentEventImage);
             }
         });
         _imgSave = new MenuItem(_imageMenu, SWT.PUSH);
         _imgSave.setText("Save image");
-        _imgSave.addSelectionListener(new FireEventListener() {
-            public void fireEvent() {
+        _imgSave.addSelectionListener(new FireSelectionListener() {
+            public void fire() {
                 if (_currentEventImage != null)
                     saveImage();
             }
         });
         _imgSaveAll = new MenuItem(_imageMenu, SWT.PUSH);
         _imgSaveAll.setText("Save all images");
-        _imgSaveAll.addSelectionListener(new FireEventListener() {
-            public void fireEvent() {
+        _imgSaveAll.addSelectionListener(new FireSelectionListener() {
+            public void fire() {
                 saveAllImages();
             }
         });
         new MenuItem(_imageMenu, SWT.SEPARATOR);
          */
         _imgDisable = new MenuItem(_imageMenu, SWT.PUSH);
-        _imgDisable.setText("Disable images");
-        _imgDisable.addSelectionListener(new FireEventListener() {
-            public void fireEvent() {
+        _imgDisable.setText(getText("Disable images"));
+        _imgDisable.addSelectionListener(new FireSelectionListener() {
+            public void fire() {
                 toggleImages();
             }
         });
         _imgEnable = new MenuItem(_imageMenu, SWT.PUSH);
-        _imgEnable.setText("Enable images");
-        _imgEnable.addSelectionListener(new FireEventListener() {
-            public void fireEvent() {
+        _imgEnable.setText(getText("Enable images"));
+        _imgEnable.addSelectionListener(new FireSelectionListener() {
+            public void fire() {
                 toggleImages();
             }
         });
-        new MenuItem(_imageMenu, SWT.SEPARATOR);
-        _imgIgnoreForum= new MenuItem(_imageMenu, SWT.PUSH);
-        _imgIgnoreForum.setText("Ignore images in this forum");
-        _imgIgnoreForum.addSelectionListener(new FireEventListener() {
-            public void fireEvent() {
-                if ( (_listener != null) && (_msg != null) )
-                    _listener.ignoreImageScope(PageRenderer.this, _msg.getTargetChannel());
-                rerender();
-            }
-        });
-        _imgIgnoreAuthor= new MenuItem(_imageMenu, SWT.PUSH);
-        _imgIgnoreAuthor.setText("Ignore images from this author");
-        _imgIgnoreAuthor.addSelectionListener(new FireEventListener() {
-            public void fireEvent() {
-                if ( (_listener != null) && (_msg != null) )
-                    _listener.ignoreImageScope(PageRenderer.this, _msg.getScopeChannel());
-                rerender();
-            }
-        });
+        if (_showForumMenu) {
+            new MenuItem(_imageMenu, SWT.SEPARATOR);
+            _imgIgnoreForum= new MenuItem(_imageMenu, SWT.PUSH);
+            _imgIgnoreForum.setText(getText("Ignore images in this forum"));
+            _imgIgnoreForum.addSelectionListener(new FireSelectionListener() {
+                public void fire() {
+                    if ( (_listener != null) && (_msg != null) )
+                        _listener.ignoreImageScope(PageRenderer.this, _msg.getTargetChannel());
+                    rerender();
+                }
+            });
+            _imgIgnoreAuthor= new MenuItem(_imageMenu, SWT.PUSH);
+            _imgIgnoreAuthor.setText(getText("Ignore images from this author"));
+            _imgIgnoreAuthor.addSelectionListener(new FireSelectionListener() {
+                public void fire() {
+                    if ( (_listener != null) && (_msg != null) )
+                        _listener.ignoreImageScope(PageRenderer.this, _msg.getScopeChannel());
+                    rerender();
+                }
+            });
+        }
     }
     
     /** menu shown when right clicking on an image that is inside a hyperlink */
@@ -1806,7 +1832,7 @@ public class PageRenderer extends BaseComponent implements Themeable {
         _imageLinkMenu.setEnabled(true);
         
         _imgLinkViewLink = new MenuItem(_imageLinkMenu, SWT.PUSH);
-        _imgLinkViewLink.setText("View link");
+        _imgLinkViewLink.setText(getText("View link"));
         _imgLinkViewLink.addSelectionListener(new FireLinkEventListener() { 
             public void fireEvent(HTMLTag tag, SyndieURI uri) { 
                 if ( (_listener != null) && (_msg != null) && (uri != null) ) {
@@ -1815,15 +1841,15 @@ public class PageRenderer extends BaseComponent implements Themeable {
             }
         });
         _imgLinkViewImg = new MenuItem(_imageLinkMenu, SWT.PUSH);
-        _imgLinkViewImg.setText("View image");
-        _imgLinkViewImg.addSelectionListener(new FireEventListener() {
-            public void fireEvent() {
+        _imgLinkViewImg.setText(getText("View image"));
+        _imgLinkViewImg.addSelectionListener(new FireSelectionListener() {
+            public void fire() {
                 if ( (_listener != null) && (_msg != null) && (_currentEventImage != null) )
                     _listener.viewImage(PageRenderer.this, _currentEventImage);
             }
         });
         _imgLinkBookmarkLink = new MenuItem(_imageLinkMenu, SWT.PUSH);
-        _imgLinkBookmarkLink.setText("Bookmark link");
+        _imgLinkBookmarkLink.setText(getText("Bookmark link"));
         _imgLinkBookmarkLink.addSelectionListener(new FireLinkEventListener() { 
             public void fireEvent(HTMLTag tag, SyndieURI uri) { 
                 if ( (_listener != null) && (_msg != null) && (uri != null) ) {
@@ -1834,101 +1860,103 @@ public class PageRenderer extends BaseComponent implements Themeable {
         new MenuItem(_imageLinkMenu, SWT.SEPARATOR);
         
         _imgLinkSave = new MenuItem(_imageLinkMenu, SWT.PUSH);
-        _imgLinkSave.setText("Save image");
-        _imgLinkSave.addSelectionListener(new FireEventListener() {
-            public void fireEvent() {
+        _imgLinkSave.setText(getText("Save image"));
+        _imgLinkSave.addSelectionListener(new FireSelectionListener() {
+            public void fire() {
                 if (_currentEventImage != null)
                     saveImage();
             }
         });
         _imgLinkSaveAll = new MenuItem(_imageLinkMenu, SWT.PUSH);
-        _imgLinkSaveAll.setText("Save all images");
-        _imgLinkSaveAll.addSelectionListener(new FireEventListener() {
-            public void fireEvent() {
+        _imgLinkSaveAll.setText(getText("Save all images"));
+        _imgLinkSaveAll.addSelectionListener(new FireSelectionListener() {
+            public void fire() {
                 saveAllImages();
             }
         });
         _imgLinkDisable = new MenuItem(_imageLinkMenu, SWT.PUSH);
-        _imgLinkDisable.setText("Disable images");
-        _imgLinkDisable.addSelectionListener(new FireEventListener() {
-            public void fireEvent() {
+        _imgLinkDisable.setText(getText("Disable images"));
+        _imgLinkDisable.addSelectionListener(new FireSelectionListener() {
+            public void fire() {
                 toggleImages();
             }
         });
         _imgLinkEnable = new MenuItem(_imageLinkMenu, SWT.PUSH);
-        _imgLinkEnable.setText("Enable images");
-        _imgLinkEnable.addSelectionListener(new FireEventListener() {
-            public void fireEvent() {
+        _imgLinkEnable.setText(getText("Enable images"));
+        _imgLinkEnable.addSelectionListener(new FireSelectionListener() {
+            public void fire() {
                 toggleImages();
             }
         });
         new MenuItem(_imageLinkMenu, SWT.SEPARATOR);
         
-        _imgLinkIgnoreForum = new MenuItem(_imageLinkMenu, SWT.PUSH);
-        _imgLinkIgnoreForum.setText("Ignore images in this forum");
-        _imgLinkIgnoreForum.addSelectionListener(new FireEventListener() {
-            public void fireEvent() {
-                if ( (_listener != null) && (_msg != null) )
-                    _listener.ignoreImageScope(PageRenderer.this, _msg.getTargetChannel());
-                rerender();
-            }
-        });
-        _imgLinkIgnoreAuthor = new MenuItem(_imageLinkMenu, SWT.PUSH);
-        _imgLinkIgnoreAuthor.setText("Ignore images from this author");
-        _imgLinkIgnoreAuthor.addSelectionListener(new FireEventListener() {
-            public void fireEvent() {
-                if ( (_listener != null) && (_msg != null) )
-                    _listener.ignoreImageScope(PageRenderer.this, _msg.getScopeChannel());
-                rerender();
-            }
-        });
-        new MenuItem(_imageLinkMenu, SWT.SEPARATOR);
-        
-        _imgLinkImportReadKey = new MenuItem(_imageLinkMenu, SWT.PUSH);
-        _imgLinkImportReadKey.setText("Import read key");
-        _imgLinkImportReadKey.addSelectionListener(new FireLinkEventListener() { 
-            public void fireEvent(HTMLTag tag, SyndieURI uri) { 
-                if ( (_listener != null) && (_msg != null) && (uri != null) ) {
-                    _listener.importReadKey(PageRenderer.this, getAuthorHash(), uri.getScope(), uri.getReadKey());
+        if (_showForumMenu) {
+            _imgLinkIgnoreForum = new MenuItem(_imageLinkMenu, SWT.PUSH);
+            _imgLinkIgnoreForum.setText(getText("Ignore images in this forum"));
+            _imgLinkIgnoreForum.addSelectionListener(new FireSelectionListener() {
+                public void fire() {
+                    if ( (_listener != null) && (_msg != null) )
+                        _listener.ignoreImageScope(PageRenderer.this, _msg.getTargetChannel());
+                    rerender();
                 }
-            }
-        });
-        _imgLinkImportPostKey = new MenuItem(_imageLinkMenu, SWT.PUSH);
-        _imgLinkImportPostKey.setText("Import post key");
-        _imgLinkImportPostKey.addSelectionListener(new FireLinkEventListener() { 
-            public void fireEvent(HTMLTag tag, SyndieURI uri) { 
-                if ( (_listener != null) && (_msg != null) && (uri != null) ) {
-                    _listener.importPostKey(PageRenderer.this, getAuthorHash(), uri.getScope(), uri.getPostKey());
+            });
+            _imgLinkIgnoreAuthor = new MenuItem(_imageLinkMenu, SWT.PUSH);
+            _imgLinkIgnoreAuthor.setText(getText("Ignore images from this author"));
+            _imgLinkIgnoreAuthor.addSelectionListener(new FireSelectionListener() {
+                public void fire() {
+                    if ( (_listener != null) && (_msg != null) )
+                        _listener.ignoreImageScope(PageRenderer.this, _msg.getScopeChannel());
+                    rerender();
                 }
-            }
-        });
-        _imgLinkImportManageKey = new MenuItem(_imageLinkMenu, SWT.PUSH);
-        _imgLinkImportManageKey.setText("Import manage key");
-        _imgLinkImportManageKey.addSelectionListener(new FireLinkEventListener() { 
-            public void fireEvent(HTMLTag tag, SyndieURI uri) { 
-                if ( (_listener != null) && (_msg != null) && (uri != null) ) {
-                    _listener.importManageKey(PageRenderer.this, getAuthorHash(), uri.getScope(), uri.getManageKey());
+            });
+            new MenuItem(_imageLinkMenu, SWT.SEPARATOR);
+
+            _imgLinkImportReadKey = new MenuItem(_imageLinkMenu, SWT.PUSH);
+            _imgLinkImportReadKey.setText(getText("Import read key"));
+            _imgLinkImportReadKey.addSelectionListener(new FireLinkEventListener() { 
+                public void fireEvent(HTMLTag tag, SyndieURI uri) { 
+                    if ( (_listener != null) && (_msg != null) && (uri != null) ) {
+                        _listener.importReadKey(PageRenderer.this, getAuthorHash(), uri.getScope(), uri.getReadKey());
+                    }
                 }
-            }
-        });
-        _imgLinkImportReplyKey = new MenuItem(_imageLinkMenu, SWT.PUSH);
-        _imgLinkImportReplyKey.setText("Import reply key");
-        _imgLinkImportReplyKey.addSelectionListener(new FireLinkEventListener() { 
-            public void fireEvent(HTMLTag tag, SyndieURI uri) { 
-                if ( (_listener != null) && (_msg != null) && (uri != null) ) {
-                    _listener.importReplyKey(PageRenderer.this, getAuthorHash(), uri.getScope(), uri.getReplyKey());
+            });
+            _imgLinkImportPostKey = new MenuItem(_imageLinkMenu, SWT.PUSH);
+            _imgLinkImportPostKey.setText(getText("Import post key"));
+            _imgLinkImportPostKey.addSelectionListener(new FireLinkEventListener() { 
+                public void fireEvent(HTMLTag tag, SyndieURI uri) { 
+                    if ( (_listener != null) && (_msg != null) && (uri != null) ) {
+                        _listener.importPostKey(PageRenderer.this, getAuthorHash(), uri.getScope(), uri.getPostKey());
+                    }
                 }
-            }
-        });
-        _imgLinkImportArchiveKey = new MenuItem(_imageLinkMenu, SWT.PUSH);
-        _imgLinkImportArchiveKey.setText("Import archive key");
-        _imgLinkImportArchiveKey.addSelectionListener(new FireLinkEventListener() { 
-            public void fireEvent(HTMLTag tag, SyndieURI uri) { 
-                if ( (_listener != null) && (_msg != null) && (uri != null) ) {
-                    _listener.importArchiveKey(PageRenderer.this, getAuthorHash(), uri, uri.getArchiveKey());
+            });
+            _imgLinkImportManageKey = new MenuItem(_imageLinkMenu, SWT.PUSH);
+            _imgLinkImportManageKey.setText(getText("Import manage key"));
+            _imgLinkImportManageKey.addSelectionListener(new FireLinkEventListener() { 
+                public void fireEvent(HTMLTag tag, SyndieURI uri) { 
+                    if ( (_listener != null) && (_msg != null) && (uri != null) ) {
+                        _listener.importManageKey(PageRenderer.this, getAuthorHash(), uri.getScope(), uri.getManageKey());
+                    }
                 }
-            }
-        });
+            });
+            _imgLinkImportReplyKey = new MenuItem(_imageLinkMenu, SWT.PUSH);
+            _imgLinkImportReplyKey.setText(getText("Import reply key"));
+            _imgLinkImportReplyKey.addSelectionListener(new FireLinkEventListener() { 
+                public void fireEvent(HTMLTag tag, SyndieURI uri) { 
+                    if ( (_listener != null) && (_msg != null) && (uri != null) ) {
+                        _listener.importReplyKey(PageRenderer.this, getAuthorHash(), uri.getScope(), uri.getReplyKey());
+                    }
+                }
+            });
+            _imgLinkImportArchiveKey = new MenuItem(_imageLinkMenu, SWT.PUSH);
+            _imgLinkImportArchiveKey.setText(getText("Import archive key"));
+            _imgLinkImportArchiveKey.addSelectionListener(new FireLinkEventListener() { 
+                public void fireEvent(HTMLTag tag, SyndieURI uri) { 
+                    if ( (_listener != null) && (_msg != null) && (uri != null) ) {
+                        _listener.importArchiveKey(PageRenderer.this, getAuthorHash(), uri, uri.getArchiveKey());
+                    }
+                }
+            });
+        }
     }
     
     public interface PageActionListener {

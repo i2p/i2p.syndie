@@ -59,7 +59,7 @@ public class PageRendererTab extends BrowserTab implements Translatable, Themeab
 
     protected void initComponents() {
         getRoot().setLayout(new FillLayout());
-        _renderer = ComponentBuilder.instance().createPageRenderer(getRoot(), true);
+        _renderer = ComponentBuilder.instance().createPageRenderer(getRoot(), true, false);
         _renderer.setListener(this);
         
         getBrowser().getThemeRegistry().register(this);

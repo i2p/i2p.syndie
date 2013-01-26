@@ -22,6 +22,7 @@ public class HelpTab extends  PageRendererTab {
     
     private static final int MAX_LINES = 2000;
 
+    private String _body;
     private boolean _success;
 
     public HelpTab(BrowserControl browser, SyndieURI uri) {
@@ -31,7 +32,7 @@ public class HelpTab extends  PageRendererTab {
     @Override
     protected void initComponents() {
         getRoot().setLayout(new FillLayout());
-        _renderer = ComponentBuilder.instance().createPageRenderer(getRoot(), true);
+        _renderer = ComponentBuilder.instance().createPageRenderer(getRoot(), true, false);
         _renderer.setListener(this);
         
         getBrowser().getThemeRegistry().register(this);
@@ -43,7 +44,6 @@ public class HelpTab extends  PageRendererTab {
 
     @Override
     public void show(SyndieURI uri) {
-        String body = null;
         String path = getURI().getString(FILE);
         if (path == null)
             path = "index.html";
@@ -54,21 +54,27 @@ public class HelpTab extends  PageRendererTab {
                 f = new File(f, path);
                 // TODO use WebRipRunner to fixup links on-the-fly?
                 // TODO PageRenderer expects images to be message attachments?
-                body = FileUtil.readTextFile(f.toString(), MAX_LINES, true);
+                _body = FileUtil.readTextFile(f.toString(), MAX_LINES, true);
             }
         }
-        if (body == null) {
+        // TODO get title from <title> ?
+        if (_body != null)
+            show(_body, "Help", "tooltip");
+        super.show(uri);
+    }
+
+    @Override
+    public void tabShown() {
+        if (_body == null) {
             MessageBox box = new MessageBox(getRoot().getShell(), SWT.ICON_INFORMATION | SWT.OK);
             box.setText(getBrowser().getTranslationRegistry().getText("File not found"));
             box.setMessage(getBrowser().getTranslationRegistry().getText("File not found"));
-            getBrowser().getNavControl().unview(getURI());
             box.open();
+            getBrowser().getNavControl().unview(getURI());
             return;
         }    
         super.tabShown();
-        // TODO get title from <title> ?
-        show(body, "Help", "tooltip");
-    }
+    }    
     
     @Override
     public Image getIcon() { return ImageUtil.ICON_HM_ABOUT; }

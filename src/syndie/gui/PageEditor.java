@@ -129,7 +129,7 @@ public class PageEditor extends BaseComponent implements Themeable {
         _text = new Text(_sash, SWT.MULTI | SWT.BORDER | SWT.WRAP | SWT.V_SCROLL | SWT.H_SCROLL);
         configText();
         
-        _preview = ComponentBuilder.instance().createPageRenderer(_sash, true);
+        _preview = ComponentBuilder.instance().createPageRenderer(_sash, true, false);
         _text.addControlListener(new ControlListener() {
             public void controlMoved(ControlEvent controlEvent) {}
             public void controlResized(ControlEvent evt) {
@@ -928,7 +928,7 @@ public class PageEditor extends BaseComponent implements Themeable {
             edit.setText(_translationRegistry.getText("Show maximized editor"));
             edit.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
             
-            _maxRenderer = ComponentBuilder.instance().createPageRenderer(_shell, true);
+            _maxRenderer = ComponentBuilder.instance().createPageRenderer(_shell, true, false);
             _maxRenderer.getComposite().setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 2, 1));
             
             MessageInfo msgInfo = new MessageInfo();
