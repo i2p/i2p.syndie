@@ -311,9 +311,11 @@ public class PageRenderer extends BaseComponent implements Themeable {
                         if (start == offset) {
                             if (i >= _images.size()) return;
                             Image img = (Image)_images.get(i);
-                            // TODO add margin
-                            int x = evt.x;
-                            int y = evt.y + evt.ascent - range.metrics.ascent;
+                            // Adjust origin by half the added margin
+                            int xMargin = (range.metrics.width - img.getBounds().width) / 2;
+                            int yMargin = (range.metrics.ascent - img.getBounds().height) / 2;
+                            int x = evt.x + xMargin;
+                            int y = evt.y + + yMargin + evt.ascent - range.metrics.ascent;
                             //System.out.println("Paint x=" + x + " y=" + y + " offset=" + offset + " image: " + img);
                             gc.drawImage(img, x, y);
                             return;

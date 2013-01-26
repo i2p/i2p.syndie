@@ -542,15 +542,17 @@ class HTMLStyleBuilder {
             return;
         }
         Display.getDefault().syncExec(new Runnable() { 
+            private static final int MARGIN_X = 10;
+            private static final int MARGIN_Y = 10;
+
             public void run() {
                 Image img = getImage(srcURI);
                 if (img == null)
                     img = ImageUtil.ICON_IMAGE_UNKNOWN;
-                int width = img.getBounds().width;
-                int ascent = img.getBounds().height;
+                int width = img.getBounds().width + (2 * MARGIN_X);
+                int ascent = img.getBounds().height + (2 * MARGIN_Y);
                 _images.add(img);
 
-                // TODO add margin
                 int descent = 0;
                 style.metrics = new GlyphMetrics(ascent, descent, width);
                 //style.background = _imgBGColor;
@@ -604,10 +606,13 @@ class HTMLStyleBuilder {
         // for links with keys on them, etc
         
         Display.getDefault().syncExec(new Runnable() { 
+            private static final int MARGIN_X = 2;
+            private static final int MARGIN_Y = 4;
+
             public void run() {
                 Image img = ImageUtil.ICON_LINK_END;
-                int width = img.getBounds().width;
-                int ascent = img.getBounds().height;
+                int width = img.getBounds().width + (2 * MARGIN_X);
+                int ascent = img.getBounds().height + (2 * MARGIN_Y);
                 Integer idx = Integer.valueOf(style.start);
                 // FIXME O(n**2)
                 if (_imageIndexes.contains(idx))
@@ -615,7 +620,6 @@ class HTMLStyleBuilder {
                 _imageIndexes.add(idx);
                 _images.add(img);
 
-                // TODO add margin
                 int descent = 0;
                 style.metrics = new GlyphMetrics(ascent, descent, width);
 	            }
