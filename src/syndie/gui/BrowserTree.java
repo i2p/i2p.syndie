@@ -282,7 +282,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
                 NymReferenceNode bookmark = getBookmark(selected[i]);
                 if ( (bookmark != null) && (bookmark.getURI() != null) ) {
                     toView.add(bookmark.getURI());
-                    bookmarkedGroupIds.add(new Long(bookmark.getGroupId()));
+                    bookmarkedGroupIds.add(Long.valueOf(bookmark.getGroupId()));
                 } else {
                     ChannelInfo chan = getPostChannel(selected[i]);
                     if (chan == null)

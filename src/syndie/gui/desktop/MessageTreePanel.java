@@ -473,7 +473,7 @@ public class MessageTreePanel extends DesktopPanel implements Themeable, Transla
                     public void run() {
                         final long channelId = _client.getChannelId(actionScope);
                         DBClient.ChannelCollector chans = _client.getNymChannels(); //getChannels(true, true, true, true, false);
-                        final boolean postable = chans.getAllIds().contains(new Long(channelId));
+                        final boolean postable = chans.getAllIds().contains(Long.valueOf(channelId));
                         final boolean privmsg = true; // true for all channels
                         final boolean watched = false; //_client.isWatched(channelId);
                         final boolean repliable = ((detailURI != null) && (detailURI.getMessageId() != null)) && (postable || _client.getChannelAllowPublicReplies(channelId));

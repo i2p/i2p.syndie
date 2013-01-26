@@ -759,7 +759,7 @@ public class NymChannelTree implements Themeable, Translatable {
         StringBuilder idsBuf = new StringBuilder();
         for (Iterator iter = nodes.iterator(); iter.hasNext(); ) {
             ReferenceNode node = (ReferenceNode)iter.next();
-            Long id = new Long(node.getUniqueId());
+            Long id = Long.valueOf(node.getUniqueId());
             if (chanIdToRecord.containsKey(id)) {
                 _ui.debugMessage("chanIdToRecord already exists: " + id + ": " + node);
                 continue;
@@ -799,7 +799,7 @@ public class NymChannelTree implements Themeable, Translatable {
                 long chanId = rs.getLong(4);
                 byte avatar[] = rs.getBytes(5);
                 
-                Record r = (Record)chanIdToRecord.get(new Long(chanId));
+                Record r = (Record)chanIdToRecord.get(Long.valueOf(chanId));
                 r.channelId = chanId;
                 
                 if (name == null)
@@ -833,7 +833,7 @@ public class NymChannelTree implements Themeable, Translatable {
                 java.sql.Date when = rs.getDate(1);
                 long chanId = rs.getLong(2);
                 
-                Record r = (Record)chanIdToRecord.get(new Long(chanId));
+                Record r = (Record)chanIdToRecord.get(Long.valueOf(chanId));
                 // FIXME what date is this? and why is the time always 12:00?
                 r.lastPostDate = (when != null ? when.getTime() : -1);
             }
@@ -857,7 +857,7 @@ public class NymChannelTree implements Themeable, Translatable {
                 long count = rs.getLong(1);
                 long chanId = rs.getLong(2);
                 
-                Record r = (Record)chanIdToRecord.get(new Long(chanId));
+                Record r = (Record)chanIdToRecord.get(Long.valueOf(chanId));
                 r.referencesIncluded = count > 0;
             }
         } catch (SQLException se) {
@@ -880,7 +880,7 @@ public class NymChannelTree implements Themeable, Translatable {
                 long count = rs.getLong(1);
                 long chanId = rs.getLong(2);
                 
-                Record r = (Record)chanIdToRecord.get(new Long(chanId));
+                Record r = (Record)chanIdToRecord.get(Long.valueOf(chanId));
                 r.unreadMessages = (int)count;
             }
         } catch (SQLException se) {
@@ -903,7 +903,7 @@ public class NymChannelTree implements Themeable, Translatable {
                 long count = rs.getLong(1);
                 long chanId = rs.getLong(2);
                 
-                Record r = (Record)chanIdToRecord.get(new Long(chanId));
+                Record r = (Record)chanIdToRecord.get(Long.valueOf(chanId));
                 r.unreadPrivate = (int)count;
             }
         } catch (SQLException se) {
@@ -926,7 +926,7 @@ public class NymChannelTree implements Themeable, Translatable {
                 long count = rs.getLong(1);
                 long chanId = rs.getLong(2);
                 
-                Record r = (Record)chanIdToRecord.get(new Long(chanId));
+                Record r = (Record)chanIdToRecord.get(Long.valueOf(chanId));
                 r.totalMessages = (int)count;
             }
         } catch (SQLException se) {
@@ -966,7 +966,7 @@ public class NymChannelTree implements Themeable, Translatable {
     }
     
     private TreeItem populateItem(Timer t, ChannelSource src, ReferenceNode node, Map chanIdToRecord, TreeItem parent) {
-        Record r = (Record)chanIdToRecord.get(new Long(node.getUniqueId()));
+        Record r = (Record)chanIdToRecord.get(Long.valueOf(node.getUniqueId()));
         if ( (r != null) && (r.channelId >= 0) )
             return populateForumItem(t, src, node, chanIdToRecord, parent);
         else
@@ -1041,7 +1041,7 @@ public class NymChannelTree implements Themeable, Translatable {
     }
     
     private TreeItem populateForumItem(Timer t, ChannelSource src, ReferenceNode node, Map chanIdToRecord, TreeItem parent) {
-        Record r = (Record)chanIdToRecord.get(new Long(node.getUniqueId()));
+        Record r = (Record)chanIdToRecord.get(Long.valueOf(node.getUniqueId()));
         _ui.debugMessage("populate forum item: " + node.getUniqueId() + "/" + node.getURI() + ": " + node);
         long chanId = r.channelId;
         boolean manageable = r.manageable;
@@ -1067,7 +1067,7 @@ public class NymChannelTree implements Themeable, Translatable {
         }
         item.setExpanded(true);
         
-        item.setData("channelId", new Long(chanId));
+        item.setData("channelId", Long.valueOf(chanId));
         if (manageable)
             item.setData("manageable", "");
         if (postable)

@@ -42,7 +42,7 @@ public class SyndieURIDAO {
                 } else {
                     long valLong = rs.getLong(3);
                     if (!rs.wasNull()) {
-                        attribs.put(key, new Long(valLong));
+                        attribs.put(key, Long.valueOf(valLong));
                     } else {
                         boolean valBool = rs.getBoolean(4);
                         if (!rs.wasNull()) {

@@ -87,7 +87,7 @@ public class ThreadReferenceNode extends ReferenceNode {
     }
     void getThreadTags(List rv, Map msgIdToTagSet) { 
         if (_msg != null) {
-            _tags = (Set)msgIdToTagSet.get(new Long(_msg.msgId));
+            _tags = (Set)msgIdToTagSet.get(Long.valueOf(_msg.msgId));
             if (_tags != null)
                 rv.addAll(_tags);
         }

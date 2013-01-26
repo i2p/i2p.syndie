@@ -1132,12 +1132,12 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
         }
         
         if (_syndieMessageDetailAttachment.getSelection() && (_syndieMessageDetailAttachmentNum.getItemCount() > 0) )
-            attributes.put("attachment", new Long(_syndieMessageDetailAttachmentNum.getSelectionIndex()));
+            attributes.put("attachment", Long.valueOf(_syndieMessageDetailAttachmentNum.getSelectionIndex()));
         else
             attributes.remove("attachment");
         
         if (_syndieMessageDetailPage.getSelection() && (_syndieMessageDetailPageNum.getItemCount() > 0) )
-            attributes.put("page", new Long(_syndieMessageDetailPageNum.getSelectionIndex()));
+            attributes.put("page", Long.valueOf(_syndieMessageDetailPageNum.getSelectionIndex()));
         else
             attributes.remove("page");
         

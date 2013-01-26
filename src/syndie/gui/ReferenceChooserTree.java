@@ -204,7 +204,7 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
                 boolean includeChildren = false;
                 if (cur != _bookmarkRoot) {
                     NymReferenceNode curNode = (NymReferenceNode)_bookmarkNodes.get(cur);
-                    if ( (curNode != null) && (openGroupIds.contains(new Long(curNode.getGroupId()))) ) {
+                    if ( (curNode != null) && (openGroupIds.contains(Long.valueOf(curNode.getGroupId()))) ) {
                         cur.setExpanded(true);
                         includeChildren = true;
                     }
@@ -256,7 +256,7 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
         NymReferenceNode node = (NymReferenceNode)_bookmarkNodes.get(base);
         long sel = -1;
         if (base.getExpanded()) {
-            openGroupIds.add(new Long(node.getGroupId()));
+            openGroupIds.add(Long.valueOf(node.getGroupId()));
             for (int i = 0; i < base.getItemCount(); i++) {
                 long id = getOpenGroupIds(base.getItem(i), openGroupIds);
                 if (id >= 0)
@@ -886,7 +886,7 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
                 boolean includeChildren = false;
                 if (cur != _bookmarkRoot) {
                     NymReferenceNode curNode = (NymReferenceNode)_bookmarkNodes.get(cur);
-                    if ( (curNode != null) && (openGroupIds.contains(new Long(curNode.getGroupId()))) ) {
+                    if ( (curNode != null) && (openGroupIds.contains(Long.valueOf(curNode.getGroupId()))) ) {
                         cur.setExpanded(true);
                         includeChildren = true;
                     }

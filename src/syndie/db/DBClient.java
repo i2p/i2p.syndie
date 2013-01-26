@@ -489,7 +489,7 @@ public class DBClient {
             while (rs.next()) {
                 long nymId = rs.getLong(1);
                 if (!rs.wasNull())
-                    rv.add(new Long(nymId));
+                    rv.add(Long.valueOf(nymId));
             }
         } catch (SQLException se) {
             if (_log.shouldLog(Log.WARN))
@@ -1025,7 +1025,7 @@ public class DBClient {
                     continue;
                 if (hash.length != Hash.HASH_LENGTH)
                     continue;
-                rv.put(new Long(id), Hash.create(hash));
+                rv.put(Long.valueOf(id), Hash.create(hash));
             }
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
@@ -1769,7 +1769,7 @@ public class DBClient {
                     Hash chan = pub.calculateHash();
                     long chanId = getChannelId(chan);
                     if (chanId >= 0) {
-                        identIds.add(new Long(chanId));
+                        identIds.add(Long.valueOf(chanId));
                     } else {
                         //ui.debugMessage("nym has a key that is not an identity key (" + chan.toBase64() + ")");
                     }
@@ -1794,7 +1794,7 @@ public class DBClient {
                         // channelId
                         long chanId = rs.getLong(1);
                         if (!rs.wasNull()) {
-                            Long id = new Long(chanId);
+                            Long id = Long.valueOf(chanId);
                             if (!identIds.contains(id) && !manageIds.contains(id)) {
                                 manageIds.add(id);
                             }
@@ -1827,7 +1827,7 @@ public class DBClient {
                         // channelId
                         long chanId = rs.getLong(1);
                         if (!rs.wasNull()) {
-                            Long id = new Long(chanId);
+                            Long id = Long.valueOf(chanId);
                             if (!identIds.contains(id) && !manageIds.contains(id) && !postIds.contains(id)) {
                                 postIds.add(id);
                             }
@@ -2045,7 +2045,7 @@ public class DBClient {
             rs = stmt.executeQuery();
             while (rs.next()) {
                 long id = rs.getLong(1);
-                rv.add(new Long(id));
+                rv.add(Long.valueOf(id));
             }
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
@@ -2218,9 +2218,9 @@ public class DBClient {
                 if (rs.wasNull())
                     enc = true;
                 if (enc)
-                    privIds.add(new Long(archiveId));
+                    privIds.add(Long.valueOf(archiveId));
                 else
-                    pubIds.add(new Long(archiveId));
+                    pubIds.add(Long.valueOf(archiveId));
             }
             rs.close();
             rs = null;
@@ -2349,7 +2349,7 @@ public class DBClient {
                 
                 SyndieURI uri = getURI(uriId);
                 DBReferenceNode ref = new DBReferenceNode(name, uri, desc, type, uriId, groupId, parentGroupId, order, enc);
-                groupIdToNode.put(new Long(groupId), ref);
+                groupIdToNode.put(Long.valueOf(groupId), ref);
             }
             
             // now build the tree out of the nodes
@@ -2358,7 +2358,7 @@ public class DBClient {
                 DBReferenceNode cur = (DBReferenceNode)iter.next();
                 long parentId = cur.getParentGroupId();
                 if (parentId >= 0) {
-                    DBReferenceNode parent = (DBReferenceNode)groupIdToNode.get(new Long(parentId));
+                    DBReferenceNode parent = (DBReferenceNode)groupIdToNode.get(Long.valueOf(parentId));
                     if (parent != null)
                         parent.addChild(cur);
                     else
@@ -2377,9 +2377,9 @@ public class DBClient {
             for (int i = 0; i < roots.size(); i++) {
                 DBReferenceNode cur = (DBReferenceNode)roots.get(i);
                 int off = 0;
-                while (sorted.containsKey(new Integer(cur.getSiblingOrder()+off)))
+                while (sorted.containsKey(Integer.valueOf(cur.getSiblingOrder()+off)))
                     off++;
-                sorted.put(new Integer(cur.getSiblingOrder()+off), cur);
+                sorted.put(Integer.valueOf(cur.getSiblingOrder()+off), cur);
             }
             roots.clear();
             roots.addAll(sorted.values());
@@ -2421,9 +2421,9 @@ public class DBClient {
             for (int i = 0; i < _children.size(); i++) {
                 DBReferenceNode child = (DBReferenceNode)_children.get(i);
                 int off = 0;
-                while (sorted.containsKey(new Long(child.getSiblingOrder()+off)))
+                while (sorted.containsKey(Long.valueOf(child.getSiblingOrder()+off)))
                     off++;
-                sorted.put(new Long(child.getSiblingOrder()+off), child);
+                sorted.put(Long.valueOf(child.getSiblingOrder()+off), child);
             }
             _children.clear();
             for (Iterator iter = sorted.values().iterator(); iter.hasNext(); ) {
@@ -2733,7 +2733,7 @@ public class DBClient {
                     // msgId, messageId
                     long msgId = rs.getLong(1);
                     if (!rs.wasNull())
-                        rv.add(new Long(msgId));
+                        rv.add(Long.valueOf(msgId));
                 }
             } catch (SQLException se) {
                 if (_log.shouldLog(Log.ERROR))
@@ -2766,7 +2766,7 @@ public class DBClient {
                 // msgId
                 long msgId = rs.getLong(1);
                 if (!rs.wasNull())
-                    rv.add(new Long(msgId));
+                    rv.add(Long.valueOf(msgId));
             }
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
@@ -2875,7 +2875,7 @@ public class DBClient {
                     // msgId, messageId
                     long msgId = rs.getLong(1);
                     if (!rs.wasNull())
-                        rv.add(new Long(msgId));
+                        rv.add(Long.valueOf(msgId));
                 }
             } catch (SQLException se) {
                 if (_log.shouldLog(Log.ERROR))
@@ -2906,7 +2906,7 @@ public class DBClient {
                     // msgId, messageId
                     long msgId = rs.getLong(1);
                     if (!rs.wasNull())
-                        rv.add(new Long(msgId));
+                        rv.add(Long.valueOf(msgId));
                 }
             } catch (SQLException se) {
                 if (_log.shouldLog(Log.ERROR))
@@ -2937,7 +2937,7 @@ public class DBClient {
                     // msgId, messageId
                     long msgId = rs.getLong(1);
                     if (!rs.wasNull())
-                        rv.add(new Long(msgId));
+                        rv.add(Long.valueOf(msgId));
                 }
             } catch (SQLException se) {
                 if (_log.shouldLog(Log.ERROR))
@@ -3906,7 +3906,7 @@ public class DBClient {
             while (rs.next()) {
                 long id = rs.getLong(1);
                 if (!rs.wasNull())
-                    rv.add(new Long(id));
+                    rv.add(Long.valueOf(id));
             }
             return rv;
         } catch (SQLException se) {
@@ -4074,11 +4074,11 @@ public class DBClient {
         //
         DBClient.ChannelCollector chans = getNymChannels();
         Hash sendAs = null;
-        if (chans.getIdentityChannelIds().contains(new Long(scopeId))) {
+        if (chans.getIdentityChannelIds().contains(Long.valueOf(scopeId))) {
             sendAs = getChannelHash(scopeId);
             metaChannelId = scopeId;
             _ui.debugMessage("sending cancel message as the original author: " + cancelledURI);
-        } else if (chans.getIdentityChannelIds().contains(new Long(targetId))) {
+        } else if (chans.getIdentityChannelIds().contains(Long.valueOf(targetId))) {
             _ui.debugMessage("sending cancel message as the forum owner: " + cancelledURI);
             metaChannelId = targetId;
             sendAs = targetChannel;
@@ -4496,7 +4496,7 @@ public class DBClient {
                 SyndieURI uri = getURI(uriId);
                 NymReferenceNode ref = new NymReferenceNode(name, uri, desc, uriId, groupId, parentGroupId, order, false, false, false);
                 //_ui.debugMessage("DB fetch ref: " + groupId + "/" + parentGroupId + ": " + name + "/" + desc + ": " + uri);
-                groupIdToNode.put(new Long(groupId), ref);
+                groupIdToNode.put(Long.valueOf(groupId), ref);
             }
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
@@ -4513,7 +4513,7 @@ public class DBClient {
             NymReferenceNode cur = (NymReferenceNode)iter.next();
             long parentId = cur.getParentGroupId();
             if (parentId >= 0) {
-                NymReferenceNode parent = (NymReferenceNode)groupIdToNode.get(new Long(parentId));
+                NymReferenceNode parent = (NymReferenceNode)groupIdToNode.get(Long.valueOf(parentId));
                 if (parent != null)
                     parent.addChild(cur);
                 else
@@ -4532,9 +4532,9 @@ public class DBClient {
         for (int i = 0; i < roots.size(); i++) {
             NymReferenceNode cur = (NymReferenceNode)roots.get(i);
             int off = 0;
-            while (sorted.containsKey(new Integer(cur.getSiblingOrder()+off)))
+            while (sorted.containsKey(Integer.valueOf(cur.getSiblingOrder()+off)))
                 off++;
-            sorted.put(new Integer(cur.getSiblingOrder()+off), cur);
+            sorted.put(Integer.valueOf(cur.getSiblingOrder()+off), cur);
         }
         roots.clear();
         roots.addAll(sorted.values());
@@ -4853,7 +4853,7 @@ public class DBClient {
         ensureLoggedIn();
         
         ArrayList<Long> groupIdsToDelete = new ArrayList();
-        groupIdsToDelete.add(new Long(groupId));
+        groupIdsToDelete.add(Long.valueOf(groupId));
         while (groupIdsToDelete.size() > 0) {
             Long id = (Long)groupIdsToDelete.remove(0);
             try {
@@ -4883,7 +4883,7 @@ public class DBClient {
             while (rs.next()) {
                 long group = rs.getLong(1);
                 if (!rs.wasNull()) {
-                    Long grp = new Long(group);
+                    Long grp = Long.valueOf(group);
                     if (!addTo.contains(grp))
                         addTo.add(grp);
                 }
@@ -5606,7 +5606,7 @@ public class DBClient {
             while (rs.next()) {
                 long msgId = rs.getLong(1);
                 if (!rs.wasNull())
-                    rv.add(new Long(msgId));
+                    rv.add(Long.valueOf(msgId));
             }
         } catch (SQLException se) {
             if (_log.shouldLog(Log.WARN))
@@ -5941,7 +5941,7 @@ public class DBClient {
             while (rs.next()) {
                 long chanId = rs.getLong(1);
                 if (!rs.wasNull())
-                    rv.add(new Long(chanId));
+                    rv.add(Long.valueOf(chanId));
             }
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
@@ -5970,7 +5970,7 @@ public class DBClient {
             while (rs.next()) {
                 long id = rs.getLong(1);
                 int ver = rs.getInt(2);
-                postponeIdToVersion.put(new Long(id), new Integer(ver));
+                postponeIdToVersion.put(Long.valueOf(id), Integer.valueOf(ver));
             }
         } catch (SQLException se) {
             log("Internal eror populating resumeable list", se);

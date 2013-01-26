@@ -520,9 +520,9 @@ class Desktop {
         synchronized (loginMutex) {
             loginMutex.clear();
             if (ok)
-                loginMutex.add(new Integer(1));
+                loginMutex.add(Integer.valueOf(1));
             else
-                loginMutex.add(new Integer(0));
+                loginMutex.add(Integer.valueOf(0));
             loginMutex.notifyAll();
         }
     }

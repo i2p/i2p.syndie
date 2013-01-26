@@ -136,7 +136,7 @@ class ImportMeta {
         Hash ident = identKey.calculateHash();
         Long edition = enc.getHeaderLong(Constants.MSG_META_HEADER_EDITION);
         if ( (edition == null) || (edition.longValue() < 0) )
-            edition = new Long(0);
+            edition = Long.valueOf(0);
         // see if we have the info already (with the same or later edition),
         // since if we do, there's nothing to import.
         long knownEdition = client.getKnownEdition(ident);
@@ -841,7 +841,7 @@ class ImportMeta {
         public void visitRoot(ReferenceNode node, int branch) throws SQLException { visit(node, branch, null); }
         private void visit(ReferenceNode node, int branch, Long parent) throws SQLException {
             insertRef(node, _nextId, parent, branch);
-            Long cur  = new Long(_nextId);
+            Long cur  = Long.valueOf(_nextId);
             _nextId++;
             // import keys even if there is an error with earlier references
             importKeys(node.getURI(), _nymKeys);

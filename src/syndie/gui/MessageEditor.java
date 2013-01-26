@@ -2130,8 +2130,8 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     
     private boolean isManaged(long chanId) {
         DBClient.ChannelCollector chans = _client.getNymChannels();
-        return chans.getIdentityChannelIds().contains(new Long(chanId)) ||
-               chans.getManagedChannelIds().contains(new Long(chanId));
+        return chans.getIdentityChannelIds().contains(Long.valueOf(chanId)) ||
+               chans.getManagedChannelIds().contains(Long.valueOf(chanId));
     }
     
     private String getSummary(long chanId) {

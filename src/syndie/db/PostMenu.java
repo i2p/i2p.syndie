@@ -286,7 +286,7 @@ class PostMenu implements TextEngine.Menu {
         for (int i = 0; i < channels.getIdentityChannelCount(); i++) {
             ChannelInfo info = channels.getIdentityChannel(i);
             ui.debugMessage("nym has the identity key for " + info.getChannelHash().toBase64());
-            _itemKeys.add(new Long(info.getChannelId()));
+            _itemKeys.add(Long.valueOf(info.getChannelId()));
             _itemText.add("Identity channel " + CommandImpl.strip(info.getName()) + " (" + info.getChannelHash().toBase64().substring(0,6) + "): " + CommandImpl.strip(info.getDescription()));
         }
         
@@ -295,7 +295,7 @@ class PostMenu implements TextEngine.Menu {
         for (int i = 0; i < channels.getManagedChannelCount(); i++) {
             ChannelInfo info = channels.getManagedChannel(i);
             ui.debugMessage("nym has a key that is an explicit management key for " + info.getChannelHash().toBase64());
-            _itemKeys.add(new Long(info.getChannelId()));
+            _itemKeys.add(Long.valueOf(info.getChannelId()));
             _itemText.add("Managed channel " + CommandImpl.strip(info.getName()) + " (" + info.getChannelHash().toBase64().substring(0,6) + "): " + CommandImpl.strip(info.getDescription()));
         }
 
@@ -304,14 +304,14 @@ class PostMenu implements TextEngine.Menu {
         for (int i = 0; i < channels.getPostChannelCount(); i++) {
             ChannelInfo info = channels.getPostChannel(i);
             ui.debugMessage("nym has a key that is an explicit post key for " + info.getChannelHash().toBase64());
-            _itemKeys.add(new Long(info.getChannelId()));
+            _itemKeys.add(Long.valueOf(info.getChannelId()));
             _itemText.add("Authorized channel " + CommandImpl.strip(info.getName()) + " (" + info.getChannelHash().toBase64().substring(0,6) + "): " + CommandImpl.strip(info.getDescription()));
         }
 
         // now for channels anyone can post to
         for (int i = 0; i < channels.getPublicPostChannelCount(); i++) {
             ChannelInfo info = channels.getPublicPostChannel(i);
-            _itemKeys.add(new Long(info.getChannelId()));
+            _itemKeys.add(Long.valueOf(info.getChannelId()));
             _itemText.add("Public channel " + CommandImpl.strip(info.getName()) + " (" + info.getChannelHash().toBase64().substring(0,6) + "): " + CommandImpl.strip(info.getDescription()));
         }
         

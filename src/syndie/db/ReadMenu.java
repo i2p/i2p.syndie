@@ -267,7 +267,7 @@ class ReadMenu implements TextEngine.Menu {
                 }
                 
                 // ok, matches criteria
-                _channelKeys.add(new Long(id));
+                _channelKeys.add(Long.valueOf(id));
                 StringBuilder buf = new StringBuilder();
                 
                 ChannelInfo chan = client.getChannel(id);
@@ -548,7 +548,7 @@ class ReadMenu implements TextEngine.Menu {
                 long id = rs.getLong(1);
                 if (rs.wasNull())
                     continue;
-                Long messageId = new Long(rs.getLong(2));
+                Long messageId = Long.valueOf(rs.getLong(2));
                 if (rs.wasNull())
                     messageId = null;
                 String subject = rs.getString(3);
@@ -557,7 +557,7 @@ class ReadMenu implements TextEngine.Menu {
                 //byte hash[] = rs.getBytes(4);
                 
                 // ok, matches criteria
-                _messageKeys.add(new Long(id));
+                _messageKeys.add(Long.valueOf(id));
                 StringBuilder buf = new StringBuilder();
                 String date = null;
                 if (messageId != null) {
@@ -684,10 +684,10 @@ class ReadMenu implements TextEngine.Menu {
             Map order = new TreeMap(new HighestFirstComparator());
             for (int i = 0; i < accumulator.getThreadCount(); i++) {
                 long mostRecentDate = accumulator.getMostRecentDate(i);
-                Long when = new Long(mostRecentDate);
+                Long when = Long.valueOf(mostRecentDate);
                 while (order.containsKey(when))
-                    when = new Long(when.longValue()+1);
-                order.put(when, new Integer(i));
+                    when = Long.valueOf(when.longValue()+1);
+                order.put(when, Integer.valueOf(i));
             }
             for (Iterator iter = order.values().iterator(); iter.hasNext(); ) {
                 int i = ((Integer)iter.next()).intValue();

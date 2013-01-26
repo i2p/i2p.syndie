@@ -256,8 +256,8 @@ public class ExpirationManager extends BaseComponent implements Themeable, Trans
             }
             
             name = name + ": " + chanId;
-            nameToScopeId.put(name, new Long(chanId));
-            scopeIdToName.put(new Long(chanId), chanName);
+            nameToScopeId.put(name, Long.valueOf(chanId));
+            scopeIdToName.put(Long.valueOf(chanId), chanName);
         }
         
         for (Iterator iter = nameToScopeId.values().iterator(); iter.hasNext(); ) {

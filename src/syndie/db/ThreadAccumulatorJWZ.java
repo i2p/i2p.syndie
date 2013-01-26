@@ -126,7 +126,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 if ( (b != null) && (b.length == Hash.HASH_LENGTH) ) {
                     long id = _client.getChannelId(Hash.create(b));
                     if (id >= 0)
-                        chanIds.add(new Long(id));
+                        chanIds.add(Long.valueOf(id));
                 }
             }
             _postByScopeIds = chanIds;
@@ -322,7 +322,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             long beforeStrip = System.currentTimeMillis();
             for (Iterator iter = matchingThreadMsgIds.iterator(); iter.hasNext(); ) {
                 ThreadMsgId tmi = (ThreadMsgId)iter.next();
-                if (!unread.contains(new Long(tmi.msgId))) {
+                if (!unread.contains(Long.valueOf(tmi.msgId))) {
                     if (VERBOSE_DEBUG) _ui.debugMessage("reject " + tmi + " because it was already read");
                     iter.remove();
                     removed++;
@@ -354,10 +354,10 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                         if (VERBOSE_DEBUG) _ui.debugMessage("reject " + tmi + " because msg tag filters failed: " + tags);
                         iter.remove();
                     } else {
-                        _msgTags.put(new Long(tmi.msgId), tags);
+                        _msgTags.put(Long.valueOf(tmi.msgId), tags);
                     }
                 } else {
-                    _msgTags.put(new Long(tmi.msgId), tags);
+                    _msgTags.put(Long.valueOf(tmi.msgId), tags);
                     //_ui.debugMessage("tags for msg " + msgId + ": " + tags);
                 }
             }
@@ -568,7 +568,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         if ( (_postByScopeIds != null) && (_postByScopeIds.size() > 0) ) {
             for (Iterator iter = matchingThreadMsgIds.iterator(); iter.hasNext(); ) {
                 ThreadMsgId id = (ThreadMsgId)iter.next();
-                if (!_postByScopeIds.contains(new Long(id.authorScopeId)))
+                if (!_postByScopeIds.contains(Long.valueOf(id.authorScopeId)))
                     iter.remove();
             }
         }
@@ -594,10 +594,10 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
 
             _roots.add(node);
             _rootURIs.add(node.getURI());
-            _threadLatestAuthorId.add(new Long(chanId));
-            _threadLatestPostDate.add(new Long(tmi.messageId));
-            _threadMessages.add(new Integer(1));
-            _threadRootAuthorId.add(new Long(chanId));
+            _threadLatestAuthorId.add(Long.valueOf(chanId));
+            _threadLatestPostDate.add(Long.valueOf(tmi.messageId));
+            _threadMessages.add(Integer.valueOf(1));
+            _threadRootAuthorId.add(Long.valueOf(chanId));
             _threadSubject.add("");
             _threadTags.add(new ArrayList(0));
         }
@@ -695,7 +695,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                     if (!rv.contains(ancestor)) {
                         rv.add(ancestor);
                         if (ancestorMsgId >= 0) {
-                            Long aMsgId = new Long(ancestorMsgId);
+                            Long aMsgId = Long.valueOf(ancestorMsgId);
                             if (!existingAncestors.containsKey(aMsgId) && !pendingThreadMsgIds.contains(ancestor))
                                 pendingThreadMsgIds.add(ancestor);
                         }
@@ -834,7 +834,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             return true;
         Set allowedAuthorIds = new HashSet();
         if (_includeOwners)
-            allowedAuthorIds.add(new Long(targetChannelId));
+            allowedAuthorIds.add(Long.valueOf(targetChannelId));
         List authKeys = _client.getAuthorizedPosters(targetChannelId, false, true, true);
         for (int i = 0; i < authKeys.size(); i++) {
             Hash chan = ((SigningPublicKey)authKeys.get(i)).calculateHash();
@@ -843,7 +843,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             // since we only care about the ones we have messages from (and we always have a channelId for
             // things we have messages from)
             if (chanId >= 0)
-                allowedAuthorIds.add(new Long(chanId));
+                allowedAuthorIds.add(Long.valueOf(chanId));
         }
         boolean allowAnyone = _client.getChannelAllowPublicPosts(targetChannelId);
         boolean allowPublicReplies = _client.getChannelAllowPublicReplies(targetChannelId);
@@ -859,7 +859,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         boolean nodeIsAuthorized = allowAnyone;
         if (!node.isDummy()) {
             long authorId = node.getAuthorId();
-            if (authorIds.contains(new Long(authorId))) {
+            if (authorIds.contains(Long.valueOf(authorId))) {
                 nodeIsAuthorized = true;
             } else if (authorizeReplies && parentIsAuthorized) {
                 nodeIsAuthorized = true;
@@ -1071,10 +1071,10 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 // filtering by post date, not import date
                 when = peers[i].getLatestMessageId();
             }
-            while (keyToNode.containsKey(new Long(when)))
+            while (keyToNode.containsKey(Long.valueOf(when)))
                 when++;
-            keyToNode.put(new Long(when), peers[i]);
-            sorted.add(new Long(when));
+            keyToNode.put(Long.valueOf(when), peers[i]);
+            sorted.add(Long.valueOf(when));
         }
         //_ui.debugMessage("sorting by date/" + _sortOrderAscending + " among " + peers.length + " peers");
         ThreadReferenceNode rv[] = new ThreadReferenceNode[peers.length];
@@ -1198,10 +1198,10 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             } else {
                 _roots.add(roots[i]);
                 _rootURIs.add(roots[i].getURI());
-                _threadLatestAuthorId.add(new Long(roots[i].getLatestAuthorId()));
-                _threadLatestPostDate.add(new Long(roots[i].getLatestPostDate()));
-                _threadMessages.add(new Integer(roots[i].getMessageCount()));
-                _threadRootAuthorId.add(new Long(roots[i].getAuthorId()));
+                _threadLatestAuthorId.add(Long.valueOf(roots[i].getLatestAuthorId()));
+                _threadLatestPostDate.add(Long.valueOf(roots[i].getLatestPostDate()));
+                _threadMessages.add(Integer.valueOf(roots[i].getMessageCount()));
+                _threadRootAuthorId.add(Long.valueOf(roots[i].getAuthorId()));
                 _threadSubject.add(roots[i].getThreadSubject());
                 List tags = new ArrayList();
                 roots[i].getThreadTags(tags, _msgTags);

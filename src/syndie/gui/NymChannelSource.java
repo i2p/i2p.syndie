@@ -45,8 +45,8 @@ public class NymChannelSource implements NymChannelTree.ChannelSource {
     }
     
     public List getReferenceNodes() { return _refNodes; }
-    public boolean isManageable(long chanId) { return _manageable.contains(new Long(chanId)); }
-    public boolean isPostable(long chanId) { return _postable.contains(new Long(chanId)); }
+    public boolean isManageable(long chanId) { return _manageable.contains(Long.valueOf(chanId)); }
+    public boolean isPostable(long chanId) { return _postable.contains(Long.valueOf(chanId)); }
     
     public void clearSource() {
         _refNodes.clear();
@@ -118,12 +118,12 @@ public class NymChannelSource implements NymChannelTree.ChannelSource {
         ArrayList rv = new ArrayList();
         for (int i = 0; i < chans.size(); i++) {
             WatchedChannel chan = (WatchedChannel)chans.get(i);
-            rv.add(new Long(chan.getChannelId()));
+            rv.add(Long.valueOf(chan.getChannelId()));
         }
         return rv;
     }
 
-    public boolean isWatched(long chanId) { return _watchedIds.contains(new Long(chanId)); }
+    public boolean isWatched(long chanId) { return _watchedIds.contains(Long.valueOf(chanId)); }
     public boolean isDeletable(long chanId) { return false; }
 
 }

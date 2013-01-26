@@ -349,9 +349,9 @@ public class SyndieURI {
         if (scope != null)
             attributes.put("channel", scope.toBase64());
         if (msgId >= 0)
-            attributes.put("messageId", new Long(msgId));
+            attributes.put("messageId", Long.valueOf(msgId));
         if (pageNum >= 0)
-            attributes.put("page", new Long(pageNum));
+            attributes.put("page", Long.valueOf(pageNum));
         return new SyndieURI(type, attributes);
     }
 
@@ -757,7 +757,7 @@ public class SyndieURI {
         String str[] = new String[] { "stringElement1", "stringElement2", "stringElement3" };
         m.put("stringList", str);
         for (int i = 8; i < 16; i++)
-            m.put("intKey" + i, (i%2==0?(Number)(new Long(i)):(Number)(new Integer(i))));
+            m.put("intKey" + i, (i%2==0?(Number)(Long.valueOf(i)):(Number)(Integer.valueOf(i))));
         return m;
     }
     private static TreeMap createMultiMixed() {
@@ -769,7 +769,7 @@ public class SyndieURI {
             m.put("stringList" + i, str);
         }
         for (int i = 8; i < 16; i++)
-            m.put("intKey" + i, (i%2==0?(Number)(new Long(i)):(Number)(new Integer(i))));
+            m.put("intKey" + i, (i%2==0?(Number)(Long.valueOf(i)):(Number)(Integer.valueOf(i))));
         return m;
     }
     private static boolean test(TreeMap orig) {
@@ -901,7 +901,7 @@ public class SyndieURI {
                         long val = Long.parseLong(lstr);
                         if (key == null)
                             throw new URISyntaxException(remaining.toString(), "Numbers cannot be syndie uri keys");
-                        target.put(key, new Long(val));
+                        target.put(key, Long.valueOf(val));
                         key = null;
                         remaining.delete(0, idx+1);
                         return false;

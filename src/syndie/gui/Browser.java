@@ -2665,10 +2665,10 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
     private static final Exception NO_CAUSE = new Exception();
     private static final List NO_LOCATIONS = new ArrayList(0);
     
-    private static final Integer TYPE_ORDER_ERROR = new Integer(0);
-    private static final Integer TYPE_ORDER_STATUS = new Integer(1);
-    private static final Integer TYPE_ORDER_DEBUG = new Integer(2);
-    private static final Integer TYPE_ORDER_COMMAND_COMPLETE = new Integer(3);
+    private static final Integer TYPE_ORDER_ERROR = Integer.valueOf(0);
+    private static final Integer TYPE_ORDER_STATUS = Integer.valueOf(1);
+    private static final Integer TYPE_ORDER_DEBUG = Integer.valueOf(2);
+    private static final Integer TYPE_ORDER_COMMAND_COMPLETE = Integer.valueOf(3);
 
     private static final boolean LOG_TO_STDERR = false;
     
@@ -2794,7 +2794,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         void commandComplete(int status, List location) {
             synchronized (UIListenerPusher.this) {
                 _typeOrder.add(TYPE_ORDER_COMMAND_COMPLETE);
-                _completeStatus.add(new Integer(status));
+                _completeStatus.add(Integer.valueOf(status));
                 if (location == null)
                     _completeLocations.add(NO_LOCATIONS);
                 else

@@ -22,8 +22,8 @@ public class URIHelper implements URIControl {
     
     public SyndieURI createPostURI(long postponeId, int postponeVersion) {
         Map attributes = new HashMap();
-        attributes.put("postponeid", new Long(postponeId));
-        attributes.put("postponever", new Long(postponeVersion));
+        attributes.put("postponeid", Long.valueOf(postponeId));
+        attributes.put("postponever", Long.valueOf(postponeVersion));
         SyndieURI uri = new SyndieURI(BrowserTab.TYPE_POST, attributes);
         return uri;
     }
@@ -115,7 +115,7 @@ public class URIHelper implements URIControl {
         if (references != null)
             attributes.put("refs", ReferenceNode.walk(references));
         if (attachments != null) {
-            attributes.put("attachments", new Long(attachments.length));
+            attributes.put("attachments", Long.valueOf(attachments.length));
             for (int i = 0; i < attachments.length; i++)
                 attributes.put("attachment" + i, attachments[i].getAbsolutePath());
         }
@@ -136,7 +136,7 @@ public class URIHelper implements URIControl {
         if (references != null)
             attributes.put("refs", ReferenceNode.walk(references));
         if (attachments != null) {
-            attributes.put("attachments", new Long(attachments.length));
+            attributes.put("attachments", Long.valueOf(attachments.length));
             for (int i = 0; i < attachments.length; i++)
                 attributes.put("attachment" + i, attachments[i].getAbsolutePath());
         }

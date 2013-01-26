@@ -74,7 +74,7 @@ class MessageReferenceBuilder {
                 
                 SyndieURI uri = _client.getURI(uriId);
                 MsgReferenceNode node = new MsgReferenceNode(name, uri, desc, refType, refId, parentId, order);
-                _referenceIdToReferenceNode.put(new Integer(refId), node);
+                _referenceIdToReferenceNode.put(Integer.valueOf(refId), node);
             }
         } finally {
             if (rs != null) try { rs.close(); } catch (SQLException se) {}
@@ -91,7 +91,7 @@ class MessageReferenceBuilder {
         for (Iterator iter = _referenceIdToReferenceNode.values().iterator(); iter.hasNext(); ) {
             MsgReferenceNode node = (MsgReferenceNode)iter.next();
             if (node.getParentReferenceId() >= 0) {
-                MsgReferenceNode parent = (MsgReferenceNode)_referenceIdToReferenceNode.get(new Integer(node.getParentReferenceId()));
+                MsgReferenceNode parent = (MsgReferenceNode)_referenceIdToReferenceNode.get(Integer.valueOf(node.getParentReferenceId()));
                 if (parent != null) {
                     node.setParent(parent);
                     parent.addChild(node);
@@ -124,7 +124,7 @@ class MessageReferenceBuilder {
             TreeMap ordered = new TreeMap();
             for (int i = 0; i < _children.size(); i++) {
                 MsgReferenceNode child = (MsgReferenceNode)_children.get(i);
-                ordered.put(new Integer(child.getSiblingOrder()), child);
+                ordered.put(Integer.valueOf(child.getSiblingOrder()), child);
             }
             _children.clear();
             for (Iterator iter = ordered.values().iterator(); iter.hasNext(); ) {

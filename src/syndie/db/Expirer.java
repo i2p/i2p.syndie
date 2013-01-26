@@ -64,9 +64,9 @@ public class Expirer {
         // execute the custom policies
         for (Iterator iter = (new TreeSet(channelsWithCustomPolicies)).iterator(); iter.hasNext(); ) {
             long chanId = ((Long)iter.next()).longValue();
-            Hash chan = (Hash)chanIdToHash.get(new Long(chanId));
-            ExpirationPolicy dbPolicy = (ExpirationPolicy)_chanIdToDBPolicy.get(new Long(chanId));
-            ExpirationPolicy dataFilePolicy = (ExpirationPolicy)_chanIdToDataFilePolicy.get(new Long(chanId));
+            Hash chan = (Hash)chanIdToHash.get(Long.valueOf(chanId));
+            ExpirationPolicy dbPolicy = (ExpirationPolicy)_chanIdToDBPolicy.get(Long.valueOf(chanId));
+            ExpirationPolicy dataFilePolicy = (ExpirationPolicy)_chanIdToDataFilePolicy.get(Long.valueOf(chanId));
             if (dbPolicy.getMimicDefault())
                 dbPolicy = _defaultDBPolicy;
             if (dataFilePolicy.getMimicDefault())
@@ -79,7 +79,7 @@ public class Expirer {
         // execute the watched policies
         for (Iterator iter = (new TreeSet(watchedChannelIds)).iterator(); iter.hasNext(); ) {
             long chanId = ((Long)iter.next()).longValue();
-            Hash chan = (Hash)chanIdToHash.get(new Long(chanId));
+            Hash chan = (Hash)chanIdToHash.get(Long.valueOf(chanId));
             ExpirationPolicy dbPolicy = _watchedDBPolicy;
             ExpirationPolicy dataFilePolicy = _watchedDataFilePolicy;
             if (dbPolicy.getMimicDefault())
@@ -94,7 +94,7 @@ public class Expirer {
         // execute the default policies (for channels still in the database)
         for (Iterator iter = (new TreeSet(otherChannelIds)).iterator(); iter.hasNext(); ) {
             long chanId = ((Long)iter.next()).longValue();
-            Hash chan = (Hash)chanIdToHash.get(new Long(chanId));
+            Hash chan = (Hash)chanIdToHash.get(Long.valueOf(chanId));
             ExpirationPolicy dbPolicy = _defaultDBPolicy;
             ExpirationPolicy dataFilePolicy = _defaultDataFilePolicy;
             
@@ -129,9 +129,9 @@ public class Expirer {
                     _watchedDataFilePolicy = policy;
             } else if (policy.getPolicyChannelId() >= 0) { // should always be true if !default and !watched
                 if (policy.isDBPolicy())
-                    _chanIdToDBPolicy.put(new Long(policy.getPolicyChannelId()), policy);
+                    _chanIdToDBPolicy.put(Long.valueOf(policy.getPolicyChannelId()), policy);
                 else
-                    _chanIdToDataFilePolicy.put(new Long(policy.getPolicyChannelId()), policy);
+                    _chanIdToDataFilePolicy.put(Long.valueOf(policy.getPolicyChannelId()), policy);
             }
         }
         
@@ -191,10 +191,10 @@ public class Expirer {
                 
                 data.totalSizeKB += size;
                 
-                data.ids.add(new Long(msgId));
-                data.dates.add(new Long(importDate.getTime()));
-                data.sizes.add(new Integer(size));
-                data.uris.add(new Long(msgId));
+                data.ids.add(Long.valueOf(msgId));
+                data.dates.add(Long.valueOf(importDate.getTime()));
+                data.sizes.add(Integer.valueOf(size));
+                data.uris.add(Long.valueOf(msgId));
             }
         } catch (SQLException se) {
             _ui.errorMessage("Error listing messages to expire", se);
@@ -226,9 +226,9 @@ public class Expirer {
             
             data.totalSizeKB += size;
             
-            data.ids.add(new Long(messageId));
-            data.dates.add(new Long(date));
-            data.sizes.add(new Integer(size));
+            data.ids.add(Long.valueOf(messageId));
+            data.dates.add(Long.valueOf(date));
+            data.sizes.add(Integer.valueOf(size));
             data.uris.add(uri);
         }
         
@@ -415,7 +415,7 @@ public class Expirer {
         List channels = _client.getWatchedChannels();
         for (int i = 0; i < channels.size(); i++) {
             WatchedChannel chan = (WatchedChannel)channels.get(i);
-            rv.add(new Long(chan.getChannelId()));
+            rv.add(Long.valueOf(chan.getChannelId()));
         }
         return rv;
     }
@@ -443,7 +443,7 @@ public class Expirer {
             while (rs.next()) {
                 long id = rs.getLong(1);
                 if ( (!rs.wasNull()) && (id >= 0) )
-                    rv.add(new Long(id));
+                    rv.add(Long.valueOf(id));
             }
         } catch (SQLException se) {
             _ui.errorMessage("Error listing sizeless messages", se);

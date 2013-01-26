@@ -348,7 +348,7 @@ public class MessagePanel extends DesktopPanel implements Translatable, Themeabl
             JobRunner.instance().enqueue(new Runnable() { 
                 public void run() {              
                     DBClient.ChannelCollector chans = _client.getNymChannels();
-                    final boolean postable = chans.getAllIds().contains(new Long(forumId));
+                    final boolean postable = chans.getAllIds().contains(Long.valueOf(forumId));
                     final boolean pubReply = _client.getChannelAllowPublicReplies(forumId);
                     final int status = _client.getMessageStatus(msgId);
                     Display.getDefault().asyncExec(new Runnable() { 

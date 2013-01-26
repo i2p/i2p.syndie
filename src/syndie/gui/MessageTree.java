@@ -812,10 +812,10 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             
             if (!uri.getBoolean("keepdate", false)) {
                 if (_advancedDateImport.getSelection()) {
-                    attributes.put("agelocal", new Integer(_age));
+                    attributes.put("agelocal", Integer.valueOf(_age));
                     attributes.remove("age");
                 } else {
-                    attributes.put("age", new Integer(_age));
+                    attributes.put("age", Integer.valueOf(_age));
                     attributes.remove("agelocal");
                 }
             }
@@ -1099,7 +1099,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
                 }
                 _itemToNode.put(item, itemNode);
                 _itemToURI.put(item, itemNode.getURI());
-                _itemToMsgId.put(item, new Long(itemNode.getUniqueId()));
+                _itemToMsgId.put(item, Long.valueOf(itemNode.getUniqueId()));
                 renderNode(itemNode, item);
                 item.setItemCount(itemNode.getChildCount());
                 if ( _expandAll || ( (parent == null) && (_expandRoots) ) ) {
@@ -1372,7 +1372,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         ThreadReferenceNode node = null;
         TreeItem item = null;
         synchronized (_msgIdToItem) {
-            item = (TreeItem)_msgIdToItem.get(new Long(msgId));
+            item = (TreeItem)_msgIdToItem.get(Long.valueOf(msgId));
         }
         _ui.debugMessage("tree: messageStatusUpdated(" + msgId + "): item=" + item);
         if (item != null) {
@@ -1414,8 +1414,8 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
                 if (chanId < 0)
                     return false;
                 DBClient.ChannelCollector chans = _client.getNymChannels();
-                Long ownerId = new Long(_client.getChannelId(uri.getScope()));
-                Long id = new Long(chanId);
+                Long ownerId = Long.valueOf(_client.getChannelId(uri.getScope()));
+                Long id = Long.valueOf(chanId);
                 return chans.getIdentityChannelIds().contains(ownerId) || // we wrote it
                        chans.getIdentityChannelIds().contains(id) || // we own the forum
                        chans.getManagedChannelIds().contains(id) || // we manage the forum
@@ -1995,8 +1995,8 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         
         _itemToNode.put(item, node);
         _itemToURI.put(item, node.getURI());
-        _itemToMsgId.put(item, new Long(node.getUniqueId()));
-        _msgIdToItem.put(new Long(node.getUniqueId()), item);
+        _itemToMsgId.put(item, Long.valueOf(node.getUniqueId()));
+        _msgIdToItem.put(Long.valueOf(node.getUniqueId()), item);
         
         if ( _expandAll || ( (parent == null) && (_expandRoots) ) ) {
             if (node.getChildCount() > 0)
@@ -2057,8 +2057,8 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             //_browser.getUI().debugMessage("renderNode: " + uri + ": msgId=" + msgId);
             
             if (msgId >= 0) {
-                _itemToMsgId.put(item, new Long(msgId));
-                _msgIdToItem.put(new Long(msgId), item);
+                _itemToMsgId.put(item, Long.valueOf(msgId));
+                _msgIdToItem.put(Long.valueOf(msgId), item);
                 subj = node.getSubject(); //_client.getMessageSubject(msgId);
                 long authorId = node.getAuthorId(); //_client.getMessageAuthor(msgId);//msg.getAuthorChannelId();
                 if (authorId != chanId) {
@@ -2186,7 +2186,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             else
                 cur = (ThreadReferenceNode)cur.getParent();
         }
-        return MessageView.calculateSubject(_client, _ui, _translationRegistry, node.getUniqueId(), node.getScopeHash(), new Long(node.getMsgId().messageId), false);
+        return MessageView.calculateSubject(_client, _ui, _translationRegistry, node.getUniqueId(), node.getScopeHash(), Long.valueOf(node.getMsgId().messageId), false);
     }
     
     
@@ -2473,7 +2473,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             for (int i = 0; i < selected.length; i++) {
                 long channelId = markAllRead(selected[i]);
                 if (channelId >= 0)
-                    channelIds.add(new Long(channelId));
+                    channelIds.add(Long.valueOf(channelId));
             }
             if (channelIds.size() > 0)
                 _dataCallback.readStatusUpdated();
@@ -2487,7 +2487,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
                     long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
                     if (msgId >= 0) {
                         long target = _client.getMessageTarget(msgId);
-                        if (channelIds.contains(new Long(target))) {
+                        if (channelIds.contains(Long.valueOf(target))) {
                             _itemsNewUnread.remove(item);
                             item.setFont(_themeRegistry.getTheme().MSG_OLD_FONT);
                         }

@@ -31,21 +31,21 @@ import syndie.util.StringUtil;
  *
  */
 class HTMLStyleBuilder {
-    private UI _ui;
-    private PageRendererSource _source;
-    private List _htmlTags;
-    private String _msgText;
-    private MessageInfo _msg;
-    private boolean _enableImages;
-    private boolean _styled;
+    private final UI _ui;
+    private final PageRendererSource _source;
+    private final List<HTMLTag> _htmlTags;
+    private final String _msgText;
+    private final MessageInfo _msg;
+    private final boolean _enableImages;
+    private final boolean _styled;
     private StyleRange[] _styleRanges;
-    private ArrayList _imageIndexes;
+    private final ArrayList<Integer> _imageIndexes;
     /** Image instances loaded up at the _imageIndexes location */
-    private ArrayList _images;
-    private ArrayList _linkIndexes;
-    private ArrayList _listItemIndexes;
-    private ArrayList _linkTags;
-    private ArrayList _imageTags;
+    private final ArrayList<Image> _images;
+    private final ArrayList<Integer> _linkIndexes;
+    private final ArrayList<Integer> _listItemIndexes;
+    private final ArrayList<HTMLTag> _linkTags;
+    private final ArrayList<HTMLTag> _imageTags;
     
     // default fonts that can be shared across many ranges.  this does not cover
     // every scenario though, so some fonts may need to be built dynamically
@@ -69,7 +69,7 @@ class HTMLStyleBuilder {
     //private static Color _bgColorQuote = new Color(Display.getDefault(), 223, 223, 223);
     private static Color _bgColorQuote = new Color(Display.getDefault(), 233, 233, 233);
     
-    private Map _customColors;
+    private final Map<String, Color> _customColors;
     
     private Color _bgColor;
     private Image _bgImage;
@@ -99,8 +99,8 @@ class HTMLStyleBuilder {
         ts("fonts built");
     }
     
-    public ArrayList getImageTags() { return _imageTags; }
-    public ArrayList getLinkTags() { return _linkTags; }
+    public ArrayList<HTMLTag> getImageTags() { return _imageTags; }
+    public ArrayList<HTMLTag> getLinkTags() { return _linkTags; }
     public Image getBackgroundImage() { return _bgImage; }
     public Color getBackgroundColor() { return _bgColor; }
     
@@ -113,7 +113,7 @@ class HTMLStyleBuilder {
         String bodyBgColor = null;
         
         // get a list of points where any tag starts or ends
-        TreeMap breakPointTags = new TreeMap();
+        TreeMap<Integer, List<HTMLTag>> breakPointTags = new TreeMap();
         for (int i = 0; i < _htmlTags.size(); i++) {
             HTMLTag tag = (HTMLTag)_htmlTags.get(i);
             if (("a".equals(tag.name)) && (tag.getAttribValueLC("href") != null)) {
@@ -124,18 +124,18 @@ class HTMLStyleBuilder {
                 bodyBgImage = tag.getAttribValueLC("bgimage");
                 bodyBgColor = tag.getAttribValueLC("bgcolor");
             }
-            List tags = (List)breakPointTags.get(new Integer(tag.startIndex));
+            List<HTMLTag> tags = (List)breakPointTags.get(Integer.valueOf(tag.startIndex));
             if (tags == null) {
                 tags = new ArrayList();
-                breakPointTags.put(new Integer(tag.startIndex), tags);
+                breakPointTags.put(Integer.valueOf(tag.startIndex), tags);
             }
             tags.add(tag);
             
             // now for ends
-            tags = (List)breakPointTags.get(new Integer(tag.endIndex));
+            tags = (List)breakPointTags.get(Integer.valueOf(tag.endIndex));
             if (tags == null) {
                 tags = new ArrayList();
-                breakPointTags.put(new Integer(tag.endIndex), tags);
+                breakPointTags.put(Integer.valueOf(tag.endIndex), tags);
             }
             tags.add(tag);
             //ts("breakpoints for tag " + tag + ": " + tag.getStartIndex() + ", " + tag.getEndIndex());
@@ -151,23 +151,23 @@ class HTMLStyleBuilder {
         ts("character breakpoints inserted: " + breakPointTags.size());
         
         // make sure it covers the whole schebang
-        List startTags = (List)breakPointTags.get(new Integer(0));
+        List<HTMLTag> startTags = (List)breakPointTags.get(Integer.valueOf(0));
         if (startTags == null)
-            breakPointTags.put(new Integer(0), new ArrayList());
+            breakPointTags.put(Integer.valueOf(0), new ArrayList());
         
         // dont need the end anymore
-        breakPointTags.remove(new Integer(_msgText.length()));
+        breakPointTags.remove(Integer.valueOf(_msgText.length()));
         
         int bps = breakPointTags.size();
         _ui.debugMessage("breakpoints: " + bps);
         ts("before organizing tags into breakpoints");
         int bpIndexes[] = new int[breakPointTags.size()];
-        List bpTags[] = new List[bpIndexes.length];
+        List<HTMLTag> bpTags[] = new List[bpIndexes.length];
         int bpOff = 0;
         for (Iterator iter = breakPointTags.entrySet().iterator(); iter.hasNext(); ) {
             Map.Entry entry = (Map.Entry)iter.next();
             Integer bp = (Integer)entry.getKey();
-            List tags = (List)entry.getValue();
+            List<HTMLTag> tags = (List)entry.getValue();
             bpIndexes[bpOff] = bp.intValue();
             bpTags[bpOff] = tags;
             bpOff++;
@@ -248,7 +248,7 @@ class HTMLStyleBuilder {
             
             long t2 = System.currentTimeMillis();
             // now trim the set of applicable tags
-            List tags = (List)breakPointTags.get(curBreakPoint);
+            List<HTMLTag> tags = (List)breakPointTags.get(curBreakPoint);
             for (int i = 0; i < tags.size(); i++) {
                 HTMLTag tag = (HTMLTag)tags.get(i);
                 if ( (tag.startIndex <= start) && (tag.endIndex >= start+length) ) {
@@ -260,7 +260,7 @@ class HTMLStyleBuilder {
             }
             
             long t3 = System.currentTimeMillis();
-            List bpt = (List)breakPointTags.get(curBreakPoint);
+            List<HTMLTag> bpt = (List)breakPointTags.get(curBreakPoint);
             _styleRanges[rangeIndex] = buildStyle(bpt, start, length);
             rangeIndex++;
             long t4 = System.currentTimeMillis();
@@ -327,12 +327,12 @@ class HTMLStyleBuilder {
     
     private final void ts(String msg) { _ui.debugMessage(msg); }
     
-    public ArrayList getImageIndexes() { return _imageIndexes; }
-    public ArrayList getImages() { return _images; }
-    public ArrayList getLinkEndIndexes() { return _linkIndexes; }
-    public ArrayList getListItemIndexes() { return _listItemIndexes; }
-    public ArrayList getFonts() {
-        ArrayList rv = new ArrayList(_customFonts);
+    public ArrayList<Integer> getImageIndexes() { return _imageIndexes; }
+    public ArrayList<Image> getImages() { return _images; }
+    public ArrayList<Integer> getLinkEndIndexes() { return _linkIndexes; }
+    public ArrayList<Integer> getListItemIndexes() { return _listItemIndexes; }
+    public ArrayList<Font> getFonts() {
+        ArrayList<Font> rv = new ArrayList(_customFonts);
         rv.add(_fontA);
         rv.add(_fontCODE);
         rv.add(_fontDefault);
@@ -346,18 +346,18 @@ class HTMLStyleBuilder {
         rv.add(_fontPRE);
         return rv;
     }
-    public ArrayList getCustomColors() { return new ArrayList(_customColors.values()); }
+    public ArrayList<Color> getCustomColors() { return new ArrayList(_customColors.values()); }
     
-    private void insertCharBreakpoints(char placeholder, Map breakpoints, List indexes) {
+    private void insertCharBreakpoints(char placeholder, Map breakpoints, List<Integer> indexes) {
         int start = 0;
         for (;;) {
             int index = _msgText.indexOf(placeholder, start);
             if (index == -1) {
                 break;
             } else {
-                Integer idx = new Integer(index);
+                Integer idx = Integer.valueOf(index);
                 indexes.add(idx);
-                List indexTags = (List)breakpoints.get(idx);
+                List<HTMLTag> indexTags = (List)breakpoints.get(idx);
                 if (indexTags == null) {
                     breakpoints.put(idx, new ArrayList());
                     //System.out.println("char breakpoint " + (int)placeholder + ": " + index + ", no tags @ breakpoint");
@@ -369,7 +369,7 @@ class HTMLStyleBuilder {
         }
     }
     
-    private StyleRange buildStyle(List tags, int start, int length) {
+    private StyleRange buildStyle(List<HTMLTag> tags, int start, int length) {
         /*
         StringBuilder buf = new StringBuilder();
         buf.append("building style for [" + start + " through " + (start+length) + "]: ");
@@ -387,20 +387,20 @@ class HTMLStyleBuilder {
     
     public StyleRange[] getStyleRanges() { return _styleRanges; }
     
-    static boolean containsTag(List tags, String tagName) {
+    static boolean containsTag(List<HTMLTag> tags, String tagName) {
         for (int i = 0; i < tags.size(); i++)
             if (((HTMLTag)tags.get(i)).name.equalsIgnoreCase(tagName))
                 return true;
         return false;
     }
-    static boolean containsTagLC(List tags, String tagName) {
+    static boolean containsTagLC(List<HTMLTag> tags, String tagName) {
         for (int i = 0; i < tags.size(); i++)
             if (((HTMLTag)tags.get(i)).name.equals(tagName))
                 return true;
         return false;
     }
     
-    private StyleRange getStyle(int start, int length, List tags) {
+    private StyleRange getStyle(int start, int length, List<HTMLTag> tags) {
         long begin = System.currentTimeMillis();
         // turn the given tags into a style
         StyleRange style = new StyleRange();
@@ -550,8 +550,9 @@ class HTMLStyleBuilder {
                 int ascent = img.getBounds().height;
                 _images.add(img);
 
+                // TODO add margin
                 int descent = 0;
-                style.metrics = new GlyphMetrics(ascent, 0, width);
+                style.metrics = new GlyphMetrics(ascent, descent, width);
                 //style.background = _imgBGColor;
             }
         });
@@ -570,7 +571,7 @@ class HTMLStyleBuilder {
                 if ( (scope == null) || (msgId == null) ) {
                     // ok, yes, its implicitly from this message
                     scopeId = _msg.getScopeChannelId();
-                    msgId = new Long(_msg.getMessageId());
+                    msgId = Long.valueOf(_msg.getMessageId());
                 } else {
                     scopeId = _source.getChannelId(scope);
                 }
@@ -607,15 +608,17 @@ class HTMLStyleBuilder {
                 Image img = ImageUtil.ICON_LINK_END;
                 int width = img.getBounds().width;
                 int ascent = img.getBounds().height;
-                Integer idx = new Integer(style.start);
+                Integer idx = Integer.valueOf(style.start);
+                // FIXME O(n**2)
                 if (_imageIndexes.contains(idx))
                     throw new RuntimeException("wtf, already have an image at " + idx + ": " + _imageIndexes);
                 _imageIndexes.add(idx);
                 _images.add(img);
 
+                // TODO add margin
                 int descent = 0;
-                style.metrics = new GlyphMetrics(ascent, 0, width);
-            }
+                style.metrics = new GlyphMetrics(ascent, descent, width);
+	            }
         });
     }
     

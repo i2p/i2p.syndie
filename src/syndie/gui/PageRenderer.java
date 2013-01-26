@@ -71,16 +71,16 @@ public class PageRenderer extends BaseComponent implements Themeable {
     private MessageInfo _msg;
     private int _page;
     private PageActionListener _listener;
-    private ArrayList _fonts;
-    private ArrayList _colors;
-    private ArrayList _imageIndexes;
-    private ArrayList _images;
-    private ArrayList _liIndexes;
+    private ArrayList<Font> _fonts;
+    private ArrayList<Color> _colors;
+    private ArrayList<Integer> _imageIndexes;
+    private ArrayList<Image> _images;
+    private ArrayList<Integer> _liIndexes;
     private Color _bgColor;
     private Image _bgImage;
     
-    private ArrayList _imageTags;
-    private ArrayList _linkTags;
+    private ArrayList<HTMLTag> _imageTags;
+    private ArrayList<HTMLTag> _linkTags;
     
     private Menu _bodyMenu;
     private Menu _imageMenu;
@@ -309,6 +309,7 @@ public class PageRenderer extends BaseComponent implements Themeable {
                         if (start == offset) {
                             if (i >= _images.size()) return;
                             Image img = (Image)_images.get(i);
+                            // TODO add margin
                             int x = evt.x;
                             int y = evt.y + evt.ascent - range.metrics.ascent;
                             //System.out.println("Paint x=" + x + " y=" + y + " offset=" + offset + " image: " + img);
@@ -451,9 +452,9 @@ public class PageRenderer extends BaseComponent implements Themeable {
         page = uri.getLong("page");
         if (page != null) {
             if ( (page.longValue() > msg.getPageCount()) || (page.longValue() <= 0) )
-                page = new Long(1);
+                page = Long.valueOf(1);
         } else {
-            page = new Long(1);
+            page = Long.valueOf(1);
         }
         renderPage(src, msg, page.intValue());
     }
@@ -1695,7 +1696,7 @@ public class PageRenderer extends BaseComponent implements Themeable {
                     // ok, yes, its implicitly from this message
                     //scope = _msg.getScopeChannel();
                     scopeId = _msg.getScopeChannelId();
-                    msgId = new Long(_msg.getMessageId());
+                    msgId = Long.valueOf(_msg.getMessageId());
                 } else {
                     scopeId = _source.getChannelId(scope);
                 }

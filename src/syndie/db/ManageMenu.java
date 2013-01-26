@@ -181,7 +181,7 @@ class ManageMenu implements TextEngine.Menu {
                 long chanId = client.getChannelId(chan);
                 if (chanId >= 0) {
                     ChannelInfo info = client.getChannel(chanId);
-                    _itemKeys.add(new Long(chanId));
+                    _itemKeys.add(Long.valueOf(chanId));
                     _itemText.add("Identity channel " + CommandImpl.strip(info.getName()) + " (" + chan.toBase64().substring(0,6) + "): " + CommandImpl.strip(info.getDescription()));
                 }
             } else {
@@ -204,7 +204,7 @@ class ManageMenu implements TextEngine.Menu {
                     // channelId
                     long chanId = rs.getLong(1);
                     if (!rs.wasNull()) {
-                        Long id = new Long(chanId);
+                        Long id = Long.valueOf(chanId);
                         if (!_itemKeys.contains(id)) {
                             ChannelInfo info = client.getChannel(chanId);
                             if (info != null) {

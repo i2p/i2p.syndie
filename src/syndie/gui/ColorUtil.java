@@ -93,7 +93,7 @@ public class ColorUtil {
      * get the given color, pulling it from the set of system colors or the cache,
      * if possible.  can be called from any thread
      */
-    public static Color getColor(String color, Map cache) {
+    public static Color getColor(String color, Map<String, Color> cache) {
         if (color == null) return null;
         color = color.trim();
         if (color.length() <= 0) return null;

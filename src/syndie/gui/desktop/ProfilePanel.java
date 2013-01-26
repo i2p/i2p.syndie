@@ -72,7 +72,7 @@ public class ProfilePanel extends DesktopPanel implements Themeable, Translatabl
         if (scope == null)
             scope = uri.getHash("scope");
         if (scope != null) {
-            Long chanId = new Long(_client.getChannelId(scope));
+            Long chanId = Long.valueOf(_client.getChannelId(scope));
             _scope = scope;
             _scopeId = chanId.longValue();
             DBClient.ChannelCollector chans = _client.getNymChannels();

@@ -55,9 +55,9 @@ public class NymReferenceNode extends ReferenceNode {
         for (int i = 0; i < _children.size(); i++) {
             NymReferenceNode child = (NymReferenceNode)_children.get(i);
             int off = 0;
-            while (sorted.containsKey(new Long(child.getSiblingOrder()+off)))
+            while (sorted.containsKey(Long.valueOf(child.getSiblingOrder()+off)))
                 off++;
-            sorted.put(new Long(child.getSiblingOrder()+off), child);
+            sorted.put(Long.valueOf(child.getSiblingOrder()+off), child);
         }
         _children.clear();
         for (Iterator iter = sorted.values().iterator(); iter.hasNext(); ) {

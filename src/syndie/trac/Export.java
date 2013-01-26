@@ -107,7 +107,7 @@ public class Export {
     private SyndieURI getSearchFilter() {
         // search for threads tagged with bug report (not including PBE or privately encrypted messages)
         // only includes posts received in the last 7 days
-        return SyndieURI.createSearch(null, null, null, new Long(7), null, new String[] { "bugreport" }, null, false, null, null, null, null, null, null, null, null, false, false, false, true, false);
+        return SyndieURI.createSearch(null, null, null, Long.valueOf(7), null, new String[] { "bugreport" }, null, false, null, null, null, null, null, null, null, null, false, false, false, true, false);
     }
     
     /**

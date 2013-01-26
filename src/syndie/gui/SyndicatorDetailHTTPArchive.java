@@ -977,7 +977,7 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
                 _whitelist.add("..." + name.substring(name.length()-MAX_WHITELIST_NAME_LEN));
             else
                 _whitelist.add(name);
-            _whitelistIds.add(new Long(ref.getGroupId()));
+            _whitelistIds.add(Long.valueOf(ref.getGroupId()));
             if (ref.getGroupId() == whitelistId)
                 _whitelist.select(_whitelist.getItemCount()-1);
             

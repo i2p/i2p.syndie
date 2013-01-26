@@ -275,10 +275,10 @@ AND
                     if (rs.wasNull()) targetId = -1;
                     
                     //if (authorId >= 0)
-                    //    _threadRootAuthorId.add(new Long(authorId));
+                    //    _threadRootAuthorId.add(Long.valueOf(authorId));
                     //else
-                    //    _threadRootAuthorId.add(new Long(scopeId));
-                    rootMsgIds.add(new Long(msgId));
+                    //    _threadRootAuthorId.add(Long.valueOf(scopeId));
+                    rootMsgIds.add(Long.valueOf(msgId));
                 }
                 _ui.debugMessage("Found root messageIds for all channels: " + rootMsgIds);
                 rs.close();
@@ -306,10 +306,10 @@ AND
                         if (rs.wasNull()) targetId = -1;
 
                         //if (authorId >= 0)
-                        //    _threadRootAuthorId.add(new Long(authorId));
+                        //    _threadRootAuthorId.add(Long.valueOf(authorId));
                         //else
-                        //    _threadRootAuthorId.add(new Long(scopeId));
-                        rootMsgIds.add(new Long(msgId));        
+                        //    _threadRootAuthorId.add(Long.valueOf(scopeId));
+                        rootMsgIds.add(Long.valueOf(msgId));        
                         //_ui.debugMessage("accumulate root msgId: " + msgId);
                     }
                     rs.close();
@@ -418,10 +418,10 @@ AND
             _ui.debugMessage("filter passed for root " + newRoot.getURI().toString());
             _rootURIs.add(newRoot.getURI());
             _threadSubject.add(newRoot.getDescription());
-            _threadLatestAuthorId.add(new Long(latestAuthorId));
-            _threadLatestPostDate.add(new Long(latestPostDate));
-            _threadMessages.add(new Integer(messageCount));
-            _threadRootAuthorId.add(new Long(newRootAuthorId));
+            _threadLatestAuthorId.add(Long.valueOf(latestAuthorId));
+            _threadLatestPostDate.add(Long.valueOf(latestPostDate));
+            _threadMessages.add(Integer.valueOf(messageCount));
+            _threadRootAuthorId.add(Long.valueOf(newRootAuthorId));
             _threadTags.add(tags);
             _roots.add(newRoot);
             if (rootAuthorId == -1)
@@ -433,10 +433,10 @@ AND
             _ui.debugMessage("filter passed for root " + threadRoot.getURI().toString());
             _rootURIs.add(threadRoot.getURI());
             _threadSubject.add(threadRoot.getDescription());
-            _threadLatestAuthorId.add(new Long(latestAuthorId));
-            _threadLatestPostDate.add(new Long(latestPostDate));
-            _threadMessages.add(new Integer(messageCount));
-            _threadRootAuthorId.add(new Long(rootAuthorId));
+            _threadLatestAuthorId.add(Long.valueOf(latestAuthorId));
+            _threadLatestPostDate.add(Long.valueOf(latestPostDate));
+            _threadMessages.add(Integer.valueOf(messageCount));
+            _threadRootAuthorId.add(Long.valueOf(rootAuthorId));
             _threadTags.add(tags);
             _roots.add(threadRoot);
         } else {
@@ -565,10 +565,10 @@ AND
         // all filtered messages were removed above in removeFilteredChildren
         _rootURIs.add(cur.getURI());
         _threadSubject.add(cur.getDescription());
-        _threadLatestAuthorId.add(new Long(authorChanId));
+        _threadLatestAuthorId.add(Long.valueOf(authorChanId));
         _threadLatestPostDate.add(cur.getURI().getMessageId());
-        _threadMessages.add(new Integer(1));
-        _threadRootAuthorId.add(new Long(rootAuthorId));
+        _threadMessages.add(Integer.valueOf(1));
+        _threadRootAuthorId.add(Long.valueOf(rootAuthorId));
         _threadTags.add(tags);
         _roots.add(cur);
         while (cur.getChildCount() > 0) {

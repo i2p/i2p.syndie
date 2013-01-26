@@ -113,7 +113,7 @@ public class CancelEngine {
             else if (policy.getScopeApplyToLocallyManaged())
                 _locallyManagedPolicy = policy;
             else
-                _channelIdToPolicy.put(new Long(policy.getScopeApplyToChannelId()), policy);
+                _channelIdToPolicy.put(Long.valueOf(policy.getScopeApplyToChannelId()), policy);
         }
         
         if (_defaultPolicy == null) {
@@ -130,9 +130,9 @@ public class CancelEngine {
     private CancelPolicy createLocallyManagedPolicy() { return new CancelPolicy(false); }
     
     private CancelPolicy getCancelPolicy(long msgTarget) {
-        CancelPolicy policy = (CancelPolicy)_channelIdToPolicy.get(new Long(msgTarget));
+        CancelPolicy policy = (CancelPolicy)_channelIdToPolicy.get(Long.valueOf(msgTarget));
         if (policy == null) {
-            if (_locallyManagedIds.contains(new Long(msgTarget)))
+            if (_locallyManagedIds.contains(Long.valueOf(msgTarget)))
                 policy = _locallyManagedPolicy;
             else
                 policy = _defaultPolicy;
