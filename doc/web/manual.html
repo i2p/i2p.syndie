@@ -56,7 +56,7 @@ delimited <code>name=value</code> pairs)</p>
 
 <p>The menus are outlined below, with unimplemented commands prefixed by
 <code>//</code>.</p>
-<ul id="menu">
+<ul id="mmenu">
  <li><a href="#start">Start menu</a></li>
  <li><a href="#general">General commands</a></li>
  <li><a href="#read">Read menu</a></li>
@@ -66,7 +66,7 @@ delimited <code>name=value</code> pairs)</p>
 </ul>
 <hr />
 <ul>
- <li id="start">Start menu (not logged in) (<a href="#menu">up</a>)<dl>
+ <li id="start">Start menu (not logged in) (<a href="#mmenu">up</a>)<dl>
   <dt id="start_login"><code>login [--db $jdbcURL] [--login $loginName --pass $password]</code></dt>
   <dd>logs into Syndie at the default database location using the default login and
       password (each Syndie login has its own set of keys - just because one login
@@ -79,7 +79,7 @@ delimited <code>name=value</code> pairs)</p>
       included).</dd>
  </dl></li>
 
- <li id="general">General commands (available across all logged in menus) (<a href="#menu">up</a>)<dl>
+ <li id="general">General commands (available across all logged in menus) (<a href="#mmenu">up</a>)<dl>
   <dt id="general_logout"><code>logout</code></dt>
   <dd>Disconnect from the database, but do not exit Syndie</dd>
   <dt id="general_menu"><code>menu [$menuName]</code></dt>
@@ -115,7 +115,7 @@ delimited <code>name=value</code> pairs)</p>
   <dt id="general_version"><code>version</code></dt>
   <dd>Display the current version of Syndie</dd>
   <dt id="general_help"><code>?</code></dt>
-  <dt id="general_help"><code>help</code></dt>
+  <dt><code>help</code></dt>
   <dd>List commands available within the current menu</dd>
   <dt id="general_sql"><code>sql $sqlQuery</code> <i>(advanced)</i></dt>
   <dd>Execute the given SQL query against the database, displaying the results</dd>
@@ -127,18 +127,18 @@ delimited <code>name=value</code> pairs)</p>
       includes the string "DATE", those four characters are replaced with the
       current date (YYYY-MM-DD)</dd>
   <dt id="general_builduri"><code>builduri --url http://foo/bar</code></dt>
-  <dt id="general_builduri"><code>builduri --channel $chanHash [--message $messageId [--page $pageNum]]</code></dt>
-  <dt id="general_builduri"><code>builduri --archive $url [--password $pass]</code></dt>
+  <dt><code>builduri --channel $chanHash [--message $messageId [--page $pageNum]]</code></dt>
+  <dt><code>builduri --archive $url [--password $pass]</code></dt>
   <dd>Helpers for building Syndie URIs</dd>
   <dt id="general_history"><code>history</code></dt>
   <dd>Display the command history</dd>
-  <dt id="general_!!"><code>!!</code></dt>
+  <dt id="general_double_exclam"><code>!!</code></dt>
   <dd>Execute the previous command again</dd>
-  <dt id="general_!num"><code>!$num</code></dt>
+  <dt id="general_exclam_num"><code>!$num</code></dt>
   <dd>Execute the $num-th command in the history</dd>
-  <dt id="general_!-num"><code>!-$num</code></dt>
+  <dt id="general_exclam-num"><code>!-$num</code></dt>
   <dd>Execute the command $num lines ago</dd>
-  <dt id="general_^a"><code>^a[^b]</code></dt>
+  <dt id="general_ctrla"><code>^a[^b]</code></dt>
   <dd>Replace the first occurrence of <code>a</code> with <code>b</code> in
       the previous command, and run it.  If <code>^b</code> is not specified,
       the first occurrence of <code>a</code> is removed.</dd>
@@ -167,7 +167,7 @@ delimited <code>name=value</code> pairs)</p>
       channel, date, etc), and authentication for both GET and POST.</dd>
  </dl></li>
 
- <li id="read">Read menu (<a href="#menu">up</a>)<dl>
+ <li id="read">Read menu (<a href="#mmenu">up</a>)<dl>
   <dt id="read_channels"><code>channels [--unreadOnly $boolean] [--name $name] [--hash $hashPrefix]</code></dt>
   <dd>Display a list of channels the user can access that matches the given criteria.  
       The --name and --hash options limit the scope to channels whose name or identity hash
@@ -218,7 +218,7 @@ delimited <code>name=value</code> pairs)</p>
   <dt id="read_watch">//<code>watch (author|channel) [--nickname $name] [--category $nameInTree]</code></dt>
  </dl></li>
 
- <li id="manage">Manage menu (<a href="#menu">up</a>)<dl>
+ <li id="manage">Manage menu (<a href="#mmenu">up</a>)<dl>
   <dt id="manage_channels"><code>channels</code></dt>
   <dd>Display a list of channels that the current nym can manage</dd>
   <dt id="manage_next"><code>next [--lines $num]</code></dt>
@@ -303,7 +303,7 @@ delimited <code>name=value</code> pairs)</p>
   <dd>Cancel the current create or update state</dd>
  </dl></li>
 
- <li id="post">Post menu (<a href="#menu">up</a>)<dl>
+ <li id="post">Post menu (<a href="#mmenu">up</a>)<dl>
   <dt id="post_channels"><code>channels [--capability (manage|post)] [--name $name] [--hash $prefix]</code></dt>
   <dd>Display a list of channels matching the given criteria.</dd>
   <dt id="post_next"><code>next [--lines $num]</code></dt>
@@ -411,7 +411,7 @@ delimited <code>name=value</code> pairs)</p>
   <dd>Cancel the current creation state</dd>
  </dl></li>
  
- <li id="syndicate">Syndicate menu (<a href="#menu">up</a>)<dl>
+ <li id="syndicate">Syndicate menu (<a href="#mmenu">up</a>)<dl>
   <dt id="syndicate_buildindex"><code>buildindex</code></dt>
   <dd>creates or updates the index of the local archive</dd>
   <dt id="syndicate_getindex"><code>getindex --archive $url [--proxyHost $host --proxyPort $port] [--pass $pass]
@@ -474,22 +474,6 @@ An example script:
     set --publicTags motd
     execute</pre>
 
-
-<!--
-//login > watch >
-     status
-        walk through the categorized tree of channels watched by the
-        nym, displaying their status (# unread/read, last activity
-        date, etc), along side an index
-        read $index
-        jumps over to the read menu and runs:
-        messages $hash --includeUnauthorized false --includeUnauthenticated false
-        unwatch $index
-        rename $index $newName
-        move $index $newCategoryIndex
-        newcategory $name $parentIndex
-        watch $channel $name $parentIndex
--->
 </div>
 </body>
 </html>
