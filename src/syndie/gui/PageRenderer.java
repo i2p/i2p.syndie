@@ -177,6 +177,8 @@ public class PageRenderer extends BaseComponent implements Themeable {
         // this can be removed.
         _defaultCaret = new Caret(_text, SWT.NONE);
         _text.setCaret(_defaultCaret);
+        // left top right bottom
+        _text.setMargins(12, 8, 12, 8);
         //_defaultCaret.setVisible(false);
         _imageTags = new ArrayList();
         _linkTags = new ArrayList();
@@ -421,9 +423,20 @@ public class PageRenderer extends BaseComponent implements Themeable {
         _text.setVisible(false);
         _text.setText("");
         _text.setStyleRanges(null, null);
-        _text.setTopIndex(_wantedTop);
+        setTop();
     }
     
+    /**
+     *  Set the top line, but if it's zero, set the top pixel,
+     *  so we don't scroll past the margin.
+     */
+    private void setTop() {
+        if (_wantedTop == 0)
+            _text.setTopPixel(0);
+        else
+            _text.setTopIndex(_wantedTop);
+    }
+
     public void renderPage(PageRendererSource src, SyndieURI uri) {
         _wantedTop = _text.getTopIndex();
         Hash chan = uri.getScope();
@@ -528,7 +541,7 @@ public class PageRenderer extends BaseComponent implements Themeable {
 
                 _text.setVisible(true);
                 
-                _text.setTopIndex(_wantedTop);
+                setTop();
                 
                 _text.setRedraw(true);
                 _text.setCursor(null);
@@ -652,7 +665,7 @@ public class PageRenderer extends BaseComponent implements Themeable {
                 //    _text.setBackground(ColorUtil.getColor("white")); //null);
                     _text.setBackground(null); // perhaps this'll work properly sans the INHERIT_DEFAULT above
                 
-                _text.setTopIndex(_wantedTop);
+                setTop();
                 
                 _text.setVisible(true);
                 _text.setRedraw(true);
