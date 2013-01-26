@@ -32,7 +32,7 @@ class MaxView extends BaseComponent {
         unmax.setFont(themes.getTheme().BUTTON_FONT);
         unmax.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
 
-        _maxRenderer = ComponentBuilder.instance().createPageRenderer(_shell, true);
+        _maxRenderer = ComponentBuilder.instance().createPageRenderer(_shell, true, true);
         _maxRenderer.getComposite().setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 2, 1));
 
         _maxRenderer.renderPage(new PageRendererSource(_client, _themeRegistry), pageURI);

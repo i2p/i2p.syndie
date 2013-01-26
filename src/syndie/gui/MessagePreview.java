@@ -48,7 +48,7 @@ import syndie.db.DBClient;
 import syndie.db.UI;
 
 /**
- *
+ *  Unused except for static allowedToReply()
  */
 public class MessagePreview extends BaseComponent implements Themeable, Translatable {
     private NavigationControl _navControl;
@@ -75,6 +75,9 @@ public class MessagePreview extends BaseComponent implements Themeable, Translat
     private Hash _author;
     private Hash _target;
     
+    /**
+     *  @deprecated unused
+     */
     public MessagePreview(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, BookmarkControl bookmarkControl, URIControl uriControl, Composite parent) {
         super(client, ui, themes, trans);
         _navControl = navControl;
@@ -246,7 +249,7 @@ public class MessagePreview extends BaseComponent implements Themeable, Translat
         _headerTags = new Label(_root, SWT.SINGLE | SWT.WRAP | SWT.READ_ONLY);
         _headerTags.setLayoutData(new GridData(GridData.END, GridData.CENTER, true, false, 2, 1));
         
-        _body = ComponentBuilder.instance().createPageRenderer(_root, true);
+        _body = ComponentBuilder.instance().createPageRenderer(_root, true, true);
         _body.getComposite().setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 3, 1));
         _body.setListener(new PageRenderer.PageActionListener() {
             public void viewScopeMessages(PageRenderer renderer, Hash scope) { _navControl.view(SyndieURI.createScope(scope)); }

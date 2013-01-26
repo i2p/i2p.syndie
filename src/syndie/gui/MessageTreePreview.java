@@ -55,7 +55,7 @@ import syndie.db.DBClient;
 import syndie.db.UI;
 
 /**
- *
+ *  Popup in a MessageTree
  */
 public class MessageTreePreview extends BaseComponent implements Themeable, Translatable {
     private NavigationControl _navControl;
@@ -185,7 +185,7 @@ public class MessageTreePreview extends BaseComponent implements Themeable, Tran
             public void mouseUp(MouseEvent mouseEvent) {}
         });
         
-        _body = ComponentBuilder.instance().createPageRenderer(_shell, true);
+        _body = ComponentBuilder.instance().createPageRenderer(_shell, true, true);
         _body.getComposite().setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 2, 1));
         _body.setListener(new PageRenderer.PageActionListener() {
             public void viewScopeMessages(PageRenderer renderer, Hash scope) { _navControl.view(SyndieURI.createScope(scope)); }
