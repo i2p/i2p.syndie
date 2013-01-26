@@ -49,7 +49,7 @@ public class ViewForumTab extends BrowserTab {
         reconfigItem();
     }
     
-    public Image getIcon() { return ImageUtil.ICON_TAB_ARCHIVE; }
+    public Image getIcon() { return _editable ? ImageUtil.ICON_MANAGEABLEFORUM : ImageUtil.ICON_FORUMPROFILE; }
     public String getName() { return _editable ? "Manage forum" : "View forum"; }
     public String getDescription() { return getName(); }
     

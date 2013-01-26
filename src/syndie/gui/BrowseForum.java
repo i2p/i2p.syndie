@@ -196,7 +196,7 @@ public class BrowseForum extends BaseComponent implements MessageTree.MessageTre
         _metaIconArchives.setVisible(false);
         _metaIconReferences.setVisible(false);
         _metaIconAdmins.setVisible(false);
-        _metaIconManageable.setImage(ImageUtil.ICON_BROWSE_MANAGEABLE);
+        _metaIconManageable.setImage(ImageUtil.ICON_MANAGEABLEFORUM);
         _metaIconPostable.setImage(ImageUtil.ICON_BROWSE_POSTABLE);
         _metaIconArchives.setImage(ImageUtil.ICON_BROWSE_ARCHIVES);
         _metaIconReferences.setImage(ImageUtil.ICON_BROWSE_REFS);

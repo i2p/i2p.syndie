@@ -42,8 +42,8 @@ public class ExpirationManagerTab extends BrowserTab {
         }
     }
         
-    public Image getIcon() { return ImageUtil.ICON_TAB_ARCHIVE; }
-    public String getName() { return "Expiration"; }
+    public Image getIcon() { return ImageUtil.ICON_MANAGEABLEFORUM; }
+    public String getName() { return "Forum expiration"; }
     public String getDescription() { return _translationRegistry.getText("Control the deletion of old messages"); }
     
     protected void disposeDetails() { _manager.dispose(); }

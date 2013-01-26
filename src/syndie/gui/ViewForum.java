@@ -217,6 +217,7 @@ public class ViewForum extends BaseComponent implements Translatable, Themeable 
         _expirationManager = new Button(expiration, SWT.PUSH);
         _expirationManager.addSelectionListener(new FireSelectionListener() { public void fire() { _navControl.view(URIHelper.instance().createExpirationURI(_scope)); } });
         _expirationManager.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
+        _expirationManager.setImage(ImageUtil.ICON_MANAGEABLEFORUM);
         
         _authorizationLabel = new Label(_root, SWT.NONE);
         _authorizationLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
@@ -846,7 +847,7 @@ public class ViewForum extends BaseComponent implements Translatable, Themeable 
         _tagsLabel.setText(registry.getText("Tags") + ':');
         _descriptionLabel.setText(registry.getText("Description") + ':');
         _expirationLabel.setText(registry.getText("Expiration") + ':');
-        _expirationManager.setText(registry.getText("Manage"));
+        _expirationManager.setText(registry.getText("Manage expiration"));
         _archiveGroup.setText(registry.getText("Advertised archives") + ':');
         _userGroup.setText(registry.getText("Authorized managers and posters") + ':');
         _banGroup.setText(registry.getText("Banned forums/authors") + ':');

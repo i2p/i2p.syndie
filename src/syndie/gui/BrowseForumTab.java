@@ -35,13 +35,13 @@ public class BrowseForumTab extends BrowserTab {
                     _name = chan.getName();
                     _description = chan.getDescription();
                     //_icon = createAvatar(chan);
-                    _icon = ImageUtil.ICON_TAB_BROWSE;
+                    _icon = ImageUtil.ICON_FORUMMESSAGES;
                 }
             }
             if (_name == null) {
                 _name = UIUtil.display(scope);
                 _description = "forum: " + scope.toBase64();
-                _icon = ImageUtil.ICON_TAB_BROWSE;
+                _icon = ImageUtil.ICON_FORUMMESSAGES;
             }
         } else {
             _name = "Forums";

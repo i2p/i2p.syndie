@@ -64,7 +64,7 @@ import syndie.util.DateTime;
 import syndie.util.StringUtil;
 
 /**
- *
+ *  Parent is a ViewForumTab
  */
 public class ManageForum extends BaseComponent implements Translatable, Themeable {
     private NavigationControl _navControl;
@@ -243,6 +243,7 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
         _expirationManager = new Button(expiration, SWT.PUSH);
         _expirationManager.addSelectionListener(new FireSelectionListener() { public void fire() { _navControl.view(URIHelper.instance().createExpirationURI(_scope)); } });
         _expirationManager.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
+        _expirationManager.setImage(ImageUtil.ICON_MANAGEABLEFORUM);
         
         if ( (_scope == null) || (_scopeId < 0) )
             _expirationManager.setEnabled(false);
@@ -1153,7 +1154,7 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
         _tagsLabel.setText(registry.getText("Tags") + ':');
         _descriptionLabel.setText(registry.getText("Description") + ':');
         _expirationLabel.setText(registry.getText("Expiration") + ':');
-        _expirationManager.setText(registry.getText("Manage"));
+        _expirationManager.setText(registry.getText("Manage expiration"));
         if (_showActions) {
             _save.setText(registry.getText("Save changes"));
             _cancel.setText(registry.getText("Cancel changes"));

@@ -30,7 +30,7 @@ import syndie.db.SyncManager;
 import syndie.db.UI;
 
 /**
- *
+ *  Parent is a ArchiveManagerTab
  */
 public class ArchiveManager extends BaseComponent implements Translatable, Themeable {
     private final Composite _parent;

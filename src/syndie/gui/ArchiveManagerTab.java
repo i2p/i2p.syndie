@@ -10,7 +10,7 @@ import syndie.data.ChannelInfo;
 import syndie.data.SyndieURI;
 
 /**
- *
+ *  Contains an ArchiveManager
  */
 public class ArchiveManagerTab extends BrowserTab {
     private ArchiveManager _manager;
@@ -22,8 +22,8 @@ public class ArchiveManagerTab extends BrowserTab {
         _manager = new ArchiveManager(_client, _ui, _themeRegistry, _translationRegistry, getRoot(), getBrowser().getNavControl());
     }
         
-    public Image getIcon() { return ImageUtil.ICON_TAB_ARCHIVE; }
-    public String getName() { return "Archive"; }
+    public Image getIcon() { return ImageUtil.ICON_MANAGEARCHIVE; }
+    public String getName() { return "Manage archive"; }
     public String getDescription() { return _translationRegistry.getText("Manage archive configuration"); }
     
     protected void disposeDetails() { _manager.dispose(); }
