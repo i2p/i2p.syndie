@@ -1281,5 +1281,10 @@ exec java -d64 -XstartOnFirstThread -cp $CP syndie.gui.SWTUI
         </replaceregexp>
         <echo>Release date set to ${files.date}. Edit doc/web/index.html is this is incorrect.</echo>
     </target>
+
+    <target name="testscripts" description="check PO files, XML, and HTML files for errors">
+        <exec executable="tests/scripts/checkpo.sh" failonerror="true" />
+        <exec executable="tests/scripts/checkxml.sh" failonerror="true" />
+    </target>
 </project>
 <!-- vim: set ft=xml ts=4 sw=4 et: -->
