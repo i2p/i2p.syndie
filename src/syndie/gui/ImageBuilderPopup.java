@@ -54,9 +54,10 @@ import syndie.util.StringUtil;
  *
  */
 public class ImageBuilderPopup {
-    private Shell _parent;
+    private final Shell _parent;
+    private final TranslationRegistry _translationRegistry;
     private Shell _shell;
-    private ImageBuilderSource _page;
+    private final ImageBuilderSource _page;
     private Composite _choices;
     private Button _choiceAttach;
     private Combo _choiceAttachCombo;
@@ -91,9 +92,10 @@ public class ImageBuilderPopup {
     
     private boolean _forBodyBackground;
     
-    public ImageBuilderPopup(Shell parent, ImageBuilderSource page) {
+    public ImageBuilderPopup(Shell parent, TranslationRegistry registry, ImageBuilderSource page) {
         _page = page;
         _parent = parent;
+        _translationRegistry = registry;
         initComponents();
     }
     
@@ -115,9 +117,13 @@ public class ImageBuilderPopup {
         public void insertAtCaret(String html);
     }
     
+    private String getText(String s) {
+        return _translationRegistry.getText(s);
+    }
+
     private void initComponents() {
         _shell = new Shell(_parent, SWT.SHELL_TRIM | SWT.PRIMARY_MODAL);
-        _shell.setText("Include image...");
+        _shell.setText(getText("Include image") + "...");
         _shell.setLayout(new GridLayout(1, true));
         
         _choices = new Composite(_shell, SWT.NONE);
@@ -125,7 +131,7 @@ public class ImageBuilderPopup {
         _choices.setLayout(new GridLayout(3, false));
         
         _choiceAttach = new Button(_choices, SWT.RADIO);
-        _choiceAttach.setText("Attachment:");
+        _choiceAttach.setText(getText("Attachment") + ':');
         _choiceAttach.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         _choiceAttach.addSelectionListener(new ChoiceUpdateListener());
         
@@ -134,7 +140,7 @@ public class ImageBuilderPopup {
         _choiceAttachCombo.addSelectionListener(new ChoiceUpdateListener());
         
         _choiceFile = new Button(_choices, SWT.RADIO);
-        _choiceFile.setText("File:");
+        _choiceFile.setText(getText("File") + ':');
         _choiceFile.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         _choiceFile.addSelectionListener(new ChoiceFileUpdateListener());
         
@@ -144,7 +150,7 @@ public class ImageBuilderPopup {
         _choiceFileText.addModifyListener(new ChoiceFileUpdateListener());
         
         _choiceFileBrowse = new Button(_choices, SWT.PUSH);
-        _choiceFileBrowse.setText("Browse...");
+        _choiceFileBrowse.setText(getText("Browse") + "...");
         _choiceFileBrowse.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _choiceFileBrowse.addSelectionListener(new SelectionListener() {
             public void widgetSelected(SelectionEvent selectionEvent) { browse(); }
@@ -162,7 +168,7 @@ public class ImageBuilderPopup {
         _config.setLayout(new GridLayout(6, false));
         
         _configPreview = new Button(_config, SWT.CHECK);
-        _configPreview.setText("Preview");
+        _configPreview.setText(getText("Preview"));
         _configPreview.setLayoutData(new GridData(GridData.BEGINNING, GridData.FILL, true, false, 7, 1));
         _configPreview.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { refreshPreview(); }
@@ -173,7 +179,7 @@ public class ImageBuilderPopup {
         _configPreviewCanvas.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 1, 5));
         
         _configResizeTo = new Label(_config, SWT.NONE);
-        _configResizeTo.setText("Resize to:");
+        _configResizeTo.setText(getText("Resize to") + ':');
         _configResizeTo.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
         _configResizeToCombo = new Combo(_config, SWT.DROP_DOWN);
@@ -191,7 +197,7 @@ public class ImageBuilderPopup {
         });
         
         _configResizeAlt = new Label(_config, SWT.NONE);
-        _configResizeAlt.setText("or:");
+        _configResizeAlt.setText(getText("or") + ':');
         _configResizeAlt.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
         _configResizeWidth = new Text(_config, SWT.SINGLE | SWT.BORDER);
@@ -227,19 +233,19 @@ public class ImageBuilderPopup {
         _configResizePx.setText("px");
 
         _configSize = new Label(_config, SWT.NONE);
-        _configSize.setText("Size:");
+        _configSize.setText(getText("Size") + ':');
         _configSize.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
         _configSizeAmount = new Label(_config, SWT.NONE);
-        _configSizeAmount.setText("0KB");
+        _configSizeAmount.setText("0 KB");
         _configSizeAmount.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, false, false, 4, 1));
         
         _configThumbnail = new Button(_config, SWT.CHECK);
-        _configThumbnail.setText("show a thumbnail in the page");
+        _configThumbnail.setText(getText("Show a thumbnail in the page"));
         _configThumbnail.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, false, false, 5, 1));
         
         _configStrip = new Button(_config, SWT.CHECK);
-        _configStrip.setText("strip exif data from the image");
+        _configStrip.setText(getText("Strip EXIF data from the image"));
         _configStrip.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, false, false, 5, 1));
         
         Composite actions = new Composite(_shell, SWT.NONE);
@@ -247,14 +253,14 @@ public class ImageBuilderPopup {
         actions.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
         _ok = new Button(actions, SWT.PUSH);
-        _ok.setText("ok");
+        _ok.setText(getText("OK"));
         _ok.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { imageAccepted(); hide(); }
             public void widgetSelected(SelectionEvent selectionEvent) { imageAccepted(); hide(); }
         });
         
         _cancel = new Button(actions, SWT.PUSH);
-        _cancel.setText("cancel");
+        _cancel.setText(getText("Cancel"));
         _cancel.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { hide(); }
             public void widgetSelected(SelectionEvent selectionEvent) { hide(); }

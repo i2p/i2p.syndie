@@ -308,8 +308,7 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
             
             String date = DateTime.getDateTime(msg.getMessageId());
             String impDate = DateTime.getDate(_client.getMessageImportDate(msg.getInternalId()));
-            // fixme translate
-            _headerDate.setText(date + "    [Imported " + impDate + "]");
+            _headerDate.setText(date + "    [" + getText("Imported") + ' ' + impDate + ']');
             
             Set tags = new TreeSet(msg.getPublicTags());
             tags.addAll(msg.getPrivateTags());

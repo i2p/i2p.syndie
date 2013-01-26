@@ -1116,9 +1116,9 @@ public class NymChannelTree implements Themeable, Translatable {
         else
             item.setText(4, "");
         
-        // TODO what is this? TODO translate
+        // TODO what is this?
         if (r.referencesIncluded)
-            item.setText(5, "with references");
+            item.setText(5, _translationRegistry.getText("with references"));
         else
             item.setText(5, "");
         

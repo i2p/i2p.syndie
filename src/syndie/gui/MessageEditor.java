@@ -1755,7 +1755,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     public void showImagePopup(boolean forBodyBackground) {
         if (_imagePopup == null) {
             Properties prefs = _client.getNymPrefs();
-            _imagePopup = new ImageBuilderPopup(_root.getShell(), this);
+            _imagePopup = new ImageBuilderPopup(_root.getShell(), _translationRegistry, this);
             _imagePopup.setFilterPath(prefs.getProperty("editor.defaultImagePath"));
         }
         _imagePopup.showPopup(forBodyBackground); 
@@ -2057,13 +2057,13 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             public void widgetSelected(SelectionEvent selectionEvent) { pickPrivacy(_privacy.getSelectionIndex()); }
         });
         
-        _hideHeaderButton.setText("Hide");
-        _subjectLabel.setText("Subject:");
-        _tagLabel.setText("Tags:");
-        _authorLabel.setText("Author:");
-        _signAsLabel.setText("Signed by:");
-        _authorHidden.setText("Hidden?");
-        _privacyLabel.setText("Privacy:");
+        _hideHeaderButton.setText(getText("Hide"));
+        _subjectLabel.setText(getText("Subject") + ':');
+        _tagLabel.setText(getText("Tags") + ':');
+        _authorLabel.setText(getText("Author") + ':');
+        _signAsLabel.setText(getText("Signed by") + ':');
+        _authorHidden.setText(getText("Hidden?"));
+        _privacyLabel.setText(getText("Privacy") + ':');
     }
     
     private void initAbbrHeader() {

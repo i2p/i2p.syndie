@@ -66,7 +66,7 @@ public class MessageChooserPopup implements MessageTree.MessageTreeListener, The
         });
         
         _cancel = new Button(_shell, SWT.PUSH);
-        _cancel.setText("cancel");
+        _cancel.setText(_translationRegistry.getText("Cancel"));
         _cancel.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _cancel.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { hide(); }

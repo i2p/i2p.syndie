@@ -26,16 +26,16 @@ import syndie.data.SyndieURI;
 import syndie.db.DBClient;
 
 public class MessageEditorToolbar implements MessageEditor.EditorStatusListener {
-    private Composite _parent;
-    private MessageEditor _editor;
-    private BookmarkControl _bookmarkControl;
-    private DBClient _client;
-    private TranslationRegistry _translationRegistry;
+    private final Composite _parent;
+    private final MessageEditor _editor;
+    private final BookmarkControl _bookmarkControl;
+    private final DBClient _client;
+    private final TranslationRegistry _translationRegistry;
     
     private int buttonWidth = 32;
     private int buttonHeight = 32;
     
-    private CoolBar _toolbar;
+    private final CoolBar _toolbar;
     // forum control
     private Button _forumButton;
     private Image _forumAvatar;
@@ -287,12 +287,16 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
         return addButton(tg, SWT.TOGGLE, tooltip, image, listener);
     }
     
+    private String getText(String s) {
+        return _translationRegistry.getText(s);
+    }
+
     public void initForumControl(ToolbarGroup tg) {
         _forumMenu = new Menu(_parent);
         SelectionListener listener = new FireSelectionListener() {
             public void fire() { _editor.pickForum(); }
         };
-        _forumButton = addFlatButton(tg, "Select the forum to post in", ImageUtil.ICON_EDITOR_NOT_BOOKMARKED, listener);
+        _forumButton = addFlatButton(tg, getText("Select the forum to post in"), ImageUtil.ICON_EDITOR_NOT_BOOKMARKED, listener);
     }
     
     public void initAuthorControl(ToolbarGroup tg) {
@@ -300,7 +304,7 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
         SelectionListener listener = new FireSelectionListener() {
             public void fire() { _editor.pickAuthor(); }
         };
-        _authorButton = addFlatButton(tg, "Who do you want to sign the post as?", ImageUtil.ICON_EDITOR_BOOKMARKED_NOAVATAR, listener);
+        _authorButton = addFlatButton(tg, getText("Who do you want to sign the post as?"), ImageUtil.ICON_EDITOR_BOOKMARKED_NOAVATAR, listener);
     }
     
     public void initPrivacyControl(ToolbarGroup tg) {        
@@ -308,7 +312,7 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
         SelectionListener listener = new FireSelectionListener() {
             public void fire() { _privMenu.setVisible(true); }
         };
-        _privButton = addFlatButton(tg,"Who is allowed to read the post?", ImageUtil.ICON_EDITOR_PRIVACY_AUTHORIZED, listener);
+        _privButton = addFlatButton(tg,getText("Who is allowed to read the post?"), ImageUtil.ICON_EDITOR_PRIVACY_AUTHORIZED, listener);
         
         _privPublic = new MenuItem(_privMenu, SWT.PUSH);
         _privAuthorized = new MenuItem(_privMenu, SWT.PUSH);
@@ -335,10 +339,10 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
         
         _privAuthorized.setSelection(true);
         
-        _privPublic.setText("Anyone can read the post");
-        _privAuthorized.setText("Authorized readers of the forum can read the post");
-        _privPBE.setText("Passphrase required to read the post...");
-        _privReply.setText("Only forum administrators can read the post");
+        _privPublic.setText(getText("Anyone can read the post"));
+        _privAuthorized.setText(getText("Authorized readers of the forum can read the post"));
+        _privPBE.setText(getText("Passphrase required to read the post") + "...");
+        _privReply.setText(getText("Only forum administrators can read the post"));
         _privAuthorized.setSelection(true);
     }
     
@@ -347,7 +351,7 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
             public void fire() { _editor.togglePageType(); }
         };
         
-        _pageTypeButton = addToggleButton(tg, "Toggle the type of the current page", ImageUtil.ICON_EDITOR_TOGGLETYPE, listener);
+        _pageTypeButton = addToggleButton(tg, getText("Toggle the type of the current page"), ImageUtil.ICON_EDITOR_TOGGLETYPE, listener);
     }
     
     public void initPageAddControl(ToolbarGroup tg) {
@@ -355,7 +359,7 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
             public void fire() { _editor.addPage(); }
         };
         
-        _pageAddButton = addFlatButton(tg, "Add a new blank page", ImageUtil.ICON_EDITOR_ADDPAGE, listener);
+        _pageAddButton = addFlatButton(tg, getText("Add a new blank page"), ImageUtil.ICON_EDITOR_ADDPAGE, listener);
     }
     
     public void initPageRemoveControl(ToolbarGroup tg) {        
@@ -363,7 +367,7 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
             public void fire() { _editor.removePage(); }
         };
         
-        _pageRemoveButton = addFlatButton(tg, "Remove the current page", ImageUtil.ICON_EDITOR_REMOVEPAGE, listener);
+        _pageRemoveButton = addFlatButton(tg, getText("Remove the current page"), ImageUtil.ICON_EDITOR_REMOVEPAGE, listener);
     }
     
     public void initWebRipControl(ToolbarGroup tg) {
@@ -371,7 +375,7 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
             public void fire() { _editor.addWebRip(); }
         };
         
-        _webRipButton = addFlatButton(tg, "Rip a web page and add it as a new page in the message", ImageUtil.ICON_EDITOR_WEBRIP, listener);
+        _webRipButton = addFlatButton(tg, getText("Rip a web page and add it as a new page in the message"), ImageUtil.ICON_EDITOR_WEBRIP, listener);
     }
     
     public void initAddImageAttachmentControl(ToolbarGroup tg) {
@@ -379,21 +383,21 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
             public void fire() { _editor.showImagePopup(false); }
         };
         
-        _addImageAttachmentButton = addFlatButton(tg, "Insert a new image into the current page", ImageUtil.ICON_EDITOR_ADDIMAGE, listener);
+        _addImageAttachmentButton = addFlatButton(tg, getText("Insert a new image into the current page"), ImageUtil.ICON_EDITOR_ADDIMAGE, listener);
     }
     
     public void initAddAttachmentControl(ToolbarGroup tg) {
         SelectionListener listener = new FireSelectionListener() {
             public void fire() { _editor.addAttachment(); }
         };
-        _addAttachmentButton = addFlatButton(tg, "Manage attachments to this post", ImageUtil.ICON_EDITOR_ADDFILE, listener);
+        _addAttachmentButton = addFlatButton(tg, getText("Manage attachments to this post"), ImageUtil.ICON_EDITOR_ADDFILE, listener);
     }
     
     public void initRemoveAttachmentControl(ToolbarGroup tg) {
         SelectionListener listener = new FireSelectionListener() {
             public void fire() { _editor.removeAttachment(); }
         };
-        _removeAttachmentButton = addFlatButton(tg, "Remove the selected attachment", ImageUtil.ICON_EDITOR_REMOVEFILE, listener);
+        _removeAttachmentButton = addFlatButton(tg, getText("Remove the selected attachment"), ImageUtil.ICON_EDITOR_REMOVEFILE, listener);
     }
     
     public void initLinkControl(ToolbarGroup tg) {
@@ -402,7 +406,7 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
             public void fire() { _linkMenu.setVisible(true); }
         };
         
-        _linkButton = addFlatButton(tg, "Add a new link", ImageUtil.ICON_EDITOR_LINK, listener);
+        _linkButton = addFlatButton(tg, getText("Add a new link"), ImageUtil.ICON_EDITOR_LINK, listener);
         
         _linkWeb = new MenuItem(_linkMenu, SWT.PUSH);
         new MenuItem(_linkMenu, SWT.SEPARATOR);
@@ -463,16 +467,16 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
             public void fire() { _editor.showLinkPopup(false, false, false, true, false, false, false, false, false, false); }
         });
         
-        _linkWeb.setText("Link to a website");
-        _linkPage.setText("Link to a page in this message");
-        _linkAttach.setText("Link to an attachment in this message");
-        _linkForum.setText("Link to a forum");
-        _linkMsg.setText("Link to a particular Syndie message");
-        _linkEepsite.setText("Link to an I2P eepsite");
-        _linkI2P.setText("Link to an I2P destination");
-        _linkFreenet.setText("Link to a Freenet freesite");
-        _linkArchive.setText("Link to a Syndie archive");
-        _linkOther.setText("Link to another Syndie URI");
+        _linkWeb.setText(getText("Link to a website"));
+        _linkPage.setText(getText("Link to a page in this message"));
+        _linkAttach.setText(getText("Link to an attachment in this message"));
+        _linkForum.setText(getText("Link to a forum"));
+        _linkMsg.setText(getText("Link to a particular Syndie message"));
+        _linkEepsite.setText(getText("Link to an I2P eepsite"));
+        _linkI2P.setText(getText("Link to an I2P destination"));
+        _linkFreenet.setText(getText("Link to a Freenet freesite"));
+        _linkArchive.setText(getText("Link to a Syndie archive"));
+        _linkOther.setText(getText("Link to another Syndie URI"));
     }
     
     public void initStyleControl(ToolbarGroup tg) {
@@ -543,20 +547,20 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
         _stylePre = new MenuItem(_styleMenu, SWT.PUSH);
         _stylePre.addSelectionListener(new InsertListener("<pre>first line\n\tindented line</pre>", true));
         
-        _styleText.setText("Styled text...");
-        _styleImage.setText("Image...");
-        _styleBGColor.setText("Page background color");
-        _styleBGColorDefault.setText("standard");
-        _styleBGImage.setText("Page background image...");
-        _styleListOrdered.setText("List (ordered)");
-        _styleListUnordered.setText("List (unordered)");
-        _styleHeading.setText("Heading");
-        _styleHeading1.setText("Heading 1 (largest)");
-        _styleHeading2.setText("Heading 2");
-        _styleHeading3.setText("Heading 3");
-        _styleHeading4.setText("Heading 4");
-        _styleHeading5.setText("Heading 5 (smallest)");
-        _stylePre.setText("Preformatted text");
+        _styleText.setText(getText("Styled text") + "...");
+        _styleImage.setText(getText("Image") + "...");
+        _styleBGColor.setText(getText("Page background color"));
+        _styleBGColorDefault.setText(getText("standard"));
+        _styleBGImage.setText(getText("Page background image") + "...");
+        _styleListOrdered.setText(getText("List (ordered)"));
+        _styleListUnordered.setText(getText("List (unordered)"));
+        _styleHeading.setText(getText("Heading"));
+        _styleHeading1.setText(getText("Heading 1 (largest)"));
+        _styleHeading2.setText(getText("Heading 2"));
+        _styleHeading3.setText(getText("Heading 3"));
+        _styleHeading4.setText(getText("Heading 4"));
+        _styleHeading5.setText(getText("Heading 5 (smallest)"));
+        _stylePre.setText(getText("Preformatted text"));
     }
 
     /** simple hook to inert a buffer at the caret */

@@ -173,7 +173,7 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
     
     private void initComponents() {
         _shell = new Shell(_parentShell, SWT.SHELL_TRIM | SWT.PRIMARY_MODAL);
-        _shell.setText("Link to...");
+        _shell.setText(getText("Link to") + "...");
         GridLayout gl = new GridLayout(2, false);
         gl.horizontalSpacing = 0;
         gl.verticalSpacing = 0;
@@ -183,7 +183,7 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
         
         _textLabel = new Label(_shell, SWT.NONE);
         _textLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
-        _textLabel.setText("Link text:");
+        _textLabel.setText(getText("Link text") + ':');
         
         _text = new Text(_shell, SWT.SINGLE | SWT.BORDER);
         _text.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
@@ -216,18 +216,18 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
         _syndieDetail.setLayoutData(gd);
         
         _linkTypeSyndieText = new Text(_syndieDetail, SWT.SINGLE | SWT.BORDER);
-        _linkTypeSyndieText.setToolTipText("Full syndie URL");
+        _linkTypeSyndieText.setToolTipText(getText("Full Syndie URL"));
         _linkTypeSyndieText.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
         
         _syndieForumLabel = new Label(_syndieDetail, SWT.NONE);
-        _syndieForumLabel.setText("Forum: ");
+        _syndieForumLabel.setText(getText("Forum") + ": ");
         _syndieForumLabel.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
         _syndieForum = new Text(_syndieDetail, SWT.SINGLE | SWT.BORDER | SWT.READ_ONLY);
         _syndieForum.setText("");
         _syndieForum.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, true, false));
         
         _syndieForumBrowse = new Button(_syndieDetail, SWT.PUSH);
-        _syndieForumBrowse.setText("Browse...");
+        _syndieForumBrowse.setText(getText("Browse") + "...");
         _syndieForumBrowse.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickForum(); }
             public void widgetSelected(SelectionEvent selectionEvent) { pickForum(); }
@@ -235,13 +235,13 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
         _syndieForumBrowse.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
         _syndieMessageLabel = new Label(_syndieDetail, SWT.NONE);
-        _syndieMessageLabel.setText("Message: ");
+        _syndieMessageLabel.setText(getText("Message") + ": ");
         _syndieMessage = new Text(_syndieDetail, SWT.SINGLE | SWT.BORDER | SWT.READ_ONLY);
         _syndieMessage.setText("");
         _syndieMessage.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
         _syndieMessageBrowse = new Button(_syndieDetail, SWT.PUSH);
-        _syndieMessageBrowse.setText("Browse...");
+        _syndieMessageBrowse.setText(getText("Browse") + "...");
         _syndieMessageBrowse.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickMessage(); }
             public void widgetSelected(SelectionEvent selectionEvent) { pickMessage(); }
@@ -258,12 +258,12 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
         _syndieMessageDetailGroup.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
         
         _syndieMessageDetailGeneral = new Button(_syndieMessageDetailGroup, SWT.RADIO);
-        _syndieMessageDetailGeneral.setText("Link to the message as a whole");
+        _syndieMessageDetailGeneral.setText(getText("Link to the message as a whole"));
         _syndieMessageDetailGeneral.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false, 2, 1));
         _syndieMessageDetailGeneral.addSelectionListener(new UpdateURIListener());
         
         _syndieMessageDetailPage = new Button(_syndieMessageDetailGroup, SWT.RADIO);
-        _syndieMessageDetailPage.setText("Page: ");
+        _syndieMessageDetailPage.setText(getText("Page") + ": ");
         _syndieMessageDetailPage.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _syndieMessageDetailPage.addSelectionListener(new UpdateURIListener());
         
@@ -276,7 +276,7 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
         //_syndieMessageDetailPageView.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         
         _syndieMessageDetailAttachment = new Button(_syndieMessageDetailGroup, SWT.RADIO);
-        _syndieMessageDetailAttachment.setText("Attachment: ");
+        _syndieMessageDetailAttachment.setText(getText("Attachment") + ": ");
         _syndieMessageDetailAttachment.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _syndieMessageDetailAttachment.addSelectionListener(new UpdateURIListener());
         
@@ -297,7 +297,7 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
         _syndieReadKeyLine.setLayout(gl);
         _syndieReadKeyLine.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
         _syndieReadKey = new Button(_syndieReadKeyLine, SWT.CHECK);
-        _syndieReadKey.setText("include read key");
+        _syndieReadKey.setText(getText("Include read key"));
         _syndieReadKey.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _syndieReadKey.addSelectionListener(new UpdateURIListener());
         _syndieReadKeyCombo = new Combo(_syndieReadKeyLine, SWT.DROP_DOWN | SWT.READ_ONLY);
@@ -313,7 +313,7 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
         _syndiePostKeyLine.setLayout(gl);
         _syndiePostKeyLine.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
         _syndiePostKey = new Button(_syndiePostKeyLine, SWT.CHECK);
-        _syndiePostKey.setText("include post key");
+        _syndiePostKey.setText(getText("Include post key"));
         _syndiePostKey.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _syndiePostKey.addSelectionListener(new UpdateURIListener());
         _syndiePostKeyCombo = new Combo(_syndiePostKeyLine, SWT.DROP_DOWN | SWT.READ_ONLY);
@@ -329,7 +329,7 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
         _syndieReplyKeyLine.setLayout(gl);
         _syndieReplyKeyLine.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
         _syndieReplyKey = new Button(_syndieReplyKeyLine, SWT.CHECK);
-        _syndieReplyKey.setText("include reply key");
+        _syndieReplyKey.setText(getText("Include reply key"));
         _syndieReplyKey.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _syndieReplyKey.addSelectionListener(new UpdateURIListener());
         _syndieReplyKeyCombo = new Combo(_syndieReplyKeyLine, SWT.DROP_DOWN | SWT.READ_ONLY);
@@ -345,7 +345,7 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
         _syndieManageKeyLine.setLayout(gl);
         _syndieManageKeyLine.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
         _syndieManageKey = new Button(_syndieManageKeyLine, SWT.CHECK);
-        _syndieManageKey.setText("include manage key");
+        _syndieManageKey.setText(getText("Include manage key"));
         _syndieManageKey.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _syndieManageKey.addSelectionListener(new UpdateURIListener());
         _syndieManageKeyCombo = new Combo(_syndieManageKeyLine, SWT.DROP_DOWN | SWT.READ_ONLY);
@@ -364,7 +364,7 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
         _linkTypeI2PRow.setLayout(gl);
         
         _linkTypeI2PNameLabel = new Label(_linkTypeI2PRow, SWT.NONE);
-        _linkTypeI2PNameLabel.setText("Name:");
+        _linkTypeI2PNameLabel.setText(getText("Name") + ':');
         _linkTypeI2PNameLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
         _linkTypeI2PName = new Text(_linkTypeI2PRow,  SWT.SINGLE | SWT.BORDER);
@@ -374,7 +374,7 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
         _linkTypeI2PName.setLayoutData(gd);
       
         _linkTypeI2PDestinationLabel = new Label(_linkTypeI2PRow, SWT.NONE);
-        _linkTypeI2PDestinationLabel.setText("Destination:");
+        _linkTypeI2PDestinationLabel.setText(getText("Destination") + ':');
         _linkTypeI2PDestinationLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
         _linkTypeI2PDestination = new Text(_linkTypeI2PRow, SWT.SINGLE | SWT.BORDER);
@@ -395,7 +395,7 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
         _linkTypeEepsiteRow.setLayout(gl);
         
         _linkTypeEepsiteNameLabel = new Label(_linkTypeEepsiteRow, SWT.NONE);
-        _linkTypeEepsiteNameLabel.setText("Name:");
+        _linkTypeEepsiteNameLabel.setText(getText("Name") + ':');
         _linkTypeEepsiteNameLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
         _linkTypeEepsiteName = new Text(_linkTypeEepsiteRow,  SWT.SINGLE | SWT.BORDER);
@@ -405,7 +405,7 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
         _linkTypeEepsiteName.setLayoutData(gd);
         
         _linkTypeEepsiteDestinationLabel = new Label(_linkTypeEepsiteRow, SWT.NONE);
-        _linkTypeEepsiteDestinationLabel.setText("Destination:");
+        _linkTypeEepsiteDestinationLabel.setText(getText("Destination") + ':');
         _linkTypeEepsiteDestinationLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         
         _linkTypeEepsiteDestination = new Text(_linkTypeEepsiteRow, SWT.SINGLE | SWT.BORDER);
@@ -429,13 +429,13 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
         actionRow.setLayoutData(gd);
         
         _actionOk = new Button(actionRow, SWT.PUSH);
-        _actionOk.setText("OK");
+        _actionOk.setText(getText("OK"));
         _actionOk.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { onOk(); }
             public void widgetSelected(SelectionEvent selectionEvent) { onOk(); }
         });
         _actionCancel = new Button(actionRow, SWT.PUSH);
-        _actionCancel.setText("Cancel");
+        _actionCancel.setText(getText("Cancel"));
         _actionCancel.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { onCancel(); }
             public void widgetSelected(SelectionEvent selectionEvent) { onCancel(); }
