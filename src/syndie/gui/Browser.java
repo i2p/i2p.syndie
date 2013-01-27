@@ -1626,10 +1626,13 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             shell.setText(getTranslationRegistry().getText("External URL selected"));
             
             Text msg = new Text(shell, SWT.WRAP | SWT.MULTI | SWT.READ_ONLY);
-            msg.setText(getTranslationRegistry().getText("The URL selected refers to a resource outside of Syndie.  You may load this in the browser of your choice, but doing so may be risky, as Syndie cannot protect your browser, and even following this link may compromise your identity or security."));
+            String w1 = getTranslationRegistry().getText("The URL selected refers to a resource outside of Syndie.  You may load this in the browser of your choice, but doing so may be risky, as Syndie cannot protect your browser, and even following this link may compromise your identity or security.");
+            String w2 = getTranslationRegistry().getText("DO NOT OPEN THE URL IF YOU ARE UNSURE!!!");
+            msg.setText('\n' + w1 + "\n\n" + w2 + '\n');
             GridData gd = new GridData(GridData.FILL, GridData.FILL, true, false);
             gd.widthHint = 400;
             msg.setLayoutData(gd);
+            msg.setForeground(ColorUtil.getColor("red"));
             
             boolean valid = true;
             String surl = uri.getURL();
@@ -1645,6 +1648,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             gd = new GridData(GridData.FILL, GridData.FILL, true, false);
             gd.widthHint = 500;
             url.setLayoutData(gd);
+            url.setForeground(ColorUtil.getColor("red"));
             
             Composite buttons = new Composite(shell, SWT.NONE);
             buttons.setLayout(new GridLayout(3, true));
@@ -1656,6 +1660,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             b.addSelectionListener(new FireSelectionListener() {
                 public void fire() { shell.dispose(); }
             });
+            b.forceFocus();
             
             if (valid && urlStr.startsWith("http://") &&
                 !(SystemVersion.isWindows() || SystemVersion.isMac())) {
@@ -1663,6 +1668,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
                 b.setText(getTranslationRegistry().getText("Open in Syndie using I2P proxy"));
                 gd = new GridData(GridData.CENTER, GridData.FILL, false, false);
                 b.setLayoutData(gd);
+                b.setForeground(ColorUtil.getColor("red"));
                 b.addSelectionListener(new FireSelectionListener() {
                     public void fire() {
                         String newurl = "browser:d3:url" + urlStr.length() + ':' + urlStr + 'e';
@@ -1681,6 +1687,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
                 b.setText(getTranslationRegistry().getText("Open in browser"));
                 gd = new GridData(GridData.END, GridData.FILL, false, false);
                 b.setLayoutData(gd);
+                b.setForeground(ColorUtil.getColor("red"));
                 b.addSelectionListener(new FireSelectionListener() {
                     public void fire() {
                         try {
@@ -1697,7 +1704,6 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             shell.pack(true);
             shell.open();
             //url.selectAll()
-            b.forceFocus();
         } else {
             MessageBox box = new MessageBox(_shell, SWT.ICON_ERROR | SWT.OK);
             box.setText(getTranslationRegistry().getText("Invalid URI"));

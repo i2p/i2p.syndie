@@ -1,5 +1,21 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
+* 2013-01-27 1.102b-12 (kytv, zzz)
+  GUI improvements:
+  - Icon and button tweaks for consistency
+  - Add margins on PageRenderer
+  - Add wizard icon
+  - Support opening external links in external browser
+  - Add experimental in-Syndie web browser
+  - Partial translation for Russian
+  Fixes:
+  - Fix problems with caching nym prefs
+  Build:
+  - New build targets
+  - Remove HTML classes from CLI jar
+  Other:
+  - More code refactoring
+
 * 2013-01-24 1.102b-11 (kytv, zzz)
   GUI improvements:
   - Partial translations for German, Spanish, Swedish
