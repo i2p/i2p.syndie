@@ -593,7 +593,7 @@
         <!-- make the windows update xpi2p (32/64) -->
         <copy file="scripts/plugin-windows.config" tofile="plugin/plugin.config" overwrite="true" />
         <exec executable="echo" osfamily="unix" failonerror="true" output="plugin/plugin.config" append="true">
-            <arg value="version=${release.number}-b${build.number}" />
+            <arg value="version=${full.version}-b${build.number}" />
         </exec>
         <exec executable="echo" osfamily="unix" failonerror="true" output="plugin/plugin.config" append="true">
             <arg value="update-only=true" />
@@ -611,7 +611,7 @@
         <copy file="scripts/plugin-linux.config" tofile="plugin/plugin.config" overwrite="true" />
         <copy file="scripts/clients-linux.config" tofile="plugin/clients.config" overwrite="true" />
         <exec executable="echo" osfamily="unix" failonerror="true" output="plugin/plugin.config" append="true">
-            <arg value="version=${release.number}-b${build.number}" />
+            <arg value="version=${full.version}-b${build.number}" />
         </exec>
         <exec executable="${java.home}/bin/pack200" failonerror="true">
             <arg value="-g" />
@@ -670,7 +670,7 @@
         <copy file="scripts/plugin-windows.config" tofile="plugin/plugin.config" overwrite="true" />
         <copy file="scripts/clients-windows.config" tofile="plugin/clients.config" overwrite="true" />
         <exec executable="echo" osfamily="unix" failonerror="true" output="plugin/plugin.config" append="true">
-            <arg value="version=${release.number}-b${build.number}" />
+            <arg value="version=${full.version}-b${build.number}" />
         </exec>
         <exec executable="${java.home}/bin/pack200" failonerror="true">
             <arg value="-g" />
