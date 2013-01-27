@@ -378,13 +378,16 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
                 if (item != null)
                     fire(item);                
             }
+
             /** the user hit return on the selected row */
             public void returnHit() {
                 TreeItem item = getSelected();
                 if (item != null)
                     fire(item);
             }
+
             public void deleteHit() { deleteSelected(); }
+
             private void fire(TreeItem item) {
                 if (_acceptanceListener == null)
                     return;
@@ -407,6 +410,12 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
                 if (chan != null) {
                     Hash scope = _client.getChannelHash(chan.getChannelId());
                     _acceptanceListener.referenceAccepted(SyndieURI.createScope(scope));
+                    return;
+                }
+                if (item.getExpanded()) {
+                    item.setExpanded(false);
+                } else if (item.getItemCount() > 0) {
+                    item.setExpanded(true);
                 }
             }
         };
