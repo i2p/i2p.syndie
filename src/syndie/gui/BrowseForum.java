@@ -75,10 +75,10 @@ public class BrowseForum extends BaseComponent implements MessageTree.MessageTre
     private MenuItem _metaNameMenuView;
     private MenuItem _metaNameMenuBookmark;
     private MenuItem _metaNameMenuMarkRead;
-    private MenuItem _metaNameMenuDeleteRead;
+    //private MenuItem _metaNameMenuDeleteRead;
     private MenuItem _metaNameMenuCopyURI;
     private MenuItem _metaNameMenuReply;
-    private MenuItem _metaNameMenuDeleteAll;
+    //private MenuItem _metaNameMenuDeleteAll;
     private MenuItem _metaNameMenuBan;
     private Button _metaIconManageable;
     private Button _metaIconPostable;
@@ -212,14 +212,16 @@ public class BrowseForum extends BaseComponent implements MessageTree.MessageTre
         _metaNameMenuView = new MenuItem(_metaNameMenu, SWT.PUSH);
         _metaNameMenuBookmark = new MenuItem(_metaNameMenu, SWT.PUSH);
         _metaNameMenuMarkRead = new MenuItem(_metaNameMenu, SWT.PUSH);
-        _metaNameMenuDeleteRead = new MenuItem(_metaNameMenu, SWT.PUSH);
+        // FIXME never enabled, no listener, unimplemented
+        //_metaNameMenuDeleteRead = new MenuItem(_metaNameMenu, SWT.PUSH);
         _metaNameMenuCopyURI = new MenuItem(_metaNameMenu, SWT.PUSH);
         _metaNameMenuReply = new MenuItem(_metaNameMenu, SWT.PUSH);
-        _metaNameMenuDeleteAll = new MenuItem(_metaNameMenu, SWT.PUSH);
+        // FIXME never enabled, no listener, unimplemented
+        //_metaNameMenuDeleteAll = new MenuItem(_metaNameMenu, SWT.PUSH);
         _metaNameMenuBan = new MenuItem(_metaNameMenu, SWT.PUSH);
         
-        _metaNameMenuDeleteRead.setEnabled(false);
-        _metaNameMenuDeleteAll.setEnabled(false);
+        //_metaNameMenuDeleteRead.setEnabled(false);
+        //_metaNameMenuDeleteAll.setEnabled(false);
         
         _metaAction.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { _metaNameMenu.setVisible(true); }
@@ -713,10 +715,10 @@ public class BrowseForum extends BaseComponent implements MessageTree.MessageTre
         _metaNameMenuBookmark.setImage(ImageUtil.ICON_ADDBOOKMARK);
 
         _metaNameMenuMarkRead.setText(registry.getText("Mark all messages read"));
-        _metaNameMenuDeleteRead.setText(registry.getText("Delete read messages"));
+        //_metaNameMenuDeleteRead.setText(registry.getText("Delete read messages"));
         _metaNameMenuCopyURI.setText(registry.getText("Copy forum URI"));
         _metaNameMenuReply.setText(registry.getText("Send the forum administrators a private message"));
-        _metaNameMenuDeleteAll.setText(registry.getText("Delete all messages"));
+        //_metaNameMenuDeleteAll.setText(registry.getText("Delete all messages"));
         _metaNameMenuBan.setText(registry.getText("Ban this forum"));
         _meta.layout(true, true);
     }

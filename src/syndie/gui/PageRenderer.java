@@ -1503,7 +1503,7 @@ public class PageRenderer extends BaseComponent implements Themeable {
             new MenuItem(_bodyMenu, SWT.SEPARATOR);
 
             _bodyReplyToForum = new MenuItem(_bodyMenu, SWT.PUSH);
-            _bodyReplyToForum.setText(getText("Reply to forum"));
+            _bodyReplyToForum.setText(getText("Public reply to forum"));
             _bodyReplyToForum.addSelectionListener(new FireSelectionListener() {
                 public void fire() {
                     if ( (_listener != null) && (_msg != null) )

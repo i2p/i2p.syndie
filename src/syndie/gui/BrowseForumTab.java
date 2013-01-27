@@ -44,8 +44,8 @@ public class BrowseForumTab extends BrowserTab {
                 _icon = ImageUtil.ICON_FORUMMESSAGES;
             }
         } else {
-            _name = "Forums";
-            _description = "browse forums";
+            _name = getText("All forums");
+            _description = getText("Browse all forums");
             _icon = ImageUtil.ICON_TAB_BROWSE;
         }
         debug("browseForum construct: done, now reconfig");

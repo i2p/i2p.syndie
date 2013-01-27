@@ -608,10 +608,7 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
             public void menuHidden(MenuEvent menuEvent) {}
             public void menuShown(MenuEvent menuEvent) {
                 // if the user isn't authorized to post a reply to the forum, don't offer to let them
-                if (MessagePreview.allowedToReply(_client, _msgId))
-                    _forumMenuReplyPublic.setEnabled(true);
-                else
-                    _forumMenuReplyPublic.setEnabled(false);
+                _forumMenuReplyPublic.setEnabled(allowedPublicReply());
             }
         });
 
@@ -633,15 +630,15 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
             public void widgetSelected(SelectionEvent selectionEvent) { bookmarkForum(); }
         });
         new MenuItem(_forumMenu, SWT.SEPARATOR);
-        _forumMenuReplyPrivate = new MenuItem(_forumMenu, SWT.PUSH);
-        _forumMenuReplyPrivate.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { replyPrivateForum(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { replyPrivateForum(); }
-        });
         _forumMenuReplyPublic = new MenuItem(_forumMenu, SWT.PUSH);
         _forumMenuReplyPublic.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { replyPublicForum(); }
             public void widgetSelected(SelectionEvent selectionEvent) { replyPublicForum(); }
+        });
+        _forumMenuReplyPrivate = new MenuItem(_forumMenu, SWT.PUSH);
+        _forumMenuReplyPrivate.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { replyPrivateForum(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { replyPrivateForum(); }
         });
         new MenuItem(_forumMenu, SWT.SEPARATOR);
         _forumMenuBan = new MenuItem(_forumMenu, SWT.PUSH);
@@ -674,10 +671,7 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
             public void menuHidden(MenuEvent menuEvent) {}
             public void menuShown(MenuEvent menuEvent) {
                 // if the user isn't authorized to post a reply to the forum, don't offer to let them
-                if (MessagePreview.allowedToReply(_client, _msgId))
-                    _headerReplyForumPublic.setEnabled(true);
-                else
-                    _headerReplyForumPublic.setEnabled(false);
+                _headerReplyForumPublic.setEnabled(allowedPublicReply());
             }
         });
 
@@ -824,13 +818,36 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
         if (_author != null)
             _navControl.view(_uriControl.createPostURI(_author, _uri, true));
     }
+
     private void replyPrivateForum() {
         if (_target != null)
             _navControl.view(_uriControl.createPostURI(_target, _uri, true));
     }
+
+    /**
+     *  Should be allow a public reply?
+     *  @since 1.102b-13
+     */
+    private boolean allowedPublicReply() {
+        return _msg != null && (!_msg.getWasPrivate()) &&
+               MessagePreview.allowedToReply(_client, _msgId);
+    }
+
     private void replyPublicForum() {
-        if (_target != null)
+        if (_target != null) {
+            // this was just a double-check, should be hidden from the menus now
+          /****
+            if (allowedPublicReply()) {
+                MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_WARNING | SWT.YES | SWT.NO);
+                box.setText(_translationRegistry.getText("Reply to private message"));
+                box.setMessage(_translationRegistry.getText("Are you sure you want to post a public reply to a private message?"));
+                int rc = box.open();
+                if (rc != SWT.YES)
+                    return;
+            }
+          ****/
             _navControl.view(_uriControl.createPostURI(_target, _uri, false));
+        }
     }
 
     private void viewAuthorMsgs() {
@@ -899,14 +916,14 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
         _headerForumLabel.setText(registry.getText("Forum") + ':');
         _headerDateLabel.setText(registry.getText("Date") + ':');
         
-        _headerReplyAuthorPrivate.setText(registry.getText("Send a private reply to the author"));
-        _headerReplyForumPrivate.setText(registry.getText("Send a private reply to the forum administrators"));
-        _headerReplyForumPublic.setText(registry.getText("Send a public reply to the forum"));
+        _headerReplyAuthorPrivate.setText(registry.getText("Private reply to author"));
+        _headerReplyForumPrivate.setText(registry.getText("Private reply to forum administrators"));
+        _headerReplyForumPublic.setText(registry.getText("Public reply to forum"));
         
         // duplicate the reply menu 
-        _authorMenuReplyPrivate.setText(registry.getText("Send a private reply to the author"));
-        _forumMenuReplyPrivate.setText(registry.getText("Send a private reply to the forum administrators"));
-        _forumMenuReplyPublic.setText(registry.getText("Send a public reply to the forum"));
+        _authorMenuReplyPrivate.setText(registry.getText("Private reply to author"));
+        _forumMenuReplyPrivate.setText(registry.getText("Private reply to forum administrators"));
+        _forumMenuReplyPublic.setText(registry.getText("Public reply to forum"));
         
         _authorMenuBan.setText(registry.getText("Ban author"));
         _authorMenuBookmark.setText(registry.getText("Bookmark author"));

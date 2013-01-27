@@ -834,7 +834,8 @@ public class NymChannelTree implements Themeable, Translatable {
                 long chanId = rs.getLong(2);
                 
                 Record r = (Record)chanIdToRecord.get(Long.valueOf(chanId));
-                // FIXME what date is this? and why is the time always 12:00?
+                // FIXME importDate is stored as a DATE, not a TIMESTAMP, we don't have the hhmmss stored.
+                // So we can't display the long version, the time is always 12:00:00
                 r.lastPostDate = (when != null ? when.getTime() : -1);
             }
         } catch (SQLException se) {
@@ -1112,7 +1113,9 @@ public class NymChannelTree implements Themeable, Translatable {
         
         long when = r.lastPostDate;
         if (when > 0)
-            item.setText(4, DateTime.getDateTime(when));
+            // FIXME see above, no time available from DB
+            //item.setText(4, DateTime.getDateTime(when));
+            item.setText(4, DateTime.getDate(when));
         else
             item.setText(4, "");
         

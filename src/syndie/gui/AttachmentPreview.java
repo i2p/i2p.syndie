@@ -153,7 +153,12 @@ class AttachmentPreview extends BaseComponent implements Translatable, Themeable
         });
 
         // right
-        _preview = new ImageCanvas(_root, true);
+        Composite right = new Composite(_root, SWT.NONE);
+        right.setLayout(new GridLayout(1, false));
+        gd = new GridData(GridData.FILL, GridData.FILL, true, true);
+        right.setLayoutData(gd);
+
+        _preview = new ImageCanvas(right, true);
         _preview.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 2, 4));
         //_preview.forceSize(64, 64);
         
