@@ -1,9 +1,13 @@
 package syndie.gui;
 
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import net.i2p.util.RandomSource;
 
@@ -20,6 +24,8 @@ import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Combo;
+import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
@@ -39,6 +45,10 @@ public class WelcomeScreen extends Wizard {
     private final Browser _browser;
     private final CompleteListener _lsnr;
     
+    private Label _langMessage;
+    private Combo _langCombo;
+    private final List<String> _langCodes;
+
     private Page _welcomePage;
     private Label _welcomeMessage;
     
@@ -75,6 +85,7 @@ public class WelcomeScreen extends Wizard {
         _lsnr = lsnr;
         _avatarImages = new ArrayList();
         ImageUtil.init(browser.getClient().getTempDir(), timer);
+        _langCodes = new ArrayList(16);
         initComponents();
     }
     
@@ -147,6 +158,24 @@ public class WelcomeScreen extends Wizard {
     
     private void initComponents() {
         _shell.setImage(ImageUtil.ICON_SHELL);
+        // Create language page
+        Page langPage = new Page();
+        langPage.setLayout(new GridLayout(1, false));
+        Composite center = new Composite(langPage, SWT.NONE);
+        center.setLayout(new GridLayout(1, false));
+        center.setLayoutData(new GridData(GridData.CENTER, GridData.CENTER, true, true));
+        _langMessage = new Label(center, SWT.WRAP);
+        _langMessage.setLayoutData(new GridData(GridData.CENTER, GridData.END, false, false));
+        _langCombo = new Combo(center, SWT.DROP_DOWN | SWT.READ_ONLY | SWT.BORDER);
+        _langCombo.setLayoutData(new GridData(GridData.CENTER, GridData.BEGINNING, false, false));
+        _langCombo.addSelectionListener(new FireSelectionListener() {
+            public void fire() {
+                int idx = _langCombo.getSelectionIndex();
+                if (idx >= 0)
+                    _browser.getTranslationRegistry().switchTranslation(_langCodes.get(idx));
+            }
+        });
+
         // Create welcome page
         _welcomePage = new Page();
         _welcomeMessage = new Label(_welcomePage, SWT.WRAP);
@@ -236,6 +265,37 @@ public class WelcomeScreen extends Wizard {
         update();
     }
     
+    /**
+     *  Modified from Browser
+     *  @since 1.102b-13
+     */
+    private void populateTranslations() {
+        final TranslationRegistry reg = _browser.getTranslationRegistry();
+        List<String> translations = reg.getTranslations();
+        String curLang = reg.getTranslation();
+        String selected = curLang;
+        Locale curLocale = new Locale(curLang);
+        // sort by display name
+        Map<String, String> tmap = new TreeMap(Collator.getInstance());
+        for (String translation : translations) {
+            String langName = (new Locale(translation)).getDisplayLanguage(curLocale);
+            if (langName.length() <= 0)
+                langName = translation;
+            tmap.put(langName, translation);
+        }
+        _langCombo.removeAll();
+        _langCodes.clear();
+        int i = 0;
+        for (Map.Entry<String, String> e : tmap.entrySet()) {
+            _langCombo.add(e.getKey());
+            String translation = e.getValue();
+            _langCodes.add(translation);
+            if (translation.equals(selected))
+                _langCombo.select(i);
+            i++;
+        }
+    }
+
     private void populateAvatarMenu() {
         int i = 0;
         while (true) {
@@ -329,6 +389,9 @@ public class WelcomeScreen extends Wizard {
     
     public void translate(TranslationRegistry registry) {
         super.translate(registry);
+
+        _langMessage.setText(registry.getText("Language"));
+        populateTranslations();
         
         _welcomeMessage.setText(reflow(registry, new String [] {
                 _x("Welcome to Syndie!"), "\n\n",

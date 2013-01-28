@@ -684,6 +684,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         });
        ****/
         
+      /****  called in translate()
         // queue it up to run sometime soon, but it has to occur in the swt thread, hence the nest
         JobRunner.instance().enqueue(new Runnable() {
             public void run() {
@@ -693,6 +694,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             }
         });
         //populateTranslations();
+       ****/
         
         timer.addEvent("language menu constructed");
         
@@ -1285,28 +1287,11 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
     }
     
     private void populateTranslations() {
-      /****
-        int trans = _languageMenu.getItemCount();
-        String selected = null;
         // remove the old translations, if any
-        int items = _languageMenu.getItemCount();
-        for (int i = 0; i < items; i++) {
-            MenuItem item = _languageMenu.getItem(i);
-            if (item == _languageMenuEdit) {
-                continue;
-            } else if (item == _languageMenuRefresh) {
-                continue;
-            } else {
-                if (item.getSelection())
-                    selected = item.getText();
-                item.dispose();
-                i--;
-                items--;
-            }
+        while(_languageMenu.getItemCount() > 0) {
+            _languageMenu.getItem(0).dispose();
         }
         
-        new MenuItem(_languageMenu, SWT.SEPARATOR);
-      ****/        
         // now rebuild given what we know
         List<String> translations = _translation.getTranslations();
         String curLang = _translation.getTranslation();
@@ -2909,6 +2894,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
 
         _languageMenuRoot.setText(X + registry.getText("Language"));
         _languageMenuRoot.setImage(ImageUtil.ICON_VM_LANGUAGE);
+        populateTranslations();
         //_languageMenuEdit.setText(X + registry.getText("Translate"));
         //_languageMenuRefresh.setText(X + registry.getText("Refresh translations"));
 

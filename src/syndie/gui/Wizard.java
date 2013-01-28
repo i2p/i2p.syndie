@@ -142,6 +142,8 @@ abstract public class Wizard implements Themeable, Translatable {
         _finish.setEnabled(lastPageShown);
         if (lastPageShown)
             _finish.forceFocus();
+        else if (firstPageShown)
+            _next.forceFocus();
         
         Page pp = (Page) _stackLayout.topControl;
         Page cp = _pages.get(currentPage);
