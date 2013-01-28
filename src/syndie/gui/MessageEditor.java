@@ -1536,6 +1536,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     public PageEditor addPage() {
         return addPage(getDefaultPageType());
     }
+
     private PageEditor addPage(String type) {
         saveState();
         modified();
@@ -1552,12 +1553,14 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         saveState();
         return ed;
     }
+
     public void removePage() {
         int cur = _pageTabs.getSelectionIndex();
         if ( (cur >= 0) && (cur < _pageEditors.size()) ) {
             removePage(cur);
         }
     }
+
     public void removePage(int pageNum) {
         if ( (pageNum >= 0) && (pageNum < _pageEditors.size()) ) {
             _ui.debugMessage("saving stte, pages: " + _pageEditors.size());
@@ -1675,7 +1678,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         else
             return -1;
     }
-    
+
     /** 0-indexed attachment being shown, or -1 if not an attachment */
     private int getCurrentAttachment() {
         int idx = _pageTabs.getSelectionIndex();
@@ -1686,9 +1689,10 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         else
             return -1;
     }
-    
+
     /** current page */
     public PageEditor getPageEditor() { return getPageEditor(getCurrentPage()); }
+
     /** grab the given (0-indexed) page */
     private PageEditor getPageEditor(int pageNum) {
         if ( (pageNum >= 0) && (pageNum < _pageEditors.size()) )
@@ -1696,8 +1700,10 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         else
             return null;
     }
+
     /** current page */
     private String getPageType() { return getPageType(getCurrentPage()); }
+
     /** grab the content type of the given (0-indexed) page */
     private String getPageType(int pageNum) {
         if (_pageTypes.size() > pageNum)
@@ -2618,6 +2624,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         updateToolbar();
         return rv;
     }
+
     public void removeAttachment(int idx) {
         saveState();
         modified();
@@ -2641,12 +2648,14 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         }
         updateToolbar();
     }
+
     public void removeAttachment() {
         int attach = getCurrentAttachment();
         if (attach >= 0) removeAttachment(attach);
     }
 
     public List getAttachmentDescriptions() { return getAttachmentDescriptions(false); }
+
     public List getAttachmentDescriptions(boolean imagesOnly) {
         ArrayList rv = new ArrayList();
         for (int i = 0; i < _attachmentConfig.size(); i++) {
@@ -2745,7 +2754,10 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                 _attachmentSummary.add(summary);
                 
                 CTabItem item = _pageTabs.getItem(_pageEditors.size()+i);
-                item.setText(_translationRegistry.getText("Attachment") + ' ' + (i+1));
+                if (name != null && name.length() != 0)
+                    item.setText(UIUtil.truncate(name, 20));
+                else
+                    item.setText(_translationRegistry.getText("Attachment") + ' ' + (i+1));
             }
         } else {
             _attachmentSummary.add(_translationRegistry.getText("none"));

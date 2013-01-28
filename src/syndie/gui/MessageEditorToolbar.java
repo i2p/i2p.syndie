@@ -175,6 +175,10 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
         _privAuthorized.setSelection(true);
     }
     
+    /**
+     *  @param page current page or -1
+     *  @param attachment current attachment or -1
+     */
     public void statusUpdated(int page, int pages, int attachment, int attachments, String type, boolean pageLoaded, boolean isHTML, boolean hasAncestors) {
         _addImageAttachmentButton.setEnabled(isHTML);
         _webRipButton.setEnabled(isHTML);
@@ -214,13 +218,11 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
             _linkAttach.setEnabled(attachments > 0);
         }
         
-       _pageTypeButton.setSelection(isHTML);
+        _pageTypeButton.setSelection(isHTML);
        
-        if (page >= 0) {
-            _pageTypeButton.setEnabled(true);
-        } else {
-            _pageTypeButton.setEnabled(false);
-        }
+        _pageTypeButton.setEnabled(page >= 0);
+        _pageRemoveButton.setEnabled(page >= 0);
+        _removeAttachmentButton.setEnabled(attachment >= 0);
         
         if (_spellButton != null)
             _spellButton.setEnabled(pageLoaded);
@@ -359,7 +361,7 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
             public void fire() { _editor.addPage(); }
         };
         
-        _pageAddButton = addFlatButton(tg, getText("Add a new blank page"), ImageUtil.ICON_EDITOR_ADDPAGE, listener);
+        _pageAddButton = addFlatButton(tg, getText("Add new page"), ImageUtil.ICON_EDITOR_ADDPAGE, listener);
     }
     
     public void initPageRemoveControl(ToolbarGroup tg) {        
@@ -367,7 +369,7 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
             public void fire() { _editor.removePage(); }
         };
         
-        _pageRemoveButton = addFlatButton(tg, getText("Remove the current page"), ImageUtil.ICON_EDITOR_REMOVEPAGE, listener);
+        _pageRemoveButton = addFlatButton(tg, getText("Remove this page"), ImageUtil.ICON_EDITOR_REMOVEPAGE, listener);
     }
     
     public void initWebRipControl(ToolbarGroup tg) {
@@ -390,14 +392,14 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
         SelectionListener listener = new FireSelectionListener() {
             public void fire() { _editor.addAttachment(); }
         };
-        _addAttachmentButton = addFlatButton(tg, getText("Manage attachments to this post"), ImageUtil.ICON_EDITOR_ADDFILE, listener);
+        _addAttachmentButton = addFlatButton(tg, getText("Add attachment"), ImageUtil.ICON_EDITOR_ADDFILE, listener);
     }
     
     public void initRemoveAttachmentControl(ToolbarGroup tg) {
         SelectionListener listener = new FireSelectionListener() {
             public void fire() { _editor.removeAttachment(); }
         };
-        _removeAttachmentButton = addFlatButton(tg, getText("Remove the selected attachment"), ImageUtil.ICON_EDITOR_REMOVEFILE, listener);
+        _removeAttachmentButton = addFlatButton(tg, getText("Remove this attachment"), ImageUtil.ICON_EDITOR_REMOVEFILE, listener);
     }
     
     public void initLinkControl(ToolbarGroup tg) {
