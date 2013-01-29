@@ -405,8 +405,8 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
     public boolean confirmClose() {
         if (!_modified) return true;
         MessageBox confirm = new MessageBox(_parent.getShell(), SWT.ICON_QUESTION | SWT.YES | SWT.NO);
-        confirm.setText(_translationRegistry.getText("Confirm"));
-        confirm.setMessage(_translationRegistry.getText("Do you want to discard these changes to the forum?"));
+        confirm.setText(getText("Confirm"));
+        confirm.setMessage(getText("Do you want to discard these changes to the forum?"));
         int rc = confirm.open();
         if (rc == SWT.YES) {
             return true;
@@ -586,8 +586,8 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
         String errs = exec.getErrors();
         if ( (errs != null) && (errs.trim().length() > 0) ) {
             MessageBox box = new MessageBox(_parent.getShell(), SWT.ICON_ERROR | SWT.OK);
-            box.setText(_translationRegistry.getText("Error"));
-            box.setMessage(_translationRegistry.getText("Internal error saving the forum") + ':' + errs);
+            box.setText(getText("Error"));
+            box.setMessage(getText("Internal error saving the forum") + ':' + errs);
             box.open();
         } else {
             // ok, now create any of the posts we need to send keys to the right people, 
@@ -797,7 +797,7 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
             MenuItem origItem = new MenuItem(_avatarMenu, SWT.PUSH);
             // image not displayed on all platforms
             origItem.setImage(_avatarImgOrig);
-            origItem.setText(_translationRegistry.getText("Current"));
+            origItem.setText(getText("Current"));
             origItem.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickAvatar(_avatarImgOrig); }
                 public void widgetSelected(SelectionEvent selectionEvent) { pickAvatar(_avatarImgOrig); }
@@ -811,7 +811,7 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
                 MenuItem item = new MenuItem(_avatarMenu, SWT.PUSH);
                 // image not displayed on all platforms - TODO pupup?
                 item.setImage(img);
-                item.setText(_translationRegistry.getText("Default") + ' ' + (i+1));
+                item.setText(getText("Default") + ' ' + (i+1));
                 item.addSelectionListener(new SelectionListener() {
                     public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickAvatar(img); }
                     public void widgetSelected(SelectionEvent selectionEvent) { pickAvatar(img); }
@@ -844,9 +844,9 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
     }
     private void pickAvatar() {
         FileDialog dialog = new FileDialog(_root.getShell(), SWT.SINGLE | SWT.OPEN);
-        dialog.setText(_translationRegistry.getText("Select a 48x48 pixel PNG image"));
+        dialog.setText(getText("Select a 48x48 pixel PNG image"));
         dialog.setFilterExtensions(new String[] { "*.png" });
-        dialog.setFilterNames(new String[] { _translationRegistry.getText("PNG image") });
+        dialog.setFilterNames(new String[] { getText("PNG image") });
         String filename = dialog.open();
         if (filename != null) {
             Image img = ImageUtil.createImageFromFile(filename);
@@ -952,7 +952,7 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
             numSelected++;
         }
         
-        _archiveGroup.setText(_translationRegistry.getText("Archives") + ": " + numSelected + " ");
+        _archiveGroup.setText(getText("Archives") + ": " + numSelected + " ");
         _archiveRemoveAll.setEnabled(numSelected > 0);
         
         _archiveGroup.getParent().layout(new Control[] { _archiveGroup });
@@ -972,7 +972,7 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
         Counter counter = new Counter(false);
         ReferenceNode.walk(_referenceNodeRoots, counter);
         numSelected = counter.getCount();
-        _refGroup.setText(_translationRegistry.getText("References") + ": " + numSelected + " ");
+        _refGroup.setText(getText("References") + ": " + numSelected + " ");
         _refRemoveAll.setEnabled(numSelected > 0);
         _refGroup.getParent().layout(new Control[] { _refGroup });
     }
@@ -989,7 +989,7 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
         ReferenceNode.walk(_referenceNodeRoots, trim);
         for (int i = 0; i < scopes.size(); i++)
             _referenceNodeRoots.add(new ReferenceNode("banned", SyndieURI.createScope((Hash)scopes.get(i)), "", Constants.REF_TYPE_BANNED));
-        _banGroup.setText(_translationRegistry.getText("Bans") + ": " + scopes.size() + " ");
+        _banGroup.setText(getText("Bans") + ": " + scopes.size() + " ");
         _banRemoveAll.setEnabled(scopes.size() > 0);
         _banGroup.getParent().layout(new Control[] { _banGroup });
         modified();
@@ -1052,7 +1052,7 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
     private void removeRefs() {
         TrimRefs trim = new TrimRefs(false);
         ReferenceNode.walk(_referenceNodeRoots, trim);
-        _refGroup.setText(_translationRegistry.getText("References") + ": " + 0 + " ");
+        _refGroup.setText(getText("References") + ": " + 0 + " ");
         _refRemoveAll.setEnabled(false);
         _refGroup.getParent().layout(new Control[] { _refGroup });
         modified();
@@ -1061,7 +1061,7 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
     private void removeBans() {
         TrimRefs trim = new TrimRefs(true);
         ReferenceNode.walk(_referenceNodeRoots, trim);
-        _banGroup.setText(_translationRegistry.getText("Bans") + ": " + 0 + " ");
+        _banGroup.setText(getText("Bans") + ": " + 0 + " ");
         _banRemoveAll.setEnabled(false);
         _banGroup.getParent().layout(new Control[] { _banGroup });
         modified();
@@ -1093,7 +1093,7 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
         Counter counter = new Counter(true);
         ReferenceNode.walk(_referenceNodeRoots, counter);
         int numSelected = counter.getCount();
-        _banGroup.setText(_translationRegistry.getText("Bans") + ": " + numSelected + " ");
+        _banGroup.setText(getText("Bans") + ": " + numSelected + " ");
         _banRemoveAll.setEnabled(numSelected > 0);
         _banGroup.getParent().layout(new Control[] { _banGroup });
     }

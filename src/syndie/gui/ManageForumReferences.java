@@ -180,7 +180,7 @@ class ManageForumReferences extends BaseComponent implements Themeable, Translat
             public int getPageCount() { return 0; }
             public List getAttachmentDescriptions() { return Collections.EMPTY_LIST; }
         });
-        popup.showPopup(_translationRegistry.getText("Add reference"));
+        popup.showPopup(getText("Add reference"));
     }
     
     public void dispose() {

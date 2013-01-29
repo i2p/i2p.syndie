@@ -599,8 +599,8 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
         _root.getDisplay().asyncExec(new Runnable() {
             public void run() {
                 MessageBox box = new MessageBox(_tree.getShell(), SWT.ICON_QUESTION | SWT.YES | SWT.NO);
-                box.setMessage(_translationRegistry.getText("To use Syndie, you need to 'syndicate' messages between you and some remote archives.  Would you like to configure your syndication now?"));
-                box.setText(_translationRegistry.getText("Schedule syndication?"));
+                box.setMessage(getText("To use Syndie, you need to 'syndicate' messages between you and some remote archives.  Would you like to configure your syndication now?"));
+                box.setText(getText("Schedule syndication?"));
                 int rc = box.open();
                 if (rc == SWT.YES)
                     _navControl.view(_uriControl.createSyndicationConfigURI());
@@ -834,7 +834,7 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
         if (info.getPassphrasePrompt() != null) {
             buf.append(info.getName())
                .append(" (")
-               .append(_translationRegistry.getText("Requires password"))
+               .append(getText("Requires password"))
                .append(')');
             f = _themeRegistry.getTheme().MSG_UNKNOWN_FONT;
         } else if (info.getReadKeyUnknown()) {  // FIXME && we don't have key in DB
@@ -842,7 +842,7 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
             buf.append('[')
                .append(hash.toBase64().substring(0, 6))
                .append("] (")
-               .append(_translationRegistry.getText("Forum key unknown"))
+               .append(getText("Forum key unknown"))
                .append(')');
             f = _themeRegistry.getTheme().MSG_UNKNOWN_FONT;
         } else {

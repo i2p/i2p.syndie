@@ -676,8 +676,8 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
                 }
             } catch (ParseException pe) {
                 MessageBox box = new MessageBox(_filterRow.getShell(), SWT.ICON_ERROR | SWT.OK);
-                box.setText(_translationRegistry.getText("Bad date"));
-                box.setMessage(_translationRegistry.getText("Error parsing date") + ": " + pe.getMessage());
+                box.setText(getText("Bad date"));
+                box.setMessage(getText("Error parsing date") + ": " + pe.getMessage());
                 box.open();
                 date.forceFocus();
             }
@@ -777,7 +777,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             _filterTag.setRedraw(false);
             _filterTag.removeAll();
             TreeSet tags = new TreeSet(_msgTree.getTags());
-            _filterTag.add(_translationRegistry.getText("Any tags"));
+            _filterTag.add(getText("Any tags"));
             for (Iterator iter = tags.iterator(); iter.hasNext(); ) {
                 String tag = ((String)iter.next()).trim();
                 if (tag.length() > 0)
@@ -1595,7 +1595,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         Composite c = new Composite(s, SWT.BORDER);
         c.setLayout(new RowLayout(SWT.HORIZONTAL));
         Label label = new Label(c, SWT.NONE);
-        label.setText(_translationRegistry.getText("Message filtering in progress") + "   ");
+        label.setText(getText("Message filtering in progress") + "   ");
         final Label filler = new Label(c, SWT.NONE);
         label.setFont(_themeRegistry.getTheme().SHELL_FONT);
         filler.setFont(_themeRegistry.getTheme().SHELL_FONT);
@@ -1702,7 +1702,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         _fullNodes = referenceNodes;
         _refreshButton.setEnabled(true);
         if (sz <= 0 || referenceNodes.isEmpty()) {
-            String msg = _translationRegistry.getText("No items to display");
+            String msg = getText("No items to display");
             _navState.setText(msg);
             _navNext.setEnabled(false);
             _navEnd.setEnabled(false);
@@ -1757,7 +1757,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
       ****/
         
         StringBuilder buf = new StringBuilder();
-        buf.append(_translationRegistry.getText("Page") + ": ");
+        buf.append(getText("Page") + ": ");
         buf.append(_currentPage+1);
         buf.append(" / ");
         buf.append(pages);
@@ -2122,7 +2122,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
                 status = node.getMessageStatus(); //_client.getMessageStatus(_client.getLoggedInNymId(), msgId, targetChanId);
             } else {
                 // message is not locally known
-                subj = _translationRegistry.getText("Message is not known locally");
+                subj = getText("Message is not known locally");
                 auth = UIUtil.displayName(scopeName, uri.getScope());
                 chan = "";
                 if (messageId >= 0)

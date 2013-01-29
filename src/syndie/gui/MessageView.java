@@ -173,7 +173,7 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
     
     public String getTitle() { 
         String rv = _headerSubject.getText();
-        //return _translationRegistry.getText("msg: ") + rv;
+        //return getText("msg: ") + rv;
         return rv;
     }
     
@@ -279,7 +279,7 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
                 _headerAuthor.setText(UIUtil.displayName(name, authorChan.getChannelHash()));
                 _headerAuthor.setFont(theme.DEFAULT_FONT);
             } else {
-                _headerAuthor.setText(_translationRegistry.getText("Unspecified"));
+                _headerAuthor.setText(getText("Unspecified"));
                 _headerAuthor.setFont(theme.MSG_UNKNOWN_FONT);
             }
             timer.addEvent("author set");
@@ -291,7 +291,7 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
                 _headerForum.setText(UIUtil.displayName(name, forumChan.getChannelHash()));
                 _headerForum.setFont(theme.DEFAULT_FONT);
             } else {
-                _headerForum.setText(_translationRegistry.getText("Unspecified"));
+                _headerForum.setText(getText("Unspecified"));
                 _headerForum.setFont(theme.MSG_UNKNOWN_FONT);
             }
             timer.addEvent("forum set");
@@ -502,8 +502,8 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
                        MessageBox box = null;
                        if (!ok) {
                            box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.YES | SWT.NO);
-                           box.setText(_translationRegistry.getText("Passphrase incorrect"));
-                           box.setMessage(_translationRegistry.getText("The message could not be reimported - the passphrase was not correct.  Would you like to try again?"));
+                           box.setText(getText("Passphrase incorrect"));
+                           box.setMessage(getText("The message could not be reimported - the passphrase was not correct.  Would you like to try again?"));
                            int rc = box.open();
                            if (rc == SWT.YES) {
                                _navControl.unview(_uri);
@@ -839,8 +839,8 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
           /****
             if (allowedPublicReply()) {
                 MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_WARNING | SWT.YES | SWT.NO);
-                box.setText(_translationRegistry.getText("Reply to private message"));
-                box.setMessage(_translationRegistry.getText("Are you sure you want to post a public reply to a private message?"));
+                box.setText(getText("Reply to private message"));
+                box.setMessage(getText("Are you sure you want to post a public reply to a private message?"));
                 int rc = box.open();
                 if (rc != SWT.YES)
                     return;

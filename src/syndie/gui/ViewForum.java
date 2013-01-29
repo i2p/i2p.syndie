@@ -326,7 +326,7 @@ public class ViewForum extends BaseComponent implements Translatable, Themeable 
         _users.setMenu(userMenu);
         MenuItem viewForum = new MenuItem(userMenu, SWT.PUSH);
         viewForum.setImage(ImageUtil.ICON_VIEW);
-        viewForum.setText(_translationRegistry.getText("View forum"));
+        viewForum.setText(getText("View forum"));
         viewForum.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewUser(); }
             public void widgetSelected(SelectionEvent selectionEvent) { viewUser(); }
@@ -340,7 +340,7 @@ public class ViewForum extends BaseComponent implements Translatable, Themeable 
         });
         MenuItem viewMeta = new MenuItem(userMenu, SWT.PUSH);
         viewMeta.setImage(ImageUtil.ICON_HM_ABOUT);
-        viewMeta.setText(_translationRegistry.getText("View forum profile"));
+        viewMeta.setText(getText("View forum profile"));
         viewMeta.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewMeta(); }
             public void widgetSelected(SelectionEvent selectionEvent) { viewMeta(); }
@@ -371,7 +371,7 @@ public class ViewForum extends BaseComponent implements Translatable, Themeable 
 
         MenuItem view = new MenuItem(archiveMenu, SWT.PUSH);
         view.setImage(ImageUtil.ICON_VIEW);
-        view.setText(_translationRegistry.getText("View"));
+        view.setText(getText("View"));
         view.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { viewArchive(); }
             public void widgetSelected(SelectionEvent selectionEvent) { viewArchive(); }
@@ -728,9 +728,9 @@ public class ViewForum extends BaseComponent implements Translatable, Themeable 
             TableItem item = new TableItem(_archives, SWT.NONE);
             item.setText(0, url.trim());
             if (_pubArchiveURIs.contains(uri))
-                item.setText(1, _translationRegistry.getText("Public"));
+                item.setText(1, getText("Public"));
             else
-                item.setText(1, _translationRegistry.getText("Authorized readers only"));
+                item.setText(1, getText("Authorized readers only"));
             
             _archiveItemToURI.put(item, uri);
         }
@@ -777,9 +777,9 @@ public class ViewForum extends BaseComponent implements Translatable, Themeable 
                 item.setText(0, scope.toBase64().substring(0,6));
             
             if (_managerHashes.contains(scope))
-                item.setText(1, _translationRegistry.getText("Manager"));
+                item.setText(1, getText("Manager"));
             else
-                item.setText(1, _translationRegistry.getText("Authorized poster"));
+                item.setText(1, getText("Authorized poster"));
             
             _userItemToHash.put(item, scope);
         }

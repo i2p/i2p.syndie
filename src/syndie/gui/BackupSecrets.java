@@ -146,8 +146,8 @@ public class BackupSecrets extends BaseComponent implements Themeable, Translata
         if (_passphraseRequired.getSelection()) {
             if (pass.length() <= 0) {
                 MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
-                box.setMessage(_translationRegistry.getText("A blank passphrase is not allowed - if you don't want to protect your secret keys, please uncheck the passphrase checkbox"));
-                box.setText(_translationRegistry.getText("Passphrase required"));
+                box.setMessage(getText("A blank passphrase is not allowed - if you don't want to protect your secret keys, please uncheck the passphrase checkbox"));
+                box.setText(getText("Passphrase required"));
                 box.open();
                 return;
             }
@@ -181,20 +181,20 @@ public class BackupSecrets extends BaseComponent implements Themeable, Translata
         if (nymKeys.size() > 0) {
             FileDialog dialog = new FileDialog(_root.getShell(), SWT.SAVE | SWT.SINGLE);
             dialog.setFileName("nymkeys.dat");
-            dialog.setText(_translationRegistry.getText("File to write the backup to"));
+            dialog.setText(getText("File to write the backup to"));
             String filename = dialog.open();
             if (filename != null) {
                 String err = backup(nymKeys, chanMeta, pass, filename);
                 if (err != null) {
                     MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
-                    box.setMessage(_translationRegistry.getText("There was an error backing up the keys")  + ": "+ err);
-                    box.setText(_translationRegistry.getText("Error"));
+                    box.setMessage(getText("There was an error backing up the keys")  + ": "+ err);
+                    box.setText(getText("Error"));
                     box.open();
                 } else {
                     _navControl.unview(_uri);
                     MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_INFORMATION | SWT.OK);
-                    box.setMessage(_translationRegistry.getText("The keys were backed up to")  + ": "+ filename);
-                    box.setText(_translationRegistry.getText("Backup successful"));
+                    box.setMessage(getText("The keys were backed up to")  + ": "+ filename);
+                    box.setText(getText("Backup successful"));
                     box.open();
                 }
             }
@@ -427,16 +427,16 @@ public class BackupSecrets extends BaseComponent implements Themeable, Translata
                 item.setChecked(true);
                 String str = null;
                 if (Constants.KEY_FUNCTION_MANAGE.equals(key.getFunction()))
-                    str = _translationRegistry.getText("Forum management key");
+                    str = getText("Forum management key");
                 else if (Constants.KEY_FUNCTION_REPLY.equals(key.getFunction()))
-                    str = _translationRegistry.getText("Forum reply key");
+                    str = getText("Forum reply key");
                 else if (Constants.KEY_FUNCTION_POST.equals(key.getFunction()))
-                    str = _translationRegistry.getText("Forum post key");
+                    str = getText("Forum post key");
                 else if (Constants.KEY_FUNCTION_READ.equals(key.getFunction()))
-                    str = _translationRegistry.getText("Forum read key");
+                    str = getText("Forum read key");
                 
                 if (key.getIsExpired())
-                    str = str + " [" + _translationRegistry.getText("Expired") + "]";
+                    str = str + " [" + getText("Expired") + "]";
                 
                 str = str + " (" + _client.sha256(key.getData()).toBase64().substring(0,12) + ")";
                 item.setText(str);

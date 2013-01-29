@@ -452,7 +452,7 @@ public class ReferenceEditor extends BaseComponent implements Themeable, Transla
         
         TreeItem root = null;
         root = new TreeItem(_refCategory, SWT.NONE);
-        root.setText(_translationRegistry.getText("Top level"));
+        root.setText(getText("Top level"));
         
         for (int i = 0; i < roots.size(); i++) {
             NymReferenceNode node = (NymReferenceNode)roots.get(i);
@@ -506,8 +506,8 @@ public class ReferenceEditor extends BaseComponent implements Themeable, Transla
             } catch (SWTException se) {
                 _ui.errorMessage("Error creating the image from " + selected, se);
                 MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
-                box.setText(_translationRegistry.getText("Invalid image"));
-                box.setMessage(_translationRegistry.getText("Unable to load the image") + ": " + se.getMessage());
+                box.setText(getText("Invalid image"));
+                box.setMessage(getText("Unable to load the image") + ": " + se.getMessage());
                 box.open();
             }
         }
@@ -645,7 +645,7 @@ public class ReferenceEditor extends BaseComponent implements Themeable, Transla
         } catch (URISyntaxException use) {
             uri = null;
         }
-        popup.showPopup(_translationRegistry.getText("Select location"), uri, null);
+        popup.showPopup(getText("Select location"), uri, null);
     }
     
     public void dispose() {

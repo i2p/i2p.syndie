@@ -147,7 +147,7 @@ public class ReferencesPanel extends BaseComponent implements Translatable, Them
         final SyndieURI uri = node.getURI();
         
         MenuItem view = new MenuItem(menu, SWT.PUSH);
-        view.setText(_translationRegistry.getText("View"));
+        view.setText(getText("View"));
         if (uri != null)
             view.addSelectionListener(new FireSelectionListener() { public void fire() { viewSelected(sel); } });
         else
@@ -156,7 +156,7 @@ public class ReferencesPanel extends BaseComponent implements Translatable, Them
         // view all makes sense in the tabbed view, but not in the desktop
         /*
         MenuItem viewAll = new MenuItem(menu, SWT.PUSH);
-        view.setText(_translationRegistry.getText("View children"));
+        view.setText(getText("View children"));
         if (node.getChildCount() > 0) {
             view.addSelectionListener(new FireSelectionListener() { 
                 public void fire() {
@@ -169,7 +169,7 @@ public class ReferencesPanel extends BaseComponent implements Translatable, Them
          */
         
         MenuItem copy = new MenuItem(menu, SWT.PUSH);
-        copy.setText(_translationRegistry.getText("Copy target URI"));
+        copy.setText(getText("Copy target URI"));
         copy.addSelectionListener(new FireSelectionListener() { 
             public void fire() {
                 TextTransfer tt = TextTransfer.getInstance();
@@ -182,27 +182,27 @@ public class ReferencesPanel extends BaseComponent implements Translatable, Them
         });
         
         MenuItem edit = new MenuItem(menu, SWT.PUSH);
-        edit.setText(_translationRegistry.getText("Edit"));
+        edit.setText(getText("Edit"));
         edit.addSelectionListener(new FireSelectionListener() { public void fire() { edit(sel); } });
         
         MenuItem delete = new MenuItem(menu, SWT.PUSH);
-        delete.setText(_translationRegistry.getText("Delete"));
+        delete.setText(getText("Delete"));
         delete.addSelectionListener(new FireSelectionListener() { public void fire() { delete(sel); } });
     }
     
     private void buildMenu(Menu menu, final TreeItem sel[]) {
         MenuItem view = new MenuItem(menu, SWT.PUSH);
-        view.setText(_translationRegistry.getText("View"));
+        view.setText(getText("View"));
         view.setImage(ImageUtil.ICON_VIEW);
         view.setEnabled(false);
         
         MenuItem edit = new MenuItem(menu, SWT.PUSH);
-        edit.setText(_translationRegistry.getText("Edit"));
+        edit.setText(getText("Edit"));
         edit.setImage(ImageUtil.ICON_EDIT);
         edit.addSelectionListener(new FireSelectionListener() { public void fire() { edit(sel); } });
         
         MenuItem delete = new MenuItem(menu, SWT.PUSH);
-        delete.setText(_translationRegistry.getText("Delete"));
+        delete.setText(getText("Delete"));
         delete.setImage(ImageUtil.ICON_DELETE);
         delete.addSelectionListener(new FireSelectionListener() { public void fire() { delete(sel); } });
     }

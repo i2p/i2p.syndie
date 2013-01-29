@@ -343,8 +343,8 @@ public class ExpirationManager extends BaseComponent implements Themeable, Trans
             _revert = new Button(buttons, SWT.PUSH);
             _revert.addSelectionListener(new FireSelectionListener() { public void fire() { revertChanges(); } });
             
-            _save.setText(_translationRegistry.getText("Save changes"));
-            _revert.setText(_translationRegistry.getText("Revert changes"));
+            _save.setText(getText("Save changes"));
+            _revert.setText(getText("Revert changes"));
             
             _save.setFont(_themeRegistry.getTheme().BUTTON_FONT);
             _revert.setFont(_themeRegistry.getTheme().BUTTON_FONT);
@@ -357,7 +357,7 @@ public class ExpirationManager extends BaseComponent implements Themeable, Trans
                 // standard policies, not deletable
             } else {
                 _delete = new Button(buttons, SWT.PUSH);
-                _delete.setText(_translationRegistry.getText("Delete policy"));
+                _delete.setText(getText("Delete policy"));
                 _delete.setFont(_themeRegistry.getTheme().BUTTON_FONT);
                 _delete.addSelectionListener(new FireSelectionListener() { public void fire() { deletePolicy(); } });
             }
@@ -459,7 +459,7 @@ public class ExpirationManager extends BaseComponent implements Themeable, Trans
                 _mimicDefault = new Button(_detailRoot, SWT.CHECK);
                 _mimicDefault.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
                 _mimicDefault.setSelection(_policy.getMimicDefault());
-                _mimicDefault.setText(_translationRegistry.getText("Same as the default policy"));
+                _mimicDefault.setText(getText("Same as the default policy"));
                 _mimicDefault.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
                 attributeRoot = new Composite(_detailRoot, SWT.NONE);
                 attributeRoot.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
@@ -491,9 +491,9 @@ public class ExpirationManager extends BaseComponent implements Themeable, Trans
         
         private void render() {
             if (_policy.isDBPolicy())
-                _type.setText(_translationRegistry.getText("Internal message data"));
+                _type.setText(getText("Internal message data"));
             else
-                _type.setText(_translationRegistry.getText("Sharable external message data"));
+                _type.setText(getText("Sharable external message data"));
             
             if (_policy.getMaxNumMessages() > 0) {
                 _maxNumMsgsVal.setText(_policy.getMaxNumMessages() + "");
@@ -563,7 +563,7 @@ public class ExpirationManager extends BaseComponent implements Themeable, Trans
             
             _maxNumMsgsEnable = new Button(row, SWT.CHECK);
             _maxNumMsgsLabel = new Label(row, SWT.NONE);
-            _maxNumMsgsLabel.setText(_translationRegistry.getText("Max number of messages") + ": ");
+            _maxNumMsgsLabel.setText(getText("Max number of messages") + ": ");
             _maxNumMsgsVal = new Text(row, SWT.SINGLE | SWT.BORDER);
             _maxNumMsgsVal.setTextLimit(7);
             
@@ -614,7 +614,7 @@ public class ExpirationManager extends BaseComponent implements Themeable, Trans
             row.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
             _maxSizeKBEnable = new Button(row, SWT.CHECK);
             _maxSizeKBLabel = new Label(row, SWT.NONE);
-            _maxSizeKBLabel.setText(_translationRegistry.getText("Max total size (KBytes)") + ": ");
+            _maxSizeKBLabel.setText(getText("Max total size (KBytes)") + ": ");
             _maxSizeKBVal  = new Text(row, SWT.SINGLE | SWT.BORDER);
             _maxSizeKBVal.setTextLimit(7);
 
@@ -665,7 +665,7 @@ public class ExpirationManager extends BaseComponent implements Themeable, Trans
             row.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
             _maxAgeDaysEnable = new Button(row, SWT.CHECK);
             _maxAgeDaysLabel = new Label(row, SWT.NONE);
-            _maxAgeDaysLabel.setText(_translationRegistry.getText("Max age (days)") + ": ");
+            _maxAgeDaysLabel.setText(getText("Max age (days)") + ": ");
             _maxAgeDaysVal = new Text(row, SWT.SINGLE | SWT.BORDER);
             _maxAgeDaysVal.setTextLimit(4);
             

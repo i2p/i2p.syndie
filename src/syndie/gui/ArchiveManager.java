@@ -194,11 +194,11 @@ public class ArchiveManager extends BaseComponent implements Translatable, Theme
 
     private void manageAdvertised() {
         final Shell s = new Shell(_root.getShell(), SWT.DIALOG_TRIM | SWT.RESIZE | SWT.PRIMARY_MODAL);
-        s.setText(_translationRegistry.getText("Advertised archives"));
+        s.setText(getText("Advertised archives"));
         s.setLayout(new GridLayout(1, true));
         Label desc = new Label(s, SWT.WRAP);
         desc.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, false, false));
-        desc.setText(_translationRegistry.getText("If you allow people to sync off your archive, you can tell them about some alternate archives they can sync off as well"));
+        desc.setText(getText("If you allow people to sync off your archive, you can tell them about some alternate archives they can sync off as well"));
         final Table archives = new Table(s, SWT.SINGLE | SWT.CHECK | SWT.BORDER | SWT.V_SCROLL | SWT.H_SCROLL);
         archives.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         final List uris = new ArrayList();
@@ -215,7 +215,7 @@ public class ArchiveManager extends BaseComponent implements Translatable, Theme
         }
         Button ok = new Button(s, SWT.PUSH);
         ok.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
-        ok.setText(_translationRegistry.getText("OK"));
+        ok.setText(getText("OK"));
         ok.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { setArchives(archives, uris); s.dispose(); }
             public void widgetSelected(SelectionEvent selectionEvent) { setArchives(archives, uris); s.dispose(); }
@@ -249,13 +249,13 @@ public class ArchiveManager extends BaseComponent implements Translatable, Theme
 
     private void manageBanned() {
         final Shell s = new Shell(_root.getShell(), SWT.DIALOG_TRIM | SWT.RESIZE | SWT.PRIMARY_MODAL);
-        s.setText(_translationRegistry.getText("Banned"));
+        s.setText(getText("Banned"));
         s.setLayout(new GridLayout(1, true));
         Label desc = new Label(s, SWT.WRAP);
         GridData gd = new GridData(GridData.FILL, GridData.BEGINNING, false, false);
         gd.widthHint = 400;
         desc.setLayoutData(gd);
-        desc.setText(_translationRegistry.getText("These authors and forums are completely ignored, with all of the associated messages refused"));
+        desc.setText(getText("These authors and forums are completely ignored, with all of the associated messages refused"));
         final Table banned = new Table(s, SWT.SINGLE | SWT.CHECK | SWT.BORDER | SWT.V_SCROLL | SWT.H_SCROLL);
         gd = new GridData(GridData.FILL, GridData.FILL, true, true);
         gd.widthHint = 400;
@@ -267,7 +267,7 @@ public class ArchiveManager extends BaseComponent implements Translatable, Theme
             String name = _client.getChannelName(scope);
             String displayName = UIUtil.displayName(name, scope) +
                                  " (" +
-                                 _translationRegistry.getText("Full hash") +
+                                 getText("Full hash") +
                                  ": " +
                                  scope.toBase64() +
                                  ')';
@@ -276,7 +276,7 @@ public class ArchiveManager extends BaseComponent implements Translatable, Theme
         }
         Button ok = new Button(s, SWT.PUSH);
         ok.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
-        ok.setText(_translationRegistry.getText("Unban checked"));
+        ok.setText(getText("Unban checked"));
         ok.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { setBanned(banned); s.dispose(); }
             public void widgetSelected(SelectionEvent selectionEvent) { setBanned(banned); s.dispose(); }

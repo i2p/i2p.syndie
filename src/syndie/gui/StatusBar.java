@@ -348,7 +348,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         _ui.debugMessage("statusbar dorefreshdisplay all refreshes done");
         
         if (pbe > 0) {
-            _pbe.setText(_translationRegistry.getText("Pass. reqd") + ": " + pbe);
+            _pbe.setText(getText("Pass. reqd") + ": " + pbe);
             ((GridData)_pbe.getLayoutData()).exclude = false;
             _pbe.setVisible(true);
         } else {
@@ -357,7 +357,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         }
         
         if (priv != null) {
-            _priv.setText(_translationRegistry.getText("Private msgs") + ": " + priv);
+            _priv.setText(getText("Private msgs") + ": " + priv);
             ((GridData)_priv.getLayoutData()).exclude = false;
             _priv.setVisible(true);
         } else {
@@ -366,7 +366,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         }
         
         if (postpone > 0) {
-            _postpone.setText(_translationRegistry.getText("Drafts") + ": " + postpone);
+            _postpone.setText(getText("Drafts") + ": " + postpone);
             ((GridData)_postpone.getLayoutData()).exclude = false;
             _postpone.setVisible(true);
         } else {
@@ -474,7 +474,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         
         if (threads > 0) {
             MenuItem item = new MenuItem(_unreadMenu, SWT.PUSH);
-            item.setText(_translationRegistry.getText("View unread in bookmarked forums"));
+            item.setText(getText("View unread in bookmarked forums"));
             item.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) {
                     _navControl.view(_uriControl.createHighlightWatchedURI(_client, true, true, MessageTree.shouldUseImportDate(_client)));
@@ -485,7 +485,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
             });
             
             item = new MenuItem(_unreadMenu, SWT.PUSH);
-            item.setText(_translationRegistry.getText("View unread in all forums"));
+            item.setText(getText("View unread in all forums"));
             item.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) {
                     _navControl.view(SyndieURI.createBookmarked(new ArrayList(), true, true, MessageTree.shouldUseImportDate(_client)));
@@ -524,7 +524,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         GridData gd = (GridData)_unread.getLayoutData();
         boolean wasExcluded = gd.exclude;
         if (threads > 0) {
-            _unread.setText(_translationRegistry.getText("Unread") + ": " + sortedForums.size() + "/" + threads);
+            _unread.setText(getText("Unread") + ": " + sortedForums.size() + "/" + threads);
             gd.exclude = false;
             _unread.setVisible(true);
             if (wasExcluded)
@@ -602,7 +602,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         if (unreadMsgIds.size() > 0) {
             new MenuItem(_privMenu, SWT.SEPARATOR);
             MenuItem item = new MenuItem(_privMenu, SWT.PUSH);
-            item.setText(_translationRegistry.getText("Mark all as read"));
+            item.setText(getText("Mark all as read"));
             item.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) { markAllRead(); }
                 public void widgetSelected(SelectionEvent selectionEvent) { markAllRead(); }
@@ -701,7 +701,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
             final Long postponeId = (Long)entry.getKey();
             final Integer rev = (Integer)entry.getValue();
             
-            String str = _translationRegistry.getText("Saved") + ' ' + DateTime.getDateTime(postponeId.longValue());
+            String str = getText("Saved") + ' ' + DateTime.getDateTime(postponeId.longValue());
             MenuItem item = new MenuItem(_postponeMenu, SWT.PUSH);
             item.setText(str);
             item.addSelectionListener(new SelectionListener() {
@@ -796,7 +796,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         }
         
         if (!forums.isEmpty()) {
-            _newForum.setText(_translationRegistry.getText("New forums") + ": " + forums.size());
+            _newForum.setText(getText("New forums") + ": " + forums.size());
             ((GridData)_newForum.getLayoutData()).exclude = false;
             _newForum.setVisible(true);
         } else {
@@ -847,10 +847,10 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
     private void displayOnlineState(boolean online) {
         if (online) {
             _onlineState.setImage(ImageUtil.ICON_ONLINE);
-            _onlineState.setToolTipText(_translationRegistry.getText("Online: Syndication is enabled"));
+            _onlineState.setToolTipText(getText("Online: Syndication is enabled"));
         } else {
             _onlineState.setImage(ImageUtil.ICON_OFFLINE);
-            _onlineState.setToolTipText(_translationRegistry.getText("Offline: Syndication is deferred"));
+            _onlineState.setToolTipText(getText("Offline: Syndication is deferred"));
         }
         updateNextSync();
     }
@@ -866,13 +866,13 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
     
     public void setNextSync(long when, boolean online) {
         if (!online) {
-            _nextSyncDate.setText(_translationRegistry.getText("Deferred") + "...");
+            _nextSyncDate.setText(getText("Deferred") + "...");
             _syncNow = false;
         } else if (when <= 0) {
-            _nextSyncDate.setText(_translationRegistry.getText("None scheduled"));
+            _nextSyncDate.setText(getText("None scheduled"));
             _syncNow = false;
         } else if (when-System.currentTimeMillis() <= 0) {
-            _nextSyncDate.setText(_translationRegistry.getText("Now"));
+            _nextSyncDate.setText(getText("Now"));
             _syncNow = true;
         } else {
             long delay = when-System.currentTimeMillis();

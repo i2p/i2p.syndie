@@ -98,8 +98,8 @@ public class WebRipPostPopup extends BaseComponent implements Themeable, Transla
                 _shell.getDisplay().asyncExec(new Runnable() {
                     public void run() {
                         MessageBox box = new MessageBox(_parent, SWT.ICON_ERROR | SWT.OK);
-                        box.setMessage(_translationRegistry.getText("Web rip could not be created") + ": " + err.toString());
-                        box.setText(_translationRegistry.getText("Web rip failed"));
+                        box.setMessage(getText("Web rip could not be created") + ": " + err.toString());
+                        box.setText(getText("Web rip failed"));
                         box.open();
                     }
                 });
@@ -157,8 +157,8 @@ public class WebRipPostPopup extends BaseComponent implements Themeable, Transla
                                 _parent.getDisplay().asyncExec(new Runnable() { 
                                     public void run() {
                                         MessageBox box = new MessageBox(_parent, SWT.ICON_INFORMATION | SWT.OK);
-                                        box.setMessage(_translationRegistry.getText("Web rip created - please syndicate it to others if you want to share"));
-                                        box.setText(_translationRegistry.getText("Web rip created"));
+                                        box.setMessage(getText("Web rip created - please syndicate it to others if you want to share"));
+                                        box.setText(getText("Web rip created"));
                                         box.open();
                                         _navControl.view(uri);
                                     }
@@ -167,8 +167,8 @@ public class WebRipPostPopup extends BaseComponent implements Themeable, Transla
                                 _parent.getDisplay().asyncExec(new Runnable() { 
                                     public void run() {
                                         MessageBox box = new MessageBox(_parent, SWT.ICON_ERROR | SWT.OK);
-                                        box.setMessage(_translationRegistry.getText("Web rip failed") + ": " + errors);
-                                        box.setText(_translationRegistry.getText("Web rip failed"));
+                                        box.setMessage(getText("Web rip failed") + ": " + errors);
+                                        box.setText(getText("Web rip failed"));
                                         box.open();
                                     }
                                 });
@@ -177,8 +177,8 @@ public class WebRipPostPopup extends BaseComponent implements Themeable, Transla
                             _parent.getDisplay().asyncExec(new Runnable() { 
                                 public void run() {
                                     MessageBox box = new MessageBox(_parent, SWT.ICON_ERROR | SWT.OK);
-                                    box.setMessage(_translationRegistry.getText("Web rip failed") + ": " + errors);
-                                    box.setText(_translationRegistry.getText("Web rip failed"));
+                                    box.setMessage(getText("Web rip failed") + ": " + errors);
+                                    box.setText(getText("Web rip failed"));
                                     box.open();
                                 }
                             });

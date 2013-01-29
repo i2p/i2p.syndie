@@ -549,7 +549,7 @@ public class BrowseForum extends BaseComponent implements MessageTree.MessageTre
             GridData gd = (GridData)_meta.getLayoutData();
             gd.exclude = false;
             _ui.debugMessage("update metadata: no forum");
-            _metaDesc.setText(_translationRegistry.getText("Forum not found. It was banned or deleted."));
+            _metaDesc.setText(getText("Forum not found. It was banned or deleted."));
             // setFont?
             _metaIconManageable.setVisible(false);
             _metaIconPostable.setVisible(false);

@@ -179,7 +179,7 @@ class AttachmentPreview extends BaseComponent implements Translatable, Themeable
         _maxShell = new Shell(_root.getShell(), SWT.NO_TRIM | SWT.PRIMARY_MODAL);
         _maxShell.setLayout(new GridLayout(1, true));
         Button unmax = new Button(_maxShell, SWT.PUSH);
-        unmax.setText(_translationRegistry.getText("Restore normal size"));
+        unmax.setText(getText("Restore normal size"));
         unmax.setFont(_themeRegistry.getTheme().BUTTON_FONT);
         unmax.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
 
@@ -308,7 +308,7 @@ class AttachmentPreview extends BaseComponent implements Translatable, Themeable
                     _ui.errorMessage("Bad attachment length " + data.length + " expected " + size);
                 }
             } else {
-                _error.setText(_translationRegistry.getText("Unable to load attachment"));
+                _error.setText(getText("Unable to load attachment"));
                 _ui.errorMessage("unable to load attachment");
             }
         }
@@ -320,7 +320,7 @@ class AttachmentPreview extends BaseComponent implements Translatable, Themeable
         } else {
             _ui.debugMessage("not loading preview");
             // FIXME not being displayed
-            _message.setText(_translationRegistry.getText("No preview available"));
+            _message.setText(getText("No preview available"));
             _preview.setImage(null);
             _preview.setVisible(false);
             //gd.exclude = true;
@@ -356,14 +356,14 @@ class AttachmentPreview extends BaseComponent implements Translatable, Themeable
             fos.close();
             fos = null;
             MessageBox box = new MessageBox(_root.getShell(), SWT.OK | SWT.ICON_INFORMATION);
-            box.setText(_translationRegistry.getText("Attachment saved"));
-            box.setMessage(_translationRegistry.getText("Attachment saved to") + ':' + out.getAbsolutePath());
+            box.setText(getText("Attachment saved"));
+            box.setMessage(getText("Attachment saved to") + ':' + out.getAbsolutePath());
             box.open();
         } catch (IOException ioe) {
             // hrm
             MessageBox box = new MessageBox(_root.getShell(), SWT.OK | SWT.ICON_ERROR);
-            box.setText(_translationRegistry.getText("Error saving attachment"));
-            box.setMessage(_translationRegistry.getText("Attachment could not be saved") + ": " + ioe.getMessage());
+            box.setText(getText("Error saving attachment"));
+            box.setMessage(getText("Attachment could not be saved") + ": " + ioe.getMessage());
             box.open();
         } finally {
             if (fos != null) try { fos.close(); } catch (IOException ioe) {}

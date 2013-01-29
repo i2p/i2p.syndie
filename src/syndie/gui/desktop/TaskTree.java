@@ -92,7 +92,7 @@ public class TaskTree extends BaseComponent implements Themeable, Translatable {
         });
         _cancel.addPaintListener(new PaintListener() {
             public void paintControl(PaintEvent evt) {
-                ImageUtil.drawAscending(evt.gc, _cancel, _themeRegistry.getTheme().SHELL_FONT, _translationRegistry.getText("Cancel task switch"));
+                ImageUtil.drawAscending(evt.gc, _cancel, _themeRegistry.getTheme().SHELL_FONT, getText("Cancel task switch"));
             }
         });
         
@@ -151,7 +151,7 @@ public class TaskTree extends BaseComponent implements Themeable, Translatable {
         _exit.addSelectionListener(new FireSelectionListener() { public void fire() { exit(); } });
         _exit.addPaintListener(new PaintListener() {
             public void paintControl(PaintEvent evt) {
-                ImageUtil.drawDescending(evt.gc, _exit, _themeRegistry.getTheme().SHELL_FONT, _translationRegistry.getText("Exit Syndie"));
+                ImageUtil.drawDescending(evt.gc, _exit, _themeRegistry.getTheme().SHELL_FONT, getText("Exit Syndie"));
             }
         });
         _translationRegistry.register(this);

@@ -300,13 +300,13 @@ public class BugReport extends BaseComponent implements Themeable, Translatable 
                             } else {
                                 MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
                                 box.setMessage(errors);
-                                box.setText(_translationRegistry.getText("Error posting report"));
+                                box.setText(getText("Error posting report"));
                                 box.open();
                             }
                         } else {
                             MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
                             box.setMessage(errors);
-                            box.setText(_translationRegistry.getText("Error posting report"));
+                            box.setText(getText("Error posting report"));
                             box.open();
                         }
                         exec.cleanup();
@@ -439,7 +439,7 @@ public class BugReport extends BaseComponent implements Themeable, Translatable 
     private void addAttachment() {
         if (_fileDialog == null) {
             _fileDialog = new FileDialog(_root.getShell(), SWT.OPEN | SWT.MULTI);
-            _fileDialog.setText(_translationRegistry.getText("File to attach"));
+            _fileDialog.setText(getText("File to attach"));
         }
         if (_fileDialog.open() == null) return;
         String selected[] = _fileDialog.getFileNames();
@@ -473,13 +473,13 @@ public class BugReport extends BaseComponent implements Themeable, Translatable 
         rebuildComponentMenu(cfg);
         ReferenceNode def = cfg.getComponentDefault();
         if (def != null)
-            _component.setText(_translationRegistry.getText(def.getName(), def.getDescription()));
+            _component.setText(getText(def.getName(), def.getDescription()));
         
         _severity.setRedraw(false);
         for (int i = 0; i < cfg.getSeverityCount(); i++) {
             String id = cfg.getSeverityId(i);
             String name = cfg.getSeverityName(i);
-            _severity.add(_translationRegistry.getText(id, name));
+            _severity.add(getText(id, name));
             _severities.add(id);
         }
         if (cfg.getSeverityDefaultIndex() >= 0) {
@@ -492,7 +492,7 @@ public class BugReport extends BaseComponent implements Themeable, Translatable 
         for (int i = 0; i < cfg.getTypeCount(); i++) {
             String id = cfg.getTypeId(i);
             String name = cfg.getTypeName(i);
-            _type.add(_translationRegistry.getText(id, name));
+            _type.add(getText(id, name));
             _types.add(id);
         }
         if (cfg.getTypeDefaultIndex() >= 0) {
@@ -579,10 +579,10 @@ public class BugReport extends BaseComponent implements Themeable, Translatable 
             item = new MenuItem(parent, SWT.CASCADE);
             Menu sub = new Menu(item);
             item.setMenu(sub);
-            item.setText(_translationRegistry.getText(node.getName(), node.getDescription()));
+            item.setText(getText(node.getName(), node.getDescription()));
             
             MenuItem subcur = new MenuItem(sub, SWT.PUSH);
-            subcur.setText(_translationRegistry.getText(node.getName(), node.getDescription()));
+            subcur.setText(getText(node.getName(), node.getDescription()));
             subcur.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) { selectComponent(node); }
                 public void widgetSelected(SelectionEvent selectionEvent) { selectComponent(node); }
@@ -592,7 +592,7 @@ public class BugReport extends BaseComponent implements Themeable, Translatable 
                 addComponent(node.getChild(i), sub);
         } else {
             item = new MenuItem(parent, SWT.PUSH);
-            item.setText(_translationRegistry.getText(node.getName(), node.getDescription()));
+            item.setText(getText(node.getName(), node.getDescription()));
             item.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) { selectComponent(node); }
                 public void widgetSelected(SelectionEvent selectionEvent) { selectComponent(node); }
@@ -601,7 +601,7 @@ public class BugReport extends BaseComponent implements Themeable, Translatable 
     }
     
     private void selectComponent(ReferenceNode node) {
-        _component.setText(_translationRegistry.getText(node.getName(), node.getDescription()));
+        _component.setText(getText(node.getName(), node.getDescription()));
         _selectedComponentId = node.getName();
     }
     

@@ -512,16 +512,16 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     public void postMessage() {
         if (!isModifiedSinceOpen()) {
             MessageBox confirm = new MessageBox(_root.getShell(), SWT.ICON_QUESTION | SWT.YES | SWT.NO);
-            confirm.setText(_translationRegistry.getText("Post empty message?"));
-            confirm.setMessage(_translationRegistry.getText("Do you really want to post this empty message?"));
+            confirm.setText(getText("Post empty message?"));
+            confirm.setMessage(getText("Do you really want to post this empty message?"));
             
             if (confirm.open() == SWT.NO)
                 return;
         }
         if (_subject.getText().length() <= 0) {
             MessageBox confirm = new MessageBox(_root.getShell(), SWT.ICON_QUESTION | SWT.YES | SWT.NO);
-            confirm.setText(_translationRegistry.getText("No subject"));
-            confirm.setMessage(_translationRegistry.getText("Do you really want to post a message without a subject?"));
+            confirm.setText(getText("No subject"));
+            confirm.setMessage(getText("Do you really want to post a message without a subject?"));
             
             if (confirm.open() == SWT.NO)
                 return;
@@ -547,14 +547,14 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                                 ((LocalMessageCallback)iter.next()).messageCreated(uri);
                         } else {
                             MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
-                            box.setMessage(_translationRegistry.getText("There was an error creating the message.  Please view the log for more information.") + ' ' + errors);
-                            box.setText(_translationRegistry.getText("Error creating the message"));
+                            box.setMessage(getText("There was an error creating the message.  Please view the log for more information.") + ' ' + errors);
+                            box.setText(getText("Error creating the message"));
                             box.open();
                         }
                     } else {
                         MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
-                        box.setMessage(_translationRegistry.getText("There was an error creating the message.  Please view the log for more information.") + ' ' + errors);
-                        box.setText(_translationRegistry.getText("Error creating the message"));
+                        box.setMessage(getText("There was an error creating the message.  Please view the log for more information.") + ' ' + errors);
+                        box.setText(getText("Error creating the message"));
                         box.open();
                     }
                     exec.cleanup();
@@ -567,7 +567,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                     if (show == null || Boolean.parseBoolean(show)) {
                         final Shell shell = new Shell(_root.getShell(), SWT.APPLICATION_MODAL | SWT.DIALOG_TRIM);
                         shell.setFont(_themeRegistry.getTheme().SHELL_FONT);
-                        shell.setText(_translationRegistry.getText("Message created"));
+                        shell.setText(getText("Message created"));
                         
                         GridLayout gl = new GridLayout(2, false);
                         shell.setLayout(gl);
@@ -578,19 +578,19 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                         messageLayoutData.heightHint = 75;
                         message.setLayoutData(messageLayoutData);
                         message.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
-                        message.setText(_translationRegistry.getText("Message created successfully! \n" +
+                        message.setText(getText("Message created successfully! \n" +
                                                                      "Please be sure to syndicate it to the arcives so others may read it. \n" +
                                                                      "The message timestamp has been randomized to protect your anonymity. \n"));
                         
                         final Button checkbox = new Button(shell, SWT.CHECK);
                         checkbox.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
-                        checkbox.setText(_translationRegistry.getText("Display this message next time"));
+                        checkbox.setText(getText("Display this message next time"));
                         checkbox.setSelection(true);
                         
                         Button ok = new Button(shell, SWT.PUSH);
                         ok.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
                         ok.setFont(_themeRegistry.getTheme().BUTTON_FONT);
-                        ok.setText(_translationRegistry.getText("OK"));
+                        ok.setText(getText("OK"));
                         ok.addSelectionListener(new FireSelectionListener() {
                             public void fire() {
                                 if (!checkbox.getSelection()) {
@@ -697,8 +697,8 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         if (requireConfirm) {
             // confirm
             MessageBox dialog = new MessageBox(_root.getShell(), SWT.ICON_WARNING | SWT.YES | SWT.NO);
-            dialog.setMessage(_translationRegistry.getText("Are you sure you want to cancel this message?"));
-            dialog.setText(_translationRegistry.getText("Confirm message cancellation"));
+            dialog.setMessage(getText("Are you sure you want to cancel this message?"));
+            dialog.setText(getText("Confirm message cancellation"));
             int rv = dialog.open();
             if (rv == SWT.YES) {
                 cancelMessage(false);
@@ -926,7 +926,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             if ( (title != null) && (title.trim().length() > 0) )
                 editor.getItem().setText(title);
             else
-                editor.getItem().setText(_translationRegistry.getText("Page ") + (i+1));
+                editor.getItem().setText(getText("Page ") + (i+1));
             //if (isHTML)
             //    _pageType.setImage(ImageUtil.ICON_EDITOR_PAGETYPE_HTML);
             //else
@@ -1369,11 +1369,11 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                 public void shellDeiconified(ShellEvent shellEvent) {}
                 public void shellIconified(ShellEvent shellEvent) {}
             });
-            shell.setText(_translationRegistry.getText("Page title"));
+            shell.setText(getText("Page title"));
             
             Label l = new Label(shell, SWT.NONE);
             l.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
-            l.setText(_translationRegistry.getText("Page title") + ':');
+            l.setText(getText("Page title") + ':');
             l.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
             
             final Text titleField = new Text(shell, SWT.SINGLE | SWT.BORDER);
@@ -1394,7 +1394,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             });
             
             Button done = new Button(shell, SWT.PUSH);
-            done.setText(_translationRegistry.getText("OK"));
+            done.setText(getText("OK"));
             done.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
             done.setFont(_themeRegistry.getTheme().BUTTON_FONT);
             done.addSelectionListener(new FireSelectionListener() { 
@@ -1427,10 +1427,10 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         else
             idx = 1;
         _privacy.removeAll();
-        _privacy.add(_translationRegistry.getText("Anyone can read the post"));
-        _privacy.add(_translationRegistry.getText("Authorized readers of the forum can read the post"));
-        _privacy.add(_translationRegistry.getText("Passphrase required to read the post") + "...");
-        _privacy.add(_translationRegistry.getText("Only forum administrators can read the post"));
+        _privacy.add(getText("Anyone can read the post"));
+        _privacy.add(getText("Authorized readers of the forum can read the post"));
+        _privacy.add(getText("Passphrase required to read the post") + "...");
+        _privacy.add(getText("Only forum administrators can read the post"));
         _privacy.setRedraw(true);
     }
     
@@ -1510,9 +1510,9 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             public void fire() { cancelMessage(); }
         });
         
-        _post.setText(_translationRegistry.getText("Post the message"));
-        _postpone.setText(_translationRegistry.getText("Save the message for later"));
-        _cancel.setText(_translationRegistry.getText("Cancel the message"));
+        _post.setText(getText("Post the message"));
+        _postpone.setText(getText("Save the message for later"));
+        _cancel.setText(getText("Cancel the message"));
     }
     
     public static final String TYPE_HTML = "text/html";
@@ -1545,7 +1545,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _pageTypes.add(type);
         _pageTitles.add("");
         int pageNum = _pageEditors.size();
-        ed.getItem().setText(_translationRegistry.getText("Page ") + pageNum);
+        ed.getItem().setText(getText("Page ") + pageNum);
         
         viewPage(_pageEditors.size()-1);
         for (int i = 0; i < _editorStatusListeners.size(); i++)
@@ -1574,7 +1574,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             
             for (int i = 0; i < _pageEditors.size(); i++) {
                 PageEditor cur = (PageEditor)_pageEditors.get(i);
-                cur.getItem().setText(_translationRegistry.getText("Page ") + (i+1));
+                cur.getItem().setText(getText("Page ") + (i+1));
             }
             viewPage(_pageEditors.size()-1);
             saveState();
@@ -1610,7 +1610,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         ctl.setListener(new WebRipListener(shell, ctl));
         ctl.setExistingAttachments(_attachmentData.size());
         shell.pack();
-        shell.setText(_translationRegistry.getText("Add web rip"));
+        shell.setText(getText("Add web rip"));
         shell.addShellListener(new ShellListener() {
             public void shellActivated(ShellEvent shellEvent) {}
             public void shellClosed(ShellEvent evt) { ctl.dispose(); }
@@ -1659,7 +1659,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         ctl.dispose();        
         if (msgs.size() > 0) {
             MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
-            box.setText(_translationRegistry.getText("Rip failed"));
+            box.setText(getText("Rip failed"));
             StringBuilder err = new StringBuilder();
             for (int i = 0; i < msgs.size(); i++)
                 err.append((String)msgs.get(i)).append('\n');
@@ -1742,9 +1742,9 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             return;
         _preview.setEnabled(isHTML);
         if (isHTML && getPageEditor(page).isPreviewShowing())
-            _preview.setText(_translationRegistry.getText("Edit the message"));
+            _preview.setText(getText("Edit the message"));
         else
-            _preview.setText(_translationRegistry.getText("Preview the message"));
+            _preview.setText(getText("Preview the message"));
     }
     
     void setBodyTags() { setBodyTags(null); }
@@ -2458,8 +2458,8 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     }
     private void showUnauthorizedWarning() {
         MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
-        box.setMessage(_translationRegistry.getText("The selected author does not have permission to write in the selected forum - please adjust your selection"));
-        box.setText(_translationRegistry.getText("Not authorized"));
+        box.setMessage(getText("The selected author does not have permission to write in the selected forum - please adjust your selection"));
+        box.setText(getText("Not authorized"));
         box.open();
     }
     
@@ -2506,8 +2506,8 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _toChangeButton.setText(registry.getText("Change forum"));
         _signAsChangeButton.setText(registry.getText("Change signed by"));
         
-        _refEditorTab.setText(_translationRegistry.getText("References"));
-        _threadTab.setText(_translationRegistry.getText("Thread"));
+        _refEditorTab.setText(getText("References"));
+        _threadTab.setText(getText("Thread"));
     }
 
     // image popup stuff
@@ -2515,7 +2515,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         FileDialog dialog = new FileDialog(_root.getShell(), SWT.MULTI | SWT.OPEN);
         Properties prefs = _client.getNymPrefs();
         dialog.setFilterPath(prefs.getProperty("editor.defaultAttachmentPath"));
-        dialog.setText(_translationRegistry.getText("Attach file"));
+        dialog.setText(getText("Attach file"));
         if (dialog.open() == null) return; // cancelled
         String selected[] = dialog.getFileNames();
         String base = dialog.getFilterPath();
@@ -2537,8 +2537,8 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     private boolean isValidSize(long length) {
         if (length > Constants.MAX_ATTACHMENT_SIZE) {
             MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_ERROR | SWT.OK);
-            box.setMessage(_translationRegistry.getText("The attachment could not be added, as it exceeds the maximum attachment size (" + Constants.MAX_ATTACHMENT_SIZE/1024 + "KB)"));
-            box.setText(_translationRegistry.getText("Too large"));
+            box.setMessage(getText("The attachment could not be added, as it exceeds the maximum attachment size (" + Constants.MAX_ATTACHMENT_SIZE/1024 + "KB)"));
+            box.setText(getText("Too large"));
             box.open();
             return false;
         //} else if (length > _browser.getSyndicationManager().getPushStrategy().maxKBPerMessage*1024) {
@@ -2757,10 +2757,10 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                 if (name != null && name.length() != 0)
                     item.setText(UIUtil.truncate(name, 20));
                 else
-                    item.setText(_translationRegistry.getText("Attachment") + ' ' + (i+1));
+                    item.setText(getText("Attachment") + ' ' + (i+1));
             }
         } else {
-            _attachmentSummary.add(_translationRegistry.getText("none"));
+            _attachmentSummary.add(getText("none"));
         }
         
 /*        for (int i = 0; i < _editorStatusListeners.size(); i++)

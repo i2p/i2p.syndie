@@ -360,7 +360,7 @@ class MessageEditorStyler extends BaseComponent implements Themeable, Translatab
         }
         final Menu colorMenu = new Menu(rv);
         MenuItem none = new MenuItem(colorMenu, SWT.PUSH);
-        none.setText(_translationRegistry.getText("default"));
+        none.setText(getText("default"));
         if ( (defaultColor == null) || (!names.contains(defaultColor)) )
             none.setSelection(true);
         none.addSelectionListener(new ColorMenuItemListener(rv, null, onSelect));

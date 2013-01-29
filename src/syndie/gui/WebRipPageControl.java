@@ -342,9 +342,9 @@ public class WebRipPageControl extends BaseComponent implements Translatable, Th
     private void statusUpdated(String translationDefault, String detail, boolean terminal, boolean success) {
         if (_status.isDisposed()) return;
         if ( (detail != null) && (detail.length() > 0) )
-            _status.setText(_translationRegistry.getText(translationDefault) + ": " + detail);
+            _status.setText(getText(translationDefault) + ": " + detail);
         else
-            _status.setText(_translationRegistry.getText(translationDefault));
+            _status.setText(getText(translationDefault));
         
         if (terminal && (_listener != null))
             _listener.ripComplete(success, _ripRunner);

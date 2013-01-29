@@ -228,7 +228,7 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
             if ( (title != null) && (title.trim().length() > 0) ) 
                 _tabs[i].setText(UIUtil.truncate(title, 20));
             else
-                _tabs[i].setText(_translationRegistry.getText("Page") + ' ' + (i+1));
+                _tabs[i].setText(getText("Page") + ' ' + (i+1));
             _tabs[i].setImage(ImageUtil.ICON_MSG_TYPE_NORMAL);
             
             _tabRoots[i].setLayout(new FillLayout());
@@ -246,7 +246,7 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
             _tabs[off] = new CTabItem(_tabFolder, SWT.NONE);
             _tabRoots[off] = new Composite(_tabFolder, SWT.NONE);
             _tabs[off].setControl(_tabRoots[off]);
-            _tabs[off].setText(_translationRegistry.getText("Thread"));
+            _tabs[off].setText(getText("Thread"));
             _tabs[off].setImage(ImageUtil.ICON_REF_FORUM);
             _tabRoots[off].setLayout(new FillLayout());
 
@@ -298,7 +298,7 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
             _tabs[off] = new CTabItem(_tabFolder, SWT.NONE);
             _tabRoots[off] = new Composite(_tabFolder, SWT.NONE);
             _tabs[off].setControl(_tabRoots[off]);
-            _tabs[off].setText(_translationRegistry.getText("References"));
+            _tabs[off].setText(getText("References"));
             _tabs[off].setImage(ImageUtil.ICON_LINK_END);
             _tabRoots[off].setLayout(new FillLayout());
             _refTree = ComponentBuilder.instance().createManageReferenceChooser(_tabRoots[off], false);
@@ -346,7 +346,7 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
                 if (name != null && name.length() != 0)
                     _tabs[off+i].setText(UIUtil.truncate(name, 20));
                 else
-                    _tabs[off+i].setText(_translationRegistry.getText("Attachment") + ' ' + (i+1));
+                    _tabs[off+i].setText(getText("Attachment") + ' ' + (i+1));
                 String desc = cfg.getProperty(Constants.MSG_ATTACH_NAME);
                 if (desc != null && desc.length() > 0 && !desc.equals(_tabs[off+i].getText()))
                     _tabs[off+i].setToolTipText(desc);
