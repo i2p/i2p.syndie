@@ -45,6 +45,8 @@ import syndie.db.JobRunner;
 import syndie.db.UI;
 
 /**
+ * Base for BrowserTree and for popups
+ *
  * The reference chooser tree has five roots, plus a search results list
  * - Watched forums
  *  - $forumName
@@ -70,7 +72,7 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
     protected final URIControl _uriControl;
     private final Composite _parent;
     /** list of NymReferenceNode instances for the roots of the reference trees */
-    private final ArrayList _nymRefs;
+    private final ArrayList<NymReferenceNode> _nymRefs;
     /** true during nymRef rebuild */
     private volatile boolean _rebuilding;
     /** true if viewOnStartup was called before rebuilding was complete */
@@ -78,8 +80,8 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
     /** organizes the channels the nym can post to or manage */
     private DBClient.ChannelCollector _nymChannels;
     /** list of ReferenceNode instances matching the search criteria */
-    private final ArrayList _searchResults;
-    private final Map _watchedItemToWatchedChannel;
+    private final ArrayList<ReferenceNode> _searchResults;
+    private final Map<TreeItem, WatchedChannel> _watchedItemToWatchedChannel;
     
     private Composite _root;
     private Tree _tree;
@@ -90,13 +92,13 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
     
     private TreeItem _bookmarkRoot;
     /** map of TreeItem to NymReferenceNode */
-    private final Map _bookmarkNodes;
+    private final Map<TreeItem, NymReferenceNode> _bookmarkNodes;
     private TreeItem _postRoot;
     /** map of TreeItem to ChannelInfo */
-    private final Map _postChannels;
+    private final Map<TreeItem, ChannelInfo> _postChannels;
     private TreeItem _manageRoot;
     /** map of TreeItem to ChannelInfo */
-    private Map _manageChannels;
+    private Map<TreeItem, ChannelInfo> _manageChannels;
 
     private ChoiceListener _choiceListener;
     private AcceptanceListener _acceptanceListener;
@@ -153,16 +155,21 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
         }
         _tree.getDisplay().asyncExec(new Runnable() { public void run() { redrawSearchResults(true); } });
     }
+
     public void setListener(ChoiceListener lsnr) { _choiceListener = lsnr; }
     public void setAcceptanceListener(AcceptanceListener lsnr) { _acceptanceListener = lsnr; }
 
     protected ChoiceListener getChoiceListener() { return _choiceListener; }
     protected AcceptanceListener getAcceptanceListener() { return _acceptanceListener; }
     protected Tree getTree() { return _tree; }
+
+    /** unused always null */
     protected BanControl getDataControl() { return _dataControl; }
+
     protected WatchedChannel getWatchedChannel(TreeItem item) {
-        return (WatchedChannel)_watchedItemToWatchedChannel.get(item);
+        return _watchedItemToWatchedChannel.get(item);
     }
+
     protected TreeItem getSelectedItem() {
         TreeItem selected[] = getTree().getSelection();
         if ( (selected != null) && (selected.length == 1) )
@@ -189,7 +196,7 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
     public void refreshBookmarks() {
         _tree.setRedraw(false);
         boolean rootWasOpen = _bookmarkRoot.getExpanded();
-        ArrayList openGroupIds = new ArrayList();
+        ArrayList<Long> openGroupIds = new ArrayList();
         if (rootWasOpen) {
             for (int i = 0; i < _bookmarkRoot.getItemCount(); i++)
                 getOpenGroupIds(_bookmarkRoot.getItem(i), openGroupIds);
@@ -198,12 +205,12 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
         _ui.debugMessage("refresh bookmarks: open groupIds: " + openGroupIds + " rootOpen: " + rootWasOpen);
         if (rootWasOpen) {
             _bookmarkRoot.setExpanded(true);
-            ArrayList pending = new ArrayList();
+            ArrayList<TreeItem> pending = new ArrayList();
             TreeItem cur = _bookmarkRoot;
             while (cur != null) {
                 boolean includeChildren = false;
                 if (cur != _bookmarkRoot) {
-                    NymReferenceNode curNode = (NymReferenceNode)_bookmarkNodes.get(cur);
+                    NymReferenceNode curNode = _bookmarkNodes.get(cur);
                     if ( (curNode != null) && (openGroupIds.contains(Long.valueOf(curNode.getGroupId()))) ) {
                         cur.setExpanded(true);
                         includeChildren = true;
@@ -229,20 +236,21 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
         Hash scope = uri.getScope();
         long chanId = _client.getChannelId(scope);
         if (chanId >= 0) {
-            ArrayList watched = new ArrayList(_client.getWatchedChannels());
+            ArrayList<WatchedChannel> watched = new ArrayList(_client.getWatchedChannels());
             for (int i = 0; i < watched.size(); i++) {
-                WatchedChannel chan = (WatchedChannel)watched.get(i);
+                WatchedChannel chan = watched.get(i);
                 if (chan.getChannelId() == chanId)
                     return true;
             }
         }
         for (int i = 0; i < _nymRefs.size(); i++) {
-            ReferenceNode ref = (ReferenceNode)_nymRefs.get(i);
+            ReferenceNode ref = _nymRefs.get(i);
             if (isBookmarked(ref, uri))
                 return true;
         }
         return false;
     }
+
     private boolean isBookmarked(ReferenceNode ref, SyndieURI uri) {
         if ( (ref.getURI() != null) && (ref.getURI().equals(uri)) )
             return true;
@@ -252,8 +260,9 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
         return false;
     }
     
-    private long getOpenGroupIds(TreeItem base, ArrayList openGroupIds) {
-        NymReferenceNode node = (NymReferenceNode)_bookmarkNodes.get(base);
+
+    private long getOpenGroupIds(TreeItem base, ArrayList<Long> openGroupIds) {
+        NymReferenceNode node = _bookmarkNodes.get(base);
         long sel = -1;
         if (base.getExpanded()) {
             openGroupIds.add(Long.valueOf(node.getGroupId()));
@@ -337,9 +346,9 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
         boolean wasExpanded = _watchedRoot.getExpanded();
         _watchedItemToWatchedChannel.clear();
         _watchedRoot.removeAll();
-        ArrayList watched = new ArrayList(_client.getWatchedChannels());
+        ArrayList<WatchedChannel> watched = new ArrayList(_client.getWatchedChannels());
         for (int i = 0; i < watched.size(); i++) {
-            WatchedChannel chan = (WatchedChannel)watched.get(i);
+            WatchedChannel chan = watched.get(i);
             String name = _client.getChannelName(chan.getChannelId());
             Hash hash = _client.getChannelHash(chan.getChannelId());
             if (hash == null) continue;
@@ -391,22 +400,26 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
             private void fire(TreeItem item) {
                 if (_acceptanceListener == null)
                     return;
-                NymReferenceNode node = (NymReferenceNode)_bookmarkNodes.get(item);
+                NymReferenceNode node = _bookmarkNodes.get(item);
                 if (node != null) {
-                    _acceptanceListener.referenceAccepted(node.getURI());
-                    return;
+                    SyndieURI uri = node.getURI();
+                    if (uri != null) {
+                        _acceptanceListener.referenceAccepted(node.getURI());
+                        return;
+                    }
+                    // else it's a folder, fall thru for expand/collapse
                 }
-                ChannelInfo info = (ChannelInfo)_postChannels.get(item);
+                ChannelInfo info = _postChannels.get(item);
                 if (info != null) {
                     _acceptanceListener.referenceAccepted(SyndieURI.createScope(info.getChannelHash()));
                     return;
                 }
-                info = (ChannelInfo)_manageChannels.get(item);
+                info = _manageChannels.get(item);
                 if (info != null) {
                     _acceptanceListener.referenceAccepted(SyndieURI.createScope(info.getChannelHash()));
                     return;
                 }
-                WatchedChannel chan = (WatchedChannel)_watchedItemToWatchedChannel.get(item);
+                WatchedChannel chan = _watchedItemToWatchedChannel.get(item);
                 if (chan != null) {
                     Hash scope = _client.getChannelHash(chan.getChannelId());
                     _acceptanceListener.referenceAccepted(SyndieURI.createScope(scope));
@@ -521,9 +534,9 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
         tree.addControlListener(lsnr);
     }
 
-    protected NymReferenceNode getBookmark(TreeItem item) { return (NymReferenceNode)_bookmarkNodes.get(item); }
-    protected ChannelInfo getPostChannel(TreeItem item) { return (ChannelInfo)_postChannels.get(item); }
-    protected ChannelInfo getManageChannel(TreeItem item) { return (ChannelInfo)_manageChannels.get(item); }
+    protected NymReferenceNode getBookmark(TreeItem item) { return _bookmarkNodes.get(item); }
+    protected ChannelInfo getPostChannel(TreeItem item) { return _postChannels.get(item); }
+    protected ChannelInfo getManageChannel(TreeItem item) { return _manageChannels.get(item); }
     protected ReferenceNode getSearchResult(String name) { 
         int idx = _searchList.indexOf(name);
         if (idx >= 0)
@@ -531,9 +544,9 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
         else
             return null;
     }
-    protected ArrayList getBookmarks() { return new ArrayList(_bookmarkNodes.values()); }
-    protected ArrayList getManageableChannels() { return new ArrayList(_manageChannels.values()); }
-    protected ArrayList getPostableChannels() { return new ArrayList(_postChannels.values()); }
+    protected ArrayList<NymReferenceNode> getBookmarks() { return new ArrayList(_bookmarkNodes.values()); }
+    protected ArrayList<ChannelInfo> getManageableChannels() { return new ArrayList(_manageChannels.values()); }
+    protected ArrayList<ChannelInfo> getPostableChannels() { return new ArrayList(_postChannels.values()); }
     
     //protected TreeItem getSearchRoot() { return _searchRoot; }
     protected TreeItem getManageRoot() { return _manageRoot; }
@@ -541,7 +554,7 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
     protected TreeItem getBookmarkRoot() { return _bookmarkRoot; }
     protected TreeItem getWatchedRoot() { return _watchedRoot; }
     
-    protected void bookmarksRebuilt(ArrayList nymRefs) {}
+    protected void bookmarksRebuilt(ArrayList<NymReferenceNode> nymRefs) {}
     
     private void rebuildBookmarks() {
         JobRunner.instance().enqueue(new Rebuilder());
@@ -555,7 +568,7 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
                 _rebuilding = true;
             }
             _ui.debugMessage("rebuilder started");
-            final ArrayList refs = new ArrayList(_client.getNymReferences(_client.getLoggedInNymId()));
+            final ArrayList<NymReferenceNode> refs = new ArrayList(_client.getNymReferences(_client.getLoggedInNymId()));
             final long t2 = System.currentTimeMillis();
             synchronized (_nymRefs) {
                 _nymRefs.clear();
@@ -613,11 +626,11 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
         return Boolean.valueOf(prefs.getProperty("browser.promptScheduleNow")).booleanValue();
     }
     
-    static void savePrevTabs(DBClient client, ArrayList uris) {
+    static void savePrevTabs(DBClient client, ArrayList<SyndieURI> uris) {
         Properties props = client.getNymPrefs();
         props.setProperty("browser.prevTabs", Integer.toString(uris.size()));
         for (int i = 0; i < uris.size(); i++)
-            props.setProperty("browser.prevTab." + i, ((SyndieURI)uris.get(i)).toString());
+            props.setProperty("browser.prevTab." + i, (uris.get(i)).toString());
         client.setNymPrefs(props);
     }
     
@@ -866,7 +879,7 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
     private void redrawBookmarks() {
         boolean rootWasOpen = _bookmarkRoot.getExpanded();
         long selectedGroupId = -1;
-        ArrayList openGroupIds = new ArrayList();
+        ArrayList<Long> openGroupIds = new ArrayList();
         if (rootWasOpen) {
             for (int i = 0; i < _bookmarkRoot.getItemCount(); i++) {
                 long id = getOpenGroupIds(_bookmarkRoot.getItem(i), openGroupIds);
@@ -879,7 +892,7 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
         _bookmarkNodes.clear();
         TreeItem sel = null;
         for (int i = 0; i < _nymRefs.size(); i++) {
-            NymReferenceNode ref = (NymReferenceNode)_nymRefs.get(i);
+            NymReferenceNode ref = _nymRefs.get(i);
             _ui.debugMessage("redrawBookmarks: add root ref " + i + ": " + ref.getGroupId());
             TreeItem found = add(_bookmarkRoot, ref, selectedGroupId);
             if (found != null)
@@ -889,12 +902,12 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
         _ui.debugMessage("redraw bookmarks: open groupIds: " + openGroupIds + " rootOpen: " + rootWasOpen);
         if (rootWasOpen) {
             _bookmarkRoot.setExpanded(true);
-            ArrayList pending = new ArrayList();
+            ArrayList<TreeItem> pending = new ArrayList();
             TreeItem cur = _bookmarkRoot;
             while (cur != null) {
                 boolean includeChildren = false;
                 if (cur != _bookmarkRoot) {
-                    NymReferenceNode curNode = (NymReferenceNode)_bookmarkNodes.get(cur);
+                    NymReferenceNode curNode = _bookmarkNodes.get(cur);
                     if ( (curNode != null) && (openGroupIds.contains(Long.valueOf(curNode.getGroupId()))) ) {
                         cur.setExpanded(true);
                         includeChildren = true;
@@ -907,7 +920,7 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
                         pending.add(cur.getItem(i));
                 }
                 if (pending.size() > 0)
-                    cur = (TreeItem)pending.remove(0);
+                    cur = pending.remove(0);
                 else
                     cur = null;
             }
@@ -918,6 +931,8 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
             _tree.setSelection(sel);
         }
     }
+
+    /** add a bookmark */
     private TreeItem add(TreeItem parent, NymReferenceNode child, long wantedGroupId) {
         _ui.debugMessage("redrawBookmarks: parent = " + parent.getText() + ", child = " + child.getGroupId() + "/" + child.getParentGroupId() + "/" + child.getName() + "/" + child.getChildCount());
         TreeItem childItem = new TreeItem(parent, SWT.NONE);
@@ -930,7 +945,11 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
             childItem.setText(child.getName() + "-" + child.getDescription());
         else
             childItem.setText(child.getName());
-        childItem.setImage(ImageUtil.getTypeIcon(child.getURI()));
+        SyndieURI uri = child.getURI();
+        if (uri != null)
+            childItem.setImage(ImageUtil.getTypeIcon(uri));
+        else
+            childItem.setImage(ImageUtil.ICON_FOLDER);
         _bookmarkNodes.put(childItem, child);
         TreeItem rv = null;
         if (child.getGroupId() == wantedGroupId)
@@ -944,6 +963,7 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
         }
         return rv;
     }
+
     private void redrawSearchResults(boolean forceExpand) {
         _searchList.setRedraw(false);
         _searchList.removeAll();
@@ -984,22 +1004,22 @@ public class ReferenceChooserTree extends BaseComponent implements Translatable,
         TreeItem items[] = _tree.getSelection();
         if (items != null) {
             for (int i = 0; i < items.length; i++) {
-                NymReferenceNode nref = (NymReferenceNode)_bookmarkNodes.get(items[i]);
+                NymReferenceNode nref = _bookmarkNodes.get(items[i]);
                 if (nref != null) {
                     lsnr.bookmarkSelected(items[i], nref);
                     continue;
                 }
-                ChannelInfo info = (ChannelInfo)_manageChannels.get(items[i]);
+                ChannelInfo info = _manageChannels.get(items[i]);
                 if (info != null) {
                     lsnr.manageChannelSelected(items[i], info);
                     continue;
                 }
-                info = (ChannelInfo)_postChannels.get(items[i]);
+                info = _postChannels.get(items[i]);
                 if (info != null) {
                     lsnr.postChannelSelected(items[i], info);
                     continue;
                 }
-                WatchedChannel watched = (WatchedChannel)_watchedItemToWatchedChannel.get(items[i]);
+                WatchedChannel watched = _watchedItemToWatchedChannel.get(items[i]);
                 if (watched != null) {
                     lsnr.watchedChannelSelected(items[i], watched);
                     continue;
