@@ -32,13 +32,13 @@ import syndie.db.JobRunner;
 import syndie.db.UI;
 
 /**
- *
+ *  For editing bookmarks. Parent is a ReferenceEditorPopup.
  */
 public class ReferenceEditor extends BaseComponent implements Themeable, Translatable {
-    private BookmarkControl _bookmarkControl;
-    private NavigationControl _navControl;
-    private BanControl _banControl;
-    private Composite _parent;
+    private final BookmarkControl _bookmarkControl;
+    private final NavigationControl _navControl;
+    private final BanControl _banControl;
+    private final Composite _parent;
     private Composite _root;
     private Label _locationLabel;
     private Text _location;
@@ -65,7 +65,7 @@ public class ReferenceEditor extends BaseComponent implements Themeable, Transla
     
     private NymReferenceNode _origRef;
     
-    private ReferenceEditorListener _lsnr;
+    private final ReferenceEditorListener _lsnr;
     
     public interface ReferenceEditorListener {
         public void cancelled(ReferenceEditor editor);

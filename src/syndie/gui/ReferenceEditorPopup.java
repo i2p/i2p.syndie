@@ -10,15 +10,15 @@ import syndie.db.DBClient;
 import syndie.db.UI;
 
 /**
- *
+ *  For adding bookmarks, etc. Contains a ReferenceEditor.
  */
 class ReferenceEditorPopup extends BaseComponent implements Translatable, Themeable, ReferenceEditor.ReferenceEditorListener {
-    private Shell _parent;
+    private final Shell _parent;
     private Shell _shell;
     private ReferenceEditor _editor;
-    private NavigationControl _navControl;
-    private BanControl _banControl;
-    private BookmarkControl _bookmarkControl;
+    private final NavigationControl _navControl;
+    private final BanControl _banControl;
+    private final BookmarkControl _bookmarkControl;
     
     public ReferenceEditorPopup(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, BanControl banControl, BookmarkControl bookmarkControl, Shell parent) {
         super(client, ui, themes, trans);
