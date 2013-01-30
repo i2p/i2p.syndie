@@ -4,7 +4,7 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import syndie.data.SyndieURI;
-import syndie.data.Timer;
+import syndie.util.Timer;
 import syndie.gui.*;
 
 class TabPanel extends DesktopPanel {

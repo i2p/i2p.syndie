@@ -17,7 +17,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Text;
 import syndie.data.SyndieURI;
-import syndie.data.Timer;
+import syndie.util.Timer;
 import syndie.db.DBClient;
 import syndie.db.NullUI;
 import syndie.db.TextEngine;

@@ -6,7 +6,7 @@ import java.util.Date;
 import org.eclipse.swt.graphics.DeviceData;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
-import syndie.data.Timer;
+import syndie.util.Timer;
 import syndie.db.JobRunner;
 import syndie.db.TextEngine;
 import syndie.db.TextUI;

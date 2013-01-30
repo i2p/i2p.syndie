@@ -95,7 +95,7 @@ import org.eclipse.swt.widgets.TreeItem;
 import syndie.Constants;
 import syndie.Version;
 import syndie.data.NymKey;
-import syndie.data.Timer;
+import syndie.util.Timer;
 import syndie.data.WatchedChannel;
 import syndie.db.HTTPServ;
 import syndie.db.Importer;
@@ -116,7 +116,7 @@ import syndie.db.UI;
 
 /**
  * Main gui wrapper, holding three items -
- * the bookmarks on the left, the tabs on the right, and the status bar on the bottom.
+ * the BrowserTree on the left, the tabs on the right, and the status bar on the bottom.
  * Configures all the top-strip menus.
  */
 public class Browser implements UI, BrowserControl, NavigationControl, Translatable, Themeable {
@@ -1745,12 +1745,14 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         String desc = "";
         bookmark(uri, name, desc, parentGroupId, false, 0);
     }
+
     /** show a popup to bookmark the given uri in the user's set of bookmarked references */
     public void bookmark(SyndieURI uri, long parentGroupId, int siblingOrder) {
         String name = "bookmark name";
         String desc = "";
         bookmark(uri, name, desc, parentGroupId, false, siblingOrder);
     }
+
     private void bookmark(SyndieURI uri, String name, String desc, long parentGroupId, boolean pickParent, int siblingOrder) {
         debugMessage("bookmarking "+uri + " parent=" + parentGroupId + " siblingOrder=" + siblingOrder);
         boolean loadOnStart = false;

@@ -34,7 +34,7 @@ import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Text;
 
 import syndie.Constants;
-import syndie.data.Timer;
+import syndie.util.Timer;
 import syndie.db.ManageForumExecutor;
 import syndie.gui.Wizard.Page;
 

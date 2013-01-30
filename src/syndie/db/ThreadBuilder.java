@@ -16,7 +16,7 @@ import java.util.Set;
 import net.i2p.data.Hash;
 
 import syndie.data.SyndieURI;
-import syndie.data.Timer;
+import syndie.util.Timer;
 
 /**
  * direct implementation of the jwz threading algorithm without any filtering

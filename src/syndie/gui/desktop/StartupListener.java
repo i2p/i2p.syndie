@@ -3,7 +3,7 @@ package syndie.gui.desktop;
 import java.util.HashSet;
 import java.util.Set;
 
-import syndie.data.Timer;
+import syndie.util.Timer;
 import syndie.db.TextEngine;
 
 /**

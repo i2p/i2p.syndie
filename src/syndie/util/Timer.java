@@ -1,4 +1,4 @@
-package syndie.data;
+package syndie.util;
 
 import syndie.db.UI;
 import java.util.Arrays;

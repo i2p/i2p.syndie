@@ -22,6 +22,7 @@ import net.i2p.data.SigningPublicKey;
 
 import syndie.data.*;
 import syndie.util.DateTime;
+import syndie.util.Timer;
 
 /**
  * revamped thread gathering/filtering, using the ThreadBuilder to wrap them

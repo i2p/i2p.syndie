@@ -34,7 +34,7 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 
 import syndie.data.SyndieURI;
-import syndie.data.Timer;
+import syndie.util.Timer;
 import syndie.db.NullUI;
 
 /**

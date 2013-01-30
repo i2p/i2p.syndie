@@ -1230,12 +1230,15 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         if (editor != null)
             editor.spellNext();
     }
+
     // from editor to spellchecker
     String getSpellWordOrig() { return _spellchecker.getSpellWordOrig(); }
     String getSpellWordSuggestion() { return _spellchecker.getSuggestion(); }
     List getSpellIgnoreAllList() { return _spellchecker.getIgnoreAllList(); }
+
     /** tuning parameter for how close a word has to be to serve as a suggestion.  5 was arbitrary */
     private static final int SEARCH_CLOSENESS = 5;
+
     ArrayList getSuggestions(String word, String lcword, String lineText) {
         if (!SpellUtil.getDictionary().isCorrect(lcword)) {
             ArrayList rv = new ArrayList();
@@ -1250,6 +1253,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         return null;
         
     }
+
     void showSpell(boolean wordSet) { _spellchecker.showSpell(wordSet); }
     
     public void styleText() {

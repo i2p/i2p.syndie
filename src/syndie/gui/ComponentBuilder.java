@@ -2,7 +2,7 @@ package syndie.gui;
 
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Shell;
-import syndie.data.Timer;
+import syndie.util.Timer;
 import syndie.db.DBClient;
 import syndie.db.UI;
 

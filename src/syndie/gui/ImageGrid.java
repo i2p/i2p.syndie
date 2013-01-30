@@ -24,7 +24,7 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Layout;
 import org.eclipse.swt.widgets.Shell;
-import syndie.data.Timer;
+import syndie.util.Timer;
 import syndie.db.NullUI;
 
 /**

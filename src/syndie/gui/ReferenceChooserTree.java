@@ -38,7 +38,7 @@ import syndie.data.ChannelInfo;
 import syndie.data.NymReferenceNode;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
-import syndie.data.Timer;
+import syndie.util.Timer;
 import syndie.data.WatchedChannel;
 import syndie.db.DBClient;
 import syndie.db.JobRunner;

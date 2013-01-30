@@ -12,7 +12,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Shell;
 import syndie.data.MessageInfo;
 import syndie.data.SyndieURI;
-import syndie.data.Timer;
+import syndie.util.Timer;
 import syndie.db.DBClient;
 import syndie.db.UI;
 import syndie.gui.BanControl;

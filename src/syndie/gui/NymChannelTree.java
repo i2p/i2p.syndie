@@ -41,7 +41,7 @@ import org.eclipse.swt.widgets.TreeItem;
 import syndie.Constants;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
-import syndie.data.Timer;
+import syndie.util.Timer;
 import syndie.data.WatchedChannel;
 import syndie.db.DBClient;
 import syndie.db.JobRunner;

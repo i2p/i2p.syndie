@@ -39,7 +39,7 @@ import syndie.data.MessageInfo;
 import syndie.data.NymKey;
 import syndie.data.NymReferenceNode;
 import syndie.data.SyndieURI;
-import syndie.data.Timer;
+import syndie.util.Timer;
 import syndie.db.DBClient;
 import syndie.db.HTTPServ;
 import syndie.db.Importer;
