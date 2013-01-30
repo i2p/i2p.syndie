@@ -2,6 +2,7 @@ package syndie.gui;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.ShellEvent;
@@ -16,10 +17,13 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
+/**
+ *  The spell checker popup used by the MessageEditor.
+ */
 class MessageEditorSpell implements Themeable, Translatable {
-    private ThemeRegistry _themeRegistry;
-    private TranslationRegistry _translationRegistry;
-    private MessageEditor _editor;
+    private final ThemeRegistry _themeRegistry;
+    private final TranslationRegistry _translationRegistry;
+    private final MessageEditor _editor;
     private Shell _spellShell;
     private StyledText _spellContext;
     private Label _spellWordLabel;
@@ -52,11 +56,14 @@ class MessageEditorSpell implements Themeable, Translatable {
         if (_spellShell.isDisposed()) return null;
         return _spellWord.getText().trim();
     }
+
     public String getSuggestion() { 
         if (_spellShell.isDisposed()) return null;
         return _spellSuggestions.getText().trim();
     }
+
     public List getIgnoreAllList() { return _spellIgnoreAllList; }
+
     public void updateSuggestions(ArrayList suggestions, String lineText, String word) {
         if (_spellShell.isDisposed()) return;
         _spellWord.setText(word);
@@ -66,6 +73,7 @@ class MessageEditorSpell implements Themeable, Translatable {
         _spellSuggestions.select(0);
         _spellContext.setText(lineText);
     }
+
     public void showSpell(boolean wordSet) {
         if (_spellShell.isDisposed()) return;
         if (wordSet) {
@@ -177,6 +185,7 @@ class MessageEditorSpell implements Themeable, Translatable {
         _spellIgnoreAllList.clear();
         _editor.resetSpellcheck();
     }
+
     void cancelSpell() {
         resetSpellcheck();
         if (_spellShell.isDisposed()) return;

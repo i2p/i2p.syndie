@@ -16,10 +16,14 @@ import syndie.db.JobRunner;
  *
  */
 public class SpellUtil {
-    private static SpellDictionary _dictionary;
-    private static boolean _isEnabled;
+    private static SpellDictionaryHashMap _dictionary;
+    private static volatile boolean _isEnabled;
 
     private static final boolean _isWin = System.getProperty("os.name").startsWith("Win");
+
+    private static final String PROP_STANDARD_WORDS = "syndie.dict";
+    private static final String STANDARD_WORDS = "/usr/share/dict/words";
+    private static final String LOCAL_WORDS = "/syndie/gui/localwords.txt";
 
     public static SpellDictionary getDictionary() { 
         synchronized (SpellUtil.class) {
@@ -53,24 +57,49 @@ public class SpellUtil {
     		});
     	}
     }
+
     private static void buildDictionary() {
+        Reader r = null;
         try {
-            _dictionary = new SpellDictionaryHashMap(getDictionaryReader());
+            r = getDictionaryReader();
+            _dictionary = new SpellDictionaryHashMap(r);
+            if (_isEnabled) {
+                Reader r2 = null;
+                try {
+                    r2 = getLocalWords();
+                    _dictionary.addDictionary(r2);
+                } catch (IOException ioe) {
+                    System.out.println("Local dictionary could not be loaded: " + ioe);
+                } finally {
+                    //SpellDictionaryHashMap does not close()
+                    if (r2 != null) try { r2.close(); } catch (IOException ioe) {}
+                }
+            }
             //System.out.println("Dictionary loaded");
         } catch (IOException ioe) {
             // use an empty one
             try { _dictionary = new SpellDictionaryHashMap(); } catch (IOException ioe2) {}
             System.out.println("Dictionary could not be loaded: " + ioe);
             _isEnabled = false;
+        } finally {
+            //SpellDictionaryHashMap does not close()
+            if (r != null) try { r.close(); } catch (IOException ioe) {}
         }
     }
+
+    private static Reader getLocalWords() throws IOException {
+        return new InputStreamReader(
+                        new BufferedInputStream(SpellUtil.class.getResourceAsStream(LOCAL_WORDS)),
+                        "UTF-8");
+    }
+
     private static Reader getDictionaryReader() {
         if (_isWin) {
             System.err.println("Spellchecker disabled");
             return new InputStreamReader(new ByteArrayInputStream(new byte[0]));
         }
         // read from the db/etc
-        String dictLocation = System.getProperty("syndie.dict", "/usr/share/dict/words");
+        String dictLocation = System.getProperty(PROP_STANDARD_WORDS, STANDARD_WORDS);
         try {
             Reader rv = new InputStreamReader(
                     new BufferedInputStream(new FileInputStream(dictLocation)),

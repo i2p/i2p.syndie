@@ -473,6 +473,7 @@ public class PageEditor extends BaseComponent implements Themeable {
         _findHighlight.y = 0;
         _editor.search();
     }
+
     void findReplace() {
         if (_findHighlight.x >= _findHighlight.y)
             findNext();
@@ -487,6 +488,7 @@ public class PageEditor extends BaseComponent implements Themeable {
             findNext();
         }
     }
+
     void findReplaceAll() {
         if (_findHighlight.x >= _findHighlight.y)
             findNext(false);
@@ -501,9 +503,11 @@ public class PageEditor extends BaseComponent implements Themeable {
         }
         _editor.modified();
     }
+
     void findNext() { findNext(true); }
+
     private void findNext(boolean wrapForever) {
-        _ui.debugMessage("findNext called", new Exception("source"));
+        _ui.debugMessage("findNext called" /* , new Exception("source") */);
         String searchFor = _editor.getSearchTerm();
         if ( (searchFor == null) || (searchFor.length() <= 0) ) return;
         String txt = _text.getText();
@@ -554,6 +558,7 @@ public class PageEditor extends BaseComponent implements Themeable {
             _findHighlight.y = 0;
         }
     }
+
     void cancelFind() {
         _findHighlight.x = 0;
         _findHighlight.y = 0;
@@ -572,17 +577,19 @@ public class PageEditor extends BaseComponent implements Themeable {
         _spellWordIndex++;
         spellNext();
     }
+
     void resetSpellcheck() {
         _spellLine = 0;
         _spellWordIndex = 0;
     }
+
     void spellReplaceWord(boolean replaceAll) {
         String old = _editor.getSpellWordOrig();
         String newText = _editor.getSpellWordSuggestion();
         int len = _spellWordEnd-_spellWordStart+1;
         if (_spellWordStart + len >= _text.getCharCount())
             len = _text.getCharCount() - _spellWordStart;
-        _text.setSelection(_spellWordStart, _spellWordStart+len+1);
+        _text.setSelection(_spellWordStart, _spellWordStart+len);
         _text.insert(newText);
         /*
         StringBuilder buf = new StringBuilder(_text.getText());
@@ -602,9 +609,20 @@ public class PageEditor extends BaseComponent implements Themeable {
             _spellWordIndex = word;
         }
     }
+
     void spellNext() { spellNext(null, null); }
+
+    /**
+     *   Revision: fc5f6e2229c82e0fcef4dc735bd97f3a797a6a72
+     *   Author:   jrandom@i2p.net
+     *   Date:     03/17/2007
+     *   Changelog: 
+     *     - disable the spellchecker for the moment, as it needs substantial work
+     *       (better line breaking, plural handling, caps handling)
+     */
     private void spellNext(String forceReplacement, String replaceFor) {
-        if (true) return;
+        //if (true) return;
+
         // iterate over the lines
         //  iterate over the words (ignoring html)
         //   if (!spelledCorrectly)
