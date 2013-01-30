@@ -208,7 +208,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         _searchDetailPopup.setLayout(new FillLayout());
         _searchDetail = new ReferenceChooserSearch(_client, _ui, _themeRegistry, _translationRegistry, _searchDetailPopup, this);
         _searchDetailPopup.setSize(_searchDetailPopup.computeSize(300, SWT.DEFAULT));
-        _searchDetailPopup.setText(_translationRegistry.getText("Search"));
+        _searchDetailPopup.setText(getText("Search"));
         _searchDetailPopup.setFont(_themeRegistry.getTheme().SHELL_FONT);
         
         // intercept the shell closing, since that'd cause the shell to be disposed rather than just hidden
@@ -300,7 +300,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
                 }
             }
             MenuItem mitem = new MenuItem(_menu, SWT.PUSH);
-            mitem.setText(_translationRegistry.getText("View all selected"));
+            mitem.setText(getText("View all selected"));
             mitem.addSelectionListener(new FireSelectionListener() {
                 public void fire() {
                     for (int i = 0; i < toView.size(); i++)
@@ -309,7 +309,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
             });
             if ( (watched.size() > 0) && (bookmarkedGroupIds.size() == 0) && !otherIncluded) {
                 mitem = new MenuItem(_menu, SWT.PUSH);
-                mitem.setText(_translationRegistry.getText("Unwatch all selected"));
+                mitem.setText(getText("Unwatch all selected"));
                 mitem.addSelectionListener(new FireSelectionListener() {
                     public void fire() {
                         WatchedChannel channels[] = new WatchedChannel[watched.size()];
@@ -320,12 +320,12 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
                 });   
             } else if ( (watched.size() == 0) && (bookmarkedGroupIds.size() > 0) && !otherIncluded) {
                 mitem = new MenuItem(_menu, SWT.PUSH);
-                mitem.setText(_translationRegistry.getText("Unbookmark all selected"));
+                mitem.setText(getText("Unbookmark all selected"));
                 mitem.addSelectionListener(new FireSelectionListener() {
                     public void fire() {
                         MessageBox box = new MessageBox(getControl().getShell(), SWT.ICON_WARNING | SWT.YES | SWT.NO);
-                        box.setMessage(_translationRegistry.getText("Are you sure you want to delete these bookmarks?"));
-                        box.setText(_translationRegistry.getText("Confirm"));
+                        box.setMessage(getText("Are you sure you want to delete these bookmarks?"));
+                        box.setText(getText("Confirm"));
                         int rc = box.open();
                         if (rc == SWT.YES)
                             _bookmarkControl.deleteBookmarks(bookmarkedGroupIds);
@@ -344,9 +344,10 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
                 public void widgetDefaultSelected(SelectionEvent evt) { _navControl.view(_uriControl.createManageURI(chan.getChannelHash())); }
                 public void widgetSelected(SelectionEvent evt) { _navControl.view(_uriControl.createManageURI(chan.getChannelHash())); }
             });
-            item.setText(_translationRegistry.getText("Manage"));
+            item.setText(getText("Manage"));
         }
     }
+
     private void buildPostMenu(final ChannelInfo chan) {
         if (chan != null) {
             MenuItem item = new MenuItem(_menu, SWT.PUSH);
@@ -354,9 +355,10 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
                 public void widgetDefaultSelected(SelectionEvent evt) { _navControl.view(_uriControl.createPostURI(chan.getChannelHash(), null, false)); }
                 public void widgetSelected(SelectionEvent evt) { _navControl.view(_uriControl.createPostURI(chan.getChannelHash(), null, false)); }
             });        
-            item.setText(_translationRegistry.getText("Post"));
+            item.setText(getText("Post"));
         }
     }
+
     private void buildBookmarkMenu(final NymReferenceNode bookmark, final TreeItem selected) {
         MenuItem item = null;
 
@@ -365,14 +367,14 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
             item.addSelectionListener(new FireSelectionListener() {
                 public void fire() { addBookmark(-1); }
             });
-            item.setText(_translationRegistry.getText("Add bookmark"));
+            item.setText(getText("Add bookmark"));
             item.setImage(ImageUtil.ICON_ADDBOOKMARK);
 
             item = new MenuItem(_menu, SWT.PUSH);
             item.addSelectionListener(new FireSelectionListener() {
                 public void fire() { addFolder(-1); }
             });
-            item.setText(_translationRegistry.getText("Add folder"));
+            item.setText(getText("Add folder"));
             item.setImage(ImageUtil.ICON_ADDFOLDER);
 
             return;
@@ -384,7 +386,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
             item.addSelectionListener(new FireSelectionListener() {
                 public void fire() { _navControl.view(bookmark.getURI(), bookmark.getName(), bookmark.getDescription()); }
             });
-            item.setText(_translationRegistry.getText("View selected"));
+            item.setText(getText("View selected"));
             item.setImage(ImageUtil.ICON_VIEW);
         } else if (bookmark.getChildCount() > 0) {
             item = new MenuItem(_menu, SWT.PUSH);
@@ -398,7 +400,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
                     }
                 }
             });
-            item.setText(_translationRegistry.getText("View all children"));
+            item.setText(getText("View all children"));
         }
         
         item = new MenuItem(_menu, SWT.PUSH);
@@ -406,7 +408,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
             public void widgetDefaultSelected(SelectionEvent evt) { editBookmark(selected); }
             public void widgetSelected(SelectionEvent evt) { editBookmark(selected); }
         });
-        item.setText(_translationRegistry.getText("Edit"));
+        item.setText(getText("Edit"));
         item.setImage(ImageUtil.ICON_EDIT);
         
         item = new MenuItem(_menu, SWT.PUSH);
@@ -414,7 +416,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
             public void widgetDefaultSelected(SelectionEvent evt) { deleteBookmark(selected); }
             public void widgetSelected(SelectionEvent evt) { deleteBookmark(selected); }
         });
-        item.setText(_translationRegistry.getText("Delete"));
+        item.setText(getText("Delete"));
         item.setImage(ImageUtil.ICON_DELETE);
         
         if (bookmark.getURI() == null) {
@@ -422,14 +424,14 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
             item.addSelectionListener(new FireSelectionListener() {
                 public void fire() { addBookmark(bookmark.getGroupId()); }
             });
-            item.setText(_translationRegistry.getText("Add bookmark"));
+            item.setText(getText("Add bookmark"));
             item.setImage(ImageUtil.ICON_ADDBOOKMARK);
 
             item = new MenuItem(_menu, SWT.PUSH);
             item.addSelectionListener(new FireSelectionListener() {
                 public void fire() { addFolder(bookmark.getGroupId()); }
             });
-            item.setText(_translationRegistry.getText("Add folder"));
+            item.setText(getText("Add folder"));
             item.setImage(ImageUtil.ICON_ADDFOLDER);
         }
     }
@@ -505,7 +507,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
     
     private void addFolder(long parentGroupId) {
         _ui.debugMessage("addFolder underneath " + parentGroupId);
-        String prefix = _translationRegistry.getText("New folder") + " ";
+        String prefix = getText("New folder") + " ";
         String folderName = getFolderName(prefix, parentGroupId);
         NymReferenceNode node = new NymReferenceNode(folderName, null, "", -1, -1, parentGroupId, -1, false, false, false);
         _bookmarkControl.bookmark(node, true);
@@ -567,8 +569,8 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         NymReferenceNode node = getBookmark(item);
         if (node != null) {
             MessageBox box = new MessageBox(getControl().getShell(), SWT.ICON_WARNING | SWT.YES | SWT.NO);
-            box.setMessage(_translationRegistry.getText("Are you sure you want to delete this bookmark?"));
-            box.setText(_translationRegistry.getText("Confirm"));
+            box.setMessage(getText("Are you sure you want to delete this bookmark?"));
+            box.setText(getText("Confirm"));
             int rc = box.open();
             if (rc == SWT.YES) {
                 _bookmarkControl.deleteBookmark(node.getGroupId());
@@ -626,13 +628,13 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         final Hash scope = _client.getChannelHash(watched.getChannelId());
         _ui.debugMessage("Building watch menu for " + scope + "/" + watched.getChannelId(), new Exception("source"));
         MenuItem item = new MenuItem(_menu, SWT.PUSH);
-        item.setText(_translationRegistry.getText("View the selected forum"));
+        item.setText(getText("View the selected forum"));
         item.addSelectionListener(new FireSelectionListener() {
             public void fire() { _navControl.view(SyndieURI.createScope(scope)); }
         });
         new MenuItem(_menu, SWT.SEPARATOR);
         item = new MenuItem(_menu, SWT.CHECK);
-        item.setText(_translationRegistry.getText("Highlight the forum's unread messages"));
+        item.setText(getText("Highlight the forum's unread messages"));
         item.setSelection(watched.getHighlight());
         item.addSelectionListener(new FireSelectionListener() {
             public void fire() { 
@@ -641,7 +643,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         });
 
         item = new MenuItem(_menu, SWT.CHECK);
-        item.setText(_translationRegistry.getText("Import their recommended bookmarks"));
+        item.setText(getText("Import their recommended bookmarks"));
         item.setSelection(watched.getImportBookmarks());
         item.addSelectionListener(new FireSelectionListener() {
             public void fire() { 
@@ -650,7 +652,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         });
 
         item = new MenuItem(_menu, SWT.CHECK);
-        item.setText(_translationRegistry.getText("Import their recommended archives"));
+        item.setText(getText("Import their recommended archives"));
         item.setSelection(watched.getImportArchives());
         item.addSelectionListener(new FireSelectionListener() {
             public void fire() { 
@@ -659,7 +661,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         });
         
         item = new MenuItem(_menu, SWT.CHECK);
-        item.setText(_translationRegistry.getText("Import keys they recommended"));
+        item.setText(getText("Import keys they recommended"));
         item.setSelection(watched.getImportKeys());
         item.addSelectionListener(new FireSelectionListener() {
             public void fire() { 
@@ -668,7 +670,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         });
         
         item = new MenuItem(_menu, SWT.CHECK);
-        item.setText(_translationRegistry.getText("Import and honor bans they recommended"));
+        item.setText(getText("Import and honor bans they recommended"));
         item.setSelection(watched.getImportBans());
         item.addSelectionListener(new FireSelectionListener() {
             public void fire() { 
@@ -679,7 +681,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         new MenuItem(_menu, SWT.SEPARATOR);
         
         item = new MenuItem(_menu, SWT.PUSH);
-        item.setText(_translationRegistry.getText("Stop watching the selected forum"));
+        item.setText(getText("Stop watching the selected forum"));
         item.addSelectionListener(new FireSelectionListener() {
             public void fire() { _client.unwatchChannel(watched); }
         });
