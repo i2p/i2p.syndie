@@ -221,8 +221,15 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
     private NavigationControl _navControl;
     
     private boolean _externalShell;
+
+    /** offer to open an external link in the internal browser tab */
+    private static final boolean OFFER_OPEN_LINK_INTERNAL = false;
+    /** offer to open an external link in an external browser */
+    private static final boolean OFFER_OPEN_LINK_EXTERNAL = false;
+
     
     public Browser(DBClient client) { this(client, null, null, null, null, null); }
+
     public Browser(DBClient client, Shell shell, Composite root, NavigationControl navControl, ThemeRegistry themes, TranslationRegistry trans) {
         _client = client;
         _shell = shell;
@@ -1647,7 +1654,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             });
             b.forceFocus();
             
-            if (valid && urlStr.startsWith("http://") &&
+            if (OFFER_OPEN_LINK_INTERNAL && valid && urlStr.startsWith("http://") &&
                 !(SystemVersion.isWindows() || SystemVersion.isMac())) {
                 b = new Button(buttons, SWT.PUSH);
                 b.setText(getTranslationRegistry().getText("Open in Syndie using I2P proxy"));
@@ -1667,7 +1674,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
                     }
                 });
             }
-            if (valid) {
+            if (OFFER_OPEN_LINK_EXTERNAL && valid) {
                 b = new Button(buttons, SWT.PUSH);
                 b.setText(getTranslationRegistry().getText("Open in browser"));
                 gd = new GridData(GridData.END, GridData.FILL, false, false);

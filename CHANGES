@@ -1,5 +1,24 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
+* 2013-01-31 1.102b-13 (kytv, zzz)
+  GUI improvements:
+  - Add language selection page to Wizard
+  - Repopulate Browser menu after language change
+  - Doubleclick on left headers and bookmark subfolders to expand/collapse
+  - Shorten public/private reply menu items and make consistent
+  - Disable public reply to a private message in menus
+  - Hide unimplemented 'delete read messages' and 'delete all messages' menu items
+  - Name tabs by filename in MessageEditor
+  - Disable remove page and remove attachment icons when not valid
+  - Don't display 'last post' times in the 'find forums' popup when we only store dates in the DB
+  - Rename browse-all-forums tab
+  - Re-enable spell checker so it can be improved
+  - Add spell checker local word list
+  - Fix spell replace deleting next char
+  - Hide external link buttons for internal and external browser as they are neither configurable nor safe
+  Build:
+  - Fix plugin versioning
+
 * 2013-01-27 1.102b-12 (kytv, zzz)
   GUI improvements:
   - Icon and button tweaks for consistency
