@@ -102,6 +102,7 @@ public class DBClient {
     private String _url;
     private Thread _shutdownHook;
     private boolean _shutdownInProgress;
+    private boolean _shouldDefrag;
     private String _defaultArchive;
     private String _httpProxyHost;
     private int _httpProxyPort;
@@ -114,6 +115,9 @@ public class DBClient {
     
     private ExpireEvent _expireEvent;
         
+    private static final String DEFAULT_ADMIN = "SA";
+
+
     /**
      *  @param rootDir should be a SecureFile
      */
@@ -128,6 +132,7 @@ public class DBClient {
         _log = ctx.logManager().getLog(getClass());
         _rootDir = rootDir;
         _shutdownInProgress = false;
+        _shouldDefrag = DEFRAG;
     }
     
     public void restart(String rootDir) {
@@ -139,9 +144,14 @@ public class DBClient {
     //private static final String SQL_CREATE_USER = "CREATE USER ? PASSWORD ? ADMIN";
     
     /**
-     *  Initialize the DB, update to latest version if necessary, and connect
+     *  Initialize the DB, update to latest version if necessary, and connect.
+     *  Does nothing if already connected.
      */
-    public void connect(String url) throws SQLException { 
+    void connect(String url) throws SQLException { 
+        if (_con != null && !_con.isClosed()) {
+            // don't leak connections
+            log("connect() called, already connected");
+        }
         _login = TextEngine.DEFAULT_LOGIN;
         if (_pass == null) _pass = TextEngine.DEFAULT_PASS;
         long start = System.currentTimeMillis();
@@ -150,13 +160,28 @@ public class DBClient {
         try {
             _con = DriverManager.getConnection(url);
             if (_con != null) {
-                log("default connection successful, check to see if the account exists...");
+                String version = _con.getMetaData().getDatabaseProductVersion();
+                log("default connection successful, version: " + version);
                 Statement stmt = null;
+                ResultSet rs= null;
                 try {
-                    stmt = _con.createStatement();
-                    stmt.execute("GRANT ALL ON CLASS \"java.lang.String\" TO " + _login);
+                    // test if user exists
+                    if (DBUpgrade.isHsqldb20(_con)) {
+                        // This works on hsqldb 2.0 and higher
+                        // The table is there in 1.8 but you can't select from it
+                        stmt = _con.prepareStatement("SELECT * FROM INFORMATION_SCHEMA.SYSTEM_USERS WHERE user_name = ?");
+                        ((PreparedStatement) stmt).setString(1, _login);
+                        rs = ((PreparedStatement) stmt).executeQuery();
+                        if (!rs.next())
+                            throw new SQLException("Login does not exist: " + _login);
+                    } else {
+                        // Does not work as of hsqldb 2.0 (and should have been a method name anyway)
+                        stmt = _con.createStatement();
+                        stmt.execute("GRANT ALL ON CLASS \"java.lang.String.valueOf\" TO \"" + _login + '"');
+                    }
                     log("Account " + _login + " already exists");
                     stmt.close();
+                    rs.close();
                     stmt = null;
                     
                     byte val[] = new byte[16];
@@ -164,7 +189,7 @@ public class DBClient {
                     String rand = Base64.encode(val);
                     log("changing default admin account passphrase to something random");
                     stmt = _con.createStatement();
-                    stmt.execute("ALTER USER sa SET PASSWORD '" + rand + "'");
+                    stmt.execute("ALTER USER \"" + DEFAULT_ADMIN + "\" SET PASSWORD '" + rand + "'");
                     stmt.close();
                     stmt = null;
                     log("sysadmin passphrase changed to a random value");
@@ -172,14 +197,17 @@ public class DBClient {
                     _con.close();
                     _con = null;
                 } catch (SQLException se) {
+                    // this is the usual path for a new database
                     log("Unable to check up on " + _login + ", so lets create the account (" + se.getMessage() + ")");
                     if (stmt != null)
                         stmt.close();
+                    if (rs != null)
+                        rs.close();
                     stmt = null;
                     
                     try {
                         stmt = _con.createStatement();
-                        stmt.execute("CREATE USER " + _login + " PASSWORD " + _pass + " ADMIN");
+                        stmt.execute("CREATE USER \"" + _login + "\" PASSWORD '" + _pass + "' ADMIN");
                         stmt.close();
                         stmt = null;
                         log("new user created [" + _login + "] / [" + _pass + "]");
@@ -194,6 +222,7 @@ public class DBClient {
                 }
             }
         } catch (SQLException se) {
+            // this is the typical path for an existing db
             log("Unable to connect with default db params: " + se);
             if (_con != null) _con.close();
             _con = null;
@@ -204,8 +233,11 @@ public class DBClient {
         }
          
         try {
+            // this is the typical path for an existing db
             log("connecting as [" + _login + "] / [" + _pass + "]");
             _con = DriverManager.getConnection(url, _login, _pass);
+            String version = _con.getMetaData().getDatabaseProductVersion();
+            log("connection successful, version: " + version);
             log("connection created: " + _con);
         } catch (SQLException se) {
             _con = null;
@@ -227,7 +259,15 @@ public class DBClient {
             //throw new RuntimeException("already connected");
         }
         
+        // process all updates
         initDB();
+
+        // process all hsqldb updates, rv is whether we upgraded
+        boolean shouldDefrag = DBUpgrade.postConnect(_con);
+        if (shouldDefrag)
+            log("Database updated, will compact on shutdown");
+        _shouldDefrag |= shouldDefrag;
+
         long init = System.currentTimeMillis();
         _uriDAO = new SyndieURIDAO(this);
         //_login = null;
@@ -236,11 +276,20 @@ public class DBClient {
         long now = System.currentTimeMillis();
         log("connecting: driver connection time: " + (connected-start) + " initDb time: " + (init-connected) + " uriDAO time: " + (now-init));
         
+        // We must switch from the uppper-case to lower-case default password now
+        // or verifyNymKeyEncryption() will fail
+        if (_pass.equals(TextEngine.DEFAULT_PASS))
+            _pass = TextEngine.DEFAULT_NYMKEY_PASS;
+
         boolean ok = verifyNymKeyEncryption();
         if (!ok) {
             log("db connection successfull, but we can't access the nym keys, so discon");
             disconnect();
         } else {
+            // We must switch from the uppper-case to lower-case default login now
+            // or getNymId() in connect() below will fail
+            if (_login.equals(TextEngine.DEFAULT_LOGIN))
+                _login = TextEngine.DEFAULT_NYMKEY_LOGIN;
             if (_expireEvent == null) {
                 long delay = _context.random().nextLong(60*60*1000l) + 24*60*60*1000l;
                 _expireEvent = new ExpireEvent();
@@ -264,11 +313,21 @@ public class DBClient {
     }
     
     /**
-     *  Initialize the DB, update to latest version if necessary, and connect
+     *  Initialize the DB, update to latest version if necessary, and connect.
+     *  Does nothing if already connected with this login
      *  Called from TextEngine.processLogin()
+     *
      *  @return the logged-in nym ID
+     *  @throws SQLException if already connected with a different login
      */
-    public long connect(String url, String login, String passphrase) throws SQLException {
+    long connect(String url, String login, String passphrase) throws SQLException {
+        if (_con != null && !_con.isClosed()) {
+            // don't leak connections or change logins on the fly
+            log("connect(...) called, already connected as \"" + _login + '"', new Exception());
+            if (StringUtil.lowercase(login).equals(StringUtil.lowercase(_login)))
+                return getNymId(_login, _pass);
+            throw new SQLException("Already logged in as \"" + _login + '"');
+        }
         _login = login;
         _pass = passphrase;
         try {
@@ -279,12 +338,14 @@ public class DBClient {
             _con = null;
             throw se;
         }
-        return getNymId(login, passphrase);
+        // connect() above may have changed _login and _pass
+        return getNymId(_login, _pass);
     }
 
     public boolean reconnect(String passphrase) {
         log("reconnecting to url=[" + _url + "] login=[" + _login + "] pass=[" + passphrase + "]");
         try {
+            // FIXME login changed case
             long id = connect(_url, _login, passphrase);
             log("connected w/ id=" + id);
             if (id >= 0) {
@@ -304,6 +365,7 @@ public class DBClient {
         clearNymChannelCache();
         try {
             if ( (_con != null) && (!_con.isClosed()) ) {
+                log("Disconnecting from DB");
                 _con.close();
                 _con = null;
             }
@@ -373,8 +435,8 @@ public class DBClient {
         try {
             if (_con == null) return;
             if (_con.isClosed()) return;
-            if (DEFRAG) { // && System.currentTimeMillis() % 100 > 95) // every 10 times defrag the db
-                _log.logAlways(Log.WARN, "Starting database shutdown with compaction, this will take a while");
+            if (_shouldDefrag) { // && System.currentTimeMillis() % 100 > 95) // every 10 times defrag the db
+                _log.logAlways(Log.WARN, "Starting database shutdown with compaction, this may take a while");
                 stmt = _con.prepareStatement("SHUTDOWN COMPACT");
             } else {
                 _log.logAlways(Log.WARN, "Starting database shutdown");
@@ -453,18 +515,18 @@ public class DBClient {
                         _login = login;
                         _pass = passphrase;
                         _nymId = nymId;
-                        log("passphrase is correct in the nym table");
+                        log("passphrase is correct in the nym table for \"" + login + '"');
                         
                         Properties prefs = getNymPrefs(nymId);
                         loadProxyConfig(prefs);
                         return nymId;
                     } else {
-                        log("Invalid passphrase for the nymId");
+                        log("Invalid passphrase for the nymId \"" + login + '"');
                         return NYM_ID_PASSPHRASE_INVALID;
                     }
                 }
             } else {
-                log("no nymId values are known");
+                log("no nymId values are known for \"" + login + '"');
                 return NYM_ID_LOGIN_UNKNOWN;
             }
         } catch (SQLException se) {
@@ -503,6 +565,9 @@ public class DBClient {
     
     private static final String SQL_INSERT_NYM = "INSERT INTO nym (nymId, login, publicName, passSalt, passHash, isDefaultUser) VALUES (?, ?, ?, ?, ?, ?)";
 
+    /**
+     *  All params case-sensitive!
+     */
     public long register(String login, String passphrase, String publicName) {
         long nymId = nextId("nymIdSequence");
         byte salt[] = new byte[16];
@@ -1307,6 +1372,16 @@ public class DBClient {
         }
     }
 
+    /**
+     * Return a list of NymKey structures.
+     * Does not verify encryption (validate with the passphrase).
+     *
+     * Side effect: sets _numKeysWithoutPass
+     *
+     * @param channel null for all
+     * @param keyFunction null for all
+     * @return no particular order
+     */
     public List<NymKey> getNymKeys(Hash channel, String keyFunction) { return getNymKeys(getLoggedInNymId(), getPass(), channel, keyFunction); }
     
     private static final String SQL_GET_NYMKEYS = "SELECT keyType, keyData, keySalt, authenticated, keyPeriodBegin, keyPeriodEnd, keyFunction, keyChannel " +
@@ -1316,6 +1391,9 @@ public class DBClient {
      * Return a list of NymKey structures.
      * Does not verify encryption (validate with the passphrase).
      *
+     * Side effect: sets _numKeysWithoutPass
+     *
+     * @param pass unused, must be in _pass (current password)
      * @param channel null for all
      * @param keyFunction null for all
      * @return no particular order
@@ -1327,6 +1405,9 @@ public class DBClient {
     /**
      * Return a list of NymKey structures.
      *
+     * Side effect: sets _numKeysWithoutPass
+     *
+     * @param pass unused, must be in _pass (current password)
      * @param channel null for all
      * @param keyFunction null for all
      * @return no particular order
@@ -1368,7 +1449,7 @@ public class DBClient {
                     byte key[] = pbeDecrypt(data, salt);
                     data = key;
                     if (key == null) {
-                        log("Invalid passphrase to a nymKey");
+                        log("Invalid passphrase to a nymKey: \"" + pass + '"');
                         _numNymKeysWithoutPass++;
                         continue;
                     }
@@ -6460,6 +6541,7 @@ public class DBClient {
     
     
     private static final String SQL_UPDATE_NYM_PASS = "UPDATE nym SET passSalt = ?, passHash = ? WHERE nymId = ?";
+
     public void changePassphrase(String newPass) {
         try {
             _con.setAutoCommit(false);
@@ -6504,7 +6586,7 @@ public class DBClient {
             try {
                 log("changing db passphrase...");
                 stmt = _con.createStatement();
-                stmt.execute("ALTER USER " + TextEngine.DEFAULT_LOGIN + " SET PASSWORD \"" + newPass + "\"");
+                stmt.execute("ALTER USER \"" + TextEngine.DEFAULT_LOGIN + "\" SET PASSWORD '" + newPass + '\'');
                 stmt.close();
                 stmt = null;
                 log("Passphrase changed to " + newPass);
@@ -6514,7 +6596,7 @@ public class DBClient {
                 String rand = Base64.encode(val);
                 log("changing default admin account passphrase to something random");
                 stmt = _con.createStatement();
-                stmt.execute("ALTER USER sa SET PASSWORD '" + rand + "'");
+                stmt.execute("ALTER USER \"" + DEFAULT_ADMIN + "\" SET PASSWORD '" + rand + '\'');
                 stmt.close();
                 stmt = null;
                 log("sysadmin passphrase changed to a random value");
@@ -6781,9 +6863,11 @@ public class DBClient {
     public byte[] pbeEncrypt(byte orig[], byte saltTarget[]) {
         return pbeEncrypt(orig, _pass, saltTarget, I2PAppContext.getGlobalContext());
     }
+
     public byte[] pbeEncrypt(byte orig[], String pass, byte saltTarget[]) {
         return pbeEncrypt(orig, pass, saltTarget, I2PAppContext.getGlobalContext());
     }
+
     public static byte[] pbeEncrypt(byte orig[], String pass, byte saltTarget[], I2PAppContext ctx) {
         ctx.random().nextBytes(saltTarget);
         SessionKey saltedKey = ctx.keyGenerator().generateSessionKey(saltTarget, DataHelper.getUTF8(pass));
@@ -6800,6 +6884,7 @@ public class DBClient {
     
     /** pbe decrypt the data with the current passphrase, returning the decrypted data, stripped of any padding */
     public byte[] pbeDecrypt(byte orig[], byte salt[]) { return pbeDecrypt(orig, _pass, salt); }
+
     public byte[] pbeDecrypt(byte orig[], String pass, byte salt[]) {
         return pbeDecrypt(orig, 0, salt, 0, pass, orig.length, _context);
     }
@@ -6807,6 +6892,7 @@ public class DBClient {
     public byte[] pbeDecrypt(byte orig[], int origOffset, byte salt[], int saltOffset, String pass, int len) {
         return pbeDecrypt(orig, origOffset, salt, saltOffset, pass, len, _context);
     }
+
     public static byte[] pbeDecrypt(byte orig[], int origOffset, byte salt[], int saltOffset, String pass, int len, I2PAppContext ctx) {
         byte saltCopy[] = new byte[16];
         System.arraycopy(salt, saltOffset, saltCopy, 0, saltCopy.length);
