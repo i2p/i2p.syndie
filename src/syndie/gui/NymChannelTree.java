@@ -802,11 +802,10 @@ public class NymChannelTree implements Themeable, Translatable {
                 Record r = (Record)chanIdToRecord.get(Long.valueOf(chanId));
                 r.channelId = chanId;
                 
-                if (name == null)
-                    name = "";
-                if (hash != null)
-                    name = name + " [" + Base64.encode(hash).substring(0,6) + "]";
-                r.name = name;
+                if (hash!= null && hash.length == Hash.HASH_LENGTH)
+                    r.name = UIUtil.displayName(name, Hash.create(hash));
+                else
+                    r.name = UIUtil.displayName(name, null);
                 
                 if (desc == null)
                     desc = "";

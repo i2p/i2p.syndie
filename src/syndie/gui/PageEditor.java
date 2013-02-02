@@ -713,7 +713,9 @@ public class PageEditor extends BaseComponent implements Themeable {
                                 // ok, this word may be misspelled, but we are doing a replaceAll
                             }
                         } else {
-                            if (!_editor.getSpellIgnoreAllList().contains(lower)) {
+                            if (lower.replaceAll("[0-9.,-]", "").length() == 0) {
+                                // it's a number!
+                            } else if (!_editor.getSpellIgnoreAllList().contains(lower)) {
                                 ArrayList suggestions = _editor.getSuggestions(word, lower, lineText);
                                 if (suggestions != null) {
                                     _spellWordStart = lineStart + wordStart;
