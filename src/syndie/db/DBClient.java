@@ -3919,10 +3919,13 @@ public class DBClient {
         return null;
     }
     
-    /** attachment number starts at 0 */
-    private static final String SQL_GET_MESSAGE_ATTACHMENT_SIZE = "SELECT LENGTH(dataBinary) FROM messageAttachmentData WHERE msgId = ? AND attachmentNum = ?";
+    // was LENGTH, but 2.x does not support LENGTH on binary data
+    private static final String SQL_GET_MESSAGE_ATTACHMENT_SIZE = "SELECT OCTET_LENGTH(dataBinary) FROM messageAttachmentData WHERE msgId = ? AND attachmentNum = ?";
 
-    /** FIXME long */
+    /**
+     *  FIXME should store and return long
+     *  @param attachmentNumr starts at 0
+     */
     public int getMessageAttachmentSize(long internalMessageId, int attachmentNum) {
         ensureLoggedIn();
         PreparedStatement stmt = null;
@@ -3935,7 +3938,10 @@ public class DBClient {
             if (rs.next()) {
                 int val = rs.getInt(1);
                 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! BLOB!!!!!!!!!!!!!!!!!!!!!
-                val /= 2; // hsqldb HEX ENCODES binary data, and LENGTH(dataBinary) returns the string length of the hex encoding
+                // hsqldb 1.8.x HEX ENCODES binary data, and LENGTH(dataBinary) returns the string length of the hex encoding
+                // plus 2x for UTF-16 (OCTET_LENGTH)
+                if (!DBUpgrade.isHsqldb20(_con))
+                    val /= 4;
                 return val;
             }
         } catch (SQLException se) {

@@ -213,7 +213,7 @@ class DBUpgrade {
         } catch (SQLException se) {
             return false;
         }
-        log("Post connect, version: " + version, new Exception());
+        log("Post connect, version: " + version  /*, new Exception() */ );
         boolean is20 = comp.compare(version, HSQLDB_VERSION_2) >= 0;
         if (is20 && (_oldVersion == null || comp.compare(_oldVersion, HSQLDB_VERSION_2) < 0)) {
             setIncrement(dbConn);
