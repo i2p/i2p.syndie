@@ -298,6 +298,16 @@ public class DBClient {
         }
     }
     
+    /**
+     *  The current hsqldb library version
+     *
+     *  @return library version or "unknown"
+     *  @since 1.103b-x
+     */
+    public String getHsqldbVersion() {
+        return DBUpgrade.getHsqldbVersion(_con);
+    }
+
     private class ExpireEvent extends SimpleTimer2.TimedEvent {
     	ExpireEvent() {
     		super(SimpleTimer2.getInstance());

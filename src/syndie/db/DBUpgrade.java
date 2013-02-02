@@ -17,6 +17,7 @@ import java.util.Properties;
 import net.i2p.I2PAppContext;
 import net.i2p.data.DataHelper;
 import net.i2p.util.FileUtil;
+import net.i2p.util.Log;
 import net.i2p.util.SecureFileOutputStream;
 import net.i2p.util.VersionComparator;
 
@@ -53,11 +54,20 @@ class DBUpgrade {
     public static String preConnect(String dbPath) {
         _oldVersion = getOldVersion(dbPath);
         String curVersion = getHsqldbVersion();
-        log("Old DB version is " + _oldVersion + "; new version will be " + curVersion);
         VersionComparator comp = new VersionComparator();
+        if (_oldVersion != null && curVersion != null) {
+            int diff = comp.compare(curVersion, _oldVersion);
+            if (diff > 0)
+                log("Upgrading from hsqldb version " + _oldVersion + " to " + curVersion +
+                    "; this may take a while, please be patient, do not interrupt");
+            else if (diff < 0)
+                log("Downrading from hsqldb version " + _oldVersion + " to " + curVersion +
+                    "; this may not work!");
+        }
         if (_oldVersion != null && comp.compare(_oldVersion, HSQLDB_VERSION_2) < 0 &&
             curVersion != null && comp.compare(curVersion, HSQLDB_VERSION_2) >= 0) {
-            removeOldLog(dbPath);
+            // backup everything?
+            migrateLog(dbPath);
             migrateScript(dbPath);
         }
         return _oldVersion;
@@ -99,11 +109,26 @@ class DBUpgrade {
     }
 
     /**
-     *  Remove old log file after crash, since we are updating (sorry)
+     *  The current hsqldb library version
      *
+     *  @return library version or "unknown"
+     */
+    public static String getHsqldbVersion(Connection dbConn) {
+        try {
+            if (dbConn != null && !dbConn.isClosed()) {
+                return dbConn.getMetaData().getDatabaseProductVersion();
+            }
+        } catch (SQLException se) {}
+        String rv = getHsqldbVersion();
+        return rv != null ? rv : "unknown";
+    }
+
+    /**
+     *  Remove old log file after crash, since we are updating (sorry)
+     *  Unused, let's try migrating it
      *  @param dbPath /path/to/.syndie/db/syndie (i.e. without the .data suffix)
      */
-    public static void removeOldLog(String dbPath) {
+    private static void removeOldLog(String dbPath) {
         File f = new File(dbPath + ".log");
         if (f.delete())
             log("Deleted old log file before migration: " + f);
@@ -114,11 +139,29 @@ class DBUpgrade {
      *
      *  @param dbPath /path/to/.syndie/db/syndie (i.e. without the .data suffix)
      */
-    public static void migrateScript(String dbPath) {
-        File oldFile = new File(dbPath + ".script");
+    private static void migrateScript(String dbPath) {
+        migrate(dbPath, ".script");
+    }
+
+    /**
+     *  Strip the offensive line from syndie.script
+     *
+     *  @param dbPath /path/to/.syndie/db/syndie (i.e. without the .data suffix)
+     */
+    private static void migrateLog(String dbPath) {
+        migrate(dbPath, ".log");
+    }
+
+    /**
+     *  Strip the offensive line from syndie.script
+     *
+     *  @param dbPath /path/to/.syndie/db/syndie (i.e. without the .data suffix)
+     */
+    private static void migrate(String dbPath, String suffix) {
+        File oldFile = new File(dbPath + suffix);
         if (!oldFile.exists())
             return;
-        File newFile = new File(dbPath + ".script.new");
+        File newFile = new File(dbPath + suffix + ".tmp");
         InputStream in = null;
         PrintWriter out = null;
         try {
@@ -150,14 +193,9 @@ class DBUpgrade {
      *  Are we hsqldb version 2.0 or higher?
      */
     public static boolean isHsqldb20(Connection dbConn) {
-        String version;
-        try {
-            version = dbConn.getMetaData().getDatabaseProductVersion();
-            VersionComparator comp = new VersionComparator();
-            return comp.compare(version, HSQLDB_VERSION_2) >= 0;
-        } catch (SQLException se) {
-            return false;
-        }
+        String version = getHsqldbVersion(dbConn);
+        VersionComparator comp = new VersionComparator();
+        return comp.compare(version, HSQLDB_VERSION_2) >= 0;
     }
 
     /**
@@ -203,10 +241,10 @@ class DBUpgrade {
     }
 
     private static void log(String s) {
-        I2PAppContext.getGlobalContext().logManager().getLog(DBUpgrade.class).warn(s);
+        I2PAppContext.getGlobalContext().logManager().getLog(DBUpgrade.class).logAlways(Log.WARN, s);
     }
 
     private static void log(String s, Throwable t) {
-        I2PAppContext.getGlobalContext().logManager().getLog(DBUpgrade.class).warn(s, t);
+        I2PAppContext.getGlobalContext().logManager().getLog(DBUpgrade.class).error(s, t);
     }
 }
