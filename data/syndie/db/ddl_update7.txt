@@ -4,6 +4,8 @@
 
 UPDATE appVersion SET versionNum = 8, visibleVersion = 'Message read status support';
 
+-- Note: These tables are dropped in ddl_update12.txt
+
 CREATE CACHED TABLE nymChannelReadThrough (
 	nymId		INTEGER
 	, scope		BIGINT
