@@ -31,7 +31,7 @@ class DBInit {
     /**
      *  Initialize the DB, update to latest version if necessary
      */
-    public void initDB() {
+    public void initDB() throws SQLException {
         int version = checkDBVersion();
         if (_log.shouldLog(Log.DEBUG))
             _log.debug("Known DB version: " + version);
@@ -93,7 +93,7 @@ class DBInit {
      *  Create a new DB with the version 1 ddl_update0.txt, or
      *  Update from oldVersion to oldVersion + 1 using ddl_update{oldVersion}.txt
      */
-    private void updateDB(int oldVersion) {
+    private void updateDB(int oldVersion) throws SQLException {
         BufferedReader r = null;
         try {
             InputStream in = getClass().getResourceAsStream("ddl_update" + oldVersion + ".txt");
@@ -117,9 +117,12 @@ class DBInit {
         } catch (IOException ioe) {
             if (_log.shouldLog(Log.ERROR))
                 _log.error("Error reading the db script", ioe);
+            // SQLException(Throwable) as of Java 6
+            throw new SQLException(ioe.toString());
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
                 _log.error("Error building the db", se);
+            throw se;
         } finally {
             if (r != null) try { r.close(); } catch (IOException ioe) {}
         }
