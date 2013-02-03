@@ -4,7 +4,7 @@ source_lang = en
 trans.de = locale/messages_de.po
 trans.es = locale/messages_es.po
 trans.ru_RU= locale/messages_ru.po
-trans.sv_SE = locale/messages_se.po
+trans.sv_SE = locale/messages_sv.po
 type = PO
 
 [main]
