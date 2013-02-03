@@ -15,6 +15,7 @@ import net.i2p.I2PAppContext;
 import net.i2p.util.ConcurrentHashSet;
 import net.i2p.util.Translate;
 
+import org.eclipse.swt.SWTException;
 import org.eclipse.swt.graphics.Image;
 
 import syndie.db.UI;
@@ -145,8 +146,13 @@ public class TranslationRegistry {
         // context falls back to system properties
         System.setProperty(Translate.PROP_LANG, newLang);
         for (Translatable cur : _translatable) {
-            _ui.debugMessage("switching translation to " + newLang + " for " + cur.getClass().getName() + "/" + System.identityHashCode(cur));
-            cur.translate(this);
+            try {
+                _ui.debugMessage("switching translation to " + newLang + " for " + cur.getClass().getName() + "/" + System.identityHashCode(cur));
+                cur.translate(this);
+            } catch (SWTException se) {
+                // don't let disposed widget break all registered Translatables
+                _ui.debugMessage("Translation switch failed for " + cur.getClass().getName(), se);
+            }
         }
     }
     

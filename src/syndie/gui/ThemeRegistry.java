@@ -4,10 +4,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Properties;
+
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.SWTException;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
+
 import syndie.db.DBClient;
 import syndie.db.UI;
 
@@ -66,20 +69,26 @@ public class ThemeRegistry {
     private void notifyAll(Theme theme) {
         // we need to make sure the browser is themed last, so that when it 
         // calls a recursive layout, it uses rethemed component info.
-        Object lsnrs[] = null;
+        Themeable lsnrs[];
         synchronized (_listeners) {
-            lsnrs = _listeners.toArray();
+            lsnrs = _listeners.toArray(new Themeable[_listeners.size()]);
         }
         for (int i = 0; i < lsnrs.length; i++) {
-            Themeable cur = (Themeable)lsnrs[i];
+            Themeable cur = lsnrs[i];
             if (cur == _toThemeLast) continue;
             String err = null; //theme.validate();
             if (err == null) {
-                long before = System.currentTimeMillis();
-                cur.applyTheme(theme);
-                long after = System.currentTimeMillis();
-                if (_ui != null)
-                    _ui.debugMessage("apply theme to " + cur.getClass().getName() + "/" + System.identityHashCode(cur) + " took " + (after-before));
+                try {
+                    long before = System.currentTimeMillis();
+                    cur.applyTheme(theme);
+                    long after = System.currentTimeMillis();
+                    if (_ui != null)
+                        _ui.debugMessage("apply theme to " + cur.getClass().getName() + "/" + System.identityHashCode(cur) + " took " + (after-before));
+                } catch (SWTException se) {
+                    // don't let disposed widget break all registered Themeables
+                    if (_ui != null)
+                        _ui.debugMessage("Theme switch failed for " + cur.getClass().getName(), se);
+                }
             } else {
                 if (_ui != null)
                     _ui.errorMessage("cannot apply theme: " + err);

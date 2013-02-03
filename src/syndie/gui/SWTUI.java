@@ -179,10 +179,13 @@ public class SWTUI {
             s.setText(browser.getTranslationRegistry().getText("Internal error"));
             s.setLayout(new GridLayout(1, true));
             Label l = new Label(s, SWT.SINGLE | SWT.WRAP);
-            l.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
-            l.setText(browser.getTranslationRegistry().getText("Syndie ran into an internal error trying to start up - please see the logs") + ": " + lsnr.getLoginFailedCause().getMessage());
+            GridData gd = new GridData(GridData.FILL, GridData.FILL, true, false);
+            gd.widthHint = 500;
+            l.setLayoutData(gd);
+            l.setText(browser.getTranslationRegistry().getText("Syndie ran into an internal error trying to start up - please see the logs") +
+                                                               ":\n\n" + lsnr.getLoginFailedCause().getMessage() + '\n');
             Button b = new Button(s, SWT.PUSH);
-            b.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+            b.setLayoutData(new GridData(GridData.CENTER, GridData.FILL, false, false));
             b.setText(browser.getTranslationRegistry().getText("Exit"));
             b.addSelectionListener(new FireSelectionListener() { 
                 public void fire() {
