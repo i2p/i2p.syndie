@@ -23,6 +23,10 @@ class DBInit {
     private final Connection _con;
     private final Log _log;
 
+    private static final String SQL_APP = "syndie.db";
+    private static final String DDL_PREFIX = "ddl_update";
+    private static final String DDL_SUFFIX = ".txt";
+
     public DBInit(I2PAppContext ctx, Connection dbConn) {
         _con = dbConn;
         _log = ctx.logManager().getLog(DBInit.class);
@@ -56,7 +60,7 @@ class DBInit {
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
-            stmt = _con.prepareStatement("SELECT versionNum FROM appVersion WHERE app = 'syndie.db'");
+            stmt = _con.prepareStatement("SELECT versionNum FROM appVersion WHERE app = '" + SQL_APP + '\'');
             rs = stmt.executeQuery();
             while (rs.next()) {
                 int rv = rs.getInt(1);
@@ -77,13 +81,13 @@ class DBInit {
     private int getDBUpdateCount() {
         int updates = 0;
         while (true) {
-            InputStream in = getClass().getResourceAsStream("ddl_update" + (updates+1) + ".txt");
+            InputStream in = getClass().getResourceAsStream(DDL_PREFIX + (updates+1) + DDL_SUFFIX);
             if (in != null) {
                 updates++;
                 try { in.close(); } catch (IOException ioe) {}
             } else {
                 if (_log.shouldLog(Log.DEBUG))
-                    _log.debug("There were " + updates + " database updates known for " + getClass().getName() + " ddl_update*.txt");
+                    _log.debug("There were " + updates + " database updates known for " + SQL_APP);
                 return updates;
             }
         }
@@ -96,7 +100,7 @@ class DBInit {
     private void updateDB(int oldVersion) throws SQLException {
         BufferedReader r = null;
         try {
-            InputStream in = getClass().getResourceAsStream("ddl_update" + oldVersion + ".txt");
+            InputStream in = getClass().getResourceAsStream(DDL_PREFIX + oldVersion + DDL_SUFFIX);
             if (in != null) {
                 r = new BufferedReader(new InputStreamReader(in));
                 StringBuilder cmdBuf = new StringBuilder();
@@ -113,6 +117,8 @@ class DBInit {
                 }
                 r.close();
                 r = null;
+            } else {
+                throw new SQLException("Cannot load update for database version " + oldVersion);
             }
         } catch (IOException ioe) {
             if (_log.shouldLog(Log.ERROR))
