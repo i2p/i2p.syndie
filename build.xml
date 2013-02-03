@@ -41,6 +41,7 @@
     <property name="i2p.jar" value="${lib.dir}/i2p.jar" />
     <property name="swt.jar" value="${lib.dir}/swt.jar" />
     <available property="launch4j.available" file="${launch4j.dir}/launch4j.jar" type="file" />
+    <available property="pack200.available" file="${java.home}/bin/pack200" type="file" />
 
     <!-- Set some classpaths up -->
     <path id="classpath.build">
@@ -118,6 +119,17 @@
                     <attribute name="Base-Revision" value="${workspace.version}" />
                 </manifest>
             </jar>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="repack">
+        <attribute name="jarname" />
+        <sequential>
+            <fail unless="pack200.available">Pack200 not found!</fail>
+            <exec executable="${java.home}/bin/pack200" failonerror="true">
+                <arg value="-r" />
+                <arg value="@{jarname}" />
+            </exec>
         </sequential>
     </macrodef>
 
@@ -220,6 +232,7 @@
         <delete file="${pkgtemp.dir}/lib/swt.jar" />
         <copy file="resources/uninstall.ico" todir="${pkgtemp.dir}/doc/Uninstaller" />
         <copy tofile="${pkgtemp.dir}/lib/swt.jar" file="@{swt}" />
+        <ant target="repack-swt" />
         <izpack output="syndie-installer-${extended.version}.bin.@{os}@{arch}.jar"
                 installerType="standard"
                 basedir="."
@@ -1037,6 +1050,29 @@
         </delete>
     </target>
 
+    <target name="repack-osx-bundle" if="do.repack">
+        <repack jarname="pkg-osx/Syndie.app/Contents/MacOS/swt.jar" />
+        <repack jarname="pkg-osx/Syndie.app/Contents/MacOS/i2p.jar" />
+        <repack jarname="pkg-osx/Syndie.app/Contents/MacOS/syndie.jar" />
+        <repack jarname="pkg-osx/Syndie.app/Contents/MacOS/hsqldb.jar" />
+    </target>
+
+    <target name="repack-common" if="do.repack">
+        <repack jarname="${pkgtemp.dir}/lib/i2p.jar" />
+        <repack jarname="${pkgtemp.dir}/lib/hsqldb.jar" />
+        <repack jarname="${pkgtemp.dir}/lib/syndie.jar" />
+    </target>
+
+    <target name="repack-swt" if="do.repack">
+        <repack jarname="${pkgtemp.dir}/lib/swt.jar" />
+    </target>
+
+    <target name="repack-cli" if="do.repack">
+        <repack jarname="${pkgtemp.dir}/lib/i2p.jar" />
+        <repack jarname="${pkgtemp.dir}/lib/hsqldb.jar" />
+        <repack jarname="${pkgtemp.dir}/bin/syndie-cli.jar" />
+    </target>
+
     <target name="installer-linux" depends="installer-linux32, installer-linux64" description="Create Linux installers (i386 and x86_64)"/>
 
     <!-- Aliases -->
@@ -1060,11 +1096,13 @@ java -jar %INSTALL_PATH/bin/syndie-cli.jar
 
     <target name="installer-linux32" depends="-check-for-izpack, stub-jars, preppkg, delete-windows-files, delete-osx-files, linux-start-scripts" description="Create i386 installer for Linux">
         <ant dir="swt" target="ensure-lin32-swt" />
+        <ant target="repack-common" />
         <build-installer os="linux" arch="32" swt="${swt.lin32}" />
     </target>
 
     <target name="installer-linux64" depends="-check-for-izpack, stub-jars, preppkg, delete-windows-files, delete-osx-files, linux-start-scripts" description="Create x86_64 installer for Linux">
         <ant dir="swt" target="ensure-lin64-swt" />
+        <ant target="repack-common" />
         <build-installer os="linux" arch="64" swt="${swt.lin64}" />
     </target>
 
@@ -1080,11 +1118,13 @@ java -jar %INSTALL_PATH/bin/syndie-cli.jar
 
     <target name="installer-windows32" depends="-check-for-izpack, jars2exe, stub-jars, preppkg, delete-osx-files, delete-linux-files" description="Create i386 installer for Windows">
         <ant dir="swt" target="ensure-win32-swt" />
+        <ant target="repack-common" />
         <build-installer os="win" arch="32" swt="${swt.win32}" />
     </target>
 
     <target name="installer-windows64" depends="-check-for-izpack, jars2exe, stub-jars, preppkg, delete-osx-files, delete-linux-files" description="Create x86_64 installer for Windows">
         <ant dir="swt" target="ensure-win64-swt" />
+        <ant target="repack-common" />
         <build-installer os="win" arch="64" swt="${swt.win64}" />
     </target>
 
@@ -1108,6 +1148,7 @@ CP=%INSTALL_PATH/lib/i2p.jar:%INSTALL_PATH/lib/hsqldb.jar:%INSTALL_PATH/syndie.j
 java -d32 -XstartOnFirstThread -cp $CP syndie.db.TextUI
 ]]></echo>
         <ant dir="swt" target="ensure-mac32-swt" />
+        <ant target="repack-common" />
         <build-installer os="osx" arch="32" swt="${swt.mac32}" />
     </target>
 
@@ -1125,6 +1166,7 @@ CP=%INSTALL_PATH/lib/i2p.jar:%INSTALL_PATH/lib/hsqldb.jar:%INSTALL_PATH/syndie.j
 java -d64 -XstartOnFirstThread -cp $CP syndie.db.TextUI
 ]]></echo>
         <ant dir="swt" target="ensure-mac64-swt" />
+        <ant target="repack-common" />
         <build-installer os="osx" arch="64" swt="${swt.mac64}" />
     </target>
 
@@ -1175,6 +1217,8 @@ java -d64 -XstartOnFirstThread -cp $CP syndie.db.TextUI
     <target name="pkg-cli" depends="jar-cli, prep-docs">
         <copy file="${build.dir}/syndie-cli.jar" todir="${pkgtemp.dir}/bin" />
         <copy file="${hsqldb.jar}" todir="${pkgtemp.dir}/lib" />
+        <copy file="${i2p.jar}" todir="${pkgtemp.dir}/lib" />
+        <ant target="repack-cli" />
         <echo file="${pkgtemp.dir}/bin/readme.txt">In order to use this headless version of Syndie,
 copy i2p.jar to the lib directory, then simply
 run "java -jar syndie-cli.jar".
@@ -1203,6 +1247,7 @@ java -cp path/to/hsqldb.jar:path/to/i2p.jar:path/to/syndie-cli.jar syndie.db.Tex
         <ant dir="swt" target="ensure-mac32-swt" />
         <delete file="pkg-osx/Syndie.app/Contents/MacOS/swt.jar" />
         <copy file="${swt.mac32}" tofile="pkg-osx/Syndie.app/Contents/MacOS/swt.jar" />
+        <ant target="repack-osx-bundle" />
         <echo file="pkg-osx/Syndie.app/Contents/MacOS/startsyndie.sh"><![CDATA[#!/bin/sh
 DIR=`dirname $0`
 CP=$DIR/swt.jar:$DIR/hsqldb.jar:$DIR/syndie.jar:$DIR/i2p.jar
@@ -1223,6 +1268,7 @@ exec java -d32 -XstartOnFirstThread -cp $CP syndie.gui.SWTUI
         <ant dir="swt" target="ensure-mac64-swt" />
         <delete file="pkg-osx/Syndie.app/Contents/MacOS/swt.jar" />
         <copy file="${swt.mac64}" tofile="pkg-osx/Syndie.app/Contents/MacOS/swt.jar" />
+        <ant target="repack-osx-bundle" />
         <echo file="pkg-osx/Syndie.app/Contents/MacOS/startsyndie.sh"><![CDATA[#!/bin/sh
 DIR=`dirname $0`
 CP=$DIR/swt.jar:$DIR/hsqldb.jar:$DIR/syndie.jar:$DIR/i2p.jar
