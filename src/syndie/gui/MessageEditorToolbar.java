@@ -487,7 +487,7 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
             public void fire() { _styleMenu.setVisible(true); }
         };
         
-        _styleButton = addFlatButton(tg, "Insert style elements", ImageUtil.ICON_EDITOR_STYLE, listener);
+        _styleButton = addFlatButton(tg, getText("Insert style elements"), ImageUtil.ICON_EDITOR_STYLE, listener);
         
         _styleText = new MenuItem(_styleMenu, SWT.PUSH);
         _styleText.addSelectionListener(new FireSelectionListener() {
@@ -585,7 +585,7 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
             public void fire() { _editor.spellNext(); }
         };
         
-        _spellButton = addFlatButton(tg, "Check the spelling in the current page", ImageUtil.ICON_EDITOR_SPELL, listener);
+        _spellButton = addFlatButton(tg, getText("Check the spelling in the current page"), ImageUtil.ICON_EDITOR_SPELL, listener);
     }
     
     public void initSearchControl(ToolbarGroup tg) {
@@ -593,7 +593,7 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
             public void fire() { _editor.search(); }
         };
         
-        _searchButton = addFlatButton(tg, "Find or replace text in the current page", ImageUtil.ICON_EDITOR_SEARCH, listener);
+        _searchButton = addFlatButton(tg, getText("Find or replace text in the current page"), ImageUtil.ICON_EDITOR_SEARCH, listener);
     }
     
     public void initQuoteControl(ToolbarGroup tg) {
@@ -601,7 +601,7 @@ public class MessageEditorToolbar implements MessageEditor.EditorStatusListener 
             public void fire() { _editor.quote(); }
         };
         
-        _quoteButton = addFlatButton(tg, "Quote a section of the previous message", ImageUtil.ICON_EDITOR_QUOTE, listener);
+        _quoteButton = addFlatButton(tg, getText("Quote a section of the previous message"), ImageUtil.ICON_EDITOR_QUOTE, listener);
     }
     
     public void applyTheme(Theme theme) {
