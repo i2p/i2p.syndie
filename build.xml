@@ -1346,7 +1346,7 @@ exec java -d64 -XstartOnFirstThread -cp $CP syndie.gui.SWTUI
         <make-torrent file="syndie-${extended.version}.bin.osx64.tar.bz2" />
     </target>
 
-    <target name="update-site" depends="buildProperties" if="do.update.site">
+    <target name="update-site" depends="buildProperties, copy-www" if="do.update.site">
         <replaceregexp flags="g" byline="false"
             match="[0-9]\.[0-9]+b-[0-9]+(-[a-z0-9]{8})?"
             replace="${extended.version}">
@@ -1357,6 +1357,12 @@ exec java -d64 -XstartOnFirstThread -cp $CP syndie.gui.SWTUI
             replace="(${files.date})">
         </replaceregexp>
         <echo>Release date set to ${files.date}. Edit doc/web/index.html is this is incorrect.</echo>
+    </target>
+
+    <target name="copy-www" if="syndie.www">
+        <copy todir="${syndie.www}" verbose="true" overwrite="true">
+            <fileset dir="doc/web" includes="index.html download.html" />
+        </copy>
     </target>
 
     <target name="testscripts" description="check PO files, XML, and HTML files for errors">
