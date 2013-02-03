@@ -798,7 +798,7 @@
                     <contains value="public static final String VERSION"/>
                 </linecontains>
                 <tokenfilter>
-                    <replaceregex pattern='.*"[^"]+b-([0-9]+)";' replace="\1" flags="gi" />
+                    <replaceregex pattern='.*"[^"]+(?:a|b|rc)?-([0-9]+)";' replace="\1" flags="gi" />
                 </tokenfilter>
                 <striplinebreaks/>
                 <trim/>
