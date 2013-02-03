@@ -35,10 +35,12 @@ class DBInit {
         int version = checkDBVersion();
         if (_log.shouldLog(Log.DEBUG))
             _log.debug("Known DB version: " + version);
-        if (version < 0)
-            buildDB();
+        if (version < 0) {
+            if (_log.shouldLog(Log.INFO))
+                _log.info("Building the database...");
+        }
         int updates = getDBUpdateCount(); // syndie/db/ddl_update$n.txt
-        for (int i = 1; i <= updates; i++) {
+        for (int i = 0; i <= updates; i++) {
             if (i >= version) {
                 if (_log.shouldLog(Log.DEBUG))
                     _log.debug("Updating database version " + i + " to " + (i+1));
@@ -72,43 +74,6 @@ class DBInit {
         }
     }
 
-    /**
-     *  Create a new DB with the version 1 ddl.txt
-     */
-    private void buildDB() {
-        if (_log.shouldLog(Log.INFO))
-            _log.info("Building the database...");
-        BufferedReader r = null;
-        try {
-            InputStream in = DBClient.class.getResourceAsStream("ddl.txt");
-            if (in != null) {
-                r = new BufferedReader(new InputStreamReader(in));
-                StringBuilder cmdBuf = new StringBuilder();
-                String line = null;
-                while ( (line = r.readLine()) != null) {
-                    line = line.trim();
-                    if (line.startsWith("//") || line.startsWith("--"))
-                        continue;
-                    cmdBuf.append(' ').append(line);
-                    if (line.endsWith(";")) {
-                        exec(cmdBuf.toString());
-                        cmdBuf.setLength(0);
-                    }
-                }
-                r.close();
-                r = null;
-            }
-        } catch (IOException ioe) {
-            if (_log.shouldLog(Log.ERROR))
-                _log.error("Error reading the db script", ioe);
-        } catch (SQLException se) {
-            if (_log.shouldLog(Log.ERROR))
-                _log.error("Error building the db", se);
-        } finally {
-            if (r != null) try { r.close(); } catch (IOException ioe) {}
-        }
-    }
-
     private int getDBUpdateCount() {
         int updates = 0;
         while (true) {
@@ -125,6 +90,7 @@ class DBInit {
     }
 
     /**
+     *  Create a new DB with the version 1 ddl_update0.txt, or
      *  Update from oldVersion to oldVersion + 1 using ddl_update{oldVersion}.txt
      */
     private void updateDB(int oldVersion) {
