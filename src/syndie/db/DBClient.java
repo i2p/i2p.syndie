@@ -95,8 +95,12 @@ public class DBClient {
 
     private Connection _con;
     private SyndieURIDAO _uriDAO;
+    /** for the DB, default USER/PASS */
     private String _login;
     private String _pass;
+    /** for the nym, defautl user/pass */
+    private String _nymLogin;
+    private String _nymPass;
     private long _nymId;
     private File _rootDir;
     private String _url;
@@ -280,7 +284,9 @@ public class DBClient {
         // We must switch from the uppper-case to lower-case default password now
         // or verifyNymKeyEncryption() will fail
         if (_pass.equals(TextEngine.DEFAULT_PASS))
-            _pass = TextEngine.DEFAULT_NYMKEY_PASS;
+            _nymPass = TextEngine.DEFAULT_NYMKEY_PASS;
+        else
+            _nymPass = _pass;
 
         boolean ok = verifyNymKeyEncryption();
         if (!ok) {
@@ -290,7 +296,9 @@ public class DBClient {
             // We must switch from the uppper-case to lower-case default login now
             // or getNymId() in connect() below will fail
             if (_login.equals(TextEngine.DEFAULT_LOGIN))
-                _login = TextEngine.DEFAULT_NYMKEY_LOGIN;
+                _nymLogin = TextEngine.DEFAULT_NYMKEY_LOGIN;
+            else
+                _nymLogin = _login;
             if (_expireEvent == null) {
                 long delay = _context.random().nextLong(60*60*1000l) + 24*60*60*1000l;
                 _expireEvent = new ExpireEvent();
@@ -336,7 +344,7 @@ public class DBClient {
             // don't leak connections or change logins on the fly
             log("connect(...) called, already connected as \"" + _login + '"', new Exception());
             if (StringUtil.lowercase(login).equals(StringUtil.lowercase(_login)))
-                return getNymId(_login, _pass);
+                return getNymId(_nymLogin, _nymPass);
             throw new SQLException("Already logged in as \"" + _login + '"');
         }
         _login = login;
@@ -349,14 +357,13 @@ public class DBClient {
             _con = null;
             throw se;
         }
-        // connect() above may have changed _login and _pass
-        return getNymId(_login, _pass);
+        // connect() above sets _nymLogin and _nymPass
+        return getNymId(_nymLogin, _nymPass);
     }
 
     public boolean reconnect(String passphrase) {
         log("reconnecting to url=[" + _url + "] login=[" + _login + "] pass=[" + passphrase + "]");
         try {
-            // FIXME login changed case
             long id = connect(_url, _login, passphrase);
             log("connected w/ id=" + id);
             if (id >= 0) {
@@ -393,11 +400,23 @@ public class DBClient {
     public Hash sha256(byte data[]) { return _context.sha().calculateHash(data); }
     public void setDefaultUI(UI ui) { _ui = ui; }
     
-    /** if logged in, the login used is returned here */
+    /**
+     *  If logged in, the login used is returned here.
+     *  This is the DB login, NOT the nym login.
+     */
     String getLogin() { return _login; }
-    /** if logged in, the password authenticating it is returned here */
-    public String getPass() { return _pass; }
-    public void setPass(String encryptionPass) { _pass = encryptionPass; }
+
+    /**
+     *  If logged in, the password authenticating it is returned here.
+     *  This is the nym password, NOT the DB password.
+     */
+    String getPass() { return _nymPass; }
+
+    /**
+     *  Sets the nym password, NOT the DB password.
+     *  Used only by desktop.
+     */
+    public void setPass(String encryptionPass) { _nymPass = encryptionPass; }
 
     /**
      *  TODO, ensureLoggedIn() may still throw an ISE even if isLoggedIn() returns true
@@ -434,6 +453,8 @@ public class DBClient {
     public void close() {
         _login = null;
         _pass = null;
+        _nymLogin = null;
+        _nymPass = null;
         _nymId = -1;
         _defaultArchive = null;
         _httpProxyHost = null;
@@ -523,8 +544,8 @@ public class DBClient {
                 } else {
                     byte calc[] = _context.keyGenerator().generateSessionKey(salt, DataHelper.getUTF8(passphrase)).getData();
                     if (DataHelper.eq(calc, hash)) {
-                        _login = login;
-                        _pass = passphrase;
+                        _nymLogin = login;
+                        _nymPass = passphrase;
                         _nymId = nymId;
                         log("passphrase is correct in the nym table for \"" + login + '"');
                         
@@ -849,7 +870,7 @@ public class DBClient {
      *        those that have not been deprecated)
      */
     public List<SessionKey> getReadKeys(Hash identHash, boolean onlyIncludeForWriting) {
-        return getReadKeys(identHash, _nymId, _pass, onlyIncludeForWriting);
+        return getReadKeys(identHash, _nymId, _nymPass, onlyIncludeForWriting);
     }
 
     public List<SessionKey> getReadKeys(Hash identHash, long nymId, String nymPassphrase, boolean onlyIncludeForWriting) {
@@ -1174,7 +1195,7 @@ public class DBClient {
      * list of SigningPrivateKey instances that the nym specified can use to
      * try and authenticate/authorize posts to the given identHash channel
      */
-    public List<SigningPrivateKey> getSignKeys(Hash identHash) { return getSignKeys(identHash, _nymId, _pass); }
+    public List<SigningPrivateKey> getSignKeys(Hash identHash) { return getSignKeys(identHash, _nymId, _nymPass); }
 
     public List<SigningPrivateKey> getSignKeys(Hash identHash, long nymId, String nymPassphrase) {
         ensureLoggedIn();
@@ -1273,7 +1294,7 @@ public class DBClient {
      *
      * Side effect: sets _numKeysWithoutPass
      *
-     * @param pass unused, must be in _pass (current password)
+     * @param pass unused, must be in _nymPass (current password)
      * @param channel null for all
      * @param keyFunction null for all
      * @return no particular order
@@ -1287,7 +1308,7 @@ public class DBClient {
      *
      * Side effect: sets _numKeysWithoutPass
      *
-     * @param pass unused, must be in _pass (current password)
+     * @param pass unused, must be in _nymPass (current password)
      * @param channel null for all
      * @param keyFunction null for all
      * @return no particular order
@@ -1363,7 +1384,7 @@ public class DBClient {
     }
     
     public boolean verifyNymKeyEncryption() {
-        getNymKeys(0, _pass, null, null, true);
+        getNymKeys(0, _nymPass, null, null, true);
         return _numNymKeysWithoutPass == 0;
     }
     
@@ -6431,16 +6452,16 @@ public class DBClient {
     public void changePassphrase(String newPass) {
         try {
             _con.setAutoCommit(false);
-            log("changing passphrase from [" + _pass + "] to [" + newPass + "]");
+            log("changing passphrase from [" + _nymPass + "] to [" + newPass + "]");
             // reencrypt all of the keys under the new passphrase
-            if (!reencryptKeys(_pass, newPass)) {
+            if (!reencryptKeys(_nymPass, newPass)) {
                 log("reencryptKeys failed");
                 log("Passphrase NOT changed");
                 _con.rollback();
                 return;
             }
             // reencrypt all of the postponed messages under the new passphrase
-            if (!reencryptPostponed(_pass, newPass)) {
+            if (!reencryptPostponed(_nymPass, newPass)) {
                 log("reencryptPostponed failed");
                 log("Passphrase NOT changed");
                 _con.rollback();
@@ -6493,7 +6514,7 @@ public class DBClient {
             } finally {
                 if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
             }
-            _pass = newPass;
+            _nymPass = newPass;
             _con.commit();
         } catch (SQLException se) {
             log("Error partway through the passphrase changing...?", se);
@@ -6747,7 +6768,7 @@ public class DBClient {
      * saving it in saltTarget.  The result is the padded encrypted data
      */
     public byte[] pbeEncrypt(byte orig[], byte saltTarget[]) {
-        return pbeEncrypt(orig, _pass, saltTarget, I2PAppContext.getGlobalContext());
+        return pbeEncrypt(orig, _nymPass, saltTarget, I2PAppContext.getGlobalContext());
     }
 
     public byte[] pbeEncrypt(byte orig[], String pass, byte saltTarget[]) {
@@ -6769,7 +6790,7 @@ public class DBClient {
     }
     
     /** pbe decrypt the data with the current passphrase, returning the decrypted data, stripped of any padding */
-    public byte[] pbeDecrypt(byte orig[], byte salt[]) { return pbeDecrypt(orig, _pass, salt); }
+    public byte[] pbeDecrypt(byte orig[], byte salt[]) { return pbeDecrypt(orig, _nymPass, salt); }
 
     public byte[] pbeDecrypt(byte orig[], String pass, byte salt[]) {
         return pbeDecrypt(orig, 0, salt, 0, pass, orig.length, _context);
