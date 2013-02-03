@@ -219,6 +219,20 @@
         </sequential>
     </macrodef>
 
+    <macrodef name="make-torrent">
+        <attribute name="file" />
+        <sequential>
+            <java classname="org.klomp.snark.Storage" fork="false" failonerror="true">
+                <classpath>
+                    <pathelement location="${i2p.jar}" />
+                    <pathelement location="${i2psnark.jar}" />
+                </classpath>
+                <arg value="@{file}" />
+                <arg value="http://tracker2.postman.i2p/announce.php" />
+            </java>
+        </sequential>
+    </macrodef>
+
 <macrodef name="build-installer">
     <attribute name="os" />
     <attribute name="swt" />
@@ -1310,9 +1324,26 @@ exec java -d64 -XstartOnFirstThread -cp $CP syndie.gui.SWTUI
         <sign-and-sum file="syndie-${extended.version}.src.tar.bz2" />
         <sign-and-sum file="syndie-${extended.version}.bin.osx32.tar.bz2" />
         <sign-and-sum file="syndie-${extended.version}.bin.osx64.tar.bz2" />
+        <ant target="-torrent" />
+
         <move todir="./dist">
-            <fileset dir="." includes="*.exe *.sha256 *.sig *.bz2 *.jar"/>
+            <fileset dir="." includes="*.exe *.sha256 *.sig *.bz2 *.jar *.torrent"/>
         </move>
+    </target>
+
+    <target name="-torrent" if="i2psnark.jar">
+        <available property="i2psnark.available" file="${i2psnark.jar}" type="file" />
+        <fail unless="i2psnark.available">ERROR: -Di2psnark.jar set but ${i2psnark.jar} could not be found!</fail>
+        <make-torrent file="syndie-cli-${extended.version}.bin.tar.bz2" />
+        <make-torrent file="syndie-installer-${extended.version}.bin.linux32.jar" />
+        <make-torrent file="syndie-installer-${extended.version}.bin.linux64.jar" />
+        <make-torrent file="syndie-installer-${extended.version}.bin.win32.exe" />
+        <make-torrent file="syndie-installer-${extended.version}.bin.win64.exe" />
+        <make-torrent file="syndie-installer-${extended.version}.bin.osx32.jar" />
+        <make-torrent file="syndie-installer-${extended.version}.bin.osx64.jar" />
+        <make-torrent file="syndie-${extended.version}.src.tar.bz2" />
+        <make-torrent file="syndie-${extended.version}.bin.osx32.tar.bz2" />
+        <make-torrent file="syndie-${extended.version}.bin.osx64.tar.bz2" />
     </target>
 
     <target name="update-site" depends="buildProperties" if="do.update.site">
