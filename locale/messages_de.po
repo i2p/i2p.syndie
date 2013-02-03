@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: I2P\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-02-02 21:35+0000\n"
-"PO-Revision-Date: 2013-02-02 22:54+0100\n"
+"PO-Revision-Date: 2013-02-03 11:00+0100\n"
 "Last-Translator: echelon <echelon@mail.i2p>\n"
 "Language-Team: German (http://www.transifex.com/projects/p/I2P/language/de/)\n"
 "Language: de\n"
@@ -32,7 +32,7 @@ msgstr "Namen editieren"
 #: src/syndie/gui/ArchiveDefaults.java:267
 #: src/syndie/gui/ManageForumArchives.java:498
 msgid "Archive name"
-msgstr "Namen archivieren"
+msgstr "Archiv Name"
 
 #: src/syndie/gui/ArchiveDefaults.java:285
 #: src/syndie/gui/ArchiveDefaults.java:344
@@ -107,7 +107,7 @@ msgstr "URL editieren"
 #: src/syndie/gui/ArchiveDefaults.java:326
 #: src/syndie/gui/ArchiveDefaults.java:550
 msgid "Archive location"
-msgstr "Ort archivieren"
+msgstr "Archiv Adresse"
 
 #: src/syndie/gui/ArchiveDefaults.java:390
 msgid "Edit proxy"
@@ -154,7 +154,7 @@ msgstr "HTTP Proxy für Zugang"
 
 #: src/syndie/gui/ArchiveDefaults.java:552
 msgid "Read only archive (pull only, do not push)?"
-msgstr "Schreibgeschütze Archive"
+msgstr "Nur Lese Archiv (nur holen, nicht senden)?"
 
 #: src/syndie/gui/ArchiveDefaults.java:553
 msgid "Schedule sharing immediately"
@@ -180,7 +180,7 @@ msgstr "Speichere Archive als deine eigenen."
 #: src/syndie/gui/ArchiveManager.java:336
 #: src/syndie/gui/ViewForum.java:851
 msgid "Advertised archives"
-msgstr "geworbene Archive"
+msgstr "Beworbene Archive"
 
 #: src/syndie/gui/ArchiveManager.java:201
 msgid "If you allow people to sync off your archive, you can tell them about some alternate archives they can sync off as well"
@@ -210,7 +210,7 @@ msgstr "Regeln zum Ablaufdatum managen"
 
 #: src/syndie/gui/ArchiveManager.java:334
 msgid "Manage cancel policies"
-msgstr "Abbruch Regeln verwalten"
+msgstr "Etnfernungsregeln verwalten"
 
 #: src/syndie/gui/ArchiveManager.java:337
 #: src/syndie/gui/ArchiveManager.java:340
@@ -409,7 +409,7 @@ msgstr "Das zugehörige Forum Profil sichern?"
 
 #: src/syndie/gui/BackupSecrets.java:495
 msgid "Backup expired keys?"
-msgstr "erloschene Schlüssel sichern?"
+msgstr "Veraltete Schlüssel sichern?"
 
 #: src/syndie/gui/BackupSecrets.java:496
 msgid "Passphrase required to restore"
@@ -664,13 +664,13 @@ msgstr "Font auswählen"
 #: src/syndie/gui/Browser.java:2859
 #: src/syndie/gui/desktop/ControlMenuPanel.java:621
 msgid "Open Syndie URI"
-msgstr "Syndie URL öffnen"
+msgstr "Syndie URI öffnen"
 
 #: src/syndie/gui/Browser.java:2176
 #: src/syndie/gui/ManageForumArchives.java:493
 #: src/syndie/gui/ReferenceEditor.java:678
 msgid "Location"
-msgstr "Ort"
+msgstr "Adresse"
 
 #: src/syndie/gui/Browser.java:2183
 #: src/syndie/gui/desktop/ControlMenuPanel.java:623
@@ -714,7 +714,7 @@ msgstr "Verzeichnisse rekursiv importieren"
 #: src/syndie/gui/Browser.java:2414
 #: src/syndie/gui/Browser.java:2863
 msgid "Export"
-msgstr "Exportieren."
+msgstr "Exportieren"
 
 #: src/syndie/gui/Browser.java:2431
 msgid "Export to"
@@ -762,7 +762,7 @@ msgstr "Datei"
 
 #: src/syndie/gui/Browser.java:2860
 msgid "Minimize to the systray"
-msgstr "Auf die Systemleiste minimieren"
+msgstr "Syndie GUI ins Systray legen"
 
 #: src/syndie/gui/Browser.java:2861
 #: src/syndie/gui/desktop/ControlMenuPanel.java:614
@@ -898,7 +898,7 @@ msgstr "Konfigurieren"
 #: src/syndie/gui/MessageTree.java:958
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1056
 msgid "Advanced"
-msgstr "erweiterte"
+msgstr "Erweitert"
 
 #: src/syndie/gui/Browser.java:2920
 msgid "Text interface"
@@ -1083,11 +1083,11 @@ msgstr "Fehler Typ"
 
 #: src/syndie/gui/BugReport.java:651
 msgid "Severity"
-msgstr "Härte"
+msgstr "Schweregrad"
 
 #: src/syndie/gui/BugReport.java:652
 msgid "OS"
-msgstr "Operation System (Windows, Linux, etc. ? )"
+msgstr "Betriebssystem"
 
 #: src/syndie/gui/BugReport.java:653
 msgid "JVM"
@@ -1437,16 +1437,16 @@ msgstr "Forum Authorisierung und Authentifizierung benötigt 4 Formulare - wer F
 
 #: src/syndie/gui/ManageForum.java:1165
 msgid "Read posts"
-msgstr "Lese Nachrichten"
+msgstr "Nachrichten lesen"
 
 #: src/syndie/gui/ManageForum.java:1166
 msgid "Create posts"
-msgstr "Erstelle Nachrichten"
+msgstr "Nachrichten erstellen"
 
 #: src/syndie/gui/ManageForum.java:1168
 #: src/syndie/gui/ManageForumAuthReply.java:225
 msgid "Read forum feedback"
-msgstr "Lese Forum-FKritik"
+msgstr "Forum Feedback lesen"
 
 #: src/syndie/gui/ManageForum.java:1170
 #: src/syndie/gui/ManageForum.java:1173
@@ -1606,7 +1606,7 @@ msgstr "Sende den neuen Schlüssel in einer Passwort gesicherten Nachricht ins F
 
 #: src/syndie/gui/ManageForumBans.java:314
 msgid "Locally banned scopes"
-msgstr "lokal gebannte Bereiche"
+msgstr "lokale Verbannungsregeln"
 
 #: src/syndie/gui/ManageForumBans.java:315
 msgid "Banned scopes"
@@ -2299,7 +2299,7 @@ msgstr "durchsuche Seiten und Überschrift nach dieser Phrase"
 
 #: src/syndie/gui/MessageTree.java:965
 msgid "Bookmarked forums"
-msgstr "Ale Lesezeichen gespeicherte Foren."
+msgstr "Foren in Lesezeichen"
 
 #: src/syndie/gui/MessageTree.java:966
 msgid "Specific forum"
@@ -2918,7 +2918,7 @@ msgstr "Forum-Schlüssel unbekannt"
 
 #: src/syndie/gui/ReferenceChooserTree.java:1040
 msgid "Bookmarked references"
-msgstr "bookmarked Referenzen"
+msgstr "Referenz Lesezeichen"
 
 #: src/syndie/gui/ReferenceChooserTree.java:1042
 msgid "Writable forums"
@@ -3376,7 +3376,7 @@ msgstr "Nur einmal syncen"
 
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1074
 msgid "Min sync delay"
-msgstr "Min Zeitbstand beim Syncen"
+msgstr "Min Zeitabstand beim Syncen"
 
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1075
 msgid "Sync failures"
@@ -3433,7 +3433,7 @@ msgstr "Alle Nachrichten die wir nicht haben"
 
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1140
 msgid "Recent messages in forums we know"
-msgstr "Neuste Nachrichten im Forum, welche wir kennen."
+msgstr "Neue Nachrichten in uns bekannten Foren"
 
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1141
 msgid "All messages in forums we know"
@@ -3578,7 +3578,7 @@ msgstr "Optionen"
 
 #: src/syndie/gui/WebRipPageControl.java:361
 msgid "Rip"
-msgstr "Auszug"
+msgstr "Starte Webauszug"
 
 #: src/syndie/gui/WebRipPageControl.java:363
 msgid "Import file attachments (dangerous!)"
