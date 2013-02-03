@@ -181,8 +181,8 @@
             <echo file="${launch4j.config}"><![CDATA[
                 <launch4jConfig>
                     <headerType>0</headerType>
-                    <jar>syndie-installer-${extended.version}.bin.win@{bits}.jar</jar>
-                    <outfile>syndie-installer-${extended.version}.bin.win@{bits}.exe</outfile>
+                    <jar>syndie-installer-${syndie.release.version}.bin.win@{bits}.jar</jar>
+                    <outfile>syndie-installer-${syndie.release.version}.bin.win@{bits}.exe</outfile>
                     <errTitle>Syndie ${full.version} installer</errTitle>
                     <chdir>.</chdir>
                     <icon>doc/web/favicon.ico</icon>
@@ -202,7 +202,7 @@
                 ]]></echo>
 
             <launch4j configFile="${launch4j.config}" />
-            <delete file="syndie-installer-${extended.version}.bin.win@{bits}.jar" />
+            <delete file="syndie-installer-${syndie.release.version}.bin.win@{bits}.jar" />
         </sequential>
     </macrodef>
 
@@ -247,7 +247,7 @@
         <copy file="resources/uninstall.ico" todir="${pkgtemp.dir}/doc/Uninstaller" />
         <copy tofile="${pkgtemp.dir}/lib/swt.jar" file="@{swt}" />
         <ant target="repack-swt" />
-        <izpack output="syndie-installer-${extended.version}.bin.@{os}@{arch}.jar"
+        <izpack output="syndie-installer-${syndie.release.version}.bin.@{os}@{arch}.jar"
                 installerType="standard"
                 basedir="."
                 izPackDir="${izpack.dir}/">
@@ -742,7 +742,6 @@
         <!-- default if not set above -->
         <property name="workspace.version" value="unknown" />
         <property name="full.version" value="${release.number}-${syndie.build.number}" />
-        <echo message="Building version ${full.version} (mtn rev ${workspace.version})" />
         <property name="MtnShortHash" value="unknown" />
         <condition property="extended.version" value="${full.version}-${MtnShortHash}">
             <not>
@@ -754,6 +753,18 @@
         </condition>
         <!-- if not set above we'll set it here -->
         <property name="extended.version" value="${full.version}" />
+
+        <condition property="syndie.release.version" value="${extended.version}">
+            <or>
+                <not>
+                    <equals arg1="${syndie.build.number}" arg2="0" />
+                </not>
+                <isset property="with.revision" />
+            </or>
+        </condition>
+        <!-- if not set above we'll set it here -->
+        <property name="syndie.release.version" value="${release.number}" />
+        <echo message="Building version ${syndie.release.version} (mtn rev ${workspace.version})" />
     </target>
 
     <target name="-trimMtnRev" if="with.revision" description="Shorten MTN rev ID">
@@ -896,9 +907,9 @@
                 </not>
             </condition>
         </fail>
-        <property name="source.tarball.name" value="${ant.project.name}-${extended.version}.src.tar.bz2" />
-        <echo message="Checking out fresh copy into ../${ant.project.name}-${extended.version} for tarballing:" />
-        <delete dir="../${ant.project.name}-${extended.version}" />
+        <property name="source.tarball.name" value="${ant.project.name}-${syndie.release.version}.src.tar.bz2" />
+        <echo message="Checking out fresh copy into ../${ant.project.name}-${syndie.release.version} for tarballing:" />
+        <delete dir="../${ant.project.name}-${syndie.release.version}" />
         <exec executable="mtn" failonerror="true">
             <arg value="co" />
             <arg value="-b" />
@@ -906,18 +917,18 @@
             <!-- w: is the revision of the current workspace -->
             <arg value="-r" />
             <arg value="w:" />
-            <arg value="../${ant.project.name}-${extended.version}" />
+            <arg value="../${ant.project.name}-${syndie.release.version}" />
         </exec>
         <delete includeemptydirs="true" quiet="false">
-            <fileset dir="../${ant.project.name}-${extended.version}/_MTN" />
+            <fileset dir="../${ant.project.name}-${syndie.release.version}/_MTN" />
         </delete>
         <tar longfile="gnu" destfile="${source.tarball.name}" compression="bzip2">
-            <tarfileset dir="../${ant.project.name}-${extended.version}" prefix="${ant.project.name}-${extended.version}">
+            <tarfileset dir="../${ant.project.name}-${syndie.release.version}" prefix="${ant.project.name}-${syndie.release.version}">
                 <include name="**/**" />
                 <exclude name="debian/**"/>
                 <exclude name="**/*.sh"/>
             </tarfileset>
-            <tarfileset dir="../${ant.project.name}-${extended.version}" prefix="${ant.project.name}-${extended.version}" filemode="755">
+            <tarfileset dir="../${ant.project.name}-${syndie.release.version}" prefix="${ant.project.name}-${syndie.release.version}" filemode="755">
                 <exclude name="debian/**" />
                 <include name="**/*.sh" />
             </tarfileset>
@@ -926,7 +937,7 @@
 
     <target name="debian-tarball" depends="source-tarball">
         <copy verbose="true" file="${source.tarball.name}"
-            tofile="../${ant.project.name}_${extended.version}.orig.tar.bz2" />
+            tofile="../${ant.project.name}_${syndie.release.version}.orig.tar.bz2" />
     </target>
 
     <target name="sloccount.report" description="Generate 'sloccount' report">
@@ -1240,8 +1251,8 @@ run "java -jar syndie-cli.jar".
 Alternatively, you can run a command like the following:
 java -cp path/to/hsqldb.jar:path/to/i2p.jar:path/to/syndie-cli.jar syndie.db.TextUI
 </echo>
-        <tar destfile="syndie-cli-${extended.version}.bin.tar.bz2" compression="bzip2">
-            <tarfileset dir="${pkgtemp.dir}" prefix="syndie-cli-${extended.version}" filemode="644">
+        <tar destfile="syndie-cli-${syndie.release.version}.bin.tar.bz2" compression="bzip2">
+            <tarfileset dir="${pkgtemp.dir}" prefix="syndie-cli-${syndie.release.version}" filemode="644">
                 <include name="bin/*" />
                 <exclude name="bin/*.exe" />
                 <exclude name="bin/*.sh" />
@@ -1267,12 +1278,12 @@ DIR=`dirname $0`
 CP=$DIR/swt.jar:$DIR/hsqldb.jar:$DIR/syndie.jar:$DIR/i2p.jar
 exec java -d32 -XstartOnFirstThread -cp $CP syndie.gui.SWTUI
             ]]></echo>
-        <tar destfile="syndie-${extended.version}.bin.osx32.tar.bz2" compression="bzip2">
-            <tarfileset dir="pkg-osx" prefix="syndie-${extended.version}" filemode="644">
+        <tar destfile="syndie-${syndie.release.version}.bin.osx32.tar.bz2" compression="bzip2">
+            <tarfileset dir="pkg-osx" prefix="syndie-${syndie.release.version}" filemode="644">
                 <include name="**/**" />
                 <exclude name="**/*.sh" />
             </tarfileset>
-            <tarfileset dir="pkg-osx" prefix="syndie-${extended.version}" filemode="755">
+            <tarfileset dir="pkg-osx" prefix="syndie-${syndie.release.version}" filemode="755">
                 <include name="**/*.sh" />
             </tarfileset>
         </tar>
@@ -1288,12 +1299,12 @@ DIR=`dirname $0`
 CP=$DIR/swt.jar:$DIR/hsqldb.jar:$DIR/syndie.jar:$DIR/i2p.jar
 exec java -d64 -XstartOnFirstThread -cp $CP syndie.gui.SWTUI
 ]]></echo>
-        <tar destfile="syndie-${extended.version}.bin.osx64.tar.bz2" compression="bzip2">
-            <tarfileset dir="pkg-osx" prefix="syndie-${extended.version}" filemode="644">
+        <tar destfile="syndie-${syndie.release.version}.bin.osx64.tar.bz2" compression="bzip2">
+            <tarfileset dir="pkg-osx" prefix="syndie-${syndie.release.version}" filemode="644">
                 <include name="**/**" />
                 <exclude name="**/*.sh" />
             </tarfileset>
-            <tarfileset dir="pkg-osx" prefix="syndie-${extended.version}" filemode="755">
+            <tarfileset dir="pkg-osx" prefix="syndie-${syndie.release.version}" filemode="755">
                 <include name="**/*.sh" />
             </tarfileset>
         </tar>
@@ -1314,42 +1325,50 @@ exec java -d64 -XstartOnFirstThread -cp $CP syndie.gui.SWTUI
     <target name="release" depends="-check-gpgkey, pkg-all, update-site" description="build, sign, and checksum files then update site">
         <delete dir="./dist" />
         <mkdir dir="./dist" />
-        <sign-and-sum file="syndie-installer-${extended.version}.bin.linux32.jar" />
-        <sign-and-sum file="syndie-installer-${extended.version}.bin.linux64.jar" />
-        <sign-and-sum file="syndie-installer-${extended.version}.bin.win32.exe" />
-        <sign-and-sum file="syndie-installer-${extended.version}.bin.win64.exe" />
-        <sign-and-sum file="syndie-installer-${extended.version}.bin.osx32.jar" />
-        <sign-and-sum file="syndie-installer-${extended.version}.bin.osx64.jar" />
-        <sign-and-sum file="syndie-cli-${extended.version}.bin.tar.bz2" />
-        <sign-and-sum file="syndie-${extended.version}.src.tar.bz2" />
-        <sign-and-sum file="syndie-${extended.version}.bin.osx32.tar.bz2" />
-        <sign-and-sum file="syndie-${extended.version}.bin.osx64.tar.bz2" />
+        <sign-and-sum file="syndie-installer-${syndie.release.version}.bin.linux32.jar" />
+        <sign-and-sum file="syndie-installer-${syndie.release.version}.bin.linux64.jar" />
+        <sign-and-sum file="syndie-installer-${syndie.release.version}.bin.win32.exe" />
+        <sign-and-sum file="syndie-installer-${syndie.release.version}.bin.win64.exe" />
+        <sign-and-sum file="syndie-installer-${syndie.release.version}.bin.osx32.jar" />
+        <sign-and-sum file="syndie-installer-${syndie.release.version}.bin.osx64.jar" />
+        <sign-and-sum file="syndie-cli-${syndie.release.version}.bin.tar.bz2" />
+        <sign-and-sum file="syndie-${syndie.release.version}.src.tar.bz2" />
+        <sign-and-sum file="syndie-${syndie.release.version}.bin.osx32.tar.bz2" />
+        <sign-and-sum file="syndie-${syndie.release.version}.bin.osx64.tar.bz2" />
         <ant target="-torrent" />
 
         <move todir="./dist">
             <fileset dir="." includes="*.exe *.sha256 *.sig *.bz2 *.jar *.torrent"/>
         </move>
+        <echo message="If you're happy with the results, remember to mtn tag w: ${ant.project.name}-${syndie.release.version}" />
     </target>
 
     <target name="-torrent" if="i2psnark.jar">
         <available property="i2psnark.available" file="${i2psnark.jar}" type="file" />
         <fail unless="i2psnark.available">ERROR: -Di2psnark.jar set but ${i2psnark.jar} could not be found!</fail>
-        <make-torrent file="syndie-cli-${extended.version}.bin.tar.bz2" />
-        <make-torrent file="syndie-installer-${extended.version}.bin.linux32.jar" />
-        <make-torrent file="syndie-installer-${extended.version}.bin.linux64.jar" />
-        <make-torrent file="syndie-installer-${extended.version}.bin.win32.exe" />
-        <make-torrent file="syndie-installer-${extended.version}.bin.win64.exe" />
-        <make-torrent file="syndie-installer-${extended.version}.bin.osx32.jar" />
-        <make-torrent file="syndie-installer-${extended.version}.bin.osx64.jar" />
-        <make-torrent file="syndie-${extended.version}.src.tar.bz2" />
-        <make-torrent file="syndie-${extended.version}.bin.osx32.tar.bz2" />
-        <make-torrent file="syndie-${extended.version}.bin.osx64.tar.bz2" />
+        <make-torrent file="syndie-cli-${syndie.release.version}.bin.tar.bz2" />
+        <make-torrent file="syndie-installer-${syndie.release.version}.bin.linux32.jar" />
+        <make-torrent file="syndie-installer-${syndie.release.version}.bin.linux64.jar" />
+        <make-torrent file="syndie-installer-${syndie.release.version}.bin.win32.exe" />
+        <make-torrent file="syndie-installer-${syndie.release.version}.bin.win64.exe" />
+        <make-torrent file="syndie-installer-${syndie.release.version}.bin.osx32.jar" />
+        <make-torrent file="syndie-installer-${syndie.release.version}.bin.osx64.jar" />
+        <make-torrent file="syndie-${syndie.release.version}.src.tar.bz2" />
+        <make-torrent file="syndie-${syndie.release.version}.bin.osx32.tar.bz2" />
+        <make-torrent file="syndie-${syndie.release.version}.bin.osx64.tar.bz2" />
+    </target>
+
+    <target name="update-archivesite" depends="buildProperties" if="gpg.key">
+        <replaceregexp flags="g" byline="false" file="data/archive/index.html"
+            match="[0-9]\.[0-9]+(a|b|rc)(?:-[0-9]+)?(-[a-z0-9]{8})?"
+            replace="${syndie.release.version}">
+        </replaceregexp>
     </target>
 
     <target name="update-site" depends="buildProperties, copy-www" if="do.update.site">
         <replaceregexp flags="g" byline="false"
-            match="[0-9]\.[0-9]+b-[0-9]+(-[a-z0-9]{8})?"
-            replace="${extended.version}">
+            match="[0-9]\.[0-9]+(a|b|rc)(?:-[0-9]+)?(-[a-z0-9]{8})?"
+            replace="${syndie.release.version}">
             <fileset dir="doc/web" includes="download.html index.html" />
         </replaceregexp>
         <replaceregexp file="doc/web/index.html" flags="g" byline="false"
