@@ -28,68 +28,102 @@
 </div>
 <div id="Content">
 <h1>Download</h1>
-<!--
-Windows binaries:<ul>
-<li><a href="http://syndie.i2p2.de/dist/syndie-0.917b.win.exe">syndie-0.917b.win.exe</a>
-   (<a href="http://syndie.i2p2.de/dist/syndie-0.917b.win.exe.sig">GPG signature</a>) <b>[note: does not yet exist]</b></li>
+<h4>Binaries</h4>
+Windows installers:<ul>
+<li><a href="files/syndie-installer-1.103b.bin.win32.exe">syndie-installer-1.103b.bin.win32.exe</a>
+(<a href="files/syndie-installer-1.103b.bin.win32.exe.sig">GPG signature</a>)
+(<a href="files/syndie-installer-1.103b.bin.win32.exe.sha256">checksum</a>)
+</li>
+<li><a href="files/syndie-installer-1.103b.bin.win64.exe">syndie-installer-1.103b.bin.win64.exe</a>
+   (<a href="files/syndie-installer-1.103b.bin.win64.exe.sig">GPG signature</a>)
+   (<a href="files/syndie-installer-1.103b.bin.win64.exe.sha256">checksum</a>)</li>
 <li>Download and run the executable installer.</li>
-<li>Prerequisites: None</li>
+<li>Prerequisites: None, other than Java 1.5+.</li>
 </ul>
--->
-
-<h4>Standalone installers: <!-- <font size="-3">grab <i>one</i></font>--></h4>
-<p>The standalone installers are currently in a broken state, while the build process is being renovated.</p>
-<h4>Source:</h4>
-<ul>
-<li>Only <a href="monotone_howto.html">monotone</a> is working for now.</li>
-<li> You will need to provide the hsqldb.jar and swt.jar for your platform (place them
-  in the lib/ directory).  <b>Be sure to read the INSTALL</b> for instructions.</li>
-<li>Prerequisites:
-   <a href="http://ant.apache.org/">ant 1.6.5</a>, 
-   <a href="http://java.sun.com/javase/downloads/index.jsp">jdk1.4+</a>/
-    <a href="http://gcc.gnu.org/java/">GCJ/GIJ 4.0+</a>/ or
-    <a href="http://www.kaffe.org/">Kaffe 1.1.7+</a>
-    (other JDKs may suffice),
-   <a href="http://www.eclipse.org/swt/">SWT 3.2+</a> (3.3M4 or newer includes
-   useful features),
-   <a href="http://www.hsqldb.org/">HSQLDB 1.8.0.7+</a> (older releases may
-   work)</li>
+Linux installers:<ul>
+<li><a href="files/syndie-installer-1.103b.bin.linux32.jar">syndie-installer-1.103b.bin.linux32.jar</a>
+   (<a href="files/syndie-installer-1.103b.bin.linux32.jar.sig">GPG signature</a>)
+   (<a href="files/syndie-installer-1.103b.bin.linux32.jar.sha256">checksum</a>)</li>
+<li><a href="files/syndie-installer-1.103b.bin.linux64.jar">syndie-installer-1.103b.bin.linux64.jar</a>
+   (<a href="files/syndie-installer-1.103b.bin.linux64.jar.sig">GPG signature</a>)
+   (<a href="files/syndie-installer-1.103b.bin.linux64.jar.sha256">checksum</a>)</li>
+   <li>Download and run the executable installer (e.g. <code>java -jar syndie-installer-1.103b.bin.linuxXX.jar</code>).</li>
+<li>Prerequisites: None other than Java 1.5+</li>
 </ul>
-
-<p>Older releases are <a href="dist/">archived</a></p>
-
+OSX installers:<ul>
+<li><a href="files/syndie-installer-1.103b.bin.osx32.jar">syndie-installer-1.103b.bin.osx32.jar</a>
+   (<a href="files/syndie-installer-1.103b.bin.osx32.jar.sig">GPG signature</a>)
+   (<a href="files/syndie-installer-1.103b.bin.osx32.jar.sha256">checksum</a>)</li>
+<li><a href="files/syndie-installer-1.103b.bin.osx64.jar">syndie-installer-1.103b.bin.osx64.jar</a>
+   (<a href="files/syndie-installer-1.103b.bin.osx64.jar.sig">GPG signature</a>)
+   (<a href="files/syndie-installer-1.103b.bin.osx64.jar.sha256">checksum</a>)</li>
+   <li>Download and run the executable installer (e.g. <code>java -jar syndie-installer-1.103b.bin.osxXX.jar</code>).</li>
+<li>Prerequisites: None other than Java 1.5+</li>
+</ul>
 <!--
-Gentoo:<ul>
-<li><code>emerge syndie</code></li>
-
-Debian:<ul>
-<li><code>apt-get syndie</code></li>
+OSX App Bundle<ul>
+<li><a href="files/syndie-1.103b.bin.osx32.tar.bz2">syndie-1.103b.bin.osx32.tar.bz2</a>
+   (<a href="files/syndie-1.103b.bin.osx32.tar.bz2.sig">GPG signature</a>)
+   (<a href="files/syndie-1.103b.bin.osx32.tar.bz2.sha256">checksum</a>)</li>
+<li><a href="files/syndie-1.103b.bin.osx64.tar.bz2">syndie-1.103b.bin.osx64.tar.bz2</a>
+   (<a href="files/syndie-1.103b.bin.osx64.tar.bz2.sig">GPG signature</a>)
+   (<a href="files/syndie-1.103b.bin.osx64.tar.bz2.sha256">checksum</a>)</li>
+   <li>Prerequisites: None other than Java 1.5+</li>
+</ul>
 -->
+CLI <ul>
+<li><a href="files/syndie-cli-1.103b.bin.tar.bz2">syndie-cli-1.103b.bin.tar.bz2</a>
+   (<a href="files/syndie-cli-1.103b.bin.tar.bz2.sig">GPG signature</a>)
+   (<a href="files/syndie-cli-1.103b.bin.tar.bz2.sha256">checksum</a>)</li>
+   <li>Download, extract, and and run (e.g. <code>java -jar bin/syndie-cli.jar</code>).</li>
+   <li>Prerequisites: None other than Java 1.5+</li>
+</ul>
 
+Debian package
+<ul>
+<!--
+<li>See <a href="http://killyourtv.i2p/debian/pool/main/s/syndie/">http://killyourtv.i2p/debian</a> for installable .deb packages</li>
+-->
+<li>Packages are available via the Internet at the <a href="https://launchpad.net/~i2p-maintainers/+archive/i2p">I2P PPA</a>
+and within I2P from <a href="http://killyourtv.i2p/debian/pool/main/s/syndie">KillYourTV's Debian Repository</a>.</li>
+</ul>
+
+<p> The GPG public key used to sign the distributed files is
+<a href="http://pgpkeys.mit.edu:11371/pks/lookup?op=vindex&amp;exact=on&amp;search=0xDF0A0A1A">0xDF0A0A1A</a>
+<code>(fingerprint 97C6 EEFB 60D3 8EA4 C1BE 33FF ABE0 C319 DF0A 0A1A)</code>.
+</p>
 <h4>Development source:</h4>
 <ul>
-<li>A public <a href="http://venge.net/monotone/">monotone</a> repository of the
-    syndie code is available on the netsync server <code>mtn.i2p2.de</code>
-    in the <code>syndie</code> branch.<br />
-    <i>Not familiar with monotone?  See this <a href="monotone_howto.html">howto</a></i></li>
-<li>Developers are granted write permission to that repository, and everyone
-    is granted read permission.</li>
-<li>The list of authorized committers can be found in the mtn-committers
-    file, which includes their monotone public keys, ready to be imported
-    with <code>cat mtn-committers | monotone read</code>.  That file can be
-    verified against the above GPG public key with
-    <code>gpg --verify mtn-committers.sig</code>.</li>
+<li>Tarball: <a href="files/syndie-1.103b.src.tar.bz2">syndie-1.103b.src.tar.bz2</a>
+   (<a href="files/syndie-1.103b.src.tar.bz2.sig">GPG signature</a>)
+   (<a href="files/syndie-1.103b.src.tar.bz2.sha256">checksum</a>)</li>
+   <li> You will need to provide <code>swt.jar</code> for your platform and <code>i2p.jar</code> to build Syndie. We provide <code>hsqldb.jar</code> in the Syndie source.
+<b>Be sure to read the file <code>INSTALL</code></b> for instructions.</li>
+<li>Prerequisites:
+   <a href="http://ant.apache.org/">ant 1.7.0</a>+,
+   <a href="http://www.oracle.com/technetwork/java/javase/downloads/index.html">jdk1.6+</a>/
+   <a href="http://www.eclipse.org/swt/">SWT 3.4</a>+
+   <!--
+   <a href="http://www.hsqldb.org/">HSQLDB 1.8.1.0</a>+ (older releases may
+   work)--></li>
+   <li>A public <a href="http://www.monotone.ca">monotone</a> repository of the
+       syndie code is available on the netsync server <code>mtn.i2p2.de</code>
+       in the <code>i2p.syndie</code> branch.<br />
+       <i>Not familiar with monotone?  See this <a href="monotone_howto.html">howto</a></i></li>
+   <li>Developers are granted write permission to that repository, and everyone
+       is granted read permission.</li>
 </ul>
+<p>Older releases are <a href="dist/">archived</a>.</p>
 
 <p><b>To upgrade or reinstall</b>, simply install Syndie again on top of itself.
 Upgrading or reinstalling does not affect your content or keys, just the
 software.  To completely wipe any old data, identities, or keys, delete the
 <code>$HOME/.syndie</code> directory.</p>
 
-<p><b>To uninstall</b><!--, if you used the installer and created desktop icons or
-start menu shortcuts, simply launch the included uninstaller.  Otherwise, --> just
-remove the directory you installed Syndie into (e.g. <code>$HOME/syndie-build</code> or
-<code>C:\Documents and Settings\User\syndie</code>).</p>
+<p><b>To uninstall</b>, if you used the installer and created desktop icons or
+start menu shortcuts, simply launch the included uninstaller.  Otherwise, just
+remove the directory you installed Syndie into (e.g. <code>$HOME/syndie</code> or
+<code>C:\Program Files\Syndie</code>).</p>
 
 <p>The Syndie content is stored in <code>$HOME/.syndie</code> or
 <code>%HOME%\.syndie</code> by default, so you should delete that directory as
