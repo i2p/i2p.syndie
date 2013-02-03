@@ -254,7 +254,7 @@
             <config><![CDATA[
 <installation version="1.0">
     <info>
-        <pack200/>
+        <!--<pack200/> -->
         <appname>Syndie</appname>
         <appversion>@{full.version}</appversion>
         <appsubpath>syndie</appsubpath>
