@@ -16,6 +16,7 @@ CREATE CACHED TABLE nymSyncLog (
 	, eventTime	TIMESTAMP
 );
 
+-- Note: This column is dropped in ddl_update13.txt
 -- when we next want to pull an index and potentially pull/push messages
 -- a null value means we do not want scheduled sync to occur
 ALTER TABLE nymArchive ADD nextSyncDate TIMESTAMP DEFAULT NULL;

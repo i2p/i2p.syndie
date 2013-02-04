@@ -2104,8 +2104,8 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _showHeaderButton.setLayoutData(gd);
         _showHeaderButton.addSelectionListener(new FireSelectionListener() { public void fire() { showHeaders(); } });
         
-        _showHeaderButton.setText("Headers");
-        _abbrSubjectLabel.setText("Subject:");
+        _showHeaderButton.setText(getText("Headers"));
+        _abbrSubjectLabel.setText(getText("Subject") + ':');
         _abbrHeaders.setVisible(false);
     }
     

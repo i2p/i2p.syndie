@@ -256,7 +256,7 @@ public class BugReport extends BaseComponent implements Themeable, Translatable 
         
         _target = new Combo(action, SWT.DROP_DOWN | SWT.READ_ONLY);
         gd = new GridData(GridData.FILL, GridData.FILL, false, false);
-        gd.widthHint = 100;
+        gd.widthHint = 250;
         _target.setLayoutData(gd);
         _target.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { targetSelected(); }
@@ -524,7 +524,7 @@ public class BugReport extends BaseComponent implements Themeable, Translatable 
             long targetId = _client.getChannelId(target.getScope());
             if (targetId >= 0) {
                 String name = _client.getChannelName(targetId);
-                _target.add(target.getScope().toBase64().substring(0,6) + ": " + name);
+                _target.add(UIUtil.displayName(name, target.getScope()));
             }
         }
         
@@ -533,23 +533,23 @@ public class BugReport extends BaseComponent implements Themeable, Translatable 
             ChannelInfo info = chans.getIdentityChannel(i);
             _targetChans.add(info.getChannelHash());
             _signAsChans.add(info.getChannelHash());
-            _target.add(info.getChannelHash().toBase64().substring(0,6) + ": " + info.getName());
-            _signAs.add(info.getChannelHash().toBase64().substring(0,6) + ": " + info.getName());
+            _target.add(UIUtil.displayName(info.getName(), info.getChannelHash()));
+            _signAs.add(UIUtil.displayName(info.getName(), info.getChannelHash()));
         }
         for (int i = 0; i < chans.getManagedChannelCount(); i++) {
             ChannelInfo info = chans.getManagedChannel(i);
             _targetChans.add(info.getChannelHash());
-            _target.add(info.getChannelHash().toBase64().substring(0,6) + ": " + info.getName());
+            _target.add(UIUtil.displayName(info.getName(), info.getChannelHash()));
         }
         for (int i = 0; i < chans.getPostChannelCount(); i++) {
             ChannelInfo info = chans.getPostChannel(i);
             _targetChans.add(info.getChannelHash());
-            _target.add(info.getChannelHash().toBase64().substring(0,6) + ": " + info.getName());
+            _target.add(UIUtil.displayName(info.getName(), info.getChannelHash()));
         }
         for (int i = 0; i < chans.getPublicPostChannelCount(); i++) {
             ChannelInfo info = chans.getPublicPostChannel(i);
             _targetChans.add(info.getChannelHash());
-            _target.add(info.getChannelHash().toBase64().substring(0,6) + ": " + info.getName());
+            _target.add(UIUtil.displayName(info.getName(), info.getChannelHash()));
         }
         
         // todo: enable this (need to modify MessageGen to create authorized unauthenticated posts)

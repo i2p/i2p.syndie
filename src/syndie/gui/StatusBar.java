@@ -221,7 +221,7 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         });
         
         _version = new Label(_root, SWT.NONE);
-        _version.setText("Syndie " + Version.VERSION);
+        _version.setText(getText("Syndie") + ' ' + Version.VERSION);
         _version.setLayoutData(new GridData(GridData.END, GridData.CENTER, true, false));
 
         _onlineState.addMouseListener(new MouseListener() {
