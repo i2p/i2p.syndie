@@ -7,5 +7,5 @@ public class Version {
    /**
     * for example "1.102b-1"
     */
-    public static final String VERSION = "1.102b-13";
+    public static final String VERSION = "1.103b-0";
 }
