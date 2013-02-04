@@ -511,9 +511,9 @@ class SyncInboundFetcher {
         InputStream src = null;
         try {
             src = new FileInputStream(datafile);
-            boolean ok = imp.processMessage(_manager.getUI(), _manager.getClient(), src, null, false, null, null);
-            if (!ok) {
-                action.importCorrupt();
+            ImportResult.Result result = imp.processMessage(_manager.getUI(), _manager.getClient(), src, null, false, null, null);
+            if (!result.ok()) {
+                action.importCorrupt(result);
             } else {
                 if (imp.wasPBE()) {
                     String prompt = imp.getPBEPrompt();

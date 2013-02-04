@@ -284,7 +284,7 @@ public class SyncArchive {
         /** @param total -1 if unknown */
         void setSize(long rcvd, long total) {
             _size = total;
-            _rcvd = rcvd;
+             _rcvd = rcvd;
             notifyUpdate(this);
         }
         
@@ -306,11 +306,16 @@ public class SyncArchive {
             setIsExecuting(false);
             _manager.getUI().debugMessage(msg, cause);
         }
-        void importCorrupt() {
-            _completionTime = System.currentTimeMillis();
-            _corrupt = true;
-            setIsExecuting(false);
+
+        /**
+         *  Not really corrupt, could be banned, etc.
+         *  @param result from ImportResult, will be translated in gui
+         */
+        void importCorrupt(ImportResult.Result result) {
+            //_corrupt = true;
+            importFailed(result.msg(), null);
         }
+
         void importMissingReplyKey() {
             _completionTime = System.currentTimeMillis();
             _noReplyKey = true;

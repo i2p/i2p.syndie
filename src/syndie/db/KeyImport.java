@@ -386,22 +386,22 @@ public class KeyImport extends CommandImpl {
                     FileInputStream fin = null;
                     try {
                         fin = new FileInputStream(msgFile);
-                        boolean ok = imp.processMessage(ui, client, fin, null, true, null, null);
-                        if (ok) {
+                        ImportResult.Result result = imp.processMessage(ui, client, fin, null, true, null, null);
+                        if (result.ok()) {
                             if (imp.wasMissingKey())
-                                ui.debugMessage("Still not able to decrypt " + uri.toString());
+                                ui.debugMessage("Still not able to decrypt " + uri);
                             else
-                                ui.debugMessage("Successful decryption with the new channel metadata: " + uri.toString());
+                                ui.debugMessage("Successful decryption with the new channel metadata: " + uri);
                         } else {
-                            ui.debugMessage("Still not able to decrypt " + uri.toString());
+                            ui.debugMessage("Still not able to decrypt: " + result + ' ' + uri);
                         }
                     } catch (IOException ioe) {
-                        ui.debugMessage("Still not able to decrypt " + uri.toString());
+                        ui.debugMessage("Still not able to decrypt " + uri);
                     } finally {
                         if (fin != null) try { fin.close(); } catch (IOException ioe) {}
                     }
                 } else {
-                    ui.debugMessage("We don't have the message file, so not attempting to redecrypt: " + uri.toString());
+                    ui.debugMessage("We don't have the message file, so not attempting to redecrypt: " + uri);
                 }
             }
         }
@@ -418,22 +418,22 @@ public class KeyImport extends CommandImpl {
                 FileInputStream fin = null;
                 try {
                     fin = new FileInputStream(metaFile);
-                    boolean ok = imp.processMessage(ui, client, fin, null, true, null, null);
-                    if (ok) {
+                    ImportResult.Result result = imp.processMessage(ui, client, fin, null, true, null, null);
+                    if (result.ok()) {
                         if (imp.wasMissingKey())
-                            ui.debugMessage("Still not able to decrypt " + channel.toString());
+                            ui.debugMessage("Still not able to decrypt " + channel);
                         else
-                            ui.debugMessage("Successful decryption of the channel metadata: " + channel.toString());
+                            ui.debugMessage("Successful decryption of the channel metadata: " + channel);
                     } else {
-                        ui.debugMessage("Still not able to decrypt metadata for " + channel.toString());
+                        ui.debugMessage("Still not able to decrypt metadata: " + result + ' ' + channel);
                     }
                 } catch (IOException ioe) {
-                    ui.debugMessage("Still not able to decrypt metadata for " + channel.toString());
+                    ui.debugMessage("Still not able to decrypt metadata: " + channel);
                 } finally {
                     if (fin != null) try { fin.close(); } catch (IOException ioe) {}
                 }
             } else {
-                ui.debugMessage("We don't have the metadata file, so not attempting to redecrypt: " + channel.toString());
+                ui.debugMessage("We don't have the metadata file, so not attempting to redecrypt: " + channel);
             }            
         }
     }
@@ -481,22 +481,22 @@ public class KeyImport extends CommandImpl {
                     FileInputStream fin = null;
                     try {
                         fin = new FileInputStream(msgFile);
-                        boolean ok = imp.processMessage(ui, client, fin, null, true, null, null);
-                        if (ok) {
+                        ImportResult.Result result = imp.processMessage(ui, client, fin, null, true, null, null);
+                        if (result.ok()) {
                             if (imp.wasMissingKey())
-                                ui.debugMessage("Still not able to decrypt " + uri.toString());
+                                ui.debugMessage("Still not able to decrypt " + uri);
                             else
-                                ui.debugMessage("Successful decryption with the new channel metadata: " + uri.toString());
+                                ui.debugMessage("Successful decryption with the new channel metadata: " + uri);
                         } else {
-                            ui.debugMessage("Still not able to decrypt " + uri.toString());
+                            ui.debugMessage("Still not able to decrypt: " + result + ' ' + uri);
                         }
                     } catch (IOException ioe) {
-                        ui.debugMessage("Still not able to decrypt " + uri.toString());
+                        ui.debugMessage("Still not able to decrypt " + uri);
                     } finally {
                         if (fin != null) try { fin.close(); } catch (IOException ioe) {}
                     }
                 } else {
-                    ui.debugMessage("We don't have the message file, so not attempting to redecrypt: " + uri.toString());
+                    ui.debugMessage("We don't have the message file, so not attempting to redecrypt: " + uri);
                 }
             }
         }    

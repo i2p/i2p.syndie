@@ -29,7 +29,7 @@ fi
 # set LG2 to the language you need in envrionment varibales to enable this
 
 # add ../java/ so the refs will work in the po file
-JPATHS="src/syndie/gui"
+JPATHS="src/syndie/gui src/syndie/db"
 for i in locale/messages_*.po
 do
 	# get language

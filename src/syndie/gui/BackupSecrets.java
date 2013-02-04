@@ -50,6 +50,7 @@ import syndie.data.SyndieURI;
 import syndie.db.CommandImpl;
 import syndie.db.DBClient;
 import syndie.db.Importer;
+import syndie.db.ImportResult;
 import syndie.db.KeyImport;
 import syndie.db.UI;
 
@@ -346,9 +347,9 @@ public class BackupSecrets extends BaseComponent implements Themeable, Translata
                     } else if (name.startsWith("meta")) {
                         ui.debugMessage("importing meta "+ name);
                         Importer imp = new Importer(client);
-                        boolean ok = imp.processMessage(ui, zin, client.getLoggedInNymId(), null, null, false, null, null);
-                        ui.debugMessage("import meta result: " + ok + " missingKey? " + imp.wasMissingKey() + " pbe? " + imp.wasPBE());
-                        if (ok && !imp.wasMissingKey() && !imp.wasPBE())
+                        ImportResult.Result result = imp.processMessage(ui, zin, client.getLoggedInNymId(), null, null, false, null, null);
+                        ui.debugMessage("import meta result: " + result + " missingKey? " + imp.wasMissingKey() + " pbe? " + imp.wasPBE());
+                        if (result.ok() && !imp.wasMissingKey() && !imp.wasPBE())
                             metaRead++;
                         else
                             failedMeta++;

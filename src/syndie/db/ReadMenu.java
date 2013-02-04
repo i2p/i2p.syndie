@@ -1781,18 +1781,18 @@ class ReadMenu implements TextEngine.Menu {
             ui.debugMessage("Importing from " + archivedFile.getPath());
             // true -> forceReimport
             in = new BufferedInputStream(new FileInputStream(archivedFile));
-            boolean ok = imp.processMessage(nestedUI, in, client.getLoggedInNymId(),
+            ImportResult.Result result = imp.processMessage(nestedUI, in, client.getLoggedInNymId(),
                                             client.getPass(), passphrase, true, null, null);
-            if (ok) {
+            if (result.ok()) {
                 if (nestedUI.getExitCode() == 0) {
                     ui.statusMessage("Decrypted successfully, now try 'view' again");
                     ui.commandComplete(0, null);
                 } else {
-                    ui.errorMessage("Decryption failed");
+                    ui.errorMessage("Decryption failed? " + result.msg());
                     ui.commandComplete(nestedUI.getExitCode(), null);
                 }
             } else {
-                ui.errorMessage("Decryption and import failed");
+                ui.errorMessage("Decryption and import failed: " + result + ' ' + result.msg());
                 ui.commandComplete(-1, null);
             }
         } catch (IOException ioe) {

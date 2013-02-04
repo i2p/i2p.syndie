@@ -30,6 +30,7 @@ import syndie.data.EnclosureBody;
 import syndie.data.NymKey;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
+import static syndie.db.ImportResult.Detail.*;
 
 /**
  *  Calls KeyImport on any found keys in the meta file or directly encoded in the URI.
@@ -40,7 +41,7 @@ class ImportMeta {
     /**
      * The signature has been validated, so now import what we can
      */
-    public static boolean process(DBClient client, UI ui, Enclosure enc, long nymId, String nymPassphrase, String bodyPassphrase) {
+    public static ImportResult.Result process(DBClient client, UI ui, Enclosure enc, long nymId, String nymPassphrase, String bodyPassphrase) {
         boolean wasPublic = false;
         EnclosureBody body = null;
         SigningPublicKey ident = enc.getHeaderSigningKey(Constants.MSG_META_HEADER_IDENTITY);
@@ -48,7 +49,7 @@ class ImportMeta {
         if (client.getBannedChannels().contains(identHash)) {
             ui.errorMessage("Not importing banned metadata for " + identHash.toBase64());
             ui.commandComplete(-1, null);
-            return false;
+            return IMPORT_BAN_CHAN;
         }
         SessionKey key = enc.getHeaderSessionKey(Constants.MSG_HEADER_BODYKEY);
         if (key != null) {
@@ -60,11 +61,11 @@ class ImportMeta {
             } catch (DataFormatException dfe) {
                 ui.errorMessage("Error processing with the body key (" + Base64.encode(key.getData()) + " len=" + key.getData().length + ")", dfe);
                 ui.commandComplete(-1, null);
-                return false;
+                return IMPORT_DECRYPT;
             } catch (IOException ioe) {
                 ui.errorMessage("Error processing with the body key", ioe);
                 ui.commandComplete(-1, null);
-                return false;
+                return IMPORT_DECRYPT;
             }
         } else {
             String prompt = enc.getHeaderString(Constants.MSG_HEADER_PBE_PROMPT);
@@ -115,8 +116,8 @@ class ImportMeta {
         }
 
         ui.debugMessage("enclosure: " + enc + "\nbody: " + body);
-        boolean ok = importMeta(client, ui, nymId, nymPassphrase, enc, body, wasPublic);
-        if (ok) {
+        ImportResult.Result result = importMeta(client, ui, nymId, nymPassphrase, enc, body, wasPublic);
+        if (result.ok()) {
             if (body instanceof UnreadableEnclosureBody)
                 ui.commandComplete(1, null);
             else
@@ -124,14 +125,14 @@ class ImportMeta {
         } else {
             ui.commandComplete(-1, null);
         }
-        return ok;
+        return result;
     }
     
     /**
      * interpret the bits in the enclosure body and headers, importing them
      * into the db
      */
-    private static boolean importMeta(DBClient client, UI ui, long nymId, String passphrase, Enclosure enc, EnclosureBody body, boolean wasPublic) {
+    private static ImportResult.Result importMeta(DBClient client, UI ui, long nymId, String passphrase, Enclosure enc, EnclosureBody body, boolean wasPublic) {
         SigningPublicKey identKey = enc.getHeaderSigningKey(Constants.MSG_META_HEADER_IDENTITY);
         Hash ident = identKey.calculateHash();
         Long edition = enc.getHeaderLong(Constants.MSG_META_HEADER_EDITION);
@@ -143,7 +144,7 @@ class ImportMeta {
         if (knownEdition >= edition.longValue()) {
             ui.statusMessage("already known edition " + knownEdition);
             saveToArchiveIfAbsent(client, ui, ident, enc);
-            return true;
+            return IMPORT_ALREADY;
         }
 
         // if we don't...
@@ -158,7 +159,7 @@ class ImportMeta {
                 channelId = insertIntoChannel(client, ui, nymId, passphrase, enc, body, identKey, ident, edition.longValue());
             else
                 channelId = updateChannel(client, ui, nymId, passphrase, enc, body, ident, edition.longValue());
-            if (channelId < 0) { return false; }
+            if (channelId < 0) { return IMPORT_SQLE; }
             // clear out & insert into channelTag
             setTags(client, ui, channelId, enc, body);
             // clear out & insert into channelPostKey
@@ -186,7 +187,7 @@ class ImportMeta {
             
             if (newNymKeys.size() > 0)
                 KeyImport.resolveWithNewKeys(ui, client, newNymKeys);
-            return true;
+            return IMPORT_OK_FORUM;
         } catch (SQLException se) {
             ui.errorMessage("Error importing", se);
             try {
@@ -194,7 +195,7 @@ class ImportMeta {
             } catch (SQLException ex) {
                 ui.errorMessage("Unable to rollback on error", ex);
             }
-            return false;
+            return IMPORT_SQLE;
         } finally {
             try {
                 con.setAutoCommit(wasAuto);

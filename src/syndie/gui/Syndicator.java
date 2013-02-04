@@ -725,11 +725,11 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
             long p = archive.getIndexFetchRcvdBytes();
             long t = archive.getIndexFetchSize();
             if (p > 0)
-                buf.append(":  ").append(DataHelper.formatSize(p)).append('B');
+                buf.append(":  ").append(formatSize(p));
             else if (t > 0)
                 buf.append(":  0");
             if (t > 0)
-                buf.append(" / ").append(DataHelper.formatSize(t)).append('B');
+                buf.append(" / ").append(formatSize(t));
             indexItem.setText(3, buf.toString());
         } else if (archive.getLastSyncTime() > 0) {
             indexItem.setText(1, DateTime.getDateTime(archive.getLastSyncTime()));
@@ -742,7 +742,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                 buf.append(getText("Fetch complete"));
                 long t = archive.getIndexFetchSize();
                 if (t > 0)
-                    buf.append(":  ").append(DataHelper.formatSize(t)).append('B');
+                    buf.append(":  ").append(formatSize(t));
                 indexItem.setText(3, buf.toString());
             }
         } else {
@@ -900,12 +900,14 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_NOKEY);
                 actionItem.setText(3, getText("Reply key unknown"));
             } else if (action.isCorrupt()) {
+                // UNUSED, see getFetchErrorMsg()
                 actionItem.setText(1, DateTime.getDateTime(action.getCompletionTime()));                    
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
                 actionItem.setText(3, getText("Message is corrupt"));
             } else if (action.getFetchErrorMsg() != null) {
                 actionItem.setText(1, DateTime.getDateTime(action.getCompletionTime()));
-                String msg = action.getFetchErrorMsg();
+                // from ImportResult, tagged there
+                String msg = getText(action.getFetchErrorMsg());
                 if (action.getFetchError() != null)
                     msg = msg + " - " + action.getFetchError().getMessage();
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
@@ -918,11 +920,11 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                 long p = action.getReceived();
                 long t = action.getSize();
                 if (p > 0)
-                    buf.append(":  ").append(DataHelper.formatSize(p)).append('B');
+                    buf.append(":  ").append(formatSize(p));
                 else if (t > 0)
                     buf.append(":  0");
                 if (t > 0)
-                    buf.append(" / ").append(DataHelper.formatSize(t)).append('B');
+                    buf.append(" / ").append(formatSize(t));
                 actionItem.setText(3, buf.toString());
             } else if (action.isFetchingBody()) {
                 actionItem.setText(1, getText("Now"));
@@ -932,11 +934,11 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                 long p = action.getReceived();
                 long t = action.getSize();
                 if (p > 0)
-                    buf.append(":  ").append(DataHelper.formatSize(p)).append('B');
+                    buf.append(":  ").append(formatSize(p));
                 else if (t > 0)
                     buf.append(":  0");
                 if (t > 0)
-                    buf.append(" / ").append(DataHelper.formatSize(t)).append('B');
+                    buf.append(" / ").append(formatSize(t));
                 actionItem.setText(3, buf.toString());
             } else if (action.isExecuting()) {
                 actionItem.setText(1, getText("Now"));
@@ -949,7 +951,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                 buf.append(getText("Imported"));
                 long t = action.getSize();
                 if (t > 0)
-                    buf.append(":  ").append(DataHelper.formatSize(t)).append('B');
+                    buf.append(":  ").append(formatSize(t));
                 actionItem.setText(3, buf.toString());
             }
 
@@ -1084,7 +1086,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                 buf.append(getText("Pushing keys"));
                 long t = action.getSize();
                 if (t > 0)
-                    buf.append(":  ").append(DataHelper.formatSize(t)).append('B');
+                    buf.append(":  ").append(formatSize(t));
                 actionItem.setText(3, buf.toString());
             } else if (action.isPushingBody()) {
                 actionItem.setText(1, getText("Now"));
@@ -1093,7 +1095,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                 buf.append(getText("Pushing message"));
                 long t = action.getSize();
                 if (t > 0)
-                    buf.append(":  ").append(DataHelper.formatSize(t)).append('B');
+                    buf.append(":  ").append(formatSize(t));
                 actionItem.setText(3, buf.toString());
             } else if (action.isExecuting()) {
                 actionItem.setText(1, getText("Now"));
@@ -1102,7 +1104,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                 buf.append(getText("Queued"));
                 long t = action.getSize();
                 if (t > 0)
-                    buf.append(":  ").append(DataHelper.formatSize(t)).append('B');
+                    buf.append(":  ").append(formatSize(t));
                 actionItem.setText(3, buf.toString());
             } else if (action.getErrorMsg() != null) {
                 actionItem.setText(1, DateTime.getDateTime(action.getCompletionTime()));
@@ -1115,13 +1117,17 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                 buf.append(getText("Pushed"));
                 long t = action.getSize();
                 if (t > 0)
-                    buf.append(":  ").append(DataHelper.formatSize(t)).append('B');
+                    buf.append(":  ").append(formatSize(t));
                 actionItem.setText(3, buf.toString());
             }
             resizeCols(actionItem);
         }
     }
     
+    private static String formatSize(long sz) {
+        return DataHelper.formatSize2(sz).replace("&nbsp;", " ") + 'B';
+    }
+
     private void resizeCols(TreeItem item) {
         setMinWidth(_colName, item.getText(0), 0, 300);
         setMinWidth(_colTime, item.getText(1), 0, 150);

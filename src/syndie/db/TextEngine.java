@@ -950,7 +950,7 @@ public class TextEngine {
             }
             _ui.debugMessage("Importing resource " + resourceName);
             Importer imp = new Importer(_client);
-            boolean ok = imp.processMessage(_ui, in, _client.getLoggedInNymId(), _client.getPass(), null, false, null, null);
+            imp.processMessage(_ui, in, _client.getLoggedInNymId(), _client.getPass(), null, false, null, null);
             return true;
         } catch (IOException ioe) {
             _ui.errorMessage("Error importing packaged message " + resourceName);

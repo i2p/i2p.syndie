@@ -30,6 +30,7 @@ import syndie.data.MessageInfo;
 import syndie.data.NymKey;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
+import static syndie.db.ImportResult.Detail.*;
 
 /**
  *  Copies to archive
@@ -80,7 +81,7 @@ public class ImportPost {
      *
      * @return success
      */
-    public static boolean process(DBClient client, UI ui, Enclosure enc, long nymId, String pass,
+    public static ImportResult.Result process(DBClient client, UI ui, Enclosure enc, long nymId, String pass,
                                   String bodyPassphrase, boolean forceReimport, byte replyIV[], SessionKey replySessionKey) {
         ImportPost imp = new ImportPost(client, ui, enc, nymId, pass, bodyPassphrase, forceReimport, replyIV, replySessionKey);
         return imp.process();
@@ -94,32 +95,32 @@ public class ImportPost {
      *
      * @return success
      */
-    public boolean process() {
+    public ImportResult.Result process() {
         _uri = _enc.getHeaderURI(Constants.MSG_HEADER_POST_URI);
         if (_uri == null) {
             _ui.errorMessage("No URI in the post");
             _ui.commandComplete(-1, null);
-            return false;
+            return IMPORT_NO_URI;
         }
         _channel = _uri.getScope();
         if (_channel == null) {
             _ui.errorMessage("No channel in the URI: " + _uri);
             _ui.commandComplete(-1, null);
-            return false;
+            return IMPORT_NO_CHAN;
         }
         
         long msgId = _client.getMessageId(_uri.getScope(), _uri.getMessageId());
         if (msgId >= 0) {
             if (_client.getMessageDecrypted(msgId)) {
                 _ui.debugMessage("post is already decrypted fully, no need to import it again");
-                return true; // already decrypted
+                return IMPORT_ALREADY; // already decrypted
             }
             if (_client.getMessageDeleted(msgId)) {
                 if (_forceReimport) {
                     _ui.debugMessage("Forcing reimport of a deleted message");
                 } else {
                     _ui.debugMessage("post has been locally deleted, no need to import it again");
-                    return true; // already decrypted
+                    return IMPORT_DELETED; // already decrypted
                 }
             } else if (_client.getMessage(msgId).getReadKeyUnknown())  {
                 _ui.debugMessage("Allowing reimport of msg w/ unknown read key");
@@ -128,7 +129,7 @@ public class ImportPost {
             } else if (!_forceReimport) {
                 // catch this here, it will fail the insert later
                 _ui.debugMessage("Message already exists and no force reimport");
-                return true;
+                return IMPORT_ALREADY;
             }
         }
         // either msgId == 0 || _forceReimport == true
@@ -138,7 +139,7 @@ public class ImportPost {
         if (bannedChannels.contains(_channel)) {
             _ui.errorMessage("Not importing post in banned " + _channel + ": " + _uri);
             _ui.commandComplete(-1, null);
-            return false;
+            return IMPORT_BAN_AUTH;
         }
         Hash targetHash = null;
         byte target[] = _enc.getHeaderBytes(Constants.MSG_HEADER_TARGET_CHANNEL);
@@ -147,7 +148,7 @@ public class ImportPost {
             if (bannedChannels.contains(targetHash)) {
                 _ui.errorMessage("Not importing post to banned " + targetHash + ": " + _uri);
                 _ui.commandComplete(-1, null);
-                return false;
+                return IMPORT_BAN_CHAN;
             }
         }
         /** was a published bodyKey used, rather than a secret readKey or replyKey? */
@@ -246,11 +247,11 @@ public class ImportPost {
                 } catch (DataFormatException dfe) {
                     _ui.errorMessage("Provided bodyKey is invalid", dfe);
                     _ui.commandComplete(-1, null);
-                    return false;
+                    return IMPORT_DECRYPT;
                 } catch (IOException ioe) {
                     _ui.errorMessage("Provided bodyKey is invalid", ioe);
                     _ui.commandComplete(-1, null);
-                    return false;
+                    return IMPORT_DECRYPT;
                 }
             } else {
                 String prompt = _enc.getHeaderString(Constants.MSG_HEADER_PBE_PROMPT);
@@ -316,7 +317,7 @@ public class ImportPost {
         } else {
             _ui.errorMessage("Not a post or a reply... wtf? " + _enc.getEnclosureType());
             _ui.commandComplete(-1, null);
-            return false;
+            return IMPORT_BAD_ENC_TYPE;
         }
         
         // now the body has been decrypted... 
@@ -324,7 +325,7 @@ public class ImportPost {
         if (_channelId == -1) {
             _ui.errorMessage("Channel is not known: " + _channel.toBase64());
             _ui.commandComplete(-1, null);
-            return false;
+            return IMPORT_UNK_CHAN;
         } else {
             _ui.debugMessage("Target channel is known: " + _channelId + "/" + _channel.toBase64());
         }
@@ -370,7 +371,7 @@ public class ImportPost {
                     if (bannedChannels.contains(authorHash)) {
                         _ui.errorMessage("Not importing unreadable post by banned " + authorHash + ": " + _uri);
                         _ui.commandComplete(-1, null);
-                        return false;
+                        return IMPORT_BAN_AUTH;
                     }
                 } else {
                     _ui.debugMessage("not authenticated against the identity key for the unreadable authorHash (" + authorHash.toBase64() + ")");
@@ -389,7 +390,7 @@ public class ImportPost {
                     if (bannedChannels.contains(authorHash)) {
                         _ui.errorMessage("Not importing post by banned " + authorHash + ": " + _uri);
                         _ui.commandComplete(-1, null);
-                        return false;
+                        return IMPORT_BAN_AUTH;
                     }
                 }
             }
@@ -404,13 +405,13 @@ public class ImportPost {
             if (targetHash != null && !targetHash.equals(ptargetHash)) {
                 _ui.errorMessage("Inconsistent target headers: " + _uri);
                 _ui.commandComplete(-1, null);
-                return false;
+                return IMPORT_BAD_HEADER;
             }
             targetHash = ptargetHash;
             if (bannedChannels.contains(targetHash)) {
                 _ui.errorMessage("Not importing post to (priv) banned " + targetHash + ": " + _uri);
                 _ui.commandComplete(-1, null);
-                return false;
+                return IMPORT_BAN_CHAN;
             }
         }
         
@@ -440,7 +441,7 @@ public class ImportPost {
         if (signingPubKeys == null) {
             _ui.errorMessage("Internal error getting authorized posters for the channel");
             _ui.commandComplete(-1, null);
-            return false;
+            return IMPORT_ERROR;
         }
         
         Signature authorizationSig = _enc.getAuthorizationSig();
@@ -499,11 +500,11 @@ public class ImportPost {
             } else {
                 _ui.commandComplete(-1, null);
             }
-            return ok;
+            return ok ? IMPORT_OK_POST : IMPORT_UNREADABLE;
         } else {
             _ui.errorMessage("Neither authenticated nor authorized.  bugger off.");
             _ui.commandComplete(-1, null);
-            return false;
+            return IMPORT_NO_AUTH;
         }
     }
     
@@ -1087,9 +1088,9 @@ public class ImportPost {
         _ui.debugMessage("Post had a .syndie file attached to it, attempting to import that file");
         Importer imp = new Importer(_client);
         try {
-            boolean ok = imp.processMessage(_ui, new ByteArrayInputStream(data), _client.getLoggedInNymId(),
+            ImportResult.Result result = imp.processMessage(_ui, new ByteArrayInputStream(data), _client.getLoggedInNymId(),
                                             _client.getPass(), null, false, null, null);
-            _ui.debugMessage("Attachment import complete.  success? " + ok);
+            _ui.debugMessage("Attachment import complete.  success? " + result);
         } catch (IOException ioe) {
             _ui.debugMessage("Attachment was corrupt", ioe);
         }

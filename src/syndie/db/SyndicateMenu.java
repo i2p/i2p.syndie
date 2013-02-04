@@ -579,20 +579,19 @@ class SyndicateMenu implements TextEngine.Menu {
     private void importMsg(DBClient client, UI ui, File f, boolean forceReimport) {
         Importer imp = new Importer(client, client.getPass());
         ui.debugMessage("Importing from " + f.getPath());
-        boolean ok;
         InputStream in = null;
         try {
             NestedUI nested = new NestedUI(ui);
             in = new BufferedInputStream(new FileInputStream(f));
-            ok = imp.processMessage(nested, in, client.getLoggedInNymId(), client.getPass(), null, forceReimport, null, null);
-            if (ok && (nested.getExitCode() >= 0) ) {
+            ImportResult.Result result = imp.processMessage(nested, in, client.getLoggedInNymId(), client.getPass(), null, forceReimport, null, null);
+            if (result.ok() && (nested.getExitCode() >= 0) ) {
                 if (nested.getExitCode() == 1) {
-                    ui.errorMessage("Imported but could not decrypt " + f.getPath());
+                    ui.errorMessage("Imported but could not decrypt: " + result + ' ' + result.msg() + ' ' + f.getPath());
                 } else {
                     ui.debugMessage("Import successful for " + f.getPath());
                 }
             } else {
-                ui.debugMessage("Could not import " + f.getPath());
+                ui.debugMessage("Could not import: " + result + ' ' + result.msg() + ' ' + f.getPath());
             }
         } catch (IOException ioe) {
             ui.errorMessage("Error importing the message from " + f.getPath(), ioe);

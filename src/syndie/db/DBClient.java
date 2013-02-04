@@ -6011,13 +6011,13 @@ public class DBClient {
         FileInputStream fin = null;
         try {
             fin = new FileInputStream(msgFile);
-            boolean ok = imp.processMessage(_ui, this, fin, passphrase, true, null, null);
+            ImportResult.Result result = imp.processMessage(_ui, this, fin, passphrase, true, null, null);
             fin.close();
             fin = null;
-            log("reimport ok? " + ok + " wasPBE " + imp.wasPBE() + " wasmissingKey " + imp.wasMissingKey() +": " + uri);
+            log("reimport ok? " + result + " wasPBE " + imp.wasPBE() + " wasmissingKey " + imp.wasMissingKey() +": " + uri);
             // wasPBE is still true if the post *was* pbe'd but the passphrase was correct.
             // wasMissingKey is true if the post was valid and imported successfully, but we don't know how to read it
-            boolean rv = ok && !imp.wasMissingKey();
+            boolean rv = result.ok() && !imp.wasMissingKey();
             // the Importer should take care of reimporting messages with the new read keys
             //if (uri.getMessageId() == null)
             //    metaImported();

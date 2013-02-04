@@ -7,7 +7,9 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+
 import net.i2p.util.SimpleTimer2;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.FocusListener;
@@ -31,11 +33,13 @@ import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Spinner;
 import org.eclipse.swt.widgets.Text;
+
 import syndie.Constants;
 import syndie.data.SyndieURI;
 import syndie.db.DBClient;
 import syndie.db.HTTPServ;
 import syndie.db.Importer;
+import syndie.db.ImportResult;
 import syndie.db.JobRunner;
 import syndie.db.TextEngine;
 import syndie.db.UI;
@@ -565,13 +569,16 @@ public class ControlMenuPanel extends DesktopPanel implements Themeable, Transla
         orig.addAll(post);
     }
     
-    /** run outside the swt thread */
+    /**
+     *  run outside the swt thread
+     *  @return success
+     */
     private boolean importFile(File f) {
         Importer imp = new Importer(_client, null);
         if (f.exists()) {
             try {
-                boolean rv = imp.processMessage(_ui, _client, new FileInputStream(f), null, false, null, null);
-                return rv;
+                ImportResult.Result result = imp.processMessage(_ui, _client, new FileInputStream(f), null, false, null, null);
+                return result.ok();
             } catch (IOException ioe) {
                 _ui.errorMessage("error importing " + f.getPath(), ioe);
                 return false;

@@ -99,6 +99,7 @@ import syndie.util.Timer;
 import syndie.data.WatchedChannel;
 import syndie.db.HTTPServ;
 import syndie.db.Importer;
+import syndie.db.ImportResult;
 import syndie.db.JobRunner;
 import syndie.db.SharedArchive;
 import syndie.db.SyncManager;
@@ -981,6 +982,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         
         new MenuItem(_syndicateMenu, SWT.SEPARATOR);
 
+        // FIXME not refreshed when translation changes
         MenuItem startServer = new MenuItem(_syndicateMenu, SWT.PUSH);
         startServer.setText(X + getTranslationRegistry().getText("Start HTTP archive server"));
         MenuItem stopServer = new MenuItem(_syndicateMenu, SWT.PUSH);
@@ -1312,6 +1314,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
                 langName = translation;
             tmap.put(langName, translation);
         }
+        //tmap.put("XX DEBUG", "xx");
         for (Map.Entry<String, String> e : tmap.entrySet()) {
             MenuItem item = new MenuItem(_languageMenu, SWT.RADIO);
             item.setText(e.getKey());
@@ -2383,14 +2386,17 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         orig.addAll(post);
     }
     
-    /** run outside the swt thread */
+    /**
+     *  run outside the swt thread
+     *  @return success
+     */
     private boolean importFile(File f) {
         Importer imp = new Importer(_client, null);
         if (f.exists()) {
             try {
-                boolean rv = imp.processMessage(getUI(), _client, new FileInputStream(f), null, false, null, null);
+                ImportResult.Result result = imp.processMessage(getUI(), _client, new FileInputStream(f), null, false, null, null);
                 messageImported();
-                return rv;
+                return result.ok();
             } catch (IOException ioe) {
                 errorMessage("error importing " + f.getPath(), ioe);
                 return false;

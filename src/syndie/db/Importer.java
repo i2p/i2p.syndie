@@ -20,6 +20,7 @@ import net.i2p.util.SecureFile;
 import syndie.Constants;
 import syndie.data.Enclosure;
 import syndie.data.SyndieURI;
+import static syndie.db.ImportResult.Detail.*;
 
 /**
  * Import a message for the user, using the keys known to that user and
@@ -117,9 +118,10 @@ public class Importer extends CommandImpl {
                 replySessionKey = new SessionKey(sk);
             byte replyIV[] = args.getOptBytes("replyIV");
             in = new BufferedInputStream(new FileInputStream(file));
-            boolean ok = processMessage(ui, in, nymId, client.getPass(), args.getOptValue("passphrase"), args.getOptBoolean("reimport", false), replyIV, replySessionKey);
-            ui.debugMessage("Metadata processed");
-            if (!ok) // successful imports specify whether they were decrypted (exit code of 0) or undecryptable (exit code of 1)
+            ImportResult.Result result = processMessage(ui, in, nymId, client.getPass(), args.getOptValue("passphrase"),
+                                                        args.getOptBoolean("reimport", false), replyIV, replySessionKey);
+            ui.debugMessage("Metadata processed: " + result);
+            if (!result.ok()) // successful imports specify whether they were decrypted (exit code of 0) or undecryptable (exit code of 1)
                 ui.commandComplete(-1, null);
         } catch (SQLException se) {
             ui.errorMessage("Invalid database URL", se);
@@ -175,7 +177,7 @@ public class Importer extends CommandImpl {
      *
      * Caller must close the InputStream
      */
-    public boolean processMessage(UI ui, DBClient client, InputStream source, String bodyPassphrase,
+    public ImportResult.Result processMessage(UI ui, DBClient client, InputStream source, String bodyPassphrase,
                                   boolean forceReimport, byte replyIV[], SessionKey replySessionKey) throws IOException {
         return processMessage(ui, source, client.getLoggedInNymId(), client.getPass(), bodyPassphrase, forceReimport, replyIV, replySessionKey);
     }
@@ -191,7 +193,7 @@ public class Importer extends CommandImpl {
      *
      * Caller must close the InputStream
      */
-    public boolean processMessage(UI ui, InputStream source, long nymId, String pass, String bodyPassphrase,
+    public ImportResult.Result processMessage(UI ui, InputStream source, long nymId, String pass, String bodyPassphrase,
                                   boolean forceReimport, byte replyIV[], SessionKey replySessionKey) throws IOException {
         if (bodyPassphrase != null)
             ui.debugMessage("Importing message with body passphrase " + bodyPassphrase);
@@ -203,7 +205,7 @@ public class Importer extends CommandImpl {
         _client.clearNymChannelCache();
         
         _wasPBE = false;
-        boolean rv = true;
+        ImportResult.Result rv;
         boolean isMeta = false;
         Enclosure enc = new Enclosure(source);
         try {
@@ -247,17 +249,17 @@ public class Importer extends CommandImpl {
     public boolean wasReply() { return _wasReply; }
     public SyndieURI getURI() { return _uri; }
     
-    protected boolean importMeta(UI ui, Enclosure enc, long nymId, String bodyPassphrase) {
+    protected ImportResult.Result importMeta(UI ui, Enclosure enc, long nymId, String bodyPassphrase) {
         // first check that the metadata is signed by an authorized key
         if (alreadyKnownMeta(ui, enc)) {
             _wasAlreadyImported = true;
             ui.debugMessage("Already have meta");
-            return true;
+            return IMPORT_ALREADY;
         } else if (verifyMeta(ui, enc)) {
             return ImportMeta.process(_client, ui, enc, nymId, _passphrase, bodyPassphrase);
         } else {
             ui.errorMessage("meta does not verify");
-            return false;
+            return IMPORT_BAD_META_VERIFY;
         }
     }
 
@@ -318,9 +320,9 @@ public class Importer extends CommandImpl {
         return ok;
     }
     
-    protected boolean importPost(UI ui, Enclosure enc, long nymId, String pass, String bodyPassphrase, boolean forceReimport, byte replyIV[], SessionKey replySessionKey) {
+    protected ImportResult.Result importPost(UI ui, Enclosure enc, long nymId, String pass, String bodyPassphrase, boolean forceReimport, byte replyIV[], SessionKey replySessionKey) {
         ImportPost post = new ImportPost(_client, ui, enc, nymId, pass, bodyPassphrase, forceReimport, replyIV, replySessionKey);
-        boolean rv = post.process();
+        ImportResult.Result rv = post.process();
         _wasAlreadyImported = post.getAlreadyImported();
         _noKey = post.getNoKey();
         _uri = post.getURI();
