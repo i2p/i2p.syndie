@@ -134,10 +134,21 @@ public class ImportPost {
         // either msgId == 0 || _forceReimport == true
         
         // first we check to ban posts by ANY author in a banned channel
-        if (_client.getBannedChannels().contains(_channel)) {
-            _ui.errorMessage("Not importing banned post in " + _channel.toBase64() + ": " + _uri);
+        List<Hash> bannedChannels = _client.getBannedChannels();
+        if (bannedChannels.contains(_channel)) {
+            _ui.errorMessage("Not importing post in banned " + _channel + ": " + _uri);
             _ui.commandComplete(-1, null);
             return false;
+        }
+        Hash targetHash = null;
+        byte target[] = _enc.getHeaderBytes(Constants.MSG_HEADER_TARGET_CHANNEL);
+        if (target != null && target.length == Hash.HASH_LENGTH) {
+            targetHash = Hash.create(target);
+            if (bannedChannels.contains(targetHash)) {
+                _ui.errorMessage("Not importing post to banned " + targetHash + ": " + _uri);
+                _ui.commandComplete(-1, null);
+                return false;
+            }
         }
         /** was a published bodyKey used, rather than a secret readKey or replyKey? */
         _publishedBodyKey = false;
@@ -159,18 +170,15 @@ public class ImportPost {
             }
 
             if (_body == null) {
-                List privKeys = _client.getReplyKeys(_channel, _nymId, _pass);
+                List<PrivateKey> privKeys = _client.getReplyKeys(_channel, _nymId, _pass);
                 _ui.debugMessage("post is a reply in scope " + _channel.toBase64() + " and we have " + privKeys.size() + " keys");
 
-                byte target[] = _enc.getHeaderBytes(Constants.MSG_HEADER_TARGET_CHANNEL);
-                Hash targetHash = null;
-                if (target != null) {
-                    targetHash = Hash.create(target);
-                    List targetKeys = _client.getReplyKeys(targetHash, _nymId, _pass);
+                if (targetHash != null) {
+                    List<PrivateKey> targetKeys = _client.getReplyKeys(targetHash, _nymId, _pass);
                     privKeys.addAll(targetKeys);
                     _ui.debugMessage("post is a reply targetting " + targetHash.toBase64() + " and we have " + targetKeys.size() + " keys");
                 }
-                if ( (privKeys != null) && (privKeys.size() > 0) ) {
+                if (!privKeys.isEmpty()) {
                     for (int i = 0; i < privKeys.size(); i++) {
                         PrivateKey priv = (PrivateKey)privKeys.get(i);
                         _ui.debugMessage("Attempting decrypt with key " + KeyGenerator.getPublicKey(priv).calculateHash().toBase64());
@@ -270,34 +278,38 @@ public class ImportPost {
                         }
                     }
                 } else {
-                    List keys = _client.getReadKeys(_channel, _nymId, _pass, false);
-                    if ( (keys == null) || (keys.size() <= 0) ) {
-                        _ui.errorMessage("No read keys known for " + _channel.toBase64());
-                        _body = new UnreadableEnclosureBody(_client.ctx());
-                    }
-                    byte target[] = _enc.getHeaderBytes(Constants.MSG_HEADER_TARGET_CHANNEL);
-                    if ( (target != null) && (target.length == Hash.HASH_LENGTH) ) {
-                        List targetKeys = _client.getReadKeys(Hash.create(target), _nymId, _pass, false);
-                        keys.addAll(targetKeys);
-                    }
-                    for (int i = 0; i < keys.size(); i++) {
-                        // try decrypting with that key
-                        try {
-                            _body = new EnclosureBody(_client.ctx(), _enc.getData(), _enc.getDataSize(), (SessionKey)keys.get(i));
-                            _ui.debugMessage("Known readKey was valid");
-                            break;
-                        } catch (IOException ioe) {
-                            _ui.debugMessage("Read key attempt failed, continuing...", ioe);
-                            continue;
-                        } catch (DataFormatException dfe) {
-                            //dfe.printStackTrace();
-                            _ui.debugMessage("Read key " + i + "/" + keys.size() + " attempt failed, continuing...");//, dfe);
-                            continue;
+                    List<SessionKey> keys = _client.getReadKeys(_channel, _nymId, _pass, false);
+                    if (targetHash != null) {
+                        if (!targetHash.equals(_channel)) {
+                            List<SessionKey> targetKeys = _client.getReadKeys(Hash.create(target), _nymId, _pass, false);
+                            if (!targetKeys.isEmpty())
+                                _ui.debugMessage("Adding " + targetKeys.size() + " read keys from public headers");
+                            keys.addAll(targetKeys);
                         }
                     }
-                    if (_body == null) {
-                        _ui.debugMessage("Read keys were unable to decrypt the post to " + _channel.toBase64());
+                    if (keys.isEmpty()) {
+                        _ui.errorMessage("No read keys known for " + _channel.toBase64());
                         _body = new UnreadableEnclosureBody(_client.ctx());
+                    } else {
+                        for (int i = 0; i < keys.size(); i++) {
+                            // try decrypting with that key
+                            try {
+                                _body = new EnclosureBody(_client.ctx(), _enc.getData(), _enc.getDataSize(), keys.get(i));
+                                _ui.debugMessage("Read key " + i + '/' + keys.size() + " valid");
+                                break;
+                            } catch (IOException ioe) {
+                                _ui.debugMessage("Read key " + i + '/' + keys.size() + " failed", ioe);
+                                continue;
+                            } catch (DataFormatException dfe) {
+                                // normal case when multiple keys
+                                _ui.debugMessage("Read key " + i + '/' + keys.size() + " failed");
+                                continue;
+                            }
+                        }
+                        if (_body == null) {
+                            _ui.debugMessage("Read keys were unable to decrypt the post to " + _channel.toBase64());
+                            _body = new UnreadableEnclosureBody(_client.ctx());
+                        }
                     }
                 }
             }
@@ -317,8 +329,8 @@ public class ImportPost {
             _ui.debugMessage("Target channel is known: " + _channelId + "/" + _channel.toBase64());
         }
         
-        _ui.debugMessage("private headers read: " + _body.getHeaders().toString());
         _ui.debugMessage("public headers read: " + _enc.getHeaders().toString());
+        _ui.debugMessage("private headers read: " + _body.getHeaders().toString());
         
         // check authentication/authorization
         _authenticated = false;
@@ -355,8 +367,8 @@ public class ImportPost {
                     _ui.debugMessage("authenticated against the identity key for the unreadable authorHash (" + authorHash.toBase64() +"): " + pub.toBase64());
                     // now filter out banned authors who are posting in channels that
                     // aren't banned
-                    if (_client.getBannedChannels().contains(authorHash)) {
-                        _ui.errorMessage("Not importing unreadable post written by banned author " + authorHash.toBase64() + ": " + _uri);
+                    if (bannedChannels.contains(authorHash)) {
+                        _ui.errorMessage("Not importing unreadable post by banned " + authorHash + ": " + _uri);
                         _ui.commandComplete(-1, null);
                         return false;
                     }
@@ -374,8 +386,8 @@ public class ImportPost {
                     _ui.debugMessage("authenticated against the identity key for the authorHash (" + authorHash.toBase64() +"): " + pub.toBase64());
                     // now filter out banned authors who are posting in channels that
                     // aren't banned
-                    if (_client.getBannedChannels().contains(authorHash)) {
-                        _ui.errorMessage("Not importing post written by banned author " + authorHash.toBase64() + ": " + _uri);
+                    if (bannedChannels.contains(authorHash)) {
+                        _ui.errorMessage("Not importing post by banned " + authorHash + ": " + _uri);
                         _ui.commandComplete(-1, null);
                         return false;
                     }
@@ -384,34 +396,38 @@ public class ImportPost {
         }
                    
         
-        byte target[] = _enc.getHeaderBytes(Constants.MSG_HEADER_TARGET_CHANNEL);
-        if (target == null)
-            target = _body.getHeaderBytes(Constants.MSG_HEADER_TARGET_CHANNEL);
-        Hash targetHash = null;
-        if (target != null) {
+        // already checked public header above
+        byte ptarget[] = _enc.getHeaderBytes(Constants.MSG_HEADER_TARGET_CHANNEL);
+        if (ptarget != null && ptarget.length == Hash.HASH_LENGTH) {
             // may be separate from the author or scope
-            targetHash = Hash.create(target);
-            if (_client.getBannedChannels().contains(targetHash)) {
-                _ui.errorMessage("Not importing banned post in " + _channel.toBase64() + ": " + _uri);
+            Hash ptargetHash = Hash.create(ptarget);
+            if (targetHash != null && !targetHash.equals(ptargetHash)) {
+                _ui.errorMessage("Inconsistent target headers: " + _uri);
+                _ui.commandComplete(-1, null);
+                return false;
+            }
+            targetHash = ptargetHash;
+            if (bannedChannels.contains(targetHash)) {
+                _ui.errorMessage("Not importing post to (priv) banned " + targetHash + ": " + _uri);
                 _ui.commandComplete(-1, null);
                 return false;
             }
         }
         
         // includes managers, posters, and the owner
-        List signingPubKeys = null;
+        List<SigningPublicKey> signingPubKeys = null;
         if (_enc.isReply()) {
             // private replies are authorized against either their scope's owner or any authorized
             // poster in the target.  authorized posters in the scope are not allowed, as that would
             // mean anyone could effectively cancel out a private message you send if they can post
             // to your blog
-            List both = new ArrayList();
+            List<SigningPublicKey> both = new ArrayList();
             long channelId = _client.getChannelId(_channel);
-            List scopePubKeys = _client.getAuthorizedPosters(channelId, true, false, false);
+            List<SigningPublicKey> scopePubKeys = _client.getAuthorizedPosters(channelId, true, false, false);
             if (scopePubKeys != null)
                 both.addAll(scopePubKeys);
             if (targetHash != null) {
-                List targetPubKeys = _client.getAuthorizedPosters(targetHash);
+                List<SigningPublicKey> targetPubKeys = _client.getAuthorizedPosters(targetHash);
                 if (targetPubKeys != null)
                     both.addAll(targetPubKeys);
             }
@@ -431,7 +447,7 @@ public class ImportPost {
         Hash authorizationHash = _enc.getAuthorizationHash();
         _ui.debugMessage("attempting to authorize the post against " + signingPubKeys.size() + " for " + (targetHash != null ? targetHash.toBase64().substring(0,6) : _channel.toBase64().substring(0,6)));
         for (int i = 0; i < signingPubKeys.size(); i++) {
-            SigningPublicKey pubKey = (SigningPublicKey)signingPubKeys.get(i);
+            SigningPublicKey pubKey = signingPubKeys.get(i);
             boolean ok = _client.ctx().dsa().verifySignature(authorizationSig, authorizationHash, pubKey);
             if (ok) {
                 _authorized = true;
@@ -450,7 +466,7 @@ public class ImportPost {
                 signingPubKeys = _client.getAuthorizedPosters(_channel);
                 _ui.debugMessage("attempting pseudoauthorization authorize the unreadable PBE'd post against " + signingPubKeys.size());
                 for (int i = 0; i < signingPubKeys.size(); i++) {
-                    SigningPublicKey pubKey = (SigningPublicKey)signingPubKeys.get(i);
+                    SigningPublicKey pubKey = signingPubKeys.get(i);
                     boolean ok = _client.ctx().dsa().verifySignature(authorizationSig, authorizationHash, pubKey);
                     if (ok) {
                         _pseudoauthorized = true;
@@ -562,7 +578,7 @@ public class ImportPost {
         
         Hash scope = _client.getMessageScope(msgId);
         long authorId = _client.getChannelId(scope);
-        List cancelURIs = getCancelURIs();
+        List<SyndieURI> cancelURIs = getCancelURIs();
         
         CancelEngine engine = new CancelEngine(_client, _ui);
         if (cancelURIs.size() > 0) {
@@ -571,7 +587,7 @@ public class ImportPost {
         }
         
         // check to see if this new message was cancelled by an earlier received message
-        long cancelledBy = cancelledBy = _client.getCancelledBy(_uri);
+        long cancelledBy = _client.getCancelledBy(_uri);
         if (cancelledBy >= 0) {
             // ok, this will check to see if the one who sent us the cancel request was
             // authorized, and if it was, it'll delete the newly created message
@@ -595,9 +611,9 @@ public class ImportPost {
         }
     }
     
-    private List getCancelURIs() { 
+    private List<SyndieURI> getCancelURIs() { 
         String cancel[] = _body.getHeaderStrings(Constants.MSG_HEADER_CANCEL);
-        ArrayList cancelled = new ArrayList();
+        List<String> cancelled = new ArrayList();
         if (cancel != null) {
             for (int i = 0; i < cancel.length; i++)
                 cancelled.add(cancel[i]);
@@ -608,7 +624,7 @@ public class ImportPost {
                 cancelled.add(cancel[i]);
         }
         
-        ArrayList uris = new ArrayList(cancelled.size());
+        List<SyndieURI> uris = new ArrayList(cancelled.size());
         for (int i = 0; i < cancelled.size(); i++) {
             String str = (String)cancelled.get(i);
             try {
@@ -619,9 +635,8 @@ public class ImportPost {
         return uris;
     }
 
-    private static boolean isAuth(Set authorizedKeys, Hash ident) {
-        for (Iterator iter = authorizedKeys.iterator(); iter.hasNext(); ) {
-            SigningPublicKey key = (SigningPublicKey)iter.next();
+    private static boolean isAuth(Set<SigningPublicKey> authorizedKeys, Hash ident) {
+        for (SigningPublicKey key : authorizedKeys) {
             if (key.calculateHash().equals(ident))
                 return true;
         }
@@ -1152,13 +1167,13 @@ public class ImportPost {
     private static final String SQL_MARK_UNREAD = "INSERT INTO nymUnreadMessage (nymId, msgId) VALUES (?, ?)";
     private void setUnread(long msgId) throws SQLException {
         _client.exec(SQL_DELETE_UNREAD, msgId);
-        List nymIds = _client.getNymIds();
+        List<Long> nymIds = _client.getNymIds();
         
         PreparedStatement stmt = null;
         try {
             stmt = _client.con().prepareStatement(SQL_MARK_UNREAD);
             for (int i = 0; i < nymIds.size(); i++) {
-                stmt.setLong(1, ((Long)nymIds.get(i)).longValue());
+                stmt.setLong(1, nymIds.get(i).longValue());
                 stmt.setLong(2, msgId);
                 stmt.executeUpdate();
             }
@@ -1173,13 +1188,13 @@ public class ImportPost {
     private void setMessageReferences(long msgId) throws SQLException {
         _client.exec(SQL_DELETE_MESSAGE_REF_URIS, msgId);
         _client.exec(SQL_DELETE_MESSAGE_REFS, msgId);
-        List refs = new ArrayList();
+        List<ReferenceNode> refs = new ArrayList();
         for (int i = 0; i < _body.getReferenceRootCount(); i++)
             refs.add(_body.getReferenceRoot(i));
         _ui.debugMessage("Importing reference roots: " + refs.size());
         InsertRefVisitor visitor = new InsertRefVisitor(msgId);
         ReferenceNode.walk(refs, visitor);
-        List imported = visitor.getImportedNymKeys();
+        List<NymKey> imported = visitor.getImportedNymKeys();
         if (imported.size() > 0)
             KeyImport.resolveWithNewKeys(_ui, _client, imported);
         if (visitor.getError() != null) {
@@ -1198,7 +1213,7 @@ public class ImportPost {
         private int _node;
         private SQLException _exception;
         private String _err;
-        private List _nymKeys;
+        private List<NymKey> _nymKeys;
         public InsertRefVisitor(long msgId) {
             _msgId = msgId;
             _node = 0;
@@ -1208,7 +1223,7 @@ public class ImportPost {
         }
         public SQLException getException() { return _exception; }
         public String getError() { return _err; }
-        public List getImportedNymKeys() { return _nymKeys; }
+        public List<NymKey> getImportedNymKeys() { return _nymKeys; }
 
         public void visit(ReferenceNode node, int depth, int siblingOrder) {
             if (_err == null) {
@@ -1262,7 +1277,7 @@ public class ImportPost {
      * bundled in an authenticated post from an authorized forum manager).  adds newly created
      * NymKey instances to the provided list
      */
-    private void importKeys(SyndieURI uri, List nymKeys) {
+    private void importKeys(SyndieURI uri, List<NymKey> nymKeys) {
         Hash keyScope = getKeyScope(uri);
         KeyImport.importKeys(_ui, _client, keyScope, uri, nymKeys);
     }

@@ -900,15 +900,25 @@ public class DBClient {
     /** 
      * list of SessionKey instances that the nym specified can use to try and read/write 
      * posts to the given identHash channel
+     *
      * @param onlyIncludeForWriting if true, only list the read keys we can use for writing a post (meaning
      *        those that have not been deprecated)
+     * @return non-null
      */
     public List<SessionKey> getReadKeys(Hash identHash, boolean onlyIncludeForWriting) {
         return getReadKeys(identHash, _nymId, _pass, onlyIncludeForWriting);
     }
 
+    /** 
+     * list of SessionKey instances that the nym specified can use to try and read/write 
+     * posts to the given identHash channel
+     *
+     * @param onlyIncludeForWriting if true, only list the read keys we can use for writing a post (meaning
+     *        those that have not been deprecated)
+     * @return non-null
+     */
     public List<SessionKey> getReadKeys(Hash identHash, long nymId, String nymPassphrase, boolean onlyIncludeForWriting) {
-        List<SessionKey> rv = new ArrayList(1);
+        List<SessionKey> rv = new ArrayList(4);
         if (identHash == null) return null;
         PreparedStatement stmt = null;
         ResultSet rs = null;
@@ -1406,11 +1416,14 @@ public class DBClient {
         return _numNymKeysWithoutPass == 0;
     }
     
+    /** 
+     * @return non-null
+     */
     public List<PrivateKey> getReplyKeys(Hash identHash, long nymId, String pass) {
-        List keys = getNymKeys(nymId, pass, identHash, Constants.KEY_FUNCTION_REPLY);
+        List<NymKey> keys = getNymKeys(nymId, pass, identHash, Constants.KEY_FUNCTION_REPLY);
         List<PrivateKey> rv = new ArrayList();
         for (int i = 0; i < keys.size(); i++)
-            rv.add(new PrivateKey(((NymKey)keys.get(i)).getData()));
+            rv.add(new PrivateKey(keys.get(i).getData()));
         return rv;
     }
 

@@ -93,18 +93,20 @@ public class EnclosureBody {
         int totalSize = (int)DataHelper.fromLong(dec, off, 4);
         off += 4;
         if (totalSize != (size-16)) {
+            // this is the normal path when there are multiple read keys and we have to try until
+            // we get the right one
             if (_log.shouldLog(Log.DEBUG)) {
                 MessageDigest dbg = SHA256Generator.getDigestInstance();
                 dbg.update(enc);
                 byte h[] = dbg.digest();
-                _log.debug("borked: off=" + off);
-                _log.debug("borked: Encrypted body hashes to " + Base64.encode(h));
-                _log.debug("borked: key used: " + Base64.encode(key.getData()));
-                _log.debug("borked: IV used: " + Base64.encode(iv));
-                _log.debug("borked: pad: " + pad);
-                _log.debug("borked: totalSize: " + totalSize);
-                _log.debug("borked: size: " + size);
-                _log.debug("borked: internalSize: " + internalSize);
+                _log.debug("borked: off=" + off +
+                           " Encrypted body hashes to " + Base64.encode(h) +
+                           " key used: " + Base64.encode(key.getData()) +
+                           " IV used: " + Base64.encode(iv) +
+                           " pad: " + pad +
+                           " totalSize: " + totalSize +
+                           " size: " + size +
+                           " internalSize: " + internalSize);
             }
             throw new DataFormatException("Invalid total size (" + totalSize + "/" + size + ")");
         }
