@@ -142,13 +142,15 @@ class ManageForumReferences extends BaseComponent implements Themeable, Translat
         Composite actions = new Composite(_shell, SWT.NONE);
         actions.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         actions.setLayout(new FillLayout(SWT.HORIZONTAL));
-        _ok = new Button(actions, SWT.PUSH);
-        _ok.addSelectionListener(new FireSelectionListener() {
-            public void fire() { save(); }
-        });
+
         _cancel = new Button(actions, SWT.PUSH);
         _cancel.addSelectionListener(new FireSelectionListener() {
             public void fire() { dispose(); }
+        });
+
+        _ok = new Button(actions, SWT.PUSH);
+        _ok.addSelectionListener(new FireSelectionListener() {
+            public void fire() { save(); }
         });
         
         initDnDTarget();

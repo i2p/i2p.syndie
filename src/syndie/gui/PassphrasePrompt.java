@@ -100,6 +100,7 @@ public class PassphrasePrompt extends BaseComponent implements Translatable, The
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { complete(false); }
             public void widgetSelected(SelectionEvent selectionEvent) { complete(false); }
         });
+
         _ok = new Button(_shell, SWT.PUSH);
         _ok.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         _ok.addSelectionListener(new SelectionListener() {

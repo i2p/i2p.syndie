@@ -282,6 +282,14 @@ public class ArchiveDefaults extends Composite implements Themeable, Translatabl
         
         Button b = new Button(shell, SWT.PUSH);
         b.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        b.setText(_translationRegistry.getText("Cancel"));
+        b.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
+        b.addSelectionListener(new FireSelectionListener() {
+            public void fire() { shell.dispose(); }
+        });
+        
+        b = new Button(shell, SWT.PUSH);
+        b.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         b.setText(_translationRegistry.getText("OK"));
         b.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
         b.addSelectionListener(new FireSelectionListener() {
@@ -289,14 +297,6 @@ public class ArchiveDefaults extends Composite implements Themeable, Translatabl
                 item.setText(0, name.getText()); 
                 shell.dispose();
             }
-        });
-        
-        b = new Button(shell, SWT.PUSH);
-        b.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
-        b.setText(_translationRegistry.getText("Cancel"));
-        b.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
-        b.addSelectionListener(new FireSelectionListener() {
-            public void fire() { shell.dispose(); }
         });
         
         shell.pack();
@@ -341,6 +341,14 @@ public class ArchiveDefaults extends Composite implements Themeable, Translatabl
         
         Button b = new Button(shell, SWT.PUSH);
         b.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        b.setText(_translationRegistry.getText("Cancel"));
+        b.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
+        b.addSelectionListener(new FireSelectionListener() {
+            public void fire() { shell.dispose(); }
+        });
+        
+        b = new Button(shell, SWT.PUSH);
+        b.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         b.setText(_translationRegistry.getText("OK"));
         b.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
         b.addSelectionListener(new FireSelectionListener() {
@@ -348,14 +356,6 @@ public class ArchiveDefaults extends Composite implements Themeable, Translatabl
                 item.setText(1, url.getText()); 
                 shell.dispose();
             }
-        });
-        
-        b = new Button(shell, SWT.PUSH);
-        b.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
-        b.setText(_translationRegistry.getText("Cancel"));
-        b.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
-        b.addSelectionListener(new FireSelectionListener() {
-            public void fire() { shell.dispose(); }
         });
         
         shell.pack();
@@ -436,6 +436,14 @@ public class ArchiveDefaults extends Composite implements Themeable, Translatabl
         
         Button b = new Button(shell, SWT.PUSH);
         b.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        b.setText(_translationRegistry.getText("Cancel"));
+        b.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
+        b.addSelectionListener(new FireSelectionListener() {
+            public void fire() { shell.dispose(); }
+        });
+        
+        b = new Button(shell, SWT.PUSH);
+        b.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         b.setText(_translationRegistry.getText("OK"));
         b.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
         b.addSelectionListener(new FireSelectionListener() {
@@ -452,14 +460,6 @@ public class ArchiveDefaults extends Composite implements Themeable, Translatabl
                     shell.dispose();
                 }
             }
-        });
-        
-        b = new Button(shell, SWT.PUSH);
-        b.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
-        b.setText(_translationRegistry.getText("Cancel"));
-        b.setFont(_themeRegistry.getTheme().DEFAULT_FONT);
-        b.addSelectionListener(new FireSelectionListener() {
-            public void fire() { shell.dispose(); }
         });
         
         shell.pack();

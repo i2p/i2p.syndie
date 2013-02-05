@@ -44,6 +44,14 @@ public class MessageChooserPopup implements MessageTree.MessageTreeListener, The
         gd.widthHint = 300;
         gd.heightHint = 200;
         _tree.getControl().setLayoutData(gd);
+
+        _cancel = new Button(_shell, SWT.PUSH);
+        _cancel.setText(_translationRegistry.getText("Cancel"));
+        _cancel.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+        _cancel.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { hide(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { hide(); }
+        });
         
         _ok = new Button(_shell, SWT.PUSH);
         _ok.setText("ok");
@@ -64,15 +72,6 @@ public class MessageChooserPopup implements MessageTree.MessageTreeListener, The
                     messageSelected(_tree, uri, true, true);
             }
         });
-        
-        _cancel = new Button(_shell, SWT.PUSH);
-        _cancel.setText(_translationRegistry.getText("Cancel"));
-        _cancel.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
-        _cancel.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { hide(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { hide(); }
-        });
-        
         
         // intercept the shell closing, since that'd cause the shell to be disposed rather than just hidden
         _shell.addShellListener(new ShellListener() {

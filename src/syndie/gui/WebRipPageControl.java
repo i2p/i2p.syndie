@@ -99,18 +99,18 @@ public class WebRipPageControl extends BaseComponent implements Translatable, Th
         
         createAttributeFields(_root);
         
-        _rip = new Button(_root, SWT.PUSH);
-        _rip.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
-        _rip.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { rip(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { rip(); }
-        });
-        
         _cancel = new Button(_root, SWT.PUSH);
         _cancel.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _cancel.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { cancel(); }
             public void widgetSelected(SelectionEvent selectionEvent) { cancel(); }
+        });
+        
+        _rip = new Button(_root, SWT.PUSH);
+        _rip.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
+        _rip.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { rip(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { rip(); }
         });
         
         _status = new Label(_root, SWT.NONE);

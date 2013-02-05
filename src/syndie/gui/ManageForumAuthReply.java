@@ -104,8 +104,8 @@ class ManageForumAuthReply extends BaseComponent implements Themeable, Translata
         actions.setLayout(new FillLayout(SWT.HORIZONTAL));
         actions.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 4, 1));
         
-        _ok = new Button(actions, SWT.PUSH);
         _cancel = new Button(actions, SWT.PUSH);
+        _ok = new Button(actions, SWT.PUSH);
         
         _ok.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { ok(); }

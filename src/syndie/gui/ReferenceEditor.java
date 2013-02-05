@@ -263,12 +263,13 @@ public class ReferenceEditor extends BaseComponent implements Themeable, Transla
         row.setLayout(gl);
         row.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
     
-        _ok = new Button(row, SWT.PUSH);
-        _ok.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
-        _ok.addSelectionListener(new FireSelectionListener() { public void fire() { ok(); } });
         _cancel = new Button(row, SWT.PUSH);
         _cancel.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         _cancel.addSelectionListener(new FireSelectionListener() { public void fire() { cancel(); } });
+
+        _ok = new Button(row, SWT.PUSH);
+        _ok.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
+        _ok.addSelectionListener(new FireSelectionListener() { public void fire() { ok(); } });
         
         loadCategories();
         uriSelected(null);

@@ -140,8 +140,8 @@ class ManageForumAuthPost extends BaseComponent implements Themeable, Translatab
         actions.setLayout(new FillLayout(SWT.HORIZONTAL));
         actions.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
-        _ok = new Button(actions, SWT.PUSH);
         _cancel = new Button(actions, SWT.PUSH);
+        _ok = new Button(actions, SWT.PUSH);
         
         _choiceAnyone.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickChoiceAnyone(); }

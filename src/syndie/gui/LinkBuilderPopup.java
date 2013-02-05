@@ -428,17 +428,18 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
         gd.horizontalSpan = 2;
         actionRow.setLayoutData(gd);
         
-        _actionOk = new Button(actionRow, SWT.PUSH);
-        _actionOk.setText(getText("OK"));
-        _actionOk.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { onOk(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { onOk(); }
-        });
         _actionCancel = new Button(actionRow, SWT.PUSH);
         _actionCancel.setText(getText("Cancel"));
         _actionCancel.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { onCancel(); }
             public void widgetSelected(SelectionEvent selectionEvent) { onCancel(); }
+        });
+
+        _actionOk = new Button(actionRow, SWT.PUSH);
+        _actionOk.setText(getText("OK"));
+        _actionOk.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { onOk(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { onOk(); }
         });
         
         //_refChooser = ComponentBuilder.instance().createReferenceChooserPopup(_shell, this);

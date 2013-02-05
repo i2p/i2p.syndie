@@ -71,6 +71,16 @@ public class ChangePassPopup {
 
         Button b = new Button(s, SWT.PUSH);
         b.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
+        b.setText(_translationRegistry.getText("Cancel"));
+        b.setFont(_themeRegistry.getTheme().BUTTON_FONT);
+        b.addSelectionListener(new FireSelectionListener() { 
+            public void fire() {
+                s.dispose();
+            }
+        });
+
+        b = new Button(s, SWT.PUSH);
+        b.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
         b.setText(_translationRegistry.getText("Reset passphrase"));
         b.setFont(_themeRegistry.getTheme().BUTTON_FONT);
         b.addSelectionListener(new FireSelectionListener() { 
@@ -81,16 +91,6 @@ public class ChangePassPopup {
                 
                 s.dispose();
                 changePass(old, newP, newP2);
-            }
-        });
-
-        b = new Button(s, SWT.PUSH);
-        b.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1));
-        b.setText(_translationRegistry.getText("Cancel"));
-        b.setFont(_themeRegistry.getTheme().BUTTON_FONT);
-        b.addSelectionListener(new FireSelectionListener() { 
-            public void fire() {
-                s.dispose();
             }
         });
 

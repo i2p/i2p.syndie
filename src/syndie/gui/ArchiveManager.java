@@ -119,8 +119,8 @@ public class ArchiveManager extends BaseComponent implements Translatable, Theme
         actions.setLayout(new FillLayout(SWT.HORIZONTAL));
         actions.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, false, 4, 1));
         
-        _save = new Button(actions, SWT.PUSH);
         _cancel = new Button(actions, SWT.PUSH);
+        _save = new Button(actions, SWT.PUSH);
         
         _save.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { saveConfig(); }

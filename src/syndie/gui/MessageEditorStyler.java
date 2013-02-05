@@ -147,15 +147,17 @@ class MessageEditorStyler extends BaseComponent implements Themeable, Translatab
         
         Composite actionRow = new Composite(_txtShell, SWT.NONE);
         actionRow.setLayout(new FillLayout(SWT.HORIZONTAL));
-        _styleOk = new Button(actionRow, SWT.PUSH);
-        _styleOk.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { insertTextStyle(); dispose(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { insertTextStyle(); dispose(); }
-        });
+
         _styleCancel = new Button(actionRow, SWT.PUSH);
         _styleCancel.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { cancelStyle(); }
             public void widgetSelected(SelectionEvent selectionEvent) { cancelStyle(); }
+        });
+
+        _styleOk = new Button(actionRow, SWT.PUSH);
+        _styleOk.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { insertTextStyle(); dispose(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { insertTextStyle(); dispose(); }
         });
         
         PreviewStyle lsnr = new PreviewStyle();

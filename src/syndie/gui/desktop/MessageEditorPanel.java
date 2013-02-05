@@ -479,10 +479,10 @@ public class MessageEditorPanel extends DesktopPanel implements LocalMessageCall
             Composite edge = getEdgeRoot();
             edge.setLayout(new FillLayout(SWT.VERTICAL));
             
+            _cancel = new Button(edge, SWT.PUSH);
             _saveForLater = new Button(edge, SWT.PUSH);
             _preview = new Button(edge, SWT.PUSH);
             _post = new Button(edge, SWT.PUSH);
-            _cancel = new Button(edge, SWT.PUSH);
             
             _saveForLater.addSelectionListener(new FireSelectionListener() {
                 public void fire() { _editor.postponeMessage(); }

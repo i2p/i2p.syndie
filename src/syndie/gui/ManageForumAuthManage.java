@@ -123,12 +123,12 @@ class ManageForumAuthManage extends BaseComponent implements Themeable, Translat
         actions.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 4, 1));
         
         _ok = new Button(actions, SWT.PUSH);
-        _cancel = new Button(actions, SWT.PUSH);
-        
         _ok.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { ok(); }
             public void widgetSelected(SelectionEvent selectionEvent) { ok(); }
         });
+
+        _cancel = new Button(actions, SWT.PUSH);
         _cancel.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { hide(); }
             public void widgetSelected(SelectionEvent selectionEvent) { hide(); }

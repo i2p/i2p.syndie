@@ -252,18 +252,18 @@ public class ImageBuilderPopup {
         actions.setLayout(new FillLayout(SWT.HORIZONTAL));
         actions.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
-        _ok = new Button(actions, SWT.PUSH);
-        _ok.setText(getText("OK"));
-        _ok.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { imageAccepted(); hide(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { imageAccepted(); hide(); }
-        });
-        
         _cancel = new Button(actions, SWT.PUSH);
         _cancel.setText(getText("Cancel"));
         _cancel.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { hide(); }
             public void widgetSelected(SelectionEvent selectionEvent) { hide(); }
+        });
+        
+        _ok = new Button(actions, SWT.PUSH);
+        _ok.setText(getText("OK"));
+        _ok.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { imageAccepted(); hide(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { imageAccepted(); hide(); }
         });
         
         // intercept the shell closing, since that'd cause the shell to be disposed rather than just hidden

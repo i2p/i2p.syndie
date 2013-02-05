@@ -368,9 +368,9 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         actions.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, true, 2, 1));
         actions.setLayout(new FillLayout(SWT.HORIZONTAL));
         
+        _cancel = new Button(actions, SWT.PUSH);
         _save = new Button(actions, SWT.PUSH);
         _save.setEnabled(false);
-        _cancel = new Button(actions, SWT.PUSH);
         
         configActions();
         

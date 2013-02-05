@@ -64,11 +64,11 @@ public class ArchiveDefaultsPopup implements Themeable, Translatable {
         buttonBar.setLayout(new FillLayout());
         buttonBar.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         
-        _save = new Button(buttonBar, SWT.PUSH);
-        _save.addSelectionListener(new FireSelectionListener() { public void fire() { save(); } });
-        
         _cancel = new Button(buttonBar, SWT.PUSH);
         _cancel.addSelectionListener(new FireSelectionListener() { public void fire() { dispose(); } });
+        
+        _save = new Button(buttonBar, SWT.PUSH);
+        _save.addSelectionListener(new FireSelectionListener() { public void fire() { save(); } });
         
         _themeRegistry.register(this);
         _translationRegistry.register(this);

@@ -123,17 +123,18 @@ public class BackupSecrets extends BaseComponent implements Themeable, Translata
         _passphrase = new Text(_root, SWT.BORDER | SWT.SINGLE);
         _passphrase.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         
-        _ok = new Button(_root, SWT.PUSH);
-        _ok.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, false));
-        _ok.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { backupSelection(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { backupSelection(); }
-        });
         _cancel = new Button(_root, SWT.PUSH);
         _cancel.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, false));
         _cancel.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { _navControl.unview(_uri); }
             public void widgetSelected(SelectionEvent selectionEvent) { _navControl.unview(_uri); }
+        });
+
+        _ok = new Button(_root, SWT.PUSH);
+        _ok.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, false));
+        _ok.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { backupSelection(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { backupSelection(); }
         });
         
         populateFields();

@@ -158,16 +158,16 @@ public class ManageForumArchives extends BaseComponent implements Themeable, Tra
         actions.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 3, 1));
         actions.setLayout(new FillLayout(SWT.HORIZONTAL));
         
-        _ok = new Button(actions, SWT.PUSH);
-        _ok.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { ok(); }
-            public void widgetSelected(SelectionEvent selectionEvent) { ok(); }
-        });
-        
         _cancel = new Button(actions, SWT.PUSH);
         _cancel.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { dispose(); }
             public void widgetSelected(SelectionEvent selectionEvent) { dispose(); }
+        });
+        
+        _ok = new Button(actions, SWT.PUSH);
+        _ok.addSelectionListener(new SelectionListener() {
+            public void widgetDefaultSelected(SelectionEvent selectionEvent) { ok(); }
+            public void widgetSelected(SelectionEvent selectionEvent) { ok(); }
         });
 
         _choiceHTTP.setSelection(true);
