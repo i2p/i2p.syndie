@@ -1007,6 +1007,7 @@ public class ImportPost {
         for (int i = 0; i < _body.getAttachments(); i++)
             insertAttachment(msgId, i);
     }
+
     private static final String SQL_INSERT_MESSAGE_ATTACHMENT = "INSERT INTO messageAttachment (msgId, attachmentNum, attachmentSize, contentType, name, description) VALUES (?, ?, ?, ?, ?, ?)";
     private static final String SQL_INSERT_MESSAGE_ATTACHMENT_DATA = "INSERT INTO messageAttachmentData (msgId, attachmentNum, dataBinary) VALUES (?, ?, ?)";
     private static final String SQL_INSERT_MESSAGE_ATTACHMENT_CONFIG = "INSERT INTO messageAttachmentConfig (msgId, attachmentNum, dataString) VALUES (?, ?, ?)";
@@ -1138,11 +1139,14 @@ public class ImportPost {
         }
     }
   
-    private String formatConfig(Properties props) {
+    /**
+     *  Serialize a Properties. Reverse is in CommandImpl.parseProps().
+     */
+    private static String formatConfig(Properties props) {
         StringBuilder rv = new StringBuilder();
-        for (Iterator iter = props.keySet().iterator(); iter.hasNext(); ) {
-            String key = (String)iter.next();
-            String val = props.getProperty(key);
+        for (Map.Entry e : props.entrySet()) {
+            String key = (String) e.getKey();
+            String val = (String) e.getValue();
             rv.append(CommandImpl.strip(key)).append('=').append(CommandImpl.strip(val)).append('\n');
         }
         return rv.toString();
@@ -1150,6 +1154,7 @@ public class ImportPost {
 
     private static final String SQL_DELETE_UNREAD = "DELETE FROM nymUnreadMessage WHERE msgId = ?";
     private static final String SQL_MARK_UNREAD = "INSERT INTO nymUnreadMessage (nymId, msgId) VALUES (?, ?)";
+
     private void setUnread(long msgId) throws SQLException {
         _client.exec(SQL_DELETE_UNREAD, msgId);
         List nymIds = _client.getNymIds();

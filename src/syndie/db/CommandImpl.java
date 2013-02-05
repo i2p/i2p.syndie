@@ -22,15 +22,19 @@ import syndie.Constants;
 import syndie.data.ReferenceNode;
 
 public abstract class CommandImpl implements CLI.Command {
+
     boolean writeKey(UI ui, String filename, PrivateKey key, Hash scope) {
         return writeKey(ui, filename, Constants.KEY_FUNCTION_REPLY, scope, key.toBase64());
     }
+
     boolean writeKey(UI ui, String filename, SigningPrivateKey key, Hash scope) {
         return writeKey(ui, filename, Constants.KEY_FUNCTION_MANAGE, scope, key.toBase64());
     }
+
     boolean writeKey(UI ui, String filename, SessionKey key, Hash scope) {
         return writeKey(ui, filename, Constants.KEY_FUNCTION_READ, scope, key.toBase64());
     }
+
     public static boolean writeKey(UI ui, String filename, String type, Hash scope, String data) {
         if (filename == null) {
             ui.errorMessage("Filename is null for writing?");
@@ -261,6 +265,7 @@ public abstract class CommandImpl implements CLI.Command {
     }
     
     public static final String strip(String orig) { return strip(orig, "\t\n\r\f", ' '); }
+
     public static final String strip(String orig, String charsToRemove, char replacement) {
         boolean changed = false;
         if (orig == null) return "";
@@ -281,43 +286,22 @@ public abstract class CommandImpl implements CLI.Command {
         return client.ctx().dsa().verifySignature(sig, hash, pubKey);
     }
 
+    /**
+     *  Deserialize a Properties. Reverse is in ImportPost.formatConfig().
+     *  Convert a string containing key=val\nkey2=val2\n...
+     *  All keys must have values.
+     *  This is not the same as I2P's properties serialization.
+     */
     public static void parseProps(String data, Properties rv) { parseProps(DataHelper.getUTF8(data), rv); }
+
+    /**
+     *  @param data UTF-8
+     */
     public static void parseProps(byte data[], Properties rv) {
-        //System.out.println("parsing props: " + new String(data));
-        int off = 0;
-        int dataStart = off;
-        int valStart = -1;
-        while (off < data.length) {
-            if (data[off] == '\n') {
-                try {
-                    String key = new String(data, dataStart, valStart-1-dataStart, "UTF-8");
-                    String val = new String(data, valStart, off-valStart, "UTF-8");
-                    //System.out.println("Prop parsed: [" + key + "] = [" + val + "] (dataStart=" + dataStart + " valStart " + valStart + " off " + off + ")");
-                    rv.setProperty(key, val);
-                } catch (UnsupportedEncodingException uee) {
-                    //
-                } catch (RuntimeException re) {
-                    //re.printStackTrace();
-                }
-                dataStart = off+1;
-                valStart = -1;
-            } else if ( (data[off] == '=') && (valStart == -1) ) {
-                valStart = off+1;
-            } else if (off + 1 >= data.length) {
-                if ( ( (valStart-1-dataStart) > 0) && ( (off+1-valStart) > 0) ) {
-                    try {
-                        String key = new String(data, dataStart, valStart-1-dataStart, "UTF-8");
-                        String val = new String(data, valStart, off+1-valStart, "UTF-8");
-                        //System.out.println("End prop parsed: [" + key + "] = [" + val + "] (dataStart=" + dataStart + " valStart " + valStart + " off " + off + ")");
-                        rv.setProperty(key, val);
-                    } catch (UnsupportedEncodingException uee) {
-                        //
-                    } catch (RuntimeException re) {
-                        //re.printStackTrace();
-                    }
-                }
-            }
-            off++;
+        try {
+            DataHelper.loadProps(rv, new ByteArrayInputStream(data));
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
         }
     }
 }
