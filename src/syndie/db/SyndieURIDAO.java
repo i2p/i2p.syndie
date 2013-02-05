@@ -9,7 +9,10 @@ import syndie.util.StringUtil;
 
 import net.i2p.util.Log;
 
-public class SyndieURIDAO {
+/**
+ *  Data Access Object
+ */
+class SyndieURIDAO {
     private final Log _log;
     private final DBClient _client;
 

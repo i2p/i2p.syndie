@@ -94,7 +94,7 @@ public class DBClient {
 
 
     private Connection _con;
-    private SyndieURIDAO _uriDAO;
+    private final SyndieURIDAO _uriDAO;
     /** for the DB, default USER/PASS */
     private String _login;
     private String _pass;
@@ -137,6 +137,7 @@ public class DBClient {
         _rootDir = rootDir;
         _shutdownInProgress = false;
         _shouldDefrag = DEFRAG;
+        _uriDAO = new SyndieURIDAO(this);
     }
     
     public void restart(String rootDir) {
@@ -178,6 +179,7 @@ public class DBClient {
                         rs = ((PreparedStatement) stmt).executeQuery();
                         if (!rs.next())
                             throw new SQLException("Login does not exist: " + _login);
+                        rs.close();
                     } else {
                         // Does not work as of hsqldb 2.0 (and should have been a method name anyway)
                         stmt = _con.createStatement();
@@ -185,7 +187,6 @@ public class DBClient {
                     }
                     log("Account " + _login + " already exists");
                     stmt.close();
-                    rs.close();
                     stmt = null;
                     
                     byte val[] = new byte[16];
@@ -274,12 +275,10 @@ public class DBClient {
         _shouldDefrag |= shouldDefrag;
 
         long init = System.currentTimeMillis();
-        _uriDAO = new SyndieURIDAO(this);
         //_login = null;
         //_pass = null;
         _nymId = -1;
-        long now = System.currentTimeMillis();
-        log("connecting: driver connection time: " + (connected-start) + " initDb time: " + (init-connected) + " uriDAO time: " + (now-init));
+        log("connecting: driver connection time: " + (connected-start) + " initDb time: " + (init-connected));
         
         // We must switch from the uppper-case to lower-case default password now
         // or verifyNymKeyEncryption() will fail
@@ -657,11 +656,19 @@ public class DBClient {
         }
     }
     
-    public SyndieURI getURI(long uriId) {
+    /**
+     *  @return stored URI
+     */
+    SyndieURI getURI(long uriId) {
+        ensureLoggedIn(false);
         return _uriDAO.fetch(uriId);
     }
 
-    public long addURI(SyndieURI uri) {
+    /**
+     *  @return urlID
+     */
+    long addURI(SyndieURI uri) {
+        ensureLoggedIn(false);
         return _uriDAO.add(uri);
     }
     
@@ -3821,6 +3828,15 @@ public class DBClient {
         }
         return null;
     }
+
+    /**
+     *  TODO get as stream
+     *  @since 1.103b-x
+     */
+    public InputStream getMessageAttachmentAsStream(long internalMessageId, int attachmentNum) {
+        byte[] b = getMessageAttachmentData(internalMessageId, attachmentNum);
+        return b != null ? new ByteArrayInputStream(b) : null;
+    }
     
     // was LENGTH, but 2.x does not support LENGTH on binary data
     private static final String SQL_GET_MESSAGE_ATTACHMENT_SIZE = "SELECT OCTET_LENGTH(dataBinary) FROM messageAttachmentData WHERE msgId = ? AND attachmentNum = ?";
@@ -3867,10 +3883,10 @@ public class DBClient {
         return rv;
     }
     
-    /** attachment number starts at 0 */
     private static final String SQL_GET_MESSAGE_ATTACHMENT_CONFIG = "SELECT dataString FROM messageAttachmentConfig WHERE msgId = ? AND attachmentNum = ?";
 
-    public String getMessageAttachmentConfigRaw(long internalMessageId, int attachmentNum) {
+    /** attachment number starts at 0 */
+    String getMessageAttachmentConfigRaw(long internalMessageId, int attachmentNum) {
         ensureLoggedIn();
         PreparedStatement stmt = null;
         ResultSet rs = null;
