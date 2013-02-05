@@ -70,16 +70,16 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
     private Button _syncRecurring;
     private Button _syncOnce;
     
-    private Map _archiveNameToRootItem;
-    private Map _archiveNameToIndexItem;
+    private final Map<String, TreeItem> _archiveNameToRootItem;
+    private final Map<String, TreeItem> _archiveNameToIndexItem;
     /** name to TreeItem for the subtree item */
-    private Map _archiveNameToIncomingItem;
+    private final Map<String, TreeItem> _archiveNameToIncomingItem;
     /** name to Map of SyndieURI to TreeItem for pending fetches */
-    private Map _archiveNameToIncoming;
+    private final Map<String, Map<SyndieURI, TreeItem>> _archiveNameToIncoming;
     /** name to TreeItem for the subtree item */
-    private Map _archiveNameToOutgoingItem;
+    private final Map<String, TreeItem> _archiveNameToOutgoingItem;
     /** name to Map of SyndieURI to TreeItem for pending fetches */
-    private Map _archiveNameToOutgoing;
+    private final Map<String, Map<SyndieURI, TreeItem>> _archiveNameToOutgoing;
 
     /** 
      * map of TreeItem to descriptive detail about the item they represent.  The values
@@ -89,7 +89,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
      * the incoming and outgoing branches, they contain SyncArchive.InboundAction and 
      * SyncArchive.OutboundAction elements, respectively
      */
-    private Map _items;
+    private final Map<TreeItem, Object> _items;
     
     private boolean _disposed;
     
@@ -239,7 +239,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                 SyncArchive archive = mgr.getArchive(i);
                 if (archive.getURL().equals(uri.getURL())) {
                     _ui.debugMessage("viewing [" + archive.getURL() + "] [" + archive.getName() + "]");
-                    TreeItem item = (TreeItem)_archiveNameToRootItem.get(archive.getName());
+                    TreeItem item = _archiveNameToRootItem.get(archive.getName());
                     if (item != null) {
                         _tree.setSelection(item);
                         viewDetailArchive(archive, false);
@@ -570,12 +570,11 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
             viewDetailArchive(archive, true);
         }
     }
-    public Set getFetchedScopes() {
-        Set scopes = new HashSet();
-        for (Iterator iter = _archiveNameToIncoming.values().iterator(); iter.hasNext(); ) {
-            Map uriToItem = (Map)iter.next();
-            for (Iterator uriIter = uriToItem.keySet().iterator(); uriIter.hasNext(); ) {
-                SyndieURI uri = (SyndieURI)uriIter.next();
+
+    public Set<Hash> getFetchedScopes() {
+        Set<Hash> scopes = new HashSet();
+        for (Map<SyndieURI, TreeItem> uriToItem : _archiveNameToIncoming.values()) {
+            for (SyndieURI uri : uriToItem.keySet()) {
                 if (uri == null) continue;
                 if (scopes.contains(uri.getScope())) continue;
                 if (uri.getMessageId() != null) {
@@ -607,7 +606,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
         });
         s.pack();
         s.open();
-        TreeItem item = (TreeItem)_archiveNameToRootItem.get(archive.getName());
+        TreeItem item = _archiveNameToRootItem.get(archive.getName());
         if (item != null) // null for new ones
             _tree.showItem(item);
     }
@@ -658,7 +657,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
     private TreeItem loadDataRoot(SyncArchive archive) {
         long nextTime = getNextTime(archive);
         _ui.debugMessage("loadDataRoot(" + archive + "): nextTime in " + (nextTime-System.currentTimeMillis()) + "ms");
-        TreeItem rootItem = (TreeItem)_archiveNameToRootItem.get(archive.getName());
+        TreeItem rootItem = _archiveNameToRootItem.get(archive.getName());
         if (rootItem == null) {
             rootItem = new TreeItem(_tree, SWT.NONE);
             _archiveNameToRootItem.put(archive.getName(), rootItem);
@@ -695,7 +694,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
         long nextTime = getNextTime(archive);
         _ui.debugMessage("loadDataIndex(" + archive + "): nextTime in " + (nextTime-System.currentTimeMillis()) + "ms");
         
-        TreeItem indexItem = (TreeItem)_archiveNameToIndexItem.get(archive.getName());
+        TreeItem indexItem = _archiveNameToIndexItem.get(archive.getName());
         if (nextTime <= 0) {
             // keep it around to view the details
             //if (indexItem != null) {
@@ -769,7 +768,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                 loadDataFetch(action);
             }
         } else {
-            TreeItem incomingItem = (TreeItem)_archiveNameToIncomingItem.remove(archive.getName());
+            TreeItem incomingItem = _archiveNameToIncomingItem.remove(archive.getName());
             if (incomingItem != null) {
                 incomingItem.dispose();
                 _items.remove(incomingItem);
@@ -798,13 +797,13 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
             Hash scope = uri.getScope();
             if (scope == null) return;
 
-            Map incomingURIToItem = (Map)_archiveNameToIncoming.get(action.getArchive().getName());
+            Map<SyndieURI, TreeItem> incomingURIToItem = _archiveNameToIncoming.get(action.getArchive().getName());
             if (incomingURIToItem == null) {
                 incomingURIToItem = new HashMap();
                 _archiveNameToIncoming.put(action.getArchive().getName(), incomingURIToItem);
             }
             
-            TreeItem incomingItem = (TreeItem)_archiveNameToIncomingItem.get(action.getArchive().getName());
+            TreeItem incomingItem = _archiveNameToIncomingItem.get(action.getArchive().getName());
             
             if (incomingItem == null) {
                 TreeItem rootItem = loadDataRoot(action.getArchive());
@@ -825,7 +824,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
     
             resizeCols(incomingItem);
             
-            TreeItem actionItem = (TreeItem)incomingURIToItem.get(uri);
+            TreeItem actionItem = incomingURIToItem.get(uri);
             
             if (action.isDisposed()) {
                 incomingURIToItem.remove(uri);
@@ -872,40 +871,30 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                 return;
             }
 
-            StringBuilder bf = new StringBuilder();
             String forum = _client.getChannelName(scope);
-            if (forum != null)
-                bf.append(forum).append(' ');
-            bf.append('[').append(scope.toBase64().substring(0,6)).append(']');
+            actionItem.setText(0, UIUtil.displayName(forum, scope));
             Long id = uri.getMessageId();
             if (id != null)
-                bf.append(' ').append(DateTime.getDateTime(id.longValue()));
+                actionItem.setText(1, DateTime.getDateTime(id.longValue()));
             else
-                bf.append(' ').append(getText("Forum info"));
-            actionItem.setText(0, bf.toString());
+                actionItem.setText(1, getText("Forum info"));
 
             if (action.isScheduled()) {
-                actionItem.setText(1, getText("ASAP"));
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_SCHEDULED);
             } else if (action.isReadKeyUnknown()) {
-                actionItem.setText(1, DateTime.getDateTime(action.getCompletionTime()));                    
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_NOKEY);
                 actionItem.setText(3, getText("Read key unknown"));
             } else if (action.getPBEPrompt() != null) {
-                actionItem.setText(1, DateTime.getDateTime(action.getCompletionTime()));                    
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_PBE);
                 actionItem.setText(3, getText("Passphrase required") + ": " + action.getPBEPrompt());
             } else if (action.isReplyKeyUnknown()) {
-                actionItem.setText(1, DateTime.getDateTime(action.getCompletionTime()));                    
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_NOKEY);
                 actionItem.setText(3, getText("Reply key unknown"));
             } else if (action.isCorrupt()) {
                 // UNUSED, see getFetchErrorMsg()
-                actionItem.setText(1, DateTime.getDateTime(action.getCompletionTime()));                    
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
                 actionItem.setText(3, getText("Message is corrupt"));
             } else if (action.getFetchErrorMsg() != null) {
-                actionItem.setText(1, DateTime.getDateTime(action.getCompletionTime()));
                 // from ImportResult, tagged there
                 String msg = getText(action.getFetchErrorMsg());
                 if (action.getFetchError() != null)
@@ -913,7 +902,6 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
                 actionItem.setText(3, getText("Fetch failed") + ": " + msg);
             } else if (action.isFetchingMeta()) {
-                actionItem.setText(1, getText("Now"));
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_INPROGRESS);
                 StringBuilder buf = new StringBuilder();
                 buf.append(getText("Fetching keys"));
@@ -927,7 +915,6 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                     buf.append(" / ").append(formatSize(t));
                 actionItem.setText(3, buf.toString());
             } else if (action.isFetchingBody()) {
-                actionItem.setText(1, getText("Now"));
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_INPROGRESS);
                 StringBuilder buf = new StringBuilder();
                 buf.append(getText("Fetching message"));
@@ -941,11 +928,9 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                     buf.append(" / ").append(formatSize(t));
                 actionItem.setText(3, buf.toString());
             } else if (action.isExecuting()) {
-                actionItem.setText(1, getText("Now"));
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_SCHEDULED);
                 actionItem.setText(3, getText("Queued"));
             } else { // complete
-                actionItem.setText(1, DateTime.getDateTime(action.getCompletionTime()));
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_OK);
                 StringBuilder buf = new StringBuilder();
                 buf.append(getText("Imported"));
@@ -970,7 +955,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                 loadDataPush(action);
             }
         } else {
-            TreeItem outgoingItem = (TreeItem)_archiveNameToOutgoingItem.remove(archive.getName());
+            TreeItem outgoingItem = _archiveNameToOutgoingItem.remove(archive.getName());
             if (outgoingItem != null) {
                 outgoingItem.dispose();
                 _items.remove(outgoingItem);
@@ -999,7 +984,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
             Hash scope = uri.getScope();
             if (scope == null) return;
 
-            TreeItem outgoingItem = (TreeItem)_archiveNameToOutgoingItem.get(action.getArchive().getName());
+            TreeItem outgoingItem = _archiveNameToOutgoingItem.get(action.getArchive().getName());
             
             if (outgoingItem == null) {
                 TreeItem rootItem = loadDataRoot(action.getArchive());
@@ -1018,14 +1003,14 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                 outgoingItem.setText(3, getText("Complete"));
             }
 
-            Map outgoingURIToItem = (Map)_archiveNameToOutgoing.get(action.getArchive().getName());
+            Map<SyndieURI, TreeItem> outgoingURIToItem = _archiveNameToOutgoing.get(action.getArchive().getName());
             if (outgoingURIToItem == null) {
                 outgoingURIToItem = new HashMap();
                 _archiveNameToOutgoing.put(action.getArchive().getName(), outgoingURIToItem);
             }
             resizeCols(outgoingItem);
             
-            TreeItem actionItem = (TreeItem)outgoingURIToItem.get(uri);
+            TreeItem actionItem = outgoingURIToItem.get(uri);
             
             if (action.isDisposed()) {
                 outgoingURIToItem.remove(uri);
@@ -1064,23 +1049,17 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                 return;
             }
 
-            StringBuilder bf = new StringBuilder();
             String forum = _client.getChannelName(scope);
-            if (forum != null)
-                bf.append(forum).append(' ');
-            bf.append('[').append(scope.toBase64().substring(0,6)).append(']');
+            actionItem.setText(0, UIUtil.displayName(forum, scope));
             Long id = uri.getMessageId();
             if (id != null)
-                bf.append(' ').append(DateTime.getDateTime(id.longValue()));
+                actionItem.setText(1, DateTime.getDateTime(id.longValue()));
             else
-                bf.append(' ').append(getText("Forum info"));
-            actionItem.setText(0, bf.toString());
+                actionItem.setText(1, getText("Forum info"));
 
             if (action.isScheduled()) {
-                actionItem.setText(1, getText("ASAP"));
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_SCHEDULED);
             } else if (action.isPushingMeta()) {
-                actionItem.setText(1, getText("Now"));
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_INPROGRESS);
                 StringBuilder buf = new StringBuilder();
                 buf.append(getText("Pushing keys"));
@@ -1089,7 +1068,6 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                     buf.append(":  ").append(formatSize(t));
                 actionItem.setText(3, buf.toString());
             } else if (action.isPushingBody()) {
-                actionItem.setText(1, getText("Now"));
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_INPROGRESS);
                 StringBuilder buf = new StringBuilder();
                 buf.append(getText("Pushing message"));
@@ -1098,7 +1076,6 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                     buf.append(":  ").append(formatSize(t));
                 actionItem.setText(3, buf.toString());
             } else if (action.isExecuting()) {
-                actionItem.setText(1, getText("Now"));
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_SCHEDULED);
                 StringBuilder buf = new StringBuilder();
                 buf.append(getText("Queued"));
@@ -1107,11 +1084,9 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                     buf.append(":  ").append(formatSize(t));
                 actionItem.setText(3, buf.toString());
             } else if (action.getErrorMsg() != null) {
-                actionItem.setText(1, DateTime.getDateTime(action.getCompletionTime()));
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
                 actionItem.setText(3, getText("Error pushing") + ": " + action.getErrorMsg());
             } else { // complete
-                actionItem.setText(1, DateTime.getDateTime(action.getCompletionTime()));
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_OK);
                 StringBuilder buf = new StringBuilder();
                 buf.append(getText("Pushed"));
@@ -1226,7 +1201,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
         Display.getDefault().syncExec(new Runnable() { 
             public void run() { 
                 // putting these map removals in the swt thread means we can skip synchronization
-                TreeItem rootItem = (TreeItem)_archiveNameToRootItem.remove(archive.getName());
+                TreeItem rootItem = _archiveNameToRootItem.remove(archive.getName());
                 _archiveNameToIncoming.remove(archive.getName());
                 _archiveNameToIncomingItem.remove(archive.getName());
                 _archiveNameToIndexItem.remove(archive.getName());
