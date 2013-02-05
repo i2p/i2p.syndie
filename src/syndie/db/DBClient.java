@@ -742,6 +742,9 @@ public class DBClient {
         }
     }
     
+    /**
+     *  Must be logged in, caller must ensure isLoggedIn()
+     */
     private void exec(String cmd) throws SQLException {
         if (_log.shouldLog(Log.DEBUG))
             _log.debug("Exec [" + cmd + "]");
@@ -754,7 +757,10 @@ public class DBClient {
         }
     }
 
-    public int exec(String sql, long param1) throws SQLException {
+    /**
+     *  Must be logged in, caller must ensure isLoggedIn()
+     */
+    int exec(String sql, long param1) throws SQLException {
         //if (_log.shouldLog(Log.DEBUG))
         //    _log.debug("Exec param [" + sql + "]");
         PreparedStatement stmt = null;
@@ -767,7 +773,10 @@ public class DBClient {
         }
     }
 
-    public int exec(String sql, long param1, long param2) throws SQLException {
+    /**
+     *  Must be logged in, caller must ensure isLoggedIn()
+     */
+    int exec(String sql, long param1, long param2) throws SQLException {
         //if (_log.shouldLog(Log.DEBUG))
         //    _log.debug("Exec param [" + sql + "]");
         PreparedStatement stmt = null;
@@ -781,7 +790,10 @@ public class DBClient {
         }
     }
 
-    public void exec(String query, UI ui) {
+    /**
+     *  Must be logged in, caller must ensure isLoggedIn()
+     */
+    void exec(String query, UI ui) {
         ui.debugMessage("Executing [" + query + "]");
         PreparedStatement stmt = null;
         ResultSet rs = null;
@@ -5224,62 +5236,39 @@ public class DBClient {
         throw new IllegalStateException("Not logged in");
     }
 
-    public void backup(UI ui, String out, boolean includeArchive) {
+    /**
+     *  Online backup, MUST be connected
+     *  @param out /path/to/zipfile
+     *  @param includeArchive true unsupported
+     */
+    void backup(UI ui, String out, boolean includeArchive) {
         String dbFileRoot = getDBFileRoot();
         if (dbFileRoot == null) {
             ui.errorMessage("Unable to determine the database file root.  Is this a HSQLDB file URL?");
             ui.commandComplete(-1, null);
             return;
         }
-        long now = System.currentTimeMillis();
         ui.debugMessage("Backing up the database from " + dbFileRoot + " to " + out);
         try {
+            if (!isLoggedIn())
+                throw new SQLException("not logged in");
             exec("CHECKPOINT");
         } catch (SQLException se) {
             ui.errorMessage("Error halting the database to back it up!", se);
             ui.commandComplete(-1, null);
             return;
         }
+        List<String> suffixes = new ArrayList(4);
+        suffixes.add(".properties");
+        suffixes.add(".script");
+        if (DBUpgrade.isHsqldb20(_con))
+            suffixes.add(".data");
+        else
+            suffixes.add(".backup");
         try {
-            ZipOutputStream zos = new ZipOutputStream(new SecureFileOutputStream(out));
-            
-            ZipEntry entry = new ZipEntry("db.properties");
-            File f = new File(dbFileRoot + ".properties");
-            entry.setSize(f.length());
-            entry.setTime(now);
-            zos.putNextEntry(entry);
-            copy(f, zos);
-            zos.closeEntry();
-            
-            entry = new ZipEntry("db.script");
-            f = new File(dbFileRoot + ".script");
-            entry.setSize(f.length());
-            entry.setTime(now);
-            zos.putNextEntry(entry);
-            copy(f, zos);
-            zos.closeEntry();
-            
-            entry = new ZipEntry("db.backup");
-            f = new File(dbFileRoot + ".backup");
-            entry.setSize(f.length());
-            entry.setTime(now);
-            zos.putNextEntry(entry);
-            copy(f, zos);
-            zos.closeEntry();
-            
-            // since we just did a CHECKPOINT, no need to back up the .data file
-            entry = new ZipEntry("db.data");
-            entry.setSize(0);
-            entry.setTime(now);
-            zos.putNextEntry(entry);
-            zos.closeEntry();
-            
+            backup(dbFileRoot, "db", suffixes, out);
             if (includeArchive)
-                backupArchive(ui, zos);
-            
-            zos.finish();
-            zos.close();
-            
+                backupArchive(ui, null);
             ui.statusMessage("Database backed up to " + out);
             ui.commandComplete(0, null);
         } catch (IOException ioe) {
@@ -5287,7 +5276,47 @@ public class DBClient {
             ui.commandComplete(-1, null);
         }
     }
+
+    /**
+     *  Offline backup, must NOT be connected
+     *  @param dbFileRoot /path/to/.syndie/db/syndie (i.e. without the .data suffix)
+     *  @param out /path/to/zipfile
+     *  @return success
+     *  @since 1.103b-x
+     */
+    static void offlineBackup(String dbFileRoot, String out) throws IOException {
+        List<String> suffixes = new ArrayList(4);
+        suffixes.add(".properties");
+        suffixes.add(".script");
+        suffixes.add(".data");
+        backup(dbFileRoot, "db", suffixes, out);
+    }
+
+    /**
+     *  Do the backup
+     *  @param dbFileRoot /path/to/.syndie/db/syndie (i.e. without the .data suffix)
+     *  @param out /path/to/zipfile
+     *  @since 1.103b-x
+     */
+    private static void backup(String dbFileRoot, String prefix, List<String> suffixes, String out) throws IOException {
+        ZipOutputStream zos = new ZipOutputStream(new SecureFileOutputStream(out));
+        try {
+            for (String suffix : suffixes) {
+                ZipEntry entry = new ZipEntry(prefix + suffix);
+                File f = new File(dbFileRoot + suffix);
+                entry.setSize(f.length());
+                entry.setTime(f.lastModified());
+                zos.putNextEntry(entry);
+                copy(f, zos);
+                zos.closeEntry();
+            }  
+        } finally {
+            zos.finish();
+            zos.close();
+        }
+    }
     
+    /** just spits out a message */
     private void backupArchive(UI ui, ZipOutputStream out) throws IOException {
         ui.errorMessage("Backing up the archive is not yet supported.");
         ui.errorMessage("However, you can just, erm, tar cjvf the $data/archive/ dir");
@@ -5309,11 +5338,11 @@ public class DBClient {
         }
     }
     
-    private void copy(File in, OutputStream out) throws IOException {
+    private static void copy(File in, OutputStream out) throws IOException {
         byte buf[] = new byte[4096];
-        FileInputStream fis = null;
+        InputStream fis = null;
         try {
-            fis = new FileInputStream(in);
+            fis = new BufferedInputStream(new FileInputStream(in));
             int read = -1;
             while ( (read = fis.read(buf)) != -1)
                 out.write(buf, 0, read);
@@ -5331,7 +5360,7 @@ public class DBClient {
      *           already exists (and is of a nonzero size), it will NOT be
      *           overwritten
      */
-    public void restore(UI ui, String in, String db) {
+    void restore(UI ui, String in, String db) {
         File inFile = new File(in);
         if ( (!inFile.exists()) || (inFile.length() <= 0) ) {
             ui.errorMessage("Database backup does not exist: " + inFile.getPath());

@@ -66,7 +66,16 @@ class DBUpgrade {
         }
         if (_oldVersion != null && comp.compare(_oldVersion, HSQLDB_VERSION_2) < 0 &&
             curVersion != null && comp.compare(curVersion, HSQLDB_VERSION_2) >= 0) {
-            // backup everything?
+            log("Starting the backup, this may take a while");
+            String outfile = dbPath + "-hsqldb-" + _oldVersion + '-' + System.currentTimeMillis() + ".zip";
+            try {
+                DBClient.offlineBackup(dbPath, outfile);
+                log("Backed up database successfully to " + outfile);
+                log("If all goes well, you may delete this file after you shutdown Syndie");
+            } catch (IOException ioe) {
+                log("Warning, backup failed", ioe);
+                (new File(outfile)).delete();
+            }
             migrateLog(dbPath);
             migrateScript(dbPath);
         }
