@@ -189,7 +189,14 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
         _messageViewBody.switchAttachment(attachment);
     }
     
+    /** for MessageViewTab to display a MessageBox */
     public boolean isKnownLocally() { return _author != null; }
+
+    /** for MessageViewTab to display a MessageBox */
+    public boolean isReadKeyUnknown() { return _msg != null && _msg.getReadKeyUnknown(); }
+
+    /** for MessageViewTab to display a MessageBox */
+    public boolean isReplyKeyUnknown() { return _msg != null && _msg.getReplyKeyUnknown(); }
 
     private MessageInfo _msg;
 
@@ -219,6 +226,7 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
         _headerFlags.setMessage(msg);
         timer.addEvent("header flags set");
         if (msg == null) {
+            _ui.debugMessage("No message found for uri: " + _uri);
             _root.setVisible(true);
             _avatar.disposeImage();
             _headerSubject.setText("");

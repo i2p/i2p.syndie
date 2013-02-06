@@ -191,6 +191,15 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
             _root.setVisible(true);
             return;
         }
+        if (msg.getReadKeyUnknown() || msg.getReplyKeyUnknown()) {
+            CTabItem tab = new CTabItem(_tabFolder, SWT.NONE);
+            tab.setImage(ImageUtil.ICON_SYNDICATE_STATUS_NOKEY);
+            tab.setText(getText("You do not have the keys to decrypt this message"));
+            _tabs = new CTabItem[1];
+            _tabs[0] = tab;
+            _root.setVisible(true);
+            return;
+        }
         _msg = msg;
         _page = startPage;
         timer.addEvent("initBody");

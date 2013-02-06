@@ -38,10 +38,22 @@ public class MessageViewTab extends BrowserTab implements Translatable, Themeabl
     }
     
     public void tabShown() {
+        String text = null;
+        String msg = null;
         if (!_view.isKnownLocally()) {
+            text = getText("Message unknown");
+            msg = getText("The selected message is not known locally");
+        } else if (_view.isReadKeyUnknown()) {
+            text = getText("Read key unknown");
+            msg = getText("You do not have the keys to decrypt this message");
+        } else if (_view.isReplyKeyUnknown()) {
+            text = getText("Reply key unknown");
+            msg = getText("You do not have the keys to decrypt this message");
+        }
+        if (text != null) {
             MessageBox box = new MessageBox(getRoot().getShell(), SWT.ICON_INFORMATION | SWT.OK);
-            box.setText(getBrowser().getTranslationRegistry().getText("Message unknown"));
-            box.setMessage(getBrowser().getTranslationRegistry().getText("The selected message is not known locally"));
+            box.setText(text);
+            box.setMessage(msg);
             getBrowser().getNavControl().unview(getURI());
             box.open();
             return;

@@ -36,15 +36,15 @@ public class MessageInfo {
     private long _expiration;
     private long _receiveDate;
     /** list of SyndieURI instances this message replies to, most recent first */
-    private List _hierarchy;
+    private List<SyndieURI> _hierarchy;
     /** set of tags (String) that are hidden in the message */
-    private Set _privateTags;
+    private Set<String> _privateTags;
     /** set of tags (String) that are publicly visible */
-    private Set _publicTags;
+    private Set<String> _publicTags;
     private int _attachmentCount;
     private int _pageCount;
     /** list of ReferenceNode roots attached to the message (does not include parsed data from pages or attachments) */
-    private List _references;
+    private List<ReferenceNode> _references;
     
     /** Creates a new instance of MessageInfo */
     public MessageInfo() {
@@ -117,22 +117,27 @@ public class MessageInfo {
     public void setExpiration(long expiration) { _expiration = expiration; }
     public long getReceiveDate() { return _receiveDate; }
     public void setReceiveDate(long when) { _receiveDate = when; }
+
     /** list of SyndieURI instances this message replies to, most recent first */
-    public List getHierarchy() { return _hierarchy; }
-    public void setHierarchy(List hierarchy) { _hierarchy = hierarchy; }
+    public List<SyndieURI> getHierarchy() { return _hierarchy; }
+    public void setHierarchy(List<SyndieURI> hierarchy) { _hierarchy = hierarchy; }
+
     /** set of tags (String) */
-    public Set getPrivateTags() { return _privateTags; }
-    public void setPrivateTags(Set privateTags) { _privateTags = privateTags; }
+    public Set<String> getPrivateTags() { return _privateTags; }
+    public void setPrivateTags(Set<String> privateTags) { _privateTags = privateTags; }
+
     /** set of tags (String) */
-    public Set getPublicTags() { return _publicTags; }
-    public void setPublicTags(Set publicTags) { _publicTags = publicTags; }
+    public Set<String> getPublicTags() { return _publicTags; }
+    public void setPublicTags(Set<String> publicTags) { _publicTags = publicTags; }
+
     public int getAttachmentCount() { return _attachmentCount; }
     public void setAttachmentCount(int attachmentCount) { _attachmentCount = attachmentCount; }
     public int getPageCount() { return _pageCount; }
     public void setPageCount(int pageCount) { _pageCount = pageCount; }
+
     /** list of ReferenceNode roots attached to the message (does not include parsed data from pages or attachments) */
-    public List getReferences() { return _references; }
-    public void setReferences(List refs) { _references = refs; }
+    public List<ReferenceNode> getReferences() { return _references; }
+    public void setReferences(List<ReferenceNode> refs) { _references = refs; }
 
     /** if specified, the post was imported, but we didn't have the passphrase */
     public String getPassphrasePrompt() { return _passphrasePrompt; }

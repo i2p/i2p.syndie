@@ -21,6 +21,7 @@ import net.i2p.util.SecureFile;
 import syndie.Constants;
 import syndie.data.NymKey;
 import syndie.data.SyndieURI;
+import static syndie.db.ImportResult.Detail.*;
 
 /**
  *CLI keyimport
@@ -388,7 +389,9 @@ public class KeyImport extends CommandImpl {
                         fin = new FileInputStream(msgFile);
                         ImportResult.Result result = imp.processMessage(ui, client, fin, null, true, null, null);
                         if (result.ok()) {
-                            if (imp.wasMissingKey())
+                            if (result != IMPORT_UNREADABLE &&
+                                result != IMPORT_NO_READ_KEY &&
+                                result != IMPORT_NO_REPLY_KEY)
                                 ui.debugMessage("Still not able to decrypt " + uri);
                             else
                                 ui.debugMessage("Successful decryption with the new channel metadata: " + uri);
@@ -420,7 +423,9 @@ public class KeyImport extends CommandImpl {
                     fin = new FileInputStream(metaFile);
                     ImportResult.Result result = imp.processMessage(ui, client, fin, null, true, null, null);
                     if (result.ok()) {
-                        if (imp.wasMissingKey())
+                        if (result != IMPORT_UNREADABLE &&
+                            result != IMPORT_NO_READ_KEY &&
+                            result != IMPORT_NO_REPLY_KEY)
                             ui.debugMessage("Still not able to decrypt " + channel);
                         else
                             ui.debugMessage("Successful decryption of the channel metadata: " + channel);
@@ -483,7 +488,9 @@ public class KeyImport extends CommandImpl {
                         fin = new FileInputStream(msgFile);
                         ImportResult.Result result = imp.processMessage(ui, client, fin, null, true, null, null);
                         if (result.ok()) {
-                            if (imp.wasMissingKey())
+                            if (result != IMPORT_UNREADABLE &&
+                                result != IMPORT_NO_READ_KEY &&
+                                result != IMPORT_NO_REPLY_KEY)
                                 ui.debugMessage("Still not able to decrypt " + uri);
                             else
                                 ui.debugMessage("Successful decryption with the new channel metadata: " + uri);

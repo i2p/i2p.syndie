@@ -51,6 +51,7 @@ import syndie.db.CommandImpl;
 import syndie.db.DBClient;
 import syndie.db.Importer;
 import syndie.db.ImportResult;
+import static syndie.db.ImportResult.Detail.*;
 import syndie.db.KeyImport;
 import syndie.db.UI;
 
@@ -349,8 +350,12 @@ public class BackupSecrets extends BaseComponent implements Themeable, Translata
                         ui.debugMessage("importing meta "+ name);
                         Importer imp = new Importer(client);
                         ImportResult.Result result = imp.processMessage(ui, zin, client.getLoggedInNymId(), null, null, false, null, null);
-                        ui.debugMessage("import meta result: " + result + " missingKey? " + imp.wasMissingKey() + " pbe? " + imp.wasPBE());
-                        if (result.ok() && !imp.wasMissingKey() && !imp.wasPBE())
+                        ui.debugMessage("import meta result: " + result);
+                        if (result.ok() &&
+                            result != IMPORT_UNREADABLE &&
+                            result != IMPORT_NO_READ_KEY &&
+                            result != IMPORT_NO_REPLY_KEY &&
+                            result != IMPORT_PASS_REQD)
                             metaRead++;
                         else
                             failedMeta++;

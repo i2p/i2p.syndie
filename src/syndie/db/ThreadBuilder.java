@@ -244,8 +244,9 @@ public class ThreadBuilder {
                     node.setSubject(subject);
                     
                     node.setName(authorName);
-                    // separate sql query
+                    // separate sql query TODO join into above query
                     node.setAttachmentCount(client.getMessageAttachmentCount(tmi.msgId));
+                    // TODO add in readKeyMissing and replyKeyMissing ?
                 }
             } catch (SQLException se) {
                 client.logError("Internal error populating the node", se);

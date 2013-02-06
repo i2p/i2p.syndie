@@ -47,6 +47,7 @@ import syndie.data.NymReferenceNode;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.data.WatchedChannel;
+import static syndie.db.ImportResult.Detail.*;
 import syndie.util.StringUtil;
 
 
@@ -6014,10 +6015,13 @@ public class DBClient {
             ImportResult.Result result = imp.processMessage(_ui, this, fin, passphrase, true, null, null);
             fin.close();
             fin = null;
-            log("reimport ok? " + result + " wasPBE " + imp.wasPBE() + " wasmissingKey " + imp.wasMissingKey() +": " + uri);
+            log("reimport ok? " + result + ": " + uri);
             // wasPBE is still true if the post *was* pbe'd but the passphrase was correct.
             // wasMissingKey is true if the post was valid and imported successfully, but we don't know how to read it
-            boolean rv = result.ok() && !imp.wasMissingKey();
+            boolean rv = result.ok() &&
+                         result != IMPORT_UNREADABLE &&
+                         result != IMPORT_NO_READ_KEY &&
+                         result != IMPORT_NO_REPLY_KEY;
             // the Importer should take care of reimporting messages with the new read keys
             //if (uri.getMessageId() == null)
             //    metaImported();
@@ -6390,11 +6394,19 @@ public class DBClient {
         stmt = null;
         try {
             stmt = _con.prepareStatement(SQL_ADD_CANCEL_REQUEST);
-            for (int i = 0; i < urisToCancel.size(); i++) {
-                String uri = urisToCancel.get(i).toString();
-                stmt.setLong(1, requestedByChannelId);
-                stmt.setString(2, uri);
-                stmt.executeUpdate();
+            for (SyndieURI u : urisToCancel) {
+                if (getCancelledBy(u) < 0) {
+                    // only if not cancelled already
+                    try {
+                        String uri = u.toString();
+                        stmt.setLong(1, requestedByChannelId);
+                        stmt.setString(2, uri);
+                        stmt.executeUpdate();
+                    } catch (SQLException se) {
+                        if (_log.shouldLog(Log.WARN))
+                            _log.warn("Error cancelling " + u, se);
+                    }
+                }
             }
         } catch (SQLException se) {
             if (_log.shouldLog(Log.WARN))
@@ -6417,8 +6429,6 @@ public class DBClient {
             if (rs.next())
                 return rs.getLong(1);
         } catch (SQLException se) {
-            // FIXME
-            // Table not found in statement [SELECT cancelRequestedBy FROM cancelHistory WHERE cancelledURI = ?]
             if (_log.shouldLog(Log.WARN))
                 _log.warn("Error determining if it was cancelled", se);
         } finally {
@@ -6428,12 +6438,12 @@ public class DBClient {
         return -1;
     }
     
-    public void honorCancel(SyndieURI uri, long msgId) {
+    void honorCancel(SyndieURI uri, long msgId) {
         deleteFromArchive(uri, _ui);
         deleteMessageFromDB(msgId, DELETION_CAUSE_CANCELLED);
     }
     
-    public void deleteStubMessage(SyndieURI uri) {
+    void deleteStubMessage(SyndieURI uri) {
         long msgId = getMessageId(uri.getScope(), uri.getMessageId());
         _ui.debugMessage("Deleting stub message for " + uri + " / " + msgId);
         if (msgId >= 0)

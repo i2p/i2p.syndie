@@ -35,21 +35,20 @@ public class BrowseForumTab extends BrowserTab {
                     _name = chan.getName();
                     _description = chan.getDescription();
                     //_icon = createAvatar(chan);
-                    _icon = ImageUtil.ICON_FORUMMESSAGES;
                 }
             }
-            if (_name == null) {
+            if (_name == null || _name.length() == 0)
                 _name = UIUtil.display(scope);
-                _description = "forum: " + scope.toBase64();
-                _icon = ImageUtil.ICON_FORUMMESSAGES;
-            }
+            if (_description == null || _description.length() == 0)
+                _description = getText("Forum") + ' ' + _name;
+            _icon = ImageUtil.ICON_FORUMMESSAGES;
         } else {
             _name = getText("All forums");
             _description = getText("Browse all forums");
             _icon = ImageUtil.ICON_TAB_BROWSE;
         }
-        debug("browseForum construct: done, now reconfig");
-        
+        debug("browseForum construct name \"" + _name + "\" desc \"" + _description + "\" sname \"" + suggestedName + "\" sdesc \"" + suggestedDesc + "\"");
+
         if (suggestedName != null)
             _name = suggestedName;
         if (suggestedDesc != null)

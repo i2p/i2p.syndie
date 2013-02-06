@@ -17,13 +17,14 @@ import net.i2p.util.SecureFile;
 
 import syndie.Constants;
 import syndie.data.SyndieURI;
+import static syndie.db.ImportResult.Detail.*;
 
 /**
  *  Fetcher threads
  */
 class SyncInboundFetcher {
     private final SyncManager _manager;
-    private static final Map _runnerToArchive = new HashMap();
+    private static final Map<Runner, SyncArchive> _runnerToArchive = new HashMap();
     private volatile boolean _die;
 
     private static final int THREADS = 3;
@@ -149,13 +150,13 @@ class SyncInboundFetcher {
             
             SyndieURI uri = action.getURI();
             if (isLocal(uri)) { // fetched concurrently from another archive
-                action.importSuccessful();
+                action.importSuccessful(IMPORT_ALREADY);
                 continue;
             }
         
             String url = IndexFetcher.getFreenetURL(archive, uri);
             if (url == null) {
-                action.fetchFailed("Invalid freenet archive URL", null);
+                action.importFailed(IMPORT_BAD_FREENET_URL);
             } else {
                 _manager.getUI().debugMessage("Fetching [" + url + "]");
                 try {
@@ -168,7 +169,7 @@ class SyncInboundFetcher {
                     // 1 minute for the headers, 5 minutes total, and up to 60s of inactivity
                     get.fetch(60*1000, 5*60*1000, 60*1000);
                 } catch (IOException ioe) {
-                    action.fetchFailed("Internal error writing temp file", ioe);
+                    action.importFailed(IMPORT_IOE, ioe);
                 }
             }
         }
@@ -224,7 +225,7 @@ class SyncInboundFetcher {
             SyndieURI uri = action.getURI();
         
             if (isLocal(uri)) { // fetched concurrently from another archive
-                action.importSuccessful();
+                action.importSuccessful(IMPORT_ALREADY);
                 continue;
             }
 
@@ -342,7 +343,7 @@ class SyncInboundFetcher {
                 SyndieURI uri = action.getURI();
 
                 if (isLocal(uri)) { // fetched concurrently from another archive
-                    action.importSuccessful();
+                    action.importSuccessful(IMPORT_ALREADY);
                     continue;
                 }
 
@@ -371,7 +372,7 @@ class SyncInboundFetcher {
                     // 1m for headers, 10m total, 60s idle
                     get.fetch(60*1000, 10*60*1000, 60*1000);
                 } catch (IOException ioe) {
-                    action.fetchFailed("Internal error writing temp file", ioe);
+                    action.importFailed(IMPORT_IOE, ioe);
                 }
             }
         }
@@ -414,7 +415,7 @@ class SyncInboundFetcher {
         }
         public void transferFailed(String url, long bytesTransferred, long bytesRemaining, int currentAttempt) {
             _manager.getUI().debugMessage("Fetch data totally failed [" + url + "] after " + bytesTransferred + " and " + currentAttempt + " attempts");
-            _incomingAction.fetchFailed("Unable to fetch", _err);
+            _incomingAction.importFailed(IMPORT_FETCH_FAIL, _err);
         }
 
         public void bytesTransferred(long alreadyTransferred, int currentWrite,
@@ -513,17 +514,13 @@ class SyncInboundFetcher {
             src = new FileInputStream(datafile);
             ImportResult.Result result = imp.processMessage(_manager.getUI(), _manager.getClient(), src, null, false, null, null);
             if (!result.ok()) {
-                action.importCorrupt(result);
+                action.importFailed(result);
             } else {
-                if (imp.wasPBE()) {
+                if (result == IMPORT_PASS_REQD) {
                     String prompt = imp.getPBEPrompt();
                     action.importPBE(prompt);
-                } else if (imp.wasMissingKey()) {
-                    if (imp.wasReply()) {
-                        action.importMissingReplyKey();
-                    } else {
-                        action.importMissingReadKey();
-                    }
+                } else if (result == IMPORT_NO_READ_KEY || result == IMPORT_NO_REPLY_KEY) {
+                    action.importSuccessful(result);
                 } else {
                     SyndieURI uri = imp.getURI();
                     boolean matchesWhitelist = false;
@@ -544,7 +541,7 @@ class SyncInboundFetcher {
                         delete = true;
                         _manager.getClient().deleteFromDB(uri, _manager.getUI());
                     }
-                    action.importSuccessful();
+                    action.importSuccessful(result);
                 }
             }
         } catch (IOException ioe) {

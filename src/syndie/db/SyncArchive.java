@@ -15,6 +15,7 @@ import net.i2p.data.DataHelper;
 
 import syndie.Constants;
 import syndie.data.SyndieURI;
+import static syndie.db.ImportResult.Detail.*;
 import syndie.util.DateTime;
 
 /**
@@ -241,13 +242,10 @@ public class SyncArchive {
         private boolean _fetchingMeta;
         private boolean _fetchingBody;
         private boolean _fetchOK;
-        private boolean _importOK;
         private String _pbePrompt;
-        private boolean _noReplyKey;
-        private boolean _noReadKey;
+        private ImportResult.Result _result;
         private String _fetchErrorMsg;
         private Exception _fetchError;
-        private boolean _corrupt;
         private int _attempts;
         private long _size, _rcvd;
         private boolean _disposed;
@@ -260,6 +258,8 @@ public class SyncArchive {
         
         public SyndieURI getURI() { return _uri; }
         public SyncArchive getArchive() { return SyncArchive.this; }
+
+        // TODO move all the following to a state variable
         public boolean isScheduled() { return _completionTime == -1 && !_paused && !_executing; }
         /** this really just means queued */
         public boolean isExecuting() { return _executing; }
@@ -268,13 +268,17 @@ public class SyncArchive {
         public boolean isComplete() { return _completionTime > 0; }
         public boolean isPaused() { return _paused; }
         public boolean isDisposed() { return _disposed; }
+
+        /**
+         *  @return null before completion
+         *  @since 1.103b-x
+         */
+        public ImportResult.Result getResult() { return _result; }
         public long getCompletionTime() { return _completionTime; }
         public String getPBEPrompt() { return _pbePrompt; }
-        public boolean isReplyKeyUnknown() { return _noReplyKey; }
-        public boolean isReadKeyUnknown() { return _noReadKey; }
         public String getFetchErrorMsg() { return _fetchErrorMsg; }
         public Exception getFetchError() { return _fetchError; }
-        public boolean isCorrupt() { return _corrupt; }
+
         /** @deprecated unused */
         public int getFetchAttempts() { return _attempts; }
         /** @return -1 if unknown */
@@ -307,45 +311,27 @@ public class SyncArchive {
             _manager.getUI().debugMessage(msg, cause);
         }
 
-        /**
-         *  Not really corrupt, could be banned, etc.
-         *  @param result from ImportResult, will be translated in gui
-         */
-        void importCorrupt(ImportResult.Result result) {
-            //_corrupt = true;
+        void importFailed(ImportResult.Result result) {
             importFailed(result.msg(), null);
         }
 
-        void importMissingReplyKey() {
-            _completionTime = System.currentTimeMillis();
-            _noReplyKey = true;
-            setIsExecuting(false);
+        void importFailed(ImportResult.Result result, Exception cause) {
+            _result = result;
+            importFailed(result.msg(), cause);
         }
-        void importMissingReadKey() {
-            _completionTime = System.currentTimeMillis();
-            _noReadKey = true;
-            setIsExecuting(false);
-        }
+
         void importPBE(String prompt) {
-            _completionTime = System.currentTimeMillis();
             _pbePrompt = prompt;
-            setIsExecuting(false);
+            importSuccessful(IMPORT_PASS_REQD);
         }
-        void importSuccessful() {
+
+        void importSuccessful(ImportResult.Result result) {
             if (_completionTime <= 0) {
                 _completionTime = System.currentTimeMillis();
-                _importOK = true;
+                _result = result;
                 setIsExecuting(false);
             } else
                 notifyUpdate(this); // we didn't call to setIsExecuting(), so notify manually
-        }
-        
-        void fetchFailed(String msg, Exception err) {
-            _completionTime = System.currentTimeMillis();
-            _fetchError = err;
-            _fetchErrorMsg = msg;
-            setIsExecuting(false);
-            _manager.getUI().debugMessage(msg, err);
         }
         
         boolean setIsExecuting(boolean executing) {
@@ -365,7 +351,7 @@ public class SyncArchive {
             return changed;
         }
         
-        public void cancel(String reason) { if (!isComplete()) fetchFailed(reason, null); }
+        public void cancel(String reason) { if (!isComplete()) importFailed(reason, null); }
         
         public void clearFetchError() {
             if (isComplete() && _fetchErrorMsg != null) {
@@ -483,24 +469,24 @@ public class SyncArchive {
     
     public void clearCompletedActions(boolean incoming, boolean outgoing) {
         if (incoming) {
-            List toRemove = new ArrayList();
+            List<IncomingAction> toRemove = new ArrayList();
             for (int i = 0; i < _incomingActions.size(); i++) {
-                IncomingAction action = (IncomingAction)_incomingActions.get(i);
-                if (action.getCompletionTime() > 0)
+                IncomingAction action = _incomingActions.get(i);
+                if (action.isComplete())
                     toRemove.add(action);
             }
             for (int i = 0; i < toRemove.size(); i++)
-                ((IncomingAction)toRemove.get(i)).dispose(); // removes the element from _incomingActions
+                toRemove.get(i).dispose(); // removes the element from _incomingActions
         }
         if (outgoing) {
-            List toRemove = new ArrayList();
+            List<OutgoingAction> toRemove = new ArrayList();
             for (int i = 0; i < _outgoingActions.size(); i++) {
-                OutgoingAction action = (OutgoingAction)_outgoingActions.get(i);
-                if (action.getCompletionTime() > 0)
+                OutgoingAction action = _outgoingActions.get(i);
+                if (action.isComplete())
                     toRemove.add(action);
             }
             for (int i = 0; i < toRemove.size(); i++)
-                ((OutgoingAction)toRemove.get(i)).dispose(); // removes the element from _outgoingActions
+                toRemove.get(i).dispose(); // removes the element from _outgoingActions
         }
     }
 
@@ -530,12 +516,12 @@ public class SyncArchive {
         // TODO this is really hard on the UI, can take several minutes,
         // have a bulk cancel call to the UI?
         for (int i = 0; i < _incomingActions.size(); i++) {
-            IncomingAction action = (IncomingAction)_incomingActions.get(i);
+            IncomingAction action = _incomingActions.get(i);
             if (!action.isComplete())
-                action.fetchFailed(cancelReason, null);
+                action.importFailed(cancelReason, null);
         }
         for (int i = 0; i < _outgoingActions.size(); i++) {
-            OutgoingAction action = (OutgoingAction)_outgoingActions.get(i);
+            OutgoingAction action = _outgoingActions.get(i);
             if (!action.isComplete())
                 action.pushFailed(cancelReason, null);
         }
@@ -924,8 +910,8 @@ public class SyncArchive {
     public int getIncompleteOutgoingActionCount() {
         int rv = 0;
         for (int i = 0; i < _outgoingActions.size(); i++) {
-            OutgoingAction action = (OutgoingAction)_outgoingActions.get(i);
-            if (action.getCompletionTime() <= 0)
+            OutgoingAction action = _outgoingActions.get(i);
+            if (!action.isComplete())
                 rv++;
         }
         return rv;
@@ -934,7 +920,7 @@ public class SyncArchive {
     OutgoingAction createOutgoingAction(SyndieURI uri) { 
         // FIXME O(n**2)
         for (int i = 0; i < _outgoingActions.size(); i++) {
-            OutgoingAction cur = (OutgoingAction)_outgoingActions.get(i);
+            OutgoingAction cur = _outgoingActions.get(i);
             // hmm, what if it was already complete?  etc
             if (cur.getURI().equals(uri)) {
                 if (cur.getErrorMsg() != null)
@@ -975,10 +961,10 @@ public class SyncArchive {
             int err = 0;
             int incomplete = 0;
             for (int i = 0; i < _incomingActions.size(); i++) {
-                IncomingAction action = (IncomingAction)_incomingActions.get(i);
+                IncomingAction action = _incomingActions.get(i);
                 if (!action.isComplete()) {
                     incomplete++;
-                } else if ( (action.getFetchErrorMsg() != null) || (action.isCorrupt()) ) {
+                } else if (action.getFetchErrorMsg() != null) {
                     err++;
                 } else {
                     ok++;

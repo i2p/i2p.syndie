@@ -40,10 +40,6 @@ public class Importer extends CommandImpl {
     private DBClient _client;
     private String _passphrase;
     private String _pbePrompt;
-    private boolean _wasPBE;
-    private boolean _wasAlreadyImported;
-    private boolean _noKey;
-    private boolean _wasReply;
     private SyndieURI _uri;
     
     public Importer(DBClient client) { this(client, (client != null ? client.getPass(): null)); }
@@ -204,7 +200,6 @@ public class Importer extends CommandImpl {
         // we'd consider in our cache
         _client.clearNymChannelCache();
         
-        _wasPBE = false;
         ImportResult.Result rv;
         boolean isMeta = false;
         Enclosure enc = new Enclosure(source);
@@ -215,19 +210,33 @@ public class Importer extends CommandImpl {
             } else if (!format.startsWith(Constants.TYPE_PREFIX)) {
                 throw new IOException("Unsupported enclosure format: " + format);
             }
+
             _pbePrompt = enc.getHeaderString(Constants.MSG_HEADER_PBE_PROMPT);
-            _wasPBE = _pbePrompt != null;
             
             String type = enc.getHeaderString(Constants.MSG_HEADER_TYPE);
             if (Constants.MSG_TYPE_META.equals(type)) { // validate and import metadata message
                 rv = importMeta(ui, enc, nymId, bodyPassphrase);
+                if (rv == IMPORT_UNREADABLE) {
+                    if (_pbePrompt != null)
+                        rv = IMPORT_PASS_REQD;
+                }
                 isMeta = true;
             } else if (Constants.MSG_TYPE_POST.equals(type)) { // validate and import content message
                 rv = importPost(ui, enc, nymId, pass, bodyPassphrase, forceReimport, null, null);
-                _wasReply = false;
+                if (rv == IMPORT_UNREADABLE) {
+                    if (_pbePrompt != null)
+                        rv = IMPORT_PASS_REQD;
+                    else
+                        rv = IMPORT_NO_READ_KEY;
+                }
             } else if (Constants.MSG_TYPE_REPLY.equals(type)) { // validate and import reply message
                 rv = importPost(ui, enc, nymId, pass, bodyPassphrase, forceReimport, replyIV, replySessionKey);
-                _wasReply = true;
+                if (rv == IMPORT_UNREADABLE) {
+                    if (_pbePrompt != null)
+                        rv = IMPORT_PASS_REQD;
+                    else
+                        rv = IMPORT_NO_REPLY_KEY;
+                }
             } else {
                 throw new IOException("Invalid message type: " + type);
             }
@@ -237,22 +246,13 @@ public class Importer extends CommandImpl {
         return rv;
     }
 
-    /** was the last message processed encrypted with a passphrase? */
-    public boolean wasPBE() { return _wasPBE; }
-
-    /** @deprecated unused */
-    public boolean wasAlreadyImported() { return _wasAlreadyImported; }
-
-    public boolean wasMissingKey() { return _noKey; }
-    
     public String getPBEPrompt() { return _pbePrompt; }
-    public boolean wasReply() { return _wasReply; }
+
     public SyndieURI getURI() { return _uri; }
     
     protected ImportResult.Result importMeta(UI ui, Enclosure enc, long nymId, String bodyPassphrase) {
         // first check that the metadata is signed by an authorized key
         if (alreadyKnownMeta(ui, enc)) {
-            _wasAlreadyImported = true;
             ui.debugMessage("Already have meta");
             return IMPORT_ALREADY;
         } else if (verifyMeta(ui, enc)) {
@@ -323,8 +323,6 @@ public class Importer extends CommandImpl {
     protected ImportResult.Result importPost(UI ui, Enclosure enc, long nymId, String pass, String bodyPassphrase, boolean forceReimport, byte replyIV[], SessionKey replySessionKey) {
         ImportPost post = new ImportPost(_client, ui, enc, nymId, pass, bodyPassphrase, forceReimport, replyIV, replySessionKey);
         ImportResult.Result rv = post.process();
-        _wasAlreadyImported = post.getAlreadyImported();
-        _noKey = post.getNoKey();
         _uri = post.getURI();
         return rv;
     }

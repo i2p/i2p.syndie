@@ -39,6 +39,8 @@ import org.eclipse.swt.widgets.TreeItem;
 
 import syndie.data.SyndieURI;
 import syndie.db.DBClient;
+import syndie.db.ImportResult;
+import static syndie.db.ImportResult.Detail.*;
 import syndie.db.SyncArchive;
 import syndie.db.SyncManager;
 import syndie.db.UI;
@@ -127,8 +129,6 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
         _archiveNameToOutgoingItem = new HashMap();
         _archiveNameToOutgoing = new HashMap();
         _items = new HashMap();
-        
-        _disposed = false;
 
         initComponents();
     }
@@ -324,6 +324,10 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
             _ui.debugMessage("Unknown type is selected: " + val + " for " + item);
         }
     }
+
+    /**
+     *  @param fireDefaultAction false for select, true for doubleclick/return
+     */
     private void fireSelection(TreeItem item, boolean fireDefaultAction) {
         // depending on what type of item is selected, show a different details panel
         Object val = _items.get(item);
@@ -353,6 +357,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
         archive.setNextSyncTime();
         archive.store(true);
     }
+
     private void setNextSyncTime(SyncArchive archive, long when) {
         archive.setNextSyncTime(when);
         archive.store(true);
@@ -610,15 +615,27 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
         if (item != null) // null for new ones
             _tree.showItem(item);
     }
+
     private void viewDetailIncoming(TreeItem item, boolean fireDefaultAction) {}
     private void viewDetailOutgoing(TreeItem item, boolean fireDefaultAction) {}
     private void viewDetailFetchIndex(TreeItem item, boolean fireDefaultAction) {}
+
+    /** view the message if we can */
     private void viewDetailIncoming(SyncArchive.IncomingAction action, boolean fireDefaultAction) {
-        if ( fireDefaultAction && (action.getCompletionTime() > 0) && (action.getFetchErrorMsg() == null) )
+        ImportResult.Result result = action.getResult();
+        if (fireDefaultAction && action.isComplete() &&
+            action.getFetchErrorMsg() == null &&
+            result != IMPORT_NO_READ_KEY &&
+            result != IMPORT_NO_REPLY_KEY &&
+            result != IMPORT_UNREADABLE &&
+            result != IMPORT_CANCEL_STUB) {
             _navControl.view(action.getURI());
+        }
     }
+
+    /** view the message if we can */
     private void viewDetailOutgoing(SyncArchive.OutgoingAction action, boolean fireDefaultAction) {
-        if ( fireDefaultAction && (action.getCompletionTime() > 0) && (action.getErrorMsg() == null) )
+        if ( fireDefaultAction && (action.isComplete()) && (action.getErrorMsg() == null) )
             _navControl.view(action.getURI());
     }
     
@@ -879,21 +896,24 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
             else
                 actionItem.setText(1, getText("Forum info"));
 
+            ImportResult.Result result = action.getResult();
             if (action.isScheduled()) {
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_SCHEDULED);
-            } else if (action.isReadKeyUnknown()) {
+            } else if (result == IMPORT_NO_READ_KEY ||
+                       result == IMPORT_NO_REPLY_KEY ||
+                       result == IMPORT_UNREADABLE) {
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_NOKEY);
-                actionItem.setText(3, getText("Read key unknown"));
-            } else if (action.getPBEPrompt() != null) {
+                actionItem.setText(3, getText(result.msg()));
+            } else if (result == IMPORT_PASS_REQD) {
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_PBE);
-                actionItem.setText(3, getText("Passphrase required") + ": " + action.getPBEPrompt());
-            } else if (action.isReplyKeyUnknown()) {
-                actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_NOKEY);
-                actionItem.setText(3, getText("Reply key unknown"));
-            } else if (action.isCorrupt()) {
-                // UNUSED, see getFetchErrorMsg()
-                actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
-                actionItem.setText(3, getText("Message is corrupt"));
+                String prompt = action.getPBEPrompt();
+                if (prompt != null && prompt.length() > 0)
+                    actionItem.setText(3, getText("Passphrase required") + ": " + action.getPBEPrompt());
+                else
+                    actionItem.setText(3, getText("Passphrase required"));
+            } else if (result == IMPORT_CANCEL_STUB) {
+                actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_OK);
+                actionItem.setText(3, getText(result.msg()));
             } else if (action.getFetchErrorMsg() != null) {
                 // from ImportResult, tagged there
                 String msg = getText(action.getFetchErrorMsg());

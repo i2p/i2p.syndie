@@ -118,9 +118,10 @@ class ImportMeta {
         ui.debugMessage("enclosure: " + enc + "\nbody: " + body);
         ImportResult.Result result = importMeta(client, ui, nymId, nymPassphrase, enc, body, wasPublic);
         if (result.ok()) {
-            if (body instanceof UnreadableEnclosureBody)
+            if (body instanceof UnreadableEnclosureBody) {
+                result = IMPORT_UNREADABLE;
                 ui.commandComplete(1, null);
-            else
+            } else
                 ui.commandComplete(0, null);
         } else {
             ui.commandComplete(-1, null);

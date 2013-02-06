@@ -70,7 +70,6 @@ public class ImportPost {
     }
     
     public boolean getAlreadyImported() { return _alreadyImported; }
-    public boolean getNoKey() { return (_body != null) && (_body instanceof UnreadableEnclosureBody); }
     public SyndieURI getURI() { return _uri; }
     
     /*
@@ -446,7 +445,7 @@ public class ImportPost {
         
         Signature authorizationSig = _enc.getAuthorizationSig();
         Hash authorizationHash = _enc.getAuthorizationHash();
-        _ui.debugMessage("attempting to authorize the post against " + signingPubKeys.size() + " for " + (targetHash != null ? targetHash.toBase64().substring(0,6) : _channel.toBase64().substring(0,6)));
+        _ui.debugMessage("attempting to authorize the post with " + signingPubKeys.size() + " key(s) for " + (targetHash != null ? targetHash.toBase64().substring(0,6) : _channel.toBase64().substring(0,6)));
         for (int i = 0; i < signingPubKeys.size(); i++) {
             SigningPublicKey pubKey = signingPubKeys.get(i);
             boolean ok = _client.ctx().dsa().verifySignature(authorizationSig, authorizationHash, pubKey);
@@ -481,40 +480,47 @@ public class ImportPost {
         }
         
         if (_authenticated || _authorized || _pseudoauthorized) {
+            ImportResult.Result result = null;
             boolean ok;
             if (msgId < 0) {
                 // new
-                ok = importMessage();
+                result = importMessage();
+                ok = result.ok();
             } else {
                 // _forceReimport
-                if (_body instanceof UnreadableEnclosureBody)
+                if (_body instanceof UnreadableEnclosureBody) {
+                    result = IMPORT_UNREADABLE;
                     ok = false;
-                else
+                } else
                     ok = reimportMessage(msgId);
             }
             if (ok) {
-                if (_body instanceof UnreadableEnclosureBody)
+                if (_body instanceof UnreadableEnclosureBody) {
+                    result = IMPORT_UNREADABLE;
                     _ui.commandComplete(1, null);
-                else
+                } else
                     _ui.commandComplete(0, null);
             } else {
                 _ui.commandComplete(-1, null);
             }
+            if (result != null)
+                return result;
             return ok ? IMPORT_OK_POST : IMPORT_UNREADABLE;
         } else {
-            _ui.errorMessage("Neither authenticated nor authorized.  bugger off.");
+            _ui.errorMessage("Neither authenticated nor authorized. Not importing.");
             _ui.commandComplete(-1, null);
+            // TODO delete in DB so we don't refetch/retry later?
             return IMPORT_NO_AUTH;
         }
     }
     
-    private boolean importMessage() {
+    private ImportResult.Result importMessage() {
         _ui.debugMessage("Message is" + (_authenticated ? " authenticated" : " not authenticated") +
                           (_authorized ? " authorized" : _pseudoauthorized ? " pseudoauthorized" : " not authorized") + ": " + _body);
         long msgId = _client.nextId("msgIdSequence");
         if (msgId < 0) {
             _ui.errorMessage("Internal error with the database (GCJ/HSQLDB problem with sequences?)");
-            return false;
+            return IMPORT_SQLE;
         }
         _ui.debugMessage("importing new message with id " + msgId);
         
@@ -522,18 +528,23 @@ public class ImportPost {
             boolean added = insertToChannel(msgId);
             if (!added) {
                 _ui.statusMessage("Already imported");
-                return false;
+                return IMPORT_ALREADY;
             }
             if (!importMessageBody(msgId))
-                return false;
+                return IMPORT_CANCEL_STUB;
             saveToArchive(_client, _ui, _channel, _enc);
-            return true;
+            return IMPORT_OK_POST;
         } catch (SQLException se) {
             _ui.errorMessage("Error importing the message", se);
-            return false;
+            return IMPORT_SQLE;
         }
     }
 
+    /**
+     * Cancel messages, overwrite messages, import channel keys, etc
+     *
+     * @return true normally, false if it was a "stub" message containing only cancels, and was deleted.
+     */
     private boolean importMessageBody(long msgId) throws SQLException {
             setMessageHierarchy(msgId);
             setMessageTags(msgId);
@@ -542,9 +553,9 @@ public class ImportPost {
             setMessageReferences(msgId);
             setUnread(msgId);
         
-            processControlActivity(msgId);
+            boolean rv = processControlActivity(msgId);
             
-            return true;
+            return rv;
     }
 
     private static final String SQL_UNDELETE_MESSAGE = "UPDATE channelMessage SET deletionCause = NULL, pbePrompt = NULL WHERE msgId = ?";
@@ -573,8 +584,10 @@ public class ImportPost {
     
     /**
      * Cancel messages, overwrite messages, import channel keys, etc
+     *
+     * @return true normally, false if it was a "stub" message containing only cancels, and was deleted.
      */
-    private void processControlActivity(long msgId) throws SQLException {
+    private boolean processControlActivity(long msgId) throws SQLException {
         boolean cancelIncluded = false;
         
         Hash scope = _client.getMessageScope(msgId);
@@ -604,12 +617,14 @@ public class ImportPost {
                 // the message is a noop - only cancel headers, so lets delete the bulk of it,
                 // keeping enough around so we don't reimport it and can still pass it to others,
                 // but not enough for us to want to display it to the user
+                _ui.debugMessage("Deleting stub message: " + msgId + "/" + msg);
                 _client.deleteStubMessage(_uri);
-                //return false;
+                return false;
             } else {
                 _ui.debugMessage("not deleting stub (?) message: " + msgId + "/" + msg);
             }
         }
+        return true;
     }
     
     private List<SyndieURI> getCancelURIs() { 

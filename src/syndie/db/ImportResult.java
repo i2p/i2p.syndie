@@ -37,6 +37,28 @@ public class ImportResult {
             public boolean ok() { return true; }
             public String msg() { return _x("Import keys successful"); }
         },
+        /** Message had cancel requests only, processed and deleted */
+        IMPORT_CANCEL_STUB {
+            public boolean ok() { return true; }
+            public String msg() { return _x("Cancel requests processed"); }
+        },
+        /** generic read or reply, or no password */
+        IMPORT_UNREADABLE {
+            public boolean ok() { return true; }
+            public String msg() { return _x("Unreadable"); }
+        },
+        IMPORT_NO_READ_KEY {
+            public boolean ok() { return true; }
+            public String msg() { return _x("Read key unknown"); }
+        },
+        IMPORT_NO_REPLY_KEY {
+            public boolean ok() { return true; }
+            public String msg() { return _x("Reply key unknown"); }
+        },
+        IMPORT_PASS_REQD {
+            public boolean ok() { return true; }
+            public String msg() { return _x("Passphrase required"); }
+        },
 
         // bad ones
         IMPORT_NO_ENC_TYPE {
@@ -79,18 +101,6 @@ public class ImportResult {
             public boolean ok() { return false; }
             public String msg() { return _x("Unknown author"); }
         },
-        IMPORT_NO_READ_KEY {
-            public boolean ok() { return false; }
-            public String msg() { return _x("No read key"); }
-        },
-        IMPORT_NO_REPLY_KEY {
-            public boolean ok() { return false; }
-            public String msg() { return _x("No reply key"); }
-        },
-        IMPORT_NO_PASS {
-            public boolean ok() { return false; }
-            public String msg() { return _x("Passphrase required"); }
-        },
         IMPORT_NO_AUTH {
             public boolean ok() { return false; }
             public String msg() { return _x("Not authorized"); }
@@ -98,6 +108,14 @@ public class ImportResult {
         IMPORT_BAD_META_VERIFY {
             public boolean ok() { return false; }
             public String msg() { return _x("Meta does not verify"); }
+        },
+        IMPORT_FETCH_FAIL {
+            public boolean ok() { return false; }
+            public String msg() { return _x("Unable to fetch"); }
+        },
+        IMPORT_BAD_FREENET_URL {
+            public boolean ok() { return false; }
+            public String msg() { return _x("Invalid Freenet archive URL"); }
         },
 
         // generic fails
@@ -124,10 +142,6 @@ public class ImportResult {
         IMPORT_ERROR {
             public boolean ok() { return false; }
             public String msg() { return _x("Internal error"); }
-        },
-        IMPORT_UNREADABLE {
-            public boolean ok() { return false; }
-            public String msg() { return _x("Unreadable"); }
         },
     }
 
