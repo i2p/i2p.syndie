@@ -879,9 +879,6 @@
     </target>
 
     <target name="prep-mac-licenses" depends="prep-common-swt">
-        <copy todir="${pkgtemp.dir}/doc/licenses/SWT/about_files">
-            <fileset dir="doc/licenses/SWT/mac/about_files" />
-        </copy>
         <copy file="doc/licenses/SWT/mac/about.html" tofile="${pkgtemp.dir}/doc/licenses/SWT/OSX.html" />
     </target>
 
