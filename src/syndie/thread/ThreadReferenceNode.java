@@ -1,13 +1,16 @@
-package syndie.db;
+package syndie.thread;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import net.i2p.data.Hash;
+
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
+import syndie.db.DBClient;
 
 public class ThreadReferenceNode extends ReferenceNode {
     private long _scopeId;

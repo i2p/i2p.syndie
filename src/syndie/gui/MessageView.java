@@ -61,11 +61,11 @@ import syndie.data.SyndieURI;
 import syndie.util.Timer;
 import syndie.db.DBClient;
 import syndie.db.JobRunner;
-import syndie.db.MessageThreadBuilder;
-import syndie.db.ThreadAccumulatorJWZ;
-import syndie.db.ThreadBuilder;
-import syndie.db.ThreadMsgId;
 import syndie.db.UI;
+import syndie.thread.MessageThreadBuilder;
+import syndie.thread.ThreadAccumulatorJWZ;
+import syndie.thread.ThreadBuilder;
+import syndie.thread.ThreadMsgId;
 import syndie.util.DateTime;
 import syndie.util.StringUtil;
 

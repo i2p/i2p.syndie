@@ -1,6 +1,6 @@
-package syndie.data;
+package syndie.thread;
 
-import syndie.db.ThreadReferenceNode;
+import syndie.data.SyndieURI;
 
 /**
  *

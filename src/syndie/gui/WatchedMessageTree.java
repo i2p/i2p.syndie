@@ -11,16 +11,19 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+
 import net.i2p.data.Hash;
+
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.TreeItem;
+
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.db.DBClient;
-import syndie.db.ThreadAccumulator;
-import syndie.db.ThreadAccumulatorJWZ;
-import syndie.db.ThreadReferenceNode;
 import syndie.db.UI;
+import syndie.thread.ThreadAccumulator;
+import syndie.thread.ThreadAccumulatorJWZ;
+import syndie.thread.ThreadReferenceNode;
 
 /**
  * message tree that organizes threads first by forum, then by thread

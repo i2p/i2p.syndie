@@ -32,7 +32,7 @@ import syndie.db.CommandImpl;
 import syndie.db.DBClient;
 import syndie.db.TextEngine;
 import syndie.db.TextUI;
-import syndie.db.ThreadAccumulatorJWZ;
+import syndie.thread.ThreadAccumulatorJWZ;
 import syndie.util.StringUtil;
 
 /**

@@ -27,10 +27,10 @@ import syndie.util.Timer;
 import syndie.db.CommandImpl;
 import syndie.db.DBClient;
 import syndie.db.JobRunner;
-import syndie.db.ThreadBuilder;
-import syndie.db.ThreadMsgId;
-import syndie.db.ThreadReferenceNode;
 import syndie.db.UI;
+import syndie.thread.ThreadBuilder;
+import syndie.thread.ThreadMsgId;
+import syndie.thread.ThreadReferenceNode;
 
 /**
  *  Contains a CTabFolder with pages, thread, and attachments CTabItems.

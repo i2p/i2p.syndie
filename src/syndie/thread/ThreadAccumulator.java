@@ -1,4 +1,4 @@
-package syndie.db;
+package syndie.thread;
 
 import java.util.*;
 import java.sql.Connection;
@@ -10,6 +10,8 @@ import net.i2p.data.Base64;
 import net.i2p.data.Hash;
 
 import syndie.data.*;
+import syndie.db.DBClient;
+import syndie.db.UI;
 import syndie.util.DateTime;
 
 /**

@@ -86,11 +86,11 @@ import syndie.db.JobRunner;
 import syndie.db.MessageCreator;
 import syndie.db.MessageCreatorDirect;
 import syndie.db.MessageCreatorSource;
-import syndie.db.ThreadAccumulatorJWZ;
-import syndie.db.ThreadBuilder;
-import syndie.db.ThreadMsgId;
 import syndie.db.UI;
 import syndie.html.WebRipRunner;
+import syndie.thread.ThreadAccumulatorJWZ;
+import syndie.thread.ThreadBuilder;
+import syndie.thread.ThreadMsgId;
 import syndie.util.StringUtil;
 
 /**

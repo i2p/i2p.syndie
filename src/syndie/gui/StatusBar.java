@@ -46,8 +46,8 @@ import syndie.db.DBClient;
 import syndie.db.JobRunner;
 import syndie.db.SyncArchive;
 import syndie.db.SyncManager;
-import syndie.db.ThreadAccumulatorJWZ;
 import syndie.db.UI;
+import syndie.thread.ThreadAccumulatorJWZ;
 import syndie.util.DateTime;
 
 /**

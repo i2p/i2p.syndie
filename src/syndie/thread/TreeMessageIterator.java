@@ -1,10 +1,12 @@
-package syndie.db;
+package syndie.thread;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
-import syndie.data.MessageIterator;
+import syndie.db.DBClient;
+import syndie.db.UI;
 
 /**
  * Iterate across a full tree of messages (and threads)

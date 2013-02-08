@@ -1,4 +1,5 @@
-package syndie.db;
+package syndie.thread;
+
 import net.i2p.data.Hash;
 
 public final class ThreadMsgId {

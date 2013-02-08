@@ -1,4 +1,4 @@
-package syndie.db;
+package syndie.thread;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -21,6 +21,8 @@ import net.i2p.data.Hash;
 import net.i2p.data.SigningPublicKey;
 
 import syndie.data.*;
+import syndie.db.DBClient;
+import syndie.db.UI;
 import syndie.util.DateTime;
 import syndie.util.Timer;
 

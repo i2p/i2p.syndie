@@ -1,4 +1,4 @@
-package syndie.db;
+package syndie.thread;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -11,6 +11,8 @@ import net.i2p.data.Hash;
 import syndie.data.MessageInfo;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
+import syndie.db.DBClient;
+import syndie.db.UI;
 
 /**
  * Walk through the message database and build a tree of messages.  note that
@@ -316,6 +318,7 @@ public class MessageThreadBuilder {
         public void setTreeIndex(String index) { _treeIndex = index; }
     }
     
+/****
     public static void main(String args[]) {
         TextUI ui = new TextUI(true);
         final TextEngine te = new TextEngine("/tmp/cleandb", ui);
@@ -357,4 +360,5 @@ public class MessageThreadBuilder {
             _ui.debugMessage("Visiting " + node.getTreeIndex() + ": " + channel.toBase64().substring(0,6) + ":" + msgId);
         }
     }
+****/
 }

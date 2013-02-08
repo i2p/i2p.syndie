@@ -25,7 +25,6 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import syndie.Constants;
-import syndie.data.MessageIterator;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.db.DBClient;
@@ -47,6 +46,7 @@ import syndie.gui.Translatable;
 import syndie.gui.TranslationRegistry;
 import syndie.gui.URIHelper;
 import syndie.gui.WatchedMessageTree;
+import syndie.thread.MessageIterator;
 
 public class MessageTreePanel extends DesktopPanel implements Themeable, Translatable {
     private WatchedMessageTree _tree;

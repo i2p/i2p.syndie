@@ -37,6 +37,8 @@ import syndie.data.MessageInfo;
 import syndie.data.NymKey;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
+import syndie.thread.MessageThreadBuilder;
+import syndie.thread.ThreadAccumulator;
 
 /**
  *

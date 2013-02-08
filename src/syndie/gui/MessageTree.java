@@ -68,18 +68,18 @@ import org.eclipse.swt.widgets.TreeItem;
 
 import syndie.data.ChannelInfo;
 import syndie.data.MessageInfo;
-import syndie.data.MessageIterator;
 import syndie.data.NymReferenceNode;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.db.DBClient;
 import syndie.db.JobRunner;
 import syndie.db.NullUI;
-import syndie.db.ThreadAccumulator;
-import syndie.db.ThreadAccumulatorJWZ;
-import syndie.db.TreeMessageIterator;
-import syndie.db.ThreadReferenceNode;
 import syndie.db.UI;
+import syndie.thread.MessageIterator;
+import syndie.thread.ThreadAccumulator;
+import syndie.thread.ThreadAccumulatorJWZ;
+import syndie.thread.TreeMessageIterator;
+import syndie.thread.ThreadReferenceNode;
 import syndie.util.DateTime;
 
 /**

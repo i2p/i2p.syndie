@@ -1,4 +1,4 @@
-package syndie.db;
+package syndie.thread;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -16,6 +16,8 @@ import java.util.Set;
 import net.i2p.data.Hash;
 
 import syndie.data.SyndieURI;
+import syndie.db.DBClient;
+import syndie.db.UI;
 import syndie.util.Timer;
 
 /**
