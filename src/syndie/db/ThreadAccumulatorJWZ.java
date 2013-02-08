@@ -427,7 +427,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         }
         long afterThreadKeywordFilter = System.currentTimeMillis();
         
-        // prune like a motherfucker,
+        // prune like crazy,
         // and store the results in the accumulator's vars
         ThreadReferenceNode pruned[] = prune(threads, matchingThreadMsgIds);
         long afterPrune = System.currentTimeMillis();
