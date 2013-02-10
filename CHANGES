@@ -1,5 +1,25 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
+* 2013-02-10 1.104b-1 (zzz)
+  GUI Improvements:
+  - Don't open message view tab for unreadable messages or stub messages
+  - Don't fail on duplicate cancel requests
+  - Fix BrowseForumTab text on forum with blank name
+  - For consistency, always put cancel button to the left of OK/Save
+  - Move message date to date column in syndicator tab
+  - Better formatting of file sizes in Syndicator tab
+  - Clean up internal error popup
+  - Catch dispose errors when changing translation or theme
+  Syndication:
+  - Improve import failure propagation and display
+  - More cleanup of Importer and enhanced ImportResults by passing
+    missing key and PBE indications in result code
+  - Simplification of SyncArchive.IncomingAction using Results
+  - Handle and display "stub" cancel messages correctly
+  - Early check for banned target in ImportPost
+  Other:
+  - More code refactoring
+
 * 2013-02-03 1.103b-0 (kytv, zzz)
   GUI Improvements:
   - NymChannelTree forum display clean-up
