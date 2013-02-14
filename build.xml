@@ -1106,13 +1106,13 @@
     <target name="installer-mac64" depends="installer-osx64" />
     <target name="linux-start-scripts">
         <echo file="${pkgtemp.dir}/bin/syndie.sh"><![CDATA[#!/bin/sh
-java -jar %INSTALL_PATH/bin/syndie.jar -Dsyndie.dict=/usr/share/dict/words
+java -jar %INSTALL_PATH/bin/syndie.jar -Dsyndie.dict=/usr/share/dict/words "$@"
 ]]></echo>
         <echo file="${pkgtemp.dir}/bin/syndie-desktop.sh"><![CDATA[#!/bin/sh
-java -jar %INSTALL_PATH/bin/syndie-desktop.jar -Dsyndie.dict=/usr/share/dict/words
+java -jar %INSTALL_PATH/bin/syndie-desktop.jar -Dsyndie.dict=/usr/share/dict/words "$@"
 ]]></echo>
         <echo file="${pkgtemp.dir}/bin/syndie-cli.sh"><![CDATA[#!/bin/sh
-java -jar %INSTALL_PATH/bin/syndie-cli.jar
+java -jar %INSTALL_PATH/bin/syndie-cli.jar "$@"
 ]]></echo>
     </target>
 
@@ -1159,15 +1159,15 @@ java -jar %INSTALL_PATH/bin/syndie-cli.jar
     <target name="installer-osx32" depends="-check-for-izpack, preppkg, delete-windows-files, delete-linux-files, delete-stub-jars" description="Create i386 installer for OSX">
         <echo file="${pkgtemp.dir}/bin/syndie.command"><![CDATA[#!/bin/sh
 CP=%INSTALL_PATH/lib/i2p.jar:%INSTALL_PATH/lib/hsqldb.jar:%INSTALL_PATH/lib/swt.jar:%INSTALL_PATH/lib/syndie.jar
-java -d32 -XstartOnFirstThread -cp $CP syndie.gui.SWTUI
+java -d32 -XstartOnFirstThread -cp $CP syndie.gui.SWTUI "$@"
 ]]></echo>
         <echo file="${pkgtemp.dir}/bin/syndie-cli.sh"><![CDATA[#!/bin/sh
 CP=%INSTALL_PATH/lib/i2p.jar:%INSTALL_PATH/lib/hsqldb.jar:%INSTALL_PATH/lib/syndie.jar
-java -d32 -XstartOnFirstThread -cp $CP syndie.db.TextUI
+java -d32 -XstartOnFirstThread -cp $CP syndie.db.TextUI "$@"
 ]]></echo>
         <echo file="${pkgtemp.dir}/bin/syndie-desktop.command"><![CDATA[#!/bin/sh
 CP=%INSTALL_PATH/lib/i2p.jar:%INSTALL_PATH/lib/hsqldb.jar:%INSTALL_PATH/lib/syndie.jar
-java -d32 -XstartOnFirstThread -cp $CP syndie.db.TextUI
+java -d32 -XstartOnFirstThread -cp $CP syndie.db.TextUI "$@"
 ]]></echo>
         <ant dir="swt" target="ensure-mac32-swt" />
         <ant target="repack-common" />
@@ -1177,15 +1177,15 @@ java -d32 -XstartOnFirstThread -cp $CP syndie.db.TextUI
     <target name="installer-osx64" depends="-check-for-izpack, preppkg, delete-windows-files, delete-linux-files, delete-stub-jars" description="Create x86_64 installer for OSX">
         <echo file="${pkgtemp.dir}/bin/syndie.command"><![CDATA[#!/bin/sh
 CP=%INSTALL_PATH/lib/i2p.jar:%INSTALL_PATH/lib/hsqldb.jar:%INSTALL_PATH/lib/swt.jar:%INSTALL_PATH/lib/syndie.jar
-java -d64 -XstartOnFirstThread -cp $CP syndie.gui.SWTUI
+java -d64 -XstartOnFirstThread -cp $CP syndie.gui.SWTUI "$@"
 ]]></echo>
         <echo file="${pkgtemp.dir}/bin/syndie-cli.sh"><![CDATA[#!/bin/sh
 CP=%INSTALL_PATH/lib/i2p.jar:%INSTALL_PATH/lib/hsqldb.jar:%INSTALL_PATH/lib/syndie.jar
-java -d64 -XstartOnFirstThread -cp $CP syndie.db.TextUI
+java -d64 -XstartOnFirstThread -cp $CP syndie.db.TextUI "$@"
 ]]></echo>
         <echo file="${pkgtemp.dir}/bin/syndie-desktop.command"><![CDATA[#!/bin/sh
 CP=%INSTALL_PATH/lib/i2p.jar:%INSTALL_PATH/lib/hsqldb.jar:%INSTALL_PATH/lib/syndie.jar
-java -d64 -XstartOnFirstThread -cp $CP syndie.db.TextUI
+java -d64 -XstartOnFirstThread -cp $CP syndie.db.TextUI "$@"
 ]]></echo>
         <ant dir="swt" target="ensure-mac64-swt" />
         <ant target="repack-common" />
