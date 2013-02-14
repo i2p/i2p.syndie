@@ -1372,6 +1372,11 @@ exec java -d64 -XstartOnFirstThread -cp $CP syndie.gui.SWTUI
             match="\([0-9]{4}/[0-9]{2}/[0-9]{2}\)"
             replace="(${files.date})">
         </replaceregexp>
+        <replaceregexp flags="g" byline="false" file="doc/web/download.html">
+            <regexp pattern="files/(:?.*)?/syndie"/>
+            <substitution expression="files/${release.number}/syndie" />
+        </replaceregexp>
+
         <echo>Release date set to ${files.date}. Edit doc/web/index.html is this is incorrect.</echo>
     </target>
 
