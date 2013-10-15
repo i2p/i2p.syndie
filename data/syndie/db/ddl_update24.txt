@@ -1,0 +1,133 @@
+-- update the database from schema version 24
+-- this version 25 reflects the ways to store attachments, pages, and postponed messages,
+-- and migrates everything to more efficient storage.
+-- It also changes size limits on several columns.
+--
+
+UPDATE appVersion SET versionNum = 25, visibleVersion = 'Migration to hsqldb 2.x features';
+
+--
+-- -1 deleted
+-- 0 in dataBinary LONGVARBINARY / dataString LONGVARCHAR
+-- 1 BLOB
+-- 2 external, path in externalPath
+-- 3 use .syndie file in archive if available
+--
+ALTER TABLE messageAttachmentData ADD storageType TINYINT DEFAULT 0;
+ALTER TABLE messagePageData ADD storageType TINYINT DEFAULT 0;
+ALTER TABLE nymMsgPostpone ADD storageType TINYINT DEFAULT 0;
+
+--
+-- 0 uncompressed
+-- 1 gzip
+-- others TBD
+--
+ALTER TABLE messageAttachmentData ADD compression TINYINT DEFAULT 0;
+ALTER TABLE messagePageData ADD compression TINYINT DEFAULT 0;
+ALTER TABLE nymMsgPostpone ADD compression TINYINT DEFAULT 0;
+
+--
+-- Relative (from base dir) or absolute path to external file
+--
+ALTER TABLE messageAttachmentData ADD externalPath VARCHAR(256) DEFAULT NULL;
+ALTER TABLE messagePageData ADD externalPath VARCHAR(256) DEFAULT NULL;
+ALTER TABLE nymMsgPostpone ADD externalPath VARCHAR(256) DEFAULT NULL;
+
+--
+-- Add internal compressed option
+--
+ALTER TABLE messageAttachmentData ADD compressedData VARBINARY(66000) DEFAULT NULL;
+ALTER TABLE messagePageData ADD compressedData VARBINARY(66000) DEFAULT NULL;
+ALTER TABLE nymMsgPostpone ADD compressedData VARBINARY(66000) DEFAULT NULL;
+
+--
+-- Add lob option
+--
+SET FILES LOB SCALE 4;
+ALTER TABLE messageAttachmentData ADD lob BLOB DEFAULT NULL;
+ALTER TABLE messagePageData ADD lob CLOB DEFAULT NULL;
+ALTER TABLE nymMsgPostpone ADD lob CLOB DEFAULT NULL;
+
+--
+-- Migrate large things to lobs
+-- This doesn't work, as it creates in-memory transient lobs only,
+-- the syndie.lobs file is not created and we get
+-- org.hsqldb.HsqlException: lob is no longer valid.
+-- We must create the lobs via a PreparedStatement?
+-- No, that doesn't work either, as of 2.2.9:
+-- http://sourceforge.net/projects/hsqldb/forums/forum/73674/topic/5519631
+--
+-- UPDATE messageAttachmentData SET lob = dataBinary, storageType = 1, dataBinary = NULL WHERE OCTET_LENGTH(dataBinary) > 65536;
+-- UPDATE messagePageData SET lob = dataString, storageType = 1, dataString = NULL WHERE LENGTH(dataString) > 65536;
+-- UPDATE nymMsgPostpone SET lob = encryptedData, storageType = 1, encryptedData = NULL WHERE LENGTH(encryptedData) > 65536;
+-- CHECKPOINT;
+
+--
+-- Length adjustments
+--
+
+--
+-- LONGVARBINARY and LONGVARCHAR without length in previous DDLs,
+-- automatically set to 16 MB on upgrade to 2.x
+--
+
+--
+-- Set limits now that big things are in lobs
+-- Can't do this until after the migration
+--
+--ALTER TABLE messageAttachmentData ALTER dataBinary SET DATA TYPE VARBINARY(65536);
+--ALTER TABLE messagePageData ALTER dataString SET DATA TYPE VARCHAR(65536);
+--ALTER TABLE nymMsgPostpone ALTER encryptedData SET DATA TYPE VARCHAR(65536);
+
+--
+-- The second and third seem to be empty anyway
+--
+DELETE FROM channelAvatar WHERE OCTET_LENGTH(avatarData) > 16384;
+DELETE FROM messageAvatar WHERE OCTET_LENGTH(avatarData) > 16384;
+DELETE FROM nymCustomIcon WHERE OCTET_LENGTH(data) > 16384;
+ALTER TABLE channelAvatar ALTER avatarData SET DATA TYPE VARBINARY(16384);
+ALTER TABLE messageAvatar ALTER avatarData SET DATA TYPE VARBINARY(16384);
+ALTER TABLE nymCustomIcon ALTER data SET DATA TYPE VARBINARY(16384);
+
+--
+-- This generally only contains name and contentType, and those are duplicated in
+-- messageAttachment. Not clear what this is even for.
+-- For messagePageConfig, only contentType, duplicated in messagePage
+--
+DELETE FROM messageAttachmentConfig WHERE LENGTH(dataString) > 1024;
+DELETE FROM messagePageConfig WHERE LENGTH(dataString) > 1024;
+ALTER TABLE messageAttachmentConfig ALTER dataString SET DATA TYPE VARCHAR(1024);
+ALTER TABLE messagePageConfig ALTER dataString SET DATA TYPE VARCHAR(1024);
+
+--
+-- things too small before, but 1.8 let them in anyway?
+--
+
+--
+-- was 64, but webrip automatically added long URL
+--
+DELETE FROM messageTag WHERE LENGTH(tag) > 1024;
+ALTER TABLE messageTag ALTER tag SET DATA TYPE VARCHAR(1024);
+
+-- previous limit 100, too short (from update 22)
+DELETE FROM channelCancel WHERE LENGTH(cancelledURI) > 256;
+ALTER TABLE channelCancel ALTER cancelledURI SET DATA TYPE VARCHAR(256);
+
+-- previous limit 100, too short (from update 23)
+DELETE FROM cancelHistory WHERE LENGTH(cancelledURI) > 256;
+ALTER TABLE cancelHistory ALTER cancelledURI SET DATA TYPE VARCHAR(256);
+
+-- previous limit 4096, too short (from update 0)
+-- this seems insanely big though
+DELETE FROM channelMetaHeader WHERE LENGTH(headerValue) > 16384;
+ALTER TABLE channelMetaHeader ALTER headerValue SET DATA TYPE VARCHAR(16384);
+
+
+--
+--  Generic 2.x settings
+--
+SET FILES BACKUP INCREMENT TRUE;
+SET FILES DEFRAG 35;
+SET FILES WRITE DELAY 5;
+-- this causes a CHECKPOINT
+-- SET FILES SCRIPT FORMAT COMPRESSED;

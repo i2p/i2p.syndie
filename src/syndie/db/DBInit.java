@@ -16,7 +16,7 @@ import net.i2p.util.Log;
 /**
  *  Initialize the database, creating and updating to the latest version if necessary
  *
- *  @since 1.103b-x moved from DBClient
+ *  @since 1.104b moved from DBClient
  */
 class DBInit {
 

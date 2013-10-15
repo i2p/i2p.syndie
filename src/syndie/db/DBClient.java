@@ -94,6 +94,9 @@ public class DBClient {
     /** for createEdition() */
     private static final long FUTURE_RANDOM_PERIOD = 60*60*1000l;
 
+    public static final long MIN_ATT_BLOB_SIZE = 16*1024;
+    public static final long MIN_PAGE_CLOB_SIZE = 32*1024;
+
 
     private Connection _con;
     private final SyndieURIDAO _uriDAO;
@@ -270,21 +273,34 @@ public class DBClient {
         boolean shouldDefrag = DBUpgrade.postConnect(_con);
         if (shouldDefrag) {
             _log.logAlways(Log.WARN, "Starting database shutdown with compaction, this may take a while");
+            // shutdown sometimes fails with random errors, this seems to help
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException ie) {}
             PreparedStatement stmt = null;
             try {
                 stmt = _con.prepareStatement("SHUTDOWN COMPACT");
                 stmt.execute();
                 _log.logAlways(Log.WARN, "Database shutdown complete");
-                stmt.close();
-                stmt = null;
-                _con.close();
-                log("reconnecting as [" + _login + "] / [" + _pass + "]");
-                _con = DriverManager.getConnection(url, _login, _pass);
-                String version = _con.getMetaData().getDatabaseProductVersion();
-                log("reconnection successful, version: " + version);
+            } catch (SQLException se) {
+                // only sometimes...
+                // java.sql.SQLException: error in script file line: 107 org.hsqldb.HsqlException: user lacks privilege or object not found: SYSTEM_LOBS.APPVERSION in statement [SHUTDOWN COMPACT]
+                _log.error("Database shutdown failed", se);
+                // keep going, hope it works anyway
+                // but this is very unlikely to work
             } finally {
                 if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+                try {
+                    _con.close();
+                } catch (SQLException se) {
+                    _log.error("Error closing conn", se);
+                }
+                _con = null;
             }
+            log("reconnecting as [" + _login + "] / [" + _pass + "]");
+            _con = DriverManager.getConnection(url, _login, _pass);
+            String version = _con.getMetaData().getDatabaseProductVersion();
+            log("reconnection successful, version: " + version);
             _shouldDefrag = true;
         }
         
@@ -292,11 +308,14 @@ public class DBClient {
         DBInit dbi = new DBInit(_context, _con);
         dbi.initDB();
 
-        //log("migrating to lobs start");
-        //migrateToLob("messageAttachmentData", "msgId", "attachmentNum", "dataBinary", 65536, true);
-        //migrateToLob("messagePageData", "msgId", "pageNum", "dataString", 65536, false);
-        //migrateToLob("nymMsgPostpone", "postponeId", "postponeVersion", "encryptedData", 65536, false);
-        //log("migrating to lobs done");
+        if (shouldDefrag) {
+            log("migrating to lobs start");
+            migrateToLob("messageAttachmentData", "msgId", "attachmentNum", "dataBinary", MIN_ATT_BLOB_SIZE, true);
+            migrateToLob("messagePageData", "msgId", "pageNum", "dataString", MIN_PAGE_CLOB_SIZE, false);
+            // not worth fixing getResumable() and reencryptPostponed()
+            //migrateToLob("nymMsgPostpone", "postponeId", "postponeVersion", "encryptedData", 65536, false);
+            log("migrating to lobs done");
+        }
 
         long init = System.currentTimeMillis();
         //_login = null;
@@ -334,7 +353,7 @@ public class DBClient {
      *  The current hsqldb library version
      *
      *  @return library version or "unknown"
-     *  @since 1.103b-x
+     *  @since 1.104b
      */
     public String getHsqldbVersion() {
         return DBUpgrade.getHsqldbVersion(_con);
@@ -3672,6 +3691,7 @@ public class DBClient {
         }
     }
     
+    /** FIXME doesn't cover CLOBS */
     private static final String SQL_MATCH_MESSAGE_KEYWORD = "SELECT msgId FROM channelMessage WHERE msgId = ? AND subject LIKE ?" +
                                                             " UNION " +
                                                             "SELECT msgId FROM messagePageData WHERE msgId = ? AND dataString LIKE ?";
@@ -3776,14 +3796,40 @@ public class DBClient {
     }
     
     /** page number starts at 0 */
+    private static final String SQL_GET_MESSAGE_PAGE_DATA_TYPE = "SELECT storageType FROM messagePageData WHERE msgId = ? AND pageNum = ?";
     private static final String SQL_GET_MESSAGE_PAGE_DATA = "SELECT dataString FROM messagePageData WHERE msgId = ? AND pageNum = ?";
+    private static final String SQL_GET_MESSAGE_PAGE_DATA_CLOB = "SELECT lob FROM messagePageData WHERE msgId = ? AND pageNum = ?";
 
     public String getMessagePageData(long internalMessageId, int pageNum) {
         ensureLoggedIn();
         PreparedStatement stmt = null;
         ResultSet rs = null;
+        // get the storage type
+        int type = -1;
         try {
-            stmt = _con.prepareStatement(SQL_GET_MESSAGE_PAGE_DATA);
+            stmt = _con.prepareStatement(SQL_GET_MESSAGE_PAGE_DATA_TYPE);
+            stmt.setLong(1, internalMessageId);
+            stmt.setInt(2, pageNum);
+            rs = stmt.executeQuery();
+            if (!rs.next())
+                return null;
+            type = rs.getInt(1);
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the page data", se);
+            return null;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        // now get the data
+        try {
+            if (type == 0)
+                stmt = _con.prepareStatement(SQL_GET_MESSAGE_PAGE_DATA);
+            else if (type == 1)
+                stmt = _con.prepareStatement(SQL_GET_MESSAGE_PAGE_DATA_CLOB);
+            else
+                throw new SQLException("Unknown storage type " + type);
             stmt.setLong(1, internalMessageId);
             stmt.setInt(2, pageNum);
             rs = stmt.executeQuery();
@@ -3826,7 +3872,9 @@ public class DBClient {
     }
 
     /** attachment number starts at 0 */    
+    private static final String SQL_GET_MESSAGE_ATTACHMENT_DATA_TYPE = "SELECT storageType FROM messageAttachmentData WHERE msgId = ? AND attachmentNum = ?";
     private static final String SQL_GET_MESSAGE_ATTACHMENT_DATA = "SELECT dataBinary FROM messageAttachmentData WHERE msgId = ? AND attachmentNum = ?";
+    private static final String SQL_GET_MESSAGE_ATTACHMENT_DATA_BLOB = "SELECT lob FROM messageAttachmentData WHERE msgId = ? AND attachmentNum = ?";
 
     /**
      *  TODO can we get this as a stream or otherwise not load it all into memory?
@@ -3835,8 +3883,32 @@ public class DBClient {
         ensureLoggedIn();
         PreparedStatement stmt = null;
         ResultSet rs = null;
+        // get the storage type
+        int type = -1;
         try {
-            stmt = _con.prepareStatement(SQL_GET_MESSAGE_ATTACHMENT_DATA);
+            stmt = _con.prepareStatement(SQL_GET_MESSAGE_ATTACHMENT_DATA_TYPE);
+            stmt.setLong(1, internalMessageId);
+            stmt.setInt(2, attachmentNum);
+            rs = stmt.executeQuery();
+            if (!rs.next())
+                return null;
+            type = rs.getInt(1);
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the attachment data", se);
+            return null;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        // now get the data
+        try {
+            if (type == 0)
+                stmt = _con.prepareStatement(SQL_GET_MESSAGE_ATTACHMENT_DATA);
+            else if (type == 1)
+                stmt = _con.prepareStatement(SQL_GET_MESSAGE_ATTACHMENT_DATA_BLOB);
+            else
+                throw new SQLException("Unknown storage type " + type);
             stmt.setLong(1, internalMessageId);
             stmt.setInt(2, attachmentNum);
             rs = stmt.executeQuery();
@@ -3854,22 +3926,69 @@ public class DBClient {
     }
 
     /**
-     *  TODO get as stream
-     *  @since 1.103b-x
+     *  Get as stream
+     *  @return null on error
+     *  @since 1.104b
      */
     public InputStream getMessageAttachmentAsStream(long internalMessageId, int attachmentNum) {
-        byte[] b = getMessageAttachmentData(internalMessageId, attachmentNum);
-        return b != null ? new ByteArrayInputStream(b) : null;
+        ensureLoggedIn();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        // get the storage type
+        int type = -1;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_MESSAGE_ATTACHMENT_DATA_TYPE);
+            stmt.setLong(1, internalMessageId);
+            stmt.setInt(2, attachmentNum);
+            rs = stmt.executeQuery();
+            if (!rs.next())
+                return null;
+            type = rs.getInt(1);
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the attachment data", se);
+            return null;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        // now get the data
+        try {
+            if (type == 0)
+                stmt = _con.prepareStatement(SQL_GET_MESSAGE_ATTACHMENT_DATA);
+            else if (type == 1)
+                stmt = _con.prepareStatement(SQL_GET_MESSAGE_ATTACHMENT_DATA_BLOB);
+            else
+                throw new SQLException("Unknown storage type " + type);
+            stmt.setLong(1, internalMessageId);
+            stmt.setInt(2, attachmentNum);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                if (type == 0) {
+                    byte[] b = rs.getBytes(1);
+                    return b != null ? new ByteArrayInputStream(b) : null;
+                } else {
+                    return rs.getBinaryStream(1);
+                }
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the attachment data", se);
+            return null;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        return null;
     }
     
-    // was LENGTH, but 2.x does not support LENGTH on binary data
-    private static final String SQL_GET_MESSAGE_ATTACHMENT_SIZE = "SELECT OCTET_LENGTH(dataBinary) FROM messageAttachmentData WHERE msgId = ? AND attachmentNum = ?";
+    private static final String SQL_GET_MESSAGE_ATTACHMENT_SIZE = "SELECT attachmentSize FROM messageAttachment WHERE msgId = ? AND attachmentNum = ?";
 
     /**
      *  FIXME should store and return long
      *  @param attachmentNum starts at 0
      */
-    public int getMessageAttachmentSize(long internalMessageId, int attachmentNum) {
+    public long getMessageAttachmentSize(long internalMessageId, int attachmentNum) {
         ensureLoggedIn();
         PreparedStatement stmt = null;
         ResultSet rs = null;
@@ -3879,13 +3998,7 @@ public class DBClient {
             stmt.setInt(2, attachmentNum);
             rs = stmt.executeQuery();
             if (rs.next()) {
-                int val = rs.getInt(1);
-                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! BLOB!!!!!!!!!!!!!!!!!!!!!
-                // hsqldb 1.8.x HEX ENCODES binary data, and LENGTH(dataBinary) returns the string length of the hex encoding
-                // plus 2x for UTF-16 (OCTET_LENGTH)
-                if (!DBUpgrade.isHsqldb20(_con))
-                    val /= 4;
-                return val;
+                return rs.getLong(1);
             }
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
@@ -3935,16 +4048,16 @@ public class DBClient {
     /**
      *  Move big things to LOBs.
      *  Table must have lob and storageType columns.
-     *  Required DB version 25 (ddl_update24.txt) which is not yet checked in.
+     *  Required DB version 25 (ddl_update24.txt) and hsqldb 2.3.0
      *
-     *  Does not work as of 2.2.9:
+     *  Did not work through hsqldb 2.2.9:
      *  http://sourceforge.net/projects/hsqldb/forums/forum/73674/topic/5519631
      *
      *  @param col1 primary key (long)
      *  @param col2 primary key (int)
-     *  @since 1.103b-x
+     *  @since 1.104b
      */
-    private void migrateToLob(String table, String col1, String col2, String bigColumn, int maxLen, boolean isBinary) {
+    private void migrateToLob(String table, String col1, String col2, String bigColumn, long maxLen, boolean isBinary) {
         ensureLoggedIn();
         PreparedStatement stmt = null;
         PreparedStatement stmt2 = null;
@@ -5410,7 +5523,7 @@ public class DBClient {
      *  @param dbFileRoot /path/to/.syndie/db/syndie (i.e. without the .data suffix)
      *  @param out /path/to/zipfile
      *  @return success
-     *  @since 1.103b-x
+     *  @since 1.104b
      */
     static void offlineBackup(String dbFileRoot, String out) throws IOException {
         List<String> suffixes = new ArrayList(4);
@@ -5424,7 +5537,7 @@ public class DBClient {
      *  Do the backup
      *  @param dbFileRoot /path/to/.syndie/db/syndie (i.e. without the .data suffix)
      *  @param out /path/to/zipfile
-     *  @since 1.103b-x
+     *  @since 1.104b
      */
     private static void backup(String dbFileRoot, String prefix, List<String> suffixes, String out) throws IOException {
         ZipOutputStream zos = new ZipOutputStream(new SecureFileOutputStream(out));
@@ -6523,10 +6636,16 @@ public class DBClient {
         try {
             stmt = _con.prepareStatement(SQL_ADD_CANCEL_REQUEST);
             for (int i = 0; i < urisToCancel.size(); i++) {
-                String uri = urisToCancel.get(i).toString();
-                stmt.setLong(1, requestedByChannelId);
-                stmt.setString(2, uri);
-                stmt.executeUpdate();
+                // catch each separately, as dups will throw an exception
+                try {
+                    String uri = urisToCancel.get(i).toString();
+                    stmt.setLong(1, requestedByChannelId);
+                    stmt.setString(2, uri);
+                    stmt.executeUpdate();
+                } catch (SQLException se) {
+                    if (_log.shouldLog(Log.WARN))
+                        _log.warn("Duplicate cancel?", se);
+                }
             }
         } catch (SQLException se) {
             if (_log.shouldLog(Log.WARN))
