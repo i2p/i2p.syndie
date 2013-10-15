@@ -18,6 +18,8 @@ import java.util.TreeMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
+import javax.sql.rowset.serial.SerialBlob;
+import javax.sql.rowset.serial.SerialClob;
 
 import net.i2p.I2PAppContext;
 import net.i2p.crypto.KeyGenerator;
@@ -243,7 +245,6 @@ public class DBClient {
             _con = DriverManager.getConnection(url, _login, _pass);
             String version = _con.getMetaData().getDatabaseProductVersion();
             log("connection successful, version: " + version);
-            log("connection created: " + _con);
         } catch (SQLException se) {
             _con = null;
             throw se;
@@ -263,16 +264,39 @@ public class DBClient {
         } else {
             //throw new RuntimeException("already connected");
         }
+
+        // If we upgraded hsqldb, SHUTDOWN COMPACT and reconnect
+        // We must do this before initDB() so ddl updates will work correctly
+        boolean shouldDefrag = DBUpgrade.postConnect(_con);
+        if (shouldDefrag) {
+            _log.logAlways(Log.WARN, "Starting database shutdown with compaction, this may take a while");
+            PreparedStatement stmt = null;
+            try {
+                stmt = _con.prepareStatement("SHUTDOWN COMPACT");
+                stmt.execute();
+                _log.logAlways(Log.WARN, "Database shutdown complete");
+                stmt.close();
+                stmt = null;
+                _con.close();
+                log("reconnecting as [" + _login + "] / [" + _pass + "]");
+                _con = DriverManager.getConnection(url, _login, _pass);
+                String version = _con.getMetaData().getDatabaseProductVersion();
+                log("reconnection successful, version: " + version);
+            } finally {
+                if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+            }
+            _shouldDefrag = true;
+        }
         
         // process all updates
         DBInit dbi = new DBInit(_context, _con);
         dbi.initDB();
 
-        // process all hsqldb updates, rv is whether we upgraded
-        boolean shouldDefrag = DBUpgrade.postConnect(_con);
-        if (shouldDefrag)
-            log("Database updated, will compact on shutdown");
-        _shouldDefrag |= shouldDefrag;
+        //log("migrating to lobs start");
+        //migrateToLob("messageAttachmentData", "msgId", "attachmentNum", "dataBinary", 65536, true);
+        //migrateToLob("messagePageData", "msgId", "pageNum", "dataString", 65536, false);
+        //migrateToLob("nymMsgPostpone", "postponeId", "postponeVersion", "encryptedData", 65536, false);
+        //log("migrating to lobs done");
 
         long init = System.currentTimeMillis();
         //_login = null;
@@ -3843,7 +3867,7 @@ public class DBClient {
 
     /**
      *  FIXME should store and return long
-     *  @param attachmentNumr starts at 0
+     *  @param attachmentNum starts at 0
      */
     public int getMessageAttachmentSize(long internalMessageId, int attachmentNum) {
         ensureLoggedIn();
@@ -3906,6 +3930,94 @@ public class DBClient {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
         return null;
+    }
+
+    /**
+     *  Move big things to LOBs.
+     *  Table must have lob and storageType columns.
+     *  Required DB version 25 (ddl_update24.txt) which is not yet checked in.
+     *
+     *  Does not work as of 2.2.9:
+     *  http://sourceforge.net/projects/hsqldb/forums/forum/73674/topic/5519631
+     *
+     *  @param col1 primary key (long)
+     *  @param col2 primary key (int)
+     *  @since 1.103b-x
+     */
+    private void migrateToLob(String table, String col1, String col2, String bigColumn, int maxLen, boolean isBinary) {
+        ensureLoggedIn();
+        PreparedStatement stmt = null;
+        PreparedStatement stmt2 = null;
+        PreparedStatement stmt3 = null;
+        ResultSet rs = null;
+        ResultSet rs2 = null;
+        try {
+            // statement to get all matching items
+            if (isBinary)
+                stmt = _con.prepareStatement(
+                       "SELECT " + col1 + ", " + col2 +
+                       " FROM " + table +
+                       " WHERE OCTET_LENGTH(" + bigColumn + ") > " + maxLen +
+                       " AND storageType = 0");
+            else
+                stmt = _con.prepareStatement(
+                       "SELECT " + col1 + ", " + col2 +
+                       " FROM " + table +
+                       " WHERE LENGTH(" + bigColumn + ") > " + maxLen +
+                       " AND storageType = 0");
+            rs = stmt.executeQuery();
+            // statement to get one large byte[] or string
+            stmt2 = _con.prepareStatement(
+                       "SELECT " + bigColumn +
+                       " FROM " + table +
+                       " WHERE " + col1 + " = ? " +
+                       " AND " + col2 + " = ? ");
+            // statement to set one BLOB or CLOB and null out the large byte[] or string
+            stmt3 = _con.prepareStatement(
+                       "UPDATE " + table +
+                       " SET lob = ?, storageType = 1, " + bigColumn + " = NULL" +
+                       " WHERE " + col1 + " = ? " +
+                       " AND " + col2 + " = ? ");
+            while (rs.next()) {
+                // fetch the items one at a time so we don't OOM
+                long k1 = rs.getLong(1);
+                int k2 = rs.getInt(2);
+                stmt2.setLong(1, k1);
+                stmt2.setInt(2, k2);
+                rs2 = stmt2.executeQuery();
+                if (rs2.next()) {
+                    int sz;
+                    if (isBinary) {
+                        byte[] b = rs2.getBytes(1);
+                        sz = b.length;
+                        stmt3.setBlob(1, new SerialBlob(b));
+                    } else {
+                        String s = rs2.getString(1);
+                        sz = s.length();
+                        stmt3.setClob(1, new SerialClob(s.toCharArray()));
+                    }
+                    if (_log.shouldLog(Log.WARN))
+                        _log.warn("Migrating " + table + '(' + k1 + ',' + k2 + ") size " + sz);
+                    stmt3.setLong(2, k1);
+                    stmt3.setInt(3, k2);
+                    stmt3.executeUpdate();
+                } else {
+                    if (_log.shouldLog(Log.WARN))
+                        _log.warn("Huh no rs2 result?");
+                }
+                rs2.close();
+            }
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error migrating to lobs", se);
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (rs2 != null) try { rs2.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+            if (stmt2 != null) try { stmt2.close(); } catch (SQLException se) {}
+            if (stmt3 != null) try { stmt3.close(); } catch (SQLException se) {}
+        }
     }
 
     private static final String SQL_GET_PUBLIC_POSTING_CHANNELS = "SELECT channelId, name, petname FROM channel c LEFT OUTER JOIN nymChannelPetName ncpn ON c.channelId = ncpn.channelId WHERE allowPubPost = TRUE ORDER BY petname, name ASC";
