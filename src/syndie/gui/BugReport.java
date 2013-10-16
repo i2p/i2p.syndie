@@ -72,6 +72,8 @@ public class BugReport extends BaseComponent implements Themeable, Translatable 
     private Text _swt;
     private Label _syndieLabel;
     private Text _syndie;
+    private Label _hsqldbLabel;
+    private Text _hsqldb;
     private Label _attachmentsLabel;
     private Combo _attachments;
     private Button _attachmentsAdd;
@@ -200,14 +202,14 @@ public class BugReport extends BaseComponent implements Themeable, Translatable 
         _log = new Text(_logGroup, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER | SWT.WRAP);
 
         Composite revRow = new Composite(_root, SWT.NONE);
-        revRow.setLayout(new GridLayout(8, false));
+        revRow.setLayout(new GridLayout(10, false));
         revRow.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 4, 1));
         
         _syndieLabel = new Label(revRow, SWT.NONE);
         _syndieLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         _syndie = new Text(revRow, SWT.SINGLE | SWT.BORDER);
         gd = new GridData(GridData.FILL, GridData.FILL, true, false);
-        gd.widthHint = 50;
+        gd.widthHint = 30;
         _syndie.setLayoutData(gd);
         
         _osLabel = new Label(revRow, SWT.NONE);
@@ -228,8 +230,15 @@ public class BugReport extends BaseComponent implements Themeable, Translatable 
         _swtLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         _swt = new Text(revRow, SWT.SINGLE | SWT.BORDER);
         gd = new GridData(GridData.FILL, GridData.FILL, true, false);
-        gd.widthHint = 50;
+        gd.widthHint = 25;
         _swt.setLayoutData(gd);
+
+        _hsqldbLabel = new Label(revRow, SWT.NONE);
+        _hsqldbLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
+        _hsqldb = new Text(revRow, SWT.SINGLE | SWT.BORDER);
+        gd = new GridData(GridData.FILL, GridData.FILL, true, false);
+        gd.widthHint = 25;
+        _hsqldb.setLayoutData(gd);
 
         Composite action = new Composite(_root, SWT.NONE);
         action.setLayout(new GridLayout(3, false));
@@ -262,30 +271,35 @@ public class BugReport extends BaseComponent implements Themeable, Translatable 
         _scroll.setMinSize(_root.computeSize(SWT.DEFAULT, SWT.DEFAULT));
     }
     
-    private void savePrefs(String os, String jvm, String swt) {
+    private void savePrefs(String os, String jvm, String swt, String hsqldb) {
         Properties prefs = _client.getNymPrefs();
         prefs.setProperty("bugreport.os", os);
         prefs.setProperty("bugreport.jvm", jvm);
         prefs.setProperty("bugreport.swt", swt);
+        prefs.setProperty("bugreport.hsqldb", hsqldb);
         _client.setNymPrefs(prefs);
     }
+
     private void loadPrefs() {
         String defOS = System.getProperty("os.name") + " " + System.getProperty("os.version") + " " + System.getProperty("os.arch");
         String defJVM = System.getProperty("java.vm.name") + " " + System.getProperty("java.vm.version");
         String defSWT = SWT.getPlatform() + "-" + SWT.getVersion();
+        String defHSQLDB = _client.getHsqldbVersion();
         
         Properties prefs = _client.getNymPrefs();
         _os.setText(prefs.getProperty("bugreport.os", defOS));
         _jvm.setText(prefs.getProperty("bugreport.jvm", defJVM));
         _swt.setText(prefs.getProperty("bugreport.swt", defSWT));
+        _hsqldb.setText(prefs.getProperty("bugreport.hsqldb", defHSQLDB));
     }
     
     private void postReport() {
         final String os = _os.getText().trim();
         final String jvm = _jvm.getText().trim();
         final String swt = _swt.getText().trim();
+        final String hsqldb = _hsqldb.getText().trim();
         
-        savePrefs(os, jvm, swt);
+        savePrefs(os, jvm, swt, hsqldb);
                 
         final MessageCreator creator = new MessageCreatorDirect(new MessageCreatorSource() {
             public MessageCreator.ExecutionListener getListener() {
@@ -344,6 +358,7 @@ public class BugReport extends BaseComponent implements Themeable, Translatable 
                 rv.append("OS: " + os + "\n");
                 rv.append("JVM: " + jvm + "\n");
                 rv.append("SWT: " + swt + "\n");
+                rv.append("HSQLDB: " + hsqldb + "\n");
         
                 rv.append("\n");
                 rv.append(_log.getText());
@@ -624,6 +639,7 @@ public class BugReport extends BaseComponent implements Themeable, Translatable 
         _swtLabel.setFont(theme.DEFAULT_FONT);
         _swt.setFont(theme.DEFAULT_FONT);
         _syndieLabel.setFont(theme.DEFAULT_FONT);
+        _hsqldbLabel.setFont(theme.DEFAULT_FONT);
         _syndie.setFont(theme.DEFAULT_FONT);
         _summaryLabel.setFont(theme.DEFAULT_FONT);
         _summary.setFont(theme.DEFAULT_FONT);
@@ -653,6 +669,7 @@ public class BugReport extends BaseComponent implements Themeable, Translatable 
         _jvmLabel.setText(registry.getText("JVM") + ':');
         _swtLabel.setText(registry.getText("SWT") + ':');
         _syndieLabel.setText(registry.getText("Syndie") + ':');
+        _hsqldbLabel.setText(registry.getText("HSQLDB") + ':');
         _summaryLabel.setText(registry.getText("Issue summary") + ':');
         _logGroup.setText(registry.getText("Details") + ':');
         _attachmentsLabel.setText(registry.getText("Attachments") + ':');

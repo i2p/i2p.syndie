@@ -150,7 +150,7 @@
                     <errTitle>Syndie-@{type}</errTitle>
                     <chdir>.</chdir>
                     <icon>doc/web/favicon.ico</icon>
-                    <jre><minVersion>1.5.0</minVersion></jre>
+                    <jre><minVersion>1.6.0</minVersion></jre>
                     <versionInfo>
                         <fileVersion>0.0.0.0</fileVersion>
                         <productVersion>0.0.0.0</productVersion>
@@ -186,7 +186,7 @@
                     <errTitle>Syndie ${full.version} installer</errTitle>
                     <chdir>.</chdir>
                     <icon>doc/web/favicon.ico</icon>
-                    <jre><minVersion>1.5.0</minVersion></jre>
+                    <jre><minVersion>1.6.0</minVersion></jre>
                     <versionInfo>
                         <fileVersion>0.0.0.0</fileVersion>
                         <productVersion>0.0.0.0</productVersion>
@@ -262,7 +262,7 @@
             <author name="Syndie development team" email="http://syndie.i2p2.de" />
         </authors>
         <url>http://syndie.i2p2.de</url>
-        <javaversion>1.5</javaversion>
+        <javaversion>1.6</javaversion>
         <summarylogfilepath>$INSTALL_PATH/install.log</summarylogfilepath>
         <run-privileged condition="izpack.windowsinstall.vista|izpack.windowsinstall.7"/>
     </info>
@@ -434,7 +434,7 @@
                 </not>
             </condition>
         </fail>
-        <javac srcdir="${src.dir}" destdir="${build.dir}/obj" debug="true" source="1.5" target="1.5"
+        <javac srcdir="${src.dir}" destdir="${build.dir}/obj" debug="true" source="1.6" target="1.6"
                deprecation="on" includeAntRuntime="false">
             <classpath>
                 <path refid="classpath.build" />
@@ -445,7 +445,7 @@
     <target name="compile-cli" depends="init" description="compile just the cli">
         <delete dir="${build.dir}/cli-obj" />
         <mkdir dir="${build.dir}/cli-obj" />
-        <javac srcdir="${src.dir}" destdir="${build.dir}/cli-obj" debug="true" source="1.5" target="1.5"
+        <javac srcdir="${src.dir}" destdir="${build.dir}/cli-obj" debug="true" source="1.6" target="1.6"
                excludes="syndie/gui/** syndie/trac/** com/** syndie/locale/** imports/Browser/** imports/DesktopUI/**"
                deprecation="on" includeAntRuntime="false">
             <classpath>
@@ -599,6 +599,7 @@
         <copy file="LICENSE" todir="plugin" />
         <copy file="src/com/LICENSE.txt" tofile="plugin/LICENSE-jazzy.txt" />
         <copy file="LICENSE-EPL-v1.0.html" todir="plugin" />
+        <copy file="lib/hsqldb_lic.txt" todir="plugin" />
         <copy file="scripts/plugin-linux.config" tofile="plugin/plugin.config" overwrite="true" />
         <copy file="scripts/clients-linux.config" tofile="plugin/clients.config" overwrite="true" />
         <exec executable="echo" osfamily="unix" failonerror="true" output="plugin/plugin.config" append="true">
@@ -611,6 +612,12 @@
             <arg value="-g" />
             <arg value="plugin/lib/syndie.jar.pack" />
             <arg value="${build.dir}/syndie.jar" />
+        </exec>
+        <!-- include hsqldb.jar in the updater now -->
+        <exec executable="${java.home}/bin/pack200" failonerror="true">
+            <arg value="-g" />
+            <arg value="plugin/lib/hsqldb.jar.pack" />
+            <arg value="${hsqldb.jar}" />
         </exec>
         <exec executable="scripts/makeplugin.sh" failonerror="true">
             <arg value="plugin" />
@@ -633,17 +640,11 @@
 
         <!-- make the 32 bit linux install xpi2p -->
         <ant dir="swt" target="ensure-lin32-swt" />
-        <copy file="lib/hsqldb_lic.txt" todir="plugin" />
         <copy file="scripts/LICENSE-swt.txt" todir="plugin" />
         <copy file="scripts/plugin-linux.config" tofile="plugin/plugin.config" overwrite="true" />
         <copy file="scripts/clients-linux.config" tofile="plugin/clients.config" overwrite="true" />
         <exec executable="echo" osfamily="unix" failonerror="true" output="plugin/plugin.config" append="true">
             <arg value="version=${full.version}-b${build.number}" />
-        </exec>
-        <exec executable="${java.home}/bin/pack200" failonerror="true">
-            <arg value="-g" />
-            <arg value="plugin/lib/hsqldb.jar.pack" />
-            <arg value="${hsqldb.jar}" />
         </exec>
         <exec executable="${java.home}/bin/pack200" failonerror="true">
             <arg value="-g" />

@@ -18,6 +18,8 @@ import java.util.TreeMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
+import javax.sql.rowset.serial.SerialBlob;
+import javax.sql.rowset.serial.SerialClob;
 
 import net.i2p.I2PAppContext;
 import net.i2p.crypto.KeyGenerator;
@@ -93,16 +95,24 @@ public class DBClient {
     /** for createEdition() */
     private static final long FUTURE_RANDOM_PERIOD = 60*60*1000l;
 
+    public static final long MIN_ATT_BLOB_SIZE = 16*1024;
+    public static final long MIN_PAGE_CLOB_SIZE = 32*1024;
+
 
     private Connection _con;
-    private SyndieURIDAO _uriDAO;
+    private final SyndieURIDAO _uriDAO;
+    /** for the DB, default USER/PASS */
     private String _login;
     private String _pass;
+    /** for the nym, defautl user/pass */
+    private String _nymLogin;
+    private String _nymPass;
     private long _nymId;
     private File _rootDir;
     private String _url;
     private Thread _shutdownHook;
     private boolean _shutdownInProgress;
+    private boolean _shouldDefrag;
     private String _defaultArchive;
     private String _httpProxyHost;
     private int _httpProxyPort;
@@ -115,6 +125,9 @@ public class DBClient {
     
     private ExpireEvent _expireEvent;
         
+    private static final String DEFAULT_ADMIN = "SA";
+
+
     /**
      *  @param rootDir should be a SecureFile
      */
@@ -129,6 +142,8 @@ public class DBClient {
         _log = ctx.logManager().getLog(getClass());
         _rootDir = rootDir;
         _shutdownInProgress = false;
+        _shouldDefrag = DEFRAG;
+        _uriDAO = new SyndieURIDAO(this);
     }
     
     public void restart(String rootDir) {
@@ -140,9 +155,14 @@ public class DBClient {
     //private static final String SQL_CREATE_USER = "CREATE USER ? PASSWORD ? ADMIN";
     
     /**
-     *  Initialize the DB, update to latest version if necessary, and connect
+     *  Initialize the DB, update to latest version if necessary, and connect.
+     *  Does nothing if already connected.
      */
-    public void connect(String url) throws SQLException { 
+    void connect(String url) throws SQLException { 
+        if (_con != null && !_con.isClosed()) {
+            // don't leak connections
+            log("connect() called, already connected");
+        }
         _login = TextEngine.DEFAULT_LOGIN;
         if (_pass == null) _pass = TextEngine.DEFAULT_PASS;
         long start = System.currentTimeMillis();
@@ -151,11 +171,26 @@ public class DBClient {
         try {
             _con = DriverManager.getConnection(url);
             if (_con != null) {
-                log("default connection successful, check to see if the account exists...");
+                String version = _con.getMetaData().getDatabaseProductVersion();
+                log("default connection successful, version: " + version);
                 Statement stmt = null;
+                ResultSet rs= null;
                 try {
-                    stmt = _con.createStatement();
-                    stmt.execute("GRANT ALL ON CLASS \"java.lang.String\" TO " + _login);
+                    // test if user exists
+                    if (DBUpgrade.isHsqldb20(_con)) {
+                        // This works on hsqldb 2.0 and higher
+                        // The table is there in 1.8 but you can't select from it
+                        stmt = _con.prepareStatement("SELECT * FROM INFORMATION_SCHEMA.SYSTEM_USERS WHERE user_name = ?");
+                        ((PreparedStatement) stmt).setString(1, _login);
+                        rs = ((PreparedStatement) stmt).executeQuery();
+                        if (!rs.next())
+                            throw new SQLException("Login does not exist: " + _login);
+                        rs.close();
+                    } else {
+                        // Does not work as of hsqldb 2.0 (and should have been a method name anyway)
+                        stmt = _con.createStatement();
+                        stmt.execute("GRANT ALL ON CLASS \"java.lang.String.valueOf\" TO \"" + _login + '"');
+                    }
                     log("Account " + _login + " already exists");
                     stmt.close();
                     stmt = null;
@@ -165,7 +200,7 @@ public class DBClient {
                     String rand = Base64.encode(val);
                     log("changing default admin account passphrase to something random");
                     stmt = _con.createStatement();
-                    stmt.execute("ALTER USER sa SET PASSWORD '" + rand + "'");
+                    stmt.execute("ALTER USER \"" + DEFAULT_ADMIN + "\" SET PASSWORD '" + rand + "'");
                     stmt.close();
                     stmt = null;
                     log("sysadmin passphrase changed to a random value");
@@ -173,14 +208,17 @@ public class DBClient {
                     _con.close();
                     _con = null;
                 } catch (SQLException se) {
+                    // this is the usual path for a new database
                     log("Unable to check up on " + _login + ", so lets create the account (" + se.getMessage() + ")");
                     if (stmt != null)
                         stmt.close();
+                    if (rs != null)
+                        rs.close();
                     stmt = null;
                     
                     try {
                         stmt = _con.createStatement();
-                        stmt.execute("CREATE USER " + _login + " PASSWORD " + _pass + " ADMIN");
+                        stmt.execute("CREATE USER \"" + _login + "\" PASSWORD '" + _pass + "' ADMIN");
                         stmt.close();
                         stmt = null;
                         log("new user created [" + _login + "] / [" + _pass + "]");
@@ -195,6 +233,7 @@ public class DBClient {
                 }
             }
         } catch (SQLException se) {
+            // this is the typical path for an existing db
             log("Unable to connect with default db params: " + se);
             if (_con != null) _con.close();
             _con = null;
@@ -205,9 +244,11 @@ public class DBClient {
         }
          
         try {
+            // this is the typical path for an existing db
             log("connecting as [" + _login + "] / [" + _pass + "]");
             _con = DriverManager.getConnection(url, _login, _pass);
-            log("connection created: " + _con);
+            String version = _con.getMetaData().getDatabaseProductVersion();
+            log("connection successful, version: " + version);
         } catch (SQLException se) {
             _con = null;
             throw se;
@@ -227,21 +268,80 @@ public class DBClient {
         } else {
             //throw new RuntimeException("already connected");
         }
+
+        // If we upgraded hsqldb, SHUTDOWN COMPACT and reconnect
+        // We must do this before initDB() so ddl updates will work correctly
+        boolean shouldDefrag = DBUpgrade.postConnect(_con);
+        if (shouldDefrag) {
+            _log.logAlways(Log.WARN, "Starting database shutdown with compaction, this may take a while");
+            // shutdown sometimes fails with random errors, this seems to help
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException ie) {}
+            PreparedStatement stmt = null;
+            try {
+                stmt = _con.prepareStatement("SHUTDOWN COMPACT");
+                stmt.execute();
+                _log.logAlways(Log.WARN, "Database shutdown complete");
+            } catch (SQLException se) {
+                // only sometimes...
+                // java.sql.SQLException: error in script file line: 107 org.hsqldb.HsqlException: user lacks privilege or object not found: SYSTEM_LOBS.APPVERSION in statement [SHUTDOWN COMPACT]
+                _log.error("Database shutdown failed", se);
+                // keep going, hope it works anyway
+                // but this is very unlikely to work
+            } finally {
+                if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+                try {
+                    _con.close();
+                } catch (SQLException se) {
+                    _log.error("Error closing conn", se);
+                }
+                _con = null;
+            }
+            log("reconnecting as [" + _login + "] / [" + _pass + "]");
+            _con = DriverManager.getConnection(url, _login, _pass);
+            String version = _con.getMetaData().getDatabaseProductVersion();
+            log("reconnection successful, version: " + version);
+            _shouldDefrag = true;
+        }
         
-        initDB();
+        // process all updates
+        DBInit dbi = new DBInit(_context, _con);
+        dbi.initDB();
+
+        if (shouldDefrag) {
+            log("migrating to lobs start");
+            migrateToLob("messageAttachmentData", "msgId", "attachmentNum", "dataBinary", MIN_ATT_BLOB_SIZE, true);
+            migrateToLob("messagePageData", "msgId", "pageNum", "dataString", MIN_PAGE_CLOB_SIZE, false);
+            // not worth fixing getResumable() and reencryptPostponed()
+            //migrateToLob("nymMsgPostpone", "postponeId", "postponeVersion", "encryptedData", 65536, false);
+            log("migrating to lobs done");
+        }
+
         long init = System.currentTimeMillis();
-        _uriDAO = new SyndieURIDAO(this);
         //_login = null;
         //_pass = null;
         _nymId = -1;
-        long now = System.currentTimeMillis();
-        log("connecting: driver connection time: " + (connected-start) + " initDb time: " + (init-connected) + " uriDAO time: " + (now-init));
+        log("connecting: driver connection time: " + (connected-start) + " initDb time: " + (init-connected));
         
+        // We must switch from the uppper-case to lower-case default password now
+        // or verifyNymKeyEncryption() will fail
+        if (_pass.equals(TextEngine.DEFAULT_PASS))
+            _nymPass = TextEngine.DEFAULT_NYMKEY_PASS;
+        else
+            _nymPass = _pass;
+
         boolean ok = verifyNymKeyEncryption();
         if (!ok) {
             log("db connection successfull, but we can't access the nym keys, so discon");
             disconnect();
         } else {
+            // We must switch from the uppper-case to lower-case default login now
+            // or getNymId() in connect() below will fail
+            if (_login.equals(TextEngine.DEFAULT_LOGIN))
+                _nymLogin = TextEngine.DEFAULT_NYMKEY_LOGIN;
+            else
+                _nymLogin = _login;
             if (_expireEvent == null) {
                 long delay = _context.random().nextLong(60*60*1000l) + 24*60*60*1000l;
                 _expireEvent = new ExpireEvent();
@@ -250,6 +350,16 @@ public class DBClient {
         }
     }
     
+    /**
+     *  The current hsqldb library version
+     *
+     *  @return library version or "unknown"
+     *  @since 1.104b
+     */
+    public String getHsqldbVersion() {
+        return DBUpgrade.getHsqldbVersion(_con);
+    }
+
     private class ExpireEvent extends SimpleTimer2.TimedEvent {
     	ExpireEvent() {
     		super(SimpleTimer2.getInstance());
@@ -265,11 +375,21 @@ public class DBClient {
     }
     
     /**
-     *  Initialize the DB, update to latest version if necessary, and connect
+     *  Initialize the DB, update to latest version if necessary, and connect.
+     *  Does nothing if already connected with this login
      *  Called from TextEngine.processLogin()
+     *
      *  @return the logged-in nym ID
+     *  @throws SQLException if already connected with a different login
      */
-    public long connect(String url, String login, String passphrase) throws SQLException {
+    long connect(String url, String login, String passphrase) throws SQLException {
+        if (_con != null && !_con.isClosed()) {
+            // don't leak connections or change logins on the fly
+            log("connect(...) called, already connected as \"" + _login + '"', new Exception());
+            if (StringUtil.lowercase(login).equals(StringUtil.lowercase(_login)))
+                return getNymId(_nymLogin, _nymPass);
+            throw new SQLException("Already logged in as \"" + _login + '"');
+        }
         _login = login;
         _pass = passphrase;
         try {
@@ -280,7 +400,8 @@ public class DBClient {
             _con = null;
             throw se;
         }
-        return getNymId(login, passphrase);
+        // connect() above sets _nymLogin and _nymPass
+        return getNymId(_nymLogin, _nymPass);
     }
 
     public boolean reconnect(String passphrase) {
@@ -305,6 +426,7 @@ public class DBClient {
         clearNymChannelCache();
         try {
             if ( (_con != null) && (!_con.isClosed()) ) {
+                log("Disconnecting from DB");
                 _con.close();
                 _con = null;
             }
@@ -321,11 +443,23 @@ public class DBClient {
     public Hash sha256(byte data[]) { return _context.sha().calculateHash(data); }
     public void setDefaultUI(UI ui) { _ui = ui; }
     
-    /** if logged in, the login used is returned here */
+    /**
+     *  If logged in, the login used is returned here.
+     *  This is the DB login, NOT the nym login.
+     */
     String getLogin() { return _login; }
-    /** if logged in, the password authenticating it is returned here */
-    public String getPass() { return _pass; }
-    public void setPass(String encryptionPass) { _pass = encryptionPass; }
+
+    /**
+     *  If logged in, the password authenticating it is returned here.
+     *  This is the nym password, NOT the DB password.
+     */
+    String getPass() { return _nymPass; }
+
+    /**
+     *  Sets the nym password, NOT the DB password.
+     *  Used only by desktop.
+     */
+    public void setPass(String encryptionPass) { _nymPass = encryptionPass; }
 
     /**
      *  TODO, ensureLoggedIn() may still throw an ISE even if isLoggedIn() returns true
@@ -362,6 +496,8 @@ public class DBClient {
     public void close() {
         _login = null;
         _pass = null;
+        _nymLogin = null;
+        _nymPass = null;
         _nymId = -1;
         _defaultArchive = null;
         _httpProxyHost = null;
@@ -374,8 +510,8 @@ public class DBClient {
         try {
             if (_con == null) return;
             if (_con.isClosed()) return;
-            if (DEFRAG) { // && System.currentTimeMillis() % 100 > 95) // every 10 times defrag the db
-                _log.logAlways(Log.WARN, "Starting database shutdown with compaction, this will take a while");
+            if (_shouldDefrag) { // && System.currentTimeMillis() % 100 > 95) // every 10 times defrag the db
+                _log.logAlways(Log.WARN, "Starting database shutdown with compaction, this may take a while");
                 stmt = _con.prepareStatement("SHUTDOWN COMPACT");
             } else {
                 _log.logAlways(Log.WARN, "Starting database shutdown");
@@ -451,21 +587,21 @@ public class DBClient {
                 } else {
                     byte calc[] = _context.keyGenerator().generateSessionKey(salt, DataHelper.getUTF8(passphrase)).getData();
                     if (DataHelper.eq(calc, hash)) {
-                        _login = login;
-                        _pass = passphrase;
+                        _nymLogin = login;
+                        _nymPass = passphrase;
                         _nymId = nymId;
-                        log("passphrase is correct in the nym table");
+                        log("passphrase is correct in the nym table for \"" + login + '"');
                         
                         Properties prefs = getNymPrefs(nymId);
                         loadProxyConfig(prefs);
                         return nymId;
                     } else {
-                        log("Invalid passphrase for the nymId");
+                        log("Invalid passphrase for the nymId \"" + login + '"');
                         return NYM_ID_PASSPHRASE_INVALID;
                     }
                 }
             } else {
-                log("no nymId values are known");
+                log("no nymId values are known for \"" + login + '"');
                 return NYM_ID_LOGIN_UNKNOWN;
             }
         } catch (SQLException se) {
@@ -504,6 +640,9 @@ public class DBClient {
     
     private static final String SQL_INSERT_NYM = "INSERT INTO nym (nymId, login, publicName, passSalt, passHash, isDefaultUser) VALUES (?, ?, ?, ?, ?, ?)";
 
+    /**
+     *  All params case-sensitive!
+     */
     public long register(String login, String passphrase, String publicName) {
         long nymId = nextId("nymIdSequence");
         byte salt[] = new byte[16];
@@ -561,11 +700,19 @@ public class DBClient {
         }
     }
     
-    public SyndieURI getURI(long uriId) {
+    /**
+     *  @return stored URI
+     */
+    SyndieURI getURI(long uriId) {
+        ensureLoggedIn(false);
         return _uriDAO.fetch(uriId);
     }
 
-    public long addURI(SyndieURI uri) {
+    /**
+     *  @return urlID
+     */
+    long addURI(SyndieURI uri) {
+        ensureLoggedIn(false);
         return _uriDAO.add(uri);
     }
     
@@ -647,136 +794,8 @@ public class DBClient {
     }
     
     /**
-     *  Initialize the DB, update to latest version if necessary
+     *  Must be logged in, caller must ensure isLoggedIn()
      */
-    private void initDB() {
-        int version = checkDBVersion();
-        if (_log.shouldLog(Log.DEBUG))
-            _log.debug("Known DB version: " + version);
-        if (version < 0)
-            buildDB();
-        int updates = getDBUpdateCount(); // syndie/db/ddl_update$n.txt
-        for (int i = 1; i <= updates; i++) {
-            if (i >= version) {
-                if (_log.shouldLog(Log.DEBUG))
-                    _log.debug("Updating database version " + i + " to " + (i+1));
-                updateDB(i);
-            } else {
-               // if (_log.shouldLog(Log.DEBUG))
-               //     _log.debug("No need for update " + i + " (version: " + version + ")");
-            }
-        }
-    }
-
-    private int checkDBVersion() {
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
-        try {
-            stmt = _con.prepareStatement("SELECT versionNum FROM appVersion WHERE app = 'syndie.db'");
-            rs = stmt.executeQuery();
-            while (rs.next()) {
-                int rv = rs.getInt(1);
-                if (!rs.wasNull())
-                    return rv;
-            }
-            return -1;
-        } catch (SQLException se) {
-            if (_log.shouldLog(Log.WARN))
-                _log.warn("Unable to check the database version (does not exist?)", se);
-            return -1;
-        } finally {
-            if (rs != null) try { rs.close(); } catch (SQLException se) {}
-            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
-        }
-    }
-
-    /**
-     *  Create a new DB with the version 1 ddl.txt
-     */
-    private void buildDB() {
-        if (_log.shouldLog(Log.INFO))
-            _log.info("Building the database...");
-        BufferedReader r = null;
-        try {
-            InputStream in = DBClient.class.getResourceAsStream("ddl.txt");
-            if (in != null) {
-                r = new BufferedReader(new InputStreamReader(in));
-                StringBuilder cmdBuf = new StringBuilder();
-                String line = null;
-                while ( (line = r.readLine()) != null) {
-                    line = line.trim();
-                    if (line.startsWith("//") || line.startsWith("--"))
-                        continue;
-                    cmdBuf.append(' ').append(line);
-                    if (line.endsWith(";")) {
-                        exec(cmdBuf.toString());
-                        cmdBuf.setLength(0);
-                    }
-                }
-                r.close();
-                r = null;
-            }
-        } catch (IOException ioe) {
-            if (_log.shouldLog(Log.ERROR))
-                _log.error("Error reading the db script", ioe);
-        } catch (SQLException se) {
-            if (_log.shouldLog(Log.ERROR))
-                _log.error("Error building the db", se);
-        } finally {
-            if (r != null) try { r.close(); } catch (IOException ioe) {}
-        }
-    }
-
-    private int getDBUpdateCount() {
-        int updates = 0;
-        while (true) {
-            InputStream in = getClass().getResourceAsStream("ddl_update" + (updates+1) + ".txt");
-            if (in != null) {
-                updates++;
-                try { in.close(); } catch (IOException ioe) {}
-            } else {
-                if (_log.shouldLog(Log.DEBUG))
-                    _log.debug("There were " + updates + " database updates known for " + getClass().getName() + " ddl_update*.txt");
-                return updates;
-            }
-        }
-    }
-
-    /**
-     *  Update from oldVersion to oldVersion + 1 using ddl_update{oldVersion}.txt
-     */
-    private void updateDB(int oldVersion) {
-        BufferedReader r = null;
-        try {
-            InputStream in = getClass().getResourceAsStream("ddl_update" + oldVersion + ".txt");
-            if (in != null) {
-                r = new BufferedReader(new InputStreamReader(in));
-                StringBuilder cmdBuf = new StringBuilder();
-                String line = null;
-                while ( (line = r.readLine()) != null) {
-                    line = line.trim();
-                    if (line.startsWith("//") || line.startsWith("--"))
-                        continue;
-                    cmdBuf.append(' ').append(line);
-                    if (line.endsWith(";")) {
-                        exec(cmdBuf.toString());
-                        cmdBuf.setLength(0);
-                    }
-                }
-                r.close();
-                r = null;
-            }
-        } catch (IOException ioe) {
-            if (_log.shouldLog(Log.ERROR))
-                _log.error("Error reading the db script", ioe);
-        } catch (SQLException se) {
-            if (_log.shouldLog(Log.ERROR))
-                _log.error("Error building the db", se);
-        } finally {
-            if (r != null) try { r.close(); } catch (IOException ioe) {}
-        }
-    }
-
     private void exec(String cmd) throws SQLException {
         if (_log.shouldLog(Log.DEBUG))
             _log.debug("Exec [" + cmd + "]");
@@ -789,7 +808,10 @@ public class DBClient {
         }
     }
 
-    public int exec(String sql, long param1) throws SQLException {
+    /**
+     *  Must be logged in, caller must ensure isLoggedIn()
+     */
+    int exec(String sql, long param1) throws SQLException {
         //if (_log.shouldLog(Log.DEBUG))
         //    _log.debug("Exec param [" + sql + "]");
         PreparedStatement stmt = null;
@@ -802,7 +824,10 @@ public class DBClient {
         }
     }
 
-    public int exec(String sql, long param1, long param2) throws SQLException {
+    /**
+     *  Must be logged in, caller must ensure isLoggedIn()
+     */
+    int exec(String sql, long param1, long param2) throws SQLException {
         //if (_log.shouldLog(Log.DEBUG))
         //    _log.debug("Exec param [" + sql + "]");
         PreparedStatement stmt = null;
@@ -816,7 +841,10 @@ public class DBClient {
         }
     }
 
-    public void exec(String query, UI ui) {
+    /**
+     *  Must be logged in, caller must ensure isLoggedIn()
+     */
+    void exec(String query, UI ui) {
         ui.debugMessage("Executing [" + query + "]");
         PreparedStatement stmt = null;
         ResultSet rs = null;
@@ -907,7 +935,7 @@ public class DBClient {
      * @return non-null
      */
     public List<SessionKey> getReadKeys(Hash identHash, boolean onlyIncludeForWriting) {
-        return getReadKeys(identHash, _nymId, _pass, onlyIncludeForWriting);
+        return getReadKeys(identHash, _nymId, _nymPass, onlyIncludeForWriting);
     }
 
     /** 
@@ -1240,7 +1268,7 @@ public class DBClient {
      * list of SigningPrivateKey instances that the nym specified can use to
      * try and authenticate/authorize posts to the given identHash channel
      */
-    public List<SigningPrivateKey> getSignKeys(Hash identHash) { return getSignKeys(identHash, _nymId, _pass); }
+    public List<SigningPrivateKey> getSignKeys(Hash identHash) { return getSignKeys(identHash, _nymId, _nymPass); }
 
     public List<SigningPrivateKey> getSignKeys(Hash identHash, long nymId, String nymPassphrase) {
         ensureLoggedIn();
@@ -1318,6 +1346,16 @@ public class DBClient {
         }
     }
 
+    /**
+     * Return a list of NymKey structures.
+     * Does not verify encryption (validate with the passphrase).
+     *
+     * Side effect: sets _numKeysWithoutPass
+     *
+     * @param channel null for all
+     * @param keyFunction null for all
+     * @return no particular order
+     */
     public List<NymKey> getNymKeys(Hash channel, String keyFunction) { return getNymKeys(getLoggedInNymId(), getPass(), channel, keyFunction); }
     
     private static final String SQL_GET_NYMKEYS = "SELECT keyType, keyData, keySalt, authenticated, keyPeriodBegin, keyPeriodEnd, keyFunction, keyChannel " +
@@ -1327,6 +1365,9 @@ public class DBClient {
      * Return a list of NymKey structures.
      * Does not verify encryption (validate with the passphrase).
      *
+     * Side effect: sets _numKeysWithoutPass
+     *
+     * @param pass unused, must be in _nymPass (current password)
      * @param channel null for all
      * @param keyFunction null for all
      * @return no particular order
@@ -1338,6 +1379,9 @@ public class DBClient {
     /**
      * Return a list of NymKey structures.
      *
+     * Side effect: sets _numKeysWithoutPass
+     *
+     * @param pass unused, must be in _nymPass (current password)
      * @param channel null for all
      * @param keyFunction null for all
      * @return no particular order
@@ -1379,7 +1423,7 @@ public class DBClient {
                     byte key[] = pbeDecrypt(data, salt);
                     data = key;
                     if (key == null) {
-                        log("Invalid passphrase to a nymKey");
+                        log("Invalid passphrase to a nymKey: \"" + pass + '"');
                         _numNymKeysWithoutPass++;
                         continue;
                     }
@@ -1413,7 +1457,7 @@ public class DBClient {
     }
     
     public boolean verifyNymKeyEncryption() {
-        getNymKeys(0, _pass, null, null, true);
+        getNymKeys(0, _nymPass, null, null, true);
         return _numNymKeysWithoutPass == 0;
     }
     
@@ -3661,6 +3705,7 @@ public class DBClient {
         }
     }
     
+    /** FIXME doesn't cover CLOBS */
     private static final String SQL_MATCH_MESSAGE_KEYWORD = "SELECT msgId FROM channelMessage WHERE msgId = ? AND subject LIKE ?" +
                                                             " UNION " +
                                                             "SELECT msgId FROM messagePageData WHERE msgId = ? AND dataString LIKE ?";
@@ -3765,14 +3810,40 @@ public class DBClient {
     }
     
     /** page number starts at 0 */
+    private static final String SQL_GET_MESSAGE_PAGE_DATA_TYPE = "SELECT storageType FROM messagePageData WHERE msgId = ? AND pageNum = ?";
     private static final String SQL_GET_MESSAGE_PAGE_DATA = "SELECT dataString FROM messagePageData WHERE msgId = ? AND pageNum = ?";
+    private static final String SQL_GET_MESSAGE_PAGE_DATA_CLOB = "SELECT lob FROM messagePageData WHERE msgId = ? AND pageNum = ?";
 
     public String getMessagePageData(long internalMessageId, int pageNum) {
         ensureLoggedIn();
         PreparedStatement stmt = null;
         ResultSet rs = null;
+        // get the storage type
+        int type = -1;
         try {
-            stmt = _con.prepareStatement(SQL_GET_MESSAGE_PAGE_DATA);
+            stmt = _con.prepareStatement(SQL_GET_MESSAGE_PAGE_DATA_TYPE);
+            stmt.setLong(1, internalMessageId);
+            stmt.setInt(2, pageNum);
+            rs = stmt.executeQuery();
+            if (!rs.next())
+                return null;
+            type = rs.getInt(1);
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the page data", se);
+            return null;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        // now get the data
+        try {
+            if (type == 0)
+                stmt = _con.prepareStatement(SQL_GET_MESSAGE_PAGE_DATA);
+            else if (type == 1)
+                stmt = _con.prepareStatement(SQL_GET_MESSAGE_PAGE_DATA_CLOB);
+            else
+                throw new SQLException("Unknown storage type " + type);
             stmt.setLong(1, internalMessageId);
             stmt.setInt(2, pageNum);
             rs = stmt.executeQuery();
@@ -3815,7 +3886,9 @@ public class DBClient {
     }
 
     /** attachment number starts at 0 */    
+    private static final String SQL_GET_MESSAGE_ATTACHMENT_DATA_TYPE = "SELECT storageType FROM messageAttachmentData WHERE msgId = ? AND attachmentNum = ?";
     private static final String SQL_GET_MESSAGE_ATTACHMENT_DATA = "SELECT dataBinary FROM messageAttachmentData WHERE msgId = ? AND attachmentNum = ?";
+    private static final String SQL_GET_MESSAGE_ATTACHMENT_DATA_BLOB = "SELECT lob FROM messageAttachmentData WHERE msgId = ? AND attachmentNum = ?";
 
     /**
      *  TODO can we get this as a stream or otherwise not load it all into memory?
@@ -3824,8 +3897,32 @@ public class DBClient {
         ensureLoggedIn();
         PreparedStatement stmt = null;
         ResultSet rs = null;
+        // get the storage type
+        int type = -1;
         try {
-            stmt = _con.prepareStatement(SQL_GET_MESSAGE_ATTACHMENT_DATA);
+            stmt = _con.prepareStatement(SQL_GET_MESSAGE_ATTACHMENT_DATA_TYPE);
+            stmt.setLong(1, internalMessageId);
+            stmt.setInt(2, attachmentNum);
+            rs = stmt.executeQuery();
+            if (!rs.next())
+                return null;
+            type = rs.getInt(1);
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the attachment data", se);
+            return null;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        // now get the data
+        try {
+            if (type == 0)
+                stmt = _con.prepareStatement(SQL_GET_MESSAGE_ATTACHMENT_DATA);
+            else if (type == 1)
+                stmt = _con.prepareStatement(SQL_GET_MESSAGE_ATTACHMENT_DATA_BLOB);
+            else
+                throw new SQLException("Unknown storage type " + type);
             stmt.setLong(1, internalMessageId);
             stmt.setInt(2, attachmentNum);
             rs = stmt.executeQuery();
@@ -3841,12 +3938,71 @@ public class DBClient {
         }
         return null;
     }
-    
-    /** attachment number starts at 0 */
-    private static final String SQL_GET_MESSAGE_ATTACHMENT_SIZE = "SELECT LENGTH(dataBinary) FROM messageAttachmentData WHERE msgId = ? AND attachmentNum = ?";
 
-    /** FIXME long */
-    public int getMessageAttachmentSize(long internalMessageId, int attachmentNum) {
+    /**
+     *  Get as stream
+     *  @return null on error
+     *  @since 1.104b
+     */
+    public InputStream getMessageAttachmentAsStream(long internalMessageId, int attachmentNum) {
+        ensureLoggedIn();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        // get the storage type
+        int type = -1;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_MESSAGE_ATTACHMENT_DATA_TYPE);
+            stmt.setLong(1, internalMessageId);
+            stmt.setInt(2, attachmentNum);
+            rs = stmt.executeQuery();
+            if (!rs.next())
+                return null;
+            type = rs.getInt(1);
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the attachment data", se);
+            return null;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        // now get the data
+        try {
+            if (type == 0)
+                stmt = _con.prepareStatement(SQL_GET_MESSAGE_ATTACHMENT_DATA);
+            else if (type == 1)
+                stmt = _con.prepareStatement(SQL_GET_MESSAGE_ATTACHMENT_DATA_BLOB);
+            else
+                throw new SQLException("Unknown storage type " + type);
+            stmt.setLong(1, internalMessageId);
+            stmt.setInt(2, attachmentNum);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                if (type == 0) {
+                    byte[] b = rs.getBytes(1);
+                    return b != null ? new ByteArrayInputStream(b) : null;
+                } else {
+                    return rs.getBinaryStream(1);
+                }
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the attachment data", se);
+            return null;
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        return null;
+    }
+    
+    private static final String SQL_GET_MESSAGE_ATTACHMENT_SIZE = "SELECT attachmentSize FROM messageAttachment WHERE msgId = ? AND attachmentNum = ?";
+
+    /**
+     *  FIXME should store and return long
+     *  @param attachmentNum starts at 0
+     */
+    public long getMessageAttachmentSize(long internalMessageId, int attachmentNum) {
         ensureLoggedIn();
         PreparedStatement stmt = null;
         ResultSet rs = null;
@@ -3856,10 +4012,7 @@ public class DBClient {
             stmt.setInt(2, attachmentNum);
             rs = stmt.executeQuery();
             if (rs.next()) {
-                int val = rs.getInt(1);
-                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! BLOB!!!!!!!!!!!!!!!!!!!!!
-                val /= 2; // hsqldb HEX ENCODES binary data, and LENGTH(dataBinary) returns the string length of the hex encoding
-                return val;
+                return rs.getLong(1);
             }
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
@@ -3881,10 +4034,10 @@ public class DBClient {
         return rv;
     }
     
-    /** attachment number starts at 0 */
     private static final String SQL_GET_MESSAGE_ATTACHMENT_CONFIG = "SELECT dataString FROM messageAttachmentConfig WHERE msgId = ? AND attachmentNum = ?";
 
-    public String getMessageAttachmentConfigRaw(long internalMessageId, int attachmentNum) {
+    /** attachment number starts at 0 */
+    String getMessageAttachmentConfigRaw(long internalMessageId, int attachmentNum) {
         ensureLoggedIn();
         PreparedStatement stmt = null;
         ResultSet rs = null;
@@ -3904,6 +4057,94 @@ public class DBClient {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
         return null;
+    }
+
+    /**
+     *  Move big things to LOBs.
+     *  Table must have lob and storageType columns.
+     *  Required DB version 25 (ddl_update24.txt) and hsqldb 2.3.0
+     *
+     *  Did not work through hsqldb 2.2.9:
+     *  http://sourceforge.net/projects/hsqldb/forums/forum/73674/topic/5519631
+     *
+     *  @param col1 primary key (long)
+     *  @param col2 primary key (int)
+     *  @since 1.104b
+     */
+    private void migrateToLob(String table, String col1, String col2, String bigColumn, long maxLen, boolean isBinary) {
+        ensureLoggedIn();
+        PreparedStatement stmt = null;
+        PreparedStatement stmt2 = null;
+        PreparedStatement stmt3 = null;
+        ResultSet rs = null;
+        ResultSet rs2 = null;
+        try {
+            // statement to get all matching items
+            if (isBinary)
+                stmt = _con.prepareStatement(
+                       "SELECT " + col1 + ", " + col2 +
+                       " FROM " + table +
+                       " WHERE OCTET_LENGTH(" + bigColumn + ") > " + maxLen +
+                       " AND storageType = 0");
+            else
+                stmt = _con.prepareStatement(
+                       "SELECT " + col1 + ", " + col2 +
+                       " FROM " + table +
+                       " WHERE LENGTH(" + bigColumn + ") > " + maxLen +
+                       " AND storageType = 0");
+            rs = stmt.executeQuery();
+            // statement to get one large byte[] or string
+            stmt2 = _con.prepareStatement(
+                       "SELECT " + bigColumn +
+                       " FROM " + table +
+                       " WHERE " + col1 + " = ? " +
+                       " AND " + col2 + " = ? ");
+            // statement to set one BLOB or CLOB and null out the large byte[] or string
+            stmt3 = _con.prepareStatement(
+                       "UPDATE " + table +
+                       " SET lob = ?, storageType = 1, " + bigColumn + " = NULL" +
+                       " WHERE " + col1 + " = ? " +
+                       " AND " + col2 + " = ? ");
+            while (rs.next()) {
+                // fetch the items one at a time so we don't OOM
+                long k1 = rs.getLong(1);
+                int k2 = rs.getInt(2);
+                stmt2.setLong(1, k1);
+                stmt2.setInt(2, k2);
+                rs2 = stmt2.executeQuery();
+                if (rs2.next()) {
+                    int sz;
+                    if (isBinary) {
+                        byte[] b = rs2.getBytes(1);
+                        sz = b.length;
+                        stmt3.setBlob(1, new SerialBlob(b));
+                    } else {
+                        String s = rs2.getString(1);
+                        sz = s.length();
+                        stmt3.setClob(1, new SerialClob(s.toCharArray()));
+                    }
+                    if (_log.shouldLog(Log.WARN))
+                        _log.warn("Migrating " + table + '(' + k1 + ',' + k2 + ") size " + sz);
+                    stmt3.setLong(2, k1);
+                    stmt3.setInt(3, k2);
+                    stmt3.executeUpdate();
+                } else {
+                    if (_log.shouldLog(Log.WARN))
+                        _log.warn("Huh no rs2 result?");
+                }
+                rs2.close();
+            }
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error migrating to lobs", se);
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (rs2 != null) try { rs2.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+            if (stmt2 != null) try { stmt2.close(); } catch (SQLException se) {}
+            if (stmt3 != null) try { stmt3.close(); } catch (SQLException se) {}
+        }
     }
 
     private static final String SQL_GET_PUBLIC_POSTING_CHANNELS = "SELECT channelId, name, petname FROM channel c LEFT OUTER JOIN nymChannelPetName ncpn ON c.channelId = ncpn.channelId WHERE allowPubPost = TRUE ORDER BY petname, name ASC";
@@ -5250,62 +5491,39 @@ public class DBClient {
         throw new IllegalStateException("Not logged in");
     }
 
-    public void backup(UI ui, String out, boolean includeArchive) {
+    /**
+     *  Online backup, MUST be connected
+     *  @param out /path/to/zipfile
+     *  @param includeArchive true unsupported
+     */
+    void backup(UI ui, String out, boolean includeArchive) {
         String dbFileRoot = getDBFileRoot();
         if (dbFileRoot == null) {
             ui.errorMessage("Unable to determine the database file root.  Is this a HSQLDB file URL?");
             ui.commandComplete(-1, null);
             return;
         }
-        long now = System.currentTimeMillis();
         ui.debugMessage("Backing up the database from " + dbFileRoot + " to " + out);
         try {
+            if (!isLoggedIn())
+                throw new SQLException("not logged in");
             exec("CHECKPOINT");
         } catch (SQLException se) {
             ui.errorMessage("Error halting the database to back it up!", se);
             ui.commandComplete(-1, null);
             return;
         }
+        List<String> suffixes = new ArrayList(4);
+        suffixes.add(".properties");
+        suffixes.add(".script");
+        if (DBUpgrade.isHsqldb20(_con))
+            suffixes.add(".data");
+        else
+            suffixes.add(".backup");
         try {
-            ZipOutputStream zos = new ZipOutputStream(new SecureFileOutputStream(out));
-            
-            ZipEntry entry = new ZipEntry("db.properties");
-            File f = new File(dbFileRoot + ".properties");
-            entry.setSize(f.length());
-            entry.setTime(now);
-            zos.putNextEntry(entry);
-            copy(f, zos);
-            zos.closeEntry();
-            
-            entry = new ZipEntry("db.script");
-            f = new File(dbFileRoot + ".script");
-            entry.setSize(f.length());
-            entry.setTime(now);
-            zos.putNextEntry(entry);
-            copy(f, zos);
-            zos.closeEntry();
-            
-            entry = new ZipEntry("db.backup");
-            f = new File(dbFileRoot + ".backup");
-            entry.setSize(f.length());
-            entry.setTime(now);
-            zos.putNextEntry(entry);
-            copy(f, zos);
-            zos.closeEntry();
-            
-            // since we just did a CHECKPOINT, no need to back up the .data file
-            entry = new ZipEntry("db.data");
-            entry.setSize(0);
-            entry.setTime(now);
-            zos.putNextEntry(entry);
-            zos.closeEntry();
-            
+            backup(dbFileRoot, "db", suffixes, out);
             if (includeArchive)
-                backupArchive(ui, zos);
-            
-            zos.finish();
-            zos.close();
-            
+                backupArchive(ui, null);
             ui.statusMessage("Database backed up to " + out);
             ui.commandComplete(0, null);
         } catch (IOException ioe) {
@@ -5313,7 +5531,47 @@ public class DBClient {
             ui.commandComplete(-1, null);
         }
     }
+
+    /**
+     *  Offline backup, must NOT be connected
+     *  @param dbFileRoot /path/to/.syndie/db/syndie (i.e. without the .data suffix)
+     *  @param out /path/to/zipfile
+     *  @return success
+     *  @since 1.104b
+     */
+    static void offlineBackup(String dbFileRoot, String out) throws IOException {
+        List<String> suffixes = new ArrayList(4);
+        suffixes.add(".properties");
+        suffixes.add(".script");
+        suffixes.add(".data");
+        backup(dbFileRoot, "db", suffixes, out);
+    }
+
+    /**
+     *  Do the backup
+     *  @param dbFileRoot /path/to/.syndie/db/syndie (i.e. without the .data suffix)
+     *  @param out /path/to/zipfile
+     *  @since 1.104b
+     */
+    private static void backup(String dbFileRoot, String prefix, List<String> suffixes, String out) throws IOException {
+        ZipOutputStream zos = new ZipOutputStream(new SecureFileOutputStream(out));
+        try {
+            for (String suffix : suffixes) {
+                ZipEntry entry = new ZipEntry(prefix + suffix);
+                File f = new File(dbFileRoot + suffix);
+                entry.setSize(f.length());
+                entry.setTime(f.lastModified());
+                zos.putNextEntry(entry);
+                copy(f, zos);
+                zos.closeEntry();
+            }  
+        } finally {
+            zos.finish();
+            zos.close();
+        }
+    }
     
+    /** just spits out a message */
     private void backupArchive(UI ui, ZipOutputStream out) throws IOException {
         ui.errorMessage("Backing up the archive is not yet supported.");
         ui.errorMessage("However, you can just, erm, tar cjvf the $data/archive/ dir");
@@ -5335,11 +5593,11 @@ public class DBClient {
         }
     }
     
-    private void copy(File in, OutputStream out) throws IOException {
+    private static void copy(File in, OutputStream out) throws IOException {
         byte buf[] = new byte[4096];
-        FileInputStream fis = null;
+        InputStream fis = null;
         try {
-            fis = new FileInputStream(in);
+            fis = new BufferedInputStream(new FileInputStream(in));
             int read = -1;
             while ( (read = fis.read(buf)) != -1)
                 out.write(buf, 0, read);
@@ -5357,7 +5615,7 @@ public class DBClient {
      *           already exists (and is of a nonzero size), it will NOT be
      *           overwritten
      */
-    public void restore(UI ui, String in, String db) {
+    void restore(UI ui, String in, String db) {
         File inFile = new File(in);
         if ( (!inFile.exists()) || (inFile.length() <= 0) ) {
             ui.errorMessage("Database backup does not exist: " + inFile.getPath());
@@ -6483,19 +6741,20 @@ public class DBClient {
     
     
     private static final String SQL_UPDATE_NYM_PASS = "UPDATE nym SET passSalt = ?, passHash = ? WHERE nymId = ?";
+
     public void changePassphrase(String newPass) {
         try {
             _con.setAutoCommit(false);
-            log("changing passphrase from [" + _pass + "] to [" + newPass + "]");
+            log("changing passphrase from [" + _nymPass + "] to [" + newPass + "]");
             // reencrypt all of the keys under the new passphrase
-            if (!reencryptKeys(_pass, newPass)) {
+            if (!reencryptKeys(_nymPass, newPass)) {
                 log("reencryptKeys failed");
                 log("Passphrase NOT changed");
                 _con.rollback();
                 return;
             }
             // reencrypt all of the postponed messages under the new passphrase
-            if (!reencryptPostponed(_pass, newPass)) {
+            if (!reencryptPostponed(_nymPass, newPass)) {
                 log("reencryptPostponed failed");
                 log("Passphrase NOT changed");
                 _con.rollback();
@@ -6527,7 +6786,7 @@ public class DBClient {
             try {
                 log("changing db passphrase...");
                 stmt = _con.createStatement();
-                stmt.execute("ALTER USER " + TextEngine.DEFAULT_LOGIN + " SET PASSWORD \"" + newPass + "\"");
+                stmt.execute("ALTER USER \"" + TextEngine.DEFAULT_LOGIN + "\" SET PASSWORD '" + newPass + '\'');
                 stmt.close();
                 stmt = null;
                 log("Passphrase changed to " + newPass);
@@ -6537,7 +6796,7 @@ public class DBClient {
                 String rand = Base64.encode(val);
                 log("changing default admin account passphrase to something random");
                 stmt = _con.createStatement();
-                stmt.execute("ALTER USER sa SET PASSWORD '" + rand + "'");
+                stmt.execute("ALTER USER \"" + DEFAULT_ADMIN + "\" SET PASSWORD '" + rand + '\'');
                 stmt.close();
                 stmt = null;
                 log("sysadmin passphrase changed to a random value");
@@ -6548,7 +6807,7 @@ public class DBClient {
             } finally {
                 if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
             }
-            _pass = newPass;
+            _nymPass = newPass;
             _con.commit();
         } catch (SQLException se) {
             log("Error partway through the passphrase changing...?", se);
@@ -6802,11 +7061,13 @@ public class DBClient {
      * saving it in saltTarget.  The result is the padded encrypted data
      */
     public byte[] pbeEncrypt(byte orig[], byte saltTarget[]) {
-        return pbeEncrypt(orig, _pass, saltTarget, I2PAppContext.getGlobalContext());
+        return pbeEncrypt(orig, _nymPass, saltTarget, I2PAppContext.getGlobalContext());
     }
+
     public byte[] pbeEncrypt(byte orig[], String pass, byte saltTarget[]) {
         return pbeEncrypt(orig, pass, saltTarget, I2PAppContext.getGlobalContext());
     }
+
     public static byte[] pbeEncrypt(byte orig[], String pass, byte saltTarget[], I2PAppContext ctx) {
         ctx.random().nextBytes(saltTarget);
         SessionKey saltedKey = ctx.keyGenerator().generateSessionKey(saltTarget, DataHelper.getUTF8(pass));
@@ -6822,7 +7083,8 @@ public class DBClient {
     }
     
     /** pbe decrypt the data with the current passphrase, returning the decrypted data, stripped of any padding */
-    public byte[] pbeDecrypt(byte orig[], byte salt[]) { return pbeDecrypt(orig, _pass, salt); }
+    public byte[] pbeDecrypt(byte orig[], byte salt[]) { return pbeDecrypt(orig, _nymPass, salt); }
+
     public byte[] pbeDecrypt(byte orig[], String pass, byte salt[]) {
         return pbeDecrypt(orig, 0, salt, 0, pass, orig.length, _context);
     }
@@ -6830,6 +7092,7 @@ public class DBClient {
     public byte[] pbeDecrypt(byte orig[], int origOffset, byte salt[], int saltOffset, String pass, int len) {
         return pbeDecrypt(orig, origOffset, salt, saltOffset, pass, len, _context);
     }
+
     public static byte[] pbeDecrypt(byte orig[], int origOffset, byte salt[], int saltOffset, String pass, int len, I2PAppContext ctx) {
         byte saltCopy[] = new byte[16];
         System.arraycopy(salt, saltOffset, saltCopy, 0, saltCopy.length);

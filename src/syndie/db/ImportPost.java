@@ -8,6 +8,8 @@ import java.util.*;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
+import javax.sql.rowset.serial.SerialBlob;
+import javax.sql.rowset.serial.SerialClob;
 
 import net.i2p.crypto.KeyGenerator;
 import net.i2p.data.Base64;
@@ -1038,8 +1040,10 @@ public class ImportPost {
         for (int i = 0; i < _body.getAttachments(); i++)
             insertAttachment(msgId, i);
     }
+
     private static final String SQL_INSERT_MESSAGE_ATTACHMENT = "INSERT INTO messageAttachment (msgId, attachmentNum, attachmentSize, contentType, name, description) VALUES (?, ?, ?, ?, ?, ?)";
-    private static final String SQL_INSERT_MESSAGE_ATTACHMENT_DATA = "INSERT INTO messageAttachmentData (msgId, attachmentNum, dataBinary) VALUES (?, ?, ?)";
+    private static final String SQL_INSERT_MESSAGE_ATTACHMENT_DATA = "INSERT INTO messageAttachmentData (msgId, attachmentNum, dataBinary, storageType) VALUES (?, ?, ?, 0)";
+    private static final String SQL_INSERT_MESSAGE_ATTACHMENT_DATA_BLOB = "INSERT INTO messageAttachmentData (msgId, attachmentNum, lob, storageType) VALUES (?, ?, ?, 1)";
     private static final String SQL_INSERT_MESSAGE_ATTACHMENT_CONFIG = "INSERT INTO messageAttachmentConfig (msgId, attachmentNum, dataString) VALUES (?, ?, ?)";
 
     private void insertAttachment(long msgId, int attachmentId) throws SQLException {
@@ -1074,11 +1078,18 @@ public class ImportPost {
             
             stmt.close();
             
-            stmt = _client.con().prepareStatement(SQL_INSERT_MESSAGE_ATTACHMENT_DATA);
+            boolean blob = data != null && data.length >= DBClient.MIN_ATT_BLOB_SIZE;
+            if (blob)
+                stmt = _client.con().prepareStatement(SQL_INSERT_MESSAGE_ATTACHMENT_DATA_BLOB);
+            else
+                stmt = _client.con().prepareStatement(SQL_INSERT_MESSAGE_ATTACHMENT_DATA);
             //(msgId, attachmentNum, dataBinary)
             stmt.setLong(1, msgId);
             stmt.setInt(2, attachmentId);
-            stmt.setBytes(3, data);
+            if (blob)
+                stmt.setBlob(3, new SerialBlob(data));
+            else
+                stmt.setBytes(3, data);
             stmt.executeUpdate();
             stmt.close();
             
@@ -1124,7 +1135,8 @@ public class ImportPost {
     }
 
     private static final String SQL_INSERT_MESSAGE_PAGE = "INSERT INTO messagePage (msgId, pageNum, contentType) VALUES (?, ?, ?)";
-    private static final String SQL_INSERT_MESSAGE_PAGE_DATA = "INSERT INTO messagePageData (msgId, pageNum, dataString) VALUES (?, ?, ?)";
+    private static final String SQL_INSERT_MESSAGE_PAGE_DATA = "INSERT INTO messagePageData (msgId, pageNum, dataString, storageType) VALUES (?, ?, ?, 0)";
+    private static final String SQL_INSERT_MESSAGE_PAGE_DATA_CLOB = "INSERT INTO messagePageData (msgId, pageNum, lob, storageType) VALUES (?, ?, ?, 1)";
     private static final String SQL_INSERT_MESSAGE_PAGE_CONFIG = "INSERT INTO messagePageConfig (msgId, pageNum, dataString) VALUES (?, ?, ?)";
 
     private void insertPage(long msgId, int pageId) throws SQLException {
@@ -1147,11 +1159,17 @@ public class ImportPost {
             
             stmt.close();
             
-            stmt = _client.con().prepareStatement(SQL_INSERT_MESSAGE_PAGE_DATA);
+            boolean clob = data != null && data.length >= DBClient.MIN_PAGE_CLOB_SIZE;
+            if (clob)
+                stmt = _client.con().prepareStatement(SQL_INSERT_MESSAGE_PAGE_DATA_CLOB);
+            else
+                stmt = _client.con().prepareStatement(SQL_INSERT_MESSAGE_PAGE_DATA);
             //(msgId, pageNum, dataString)
             stmt.setLong(1, msgId);
             stmt.setInt(2, pageId);
-            if (data != null)
+            if (clob)
+                stmt.setClob(3, new SerialClob(DataHelper.getUTF8(data).toCharArray()));
+            else if (data != null)
                 stmt.setString(3, DataHelper.getUTF8(data));
             else
                 stmt.setNull(3, Types.VARCHAR);
@@ -1169,11 +1187,14 @@ public class ImportPost {
         }
     }
   
-    private String formatConfig(Properties props) {
+    /**
+     *  Serialize a Properties. Reverse is in CommandImpl.parseProps().
+     */
+    private static String formatConfig(Properties props) {
         StringBuilder rv = new StringBuilder();
-        for (Iterator iter = props.keySet().iterator(); iter.hasNext(); ) {
-            String key = (String)iter.next();
-            String val = props.getProperty(key);
+        for (Map.Entry e : props.entrySet()) {
+            String key = (String) e.getKey();
+            String val = (String) e.getValue();
             rv.append(CommandImpl.strip(key)).append('=').append(CommandImpl.strip(val)).append('\n');
         }
         return rv.toString();
@@ -1181,6 +1202,7 @@ public class ImportPost {
 
     private static final String SQL_DELETE_UNREAD = "DELETE FROM nymUnreadMessage WHERE msgId = ?";
     private static final String SQL_MARK_UNREAD = "INSERT INTO nymUnreadMessage (nymId, msgId) VALUES (?, ?)";
+
     private void setUnread(long msgId) throws SQLException {
         _client.exec(SQL_DELETE_UNREAD, msgId);
         List<Long> nymIds = _client.getNymIds();

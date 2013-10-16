@@ -51,7 +51,7 @@ import syndie.db.UI;
 import syndie.data.SyndieURI;
 
 /**
- *
+ *  The SQL Tab
  */
 class SQLTab extends BrowserTab implements Translatable, Themeable {
     private Combo _in;
@@ -113,6 +113,7 @@ class SQLTab extends BrowserTab implements Translatable, Themeable {
     private static final SimpleDateFormat _dateFmt = new SimpleDateFormat("yyyy/MM/dd");
     private static final SimpleDateFormat _timeFmt = new SimpleDateFormat("HH:mm:ss.SSS");
     private static final SimpleDateFormat _tsFmt = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
+
     private static final String getDate(Date date) {
         if (date == null) return "[null]";
         synchronized (_dateFmt) { return _dateFmt.format(date); }
@@ -125,13 +126,13 @@ class SQLTab extends BrowserTab implements Translatable, Themeable {
         if (date == null) return "[null]";
         synchronized (_tsFmt) { return _tsFmt.format(date); }
     }
+
     private static final String toString(byte val[]) {
         if (val == null)
             return "[null]";
         int len = val.length;
-        if (len > 32)
-            len = 32;
-        return Base64.encode(val, 0, len);
+        int clen = Math.min(len, 32);
+        return Base64.encode(val, 0, clen) + " len: " + len;
     }
     
     private void runCommand() {
@@ -206,13 +207,16 @@ class SQLTab extends BrowserTab implements Translatable, Themeable {
                                     break;
                                 }
                                 case Types.CHAR:
+                                case Types.CLOB:
                                 case Types.LONGVARCHAR:
                                 case Types.VARCHAR: {
                                     String val = rs.getString(i);
                                     if (rs.wasNull())
                                         row.setBackground(i-1, _nullBG);
+                                    else if (val != null && val.length() > 100)
+                                        row.setText(i-1, val.substring(0, 90) + "... len: " + val.length());
                                     else
-                                        row.setText(i-1, val); // perhaps we should trim this?
+                                        row.setText(i-1, val);
                                     break;
                                 }
                                 case Types.DATE: {
@@ -241,7 +245,6 @@ class SQLTab extends BrowserTab implements Translatable, Themeable {
                                 }
                                 case Types.BINARY:
                                 case Types.BLOB:
-                                case Types.CLOB:
                                 case Types.LONGVARBINARY:
                                 case Types.VARBINARY: {
                                     byte val[] = rs.getBytes(i);
@@ -270,6 +273,9 @@ class SQLTab extends BrowserTab implements Translatable, Themeable {
                     int rows = stmt.getUpdateCount();
                     _msgs.setText("rows: " + rows);
                 }
+            } catch (RuntimeException re) {
+                getBrowser().getUI().debugMessage("Error executing [" + sql + "]", re);
+                _msgs.setText(re.getMessage());
             } catch (SQLException se) {
                 getBrowser().getUI().debugMessage("Error executing [" + sql + "]", se);
                 _msgs.setText(se.getMessage());

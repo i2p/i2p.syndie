@@ -1,0 +1,5 @@
+#
+#  The hsqldb GUI database manager, included in hsqldb.jar.
+#  http://hsqldb.org/doc/2.0/util-guide/dbm-chapt.html
+#
+java -cp ../lib/hsqldb.jar org.hsqldb.util.DatabaseManagerSwing --rcfile sqltool.rc --urlid syndie

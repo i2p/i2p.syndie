@@ -277,9 +277,13 @@ public class TextEngine {
             _ui.insertCommand("gobble");
             _ui.insertCommand("init");
             //--root '" + _rootFile + "' 
-            _ui.insertCommand("register --db '" + getDefaultURL() + "' --login " + DEFAULT_LOGIN + " --pass '" + DEFAULT_PASS + "' --name 'Default account'");
+            _ui.insertCommand("register --db '" + getDefaultURL() + "' --login " +
+                              DEFAULT_NYMKEY_LOGIN + " --pass '" + DEFAULT_NYMKEY_PASS +
+                              "' --name 'Default account'");
             _ui.insertCommand("ungobble");
             _newNymCreated = true;
+        } else {
+            DBUpgrade.preConnect(getDBFile());
         }
         
         /*
@@ -356,8 +360,29 @@ public class TextEngine {
 
     public DBClient getClient() { return _client; }
     
-    public static final String DEFAULT_LOGIN = "user";
-    public static final String DEFAULT_PASS = "pass";
+    /**
+     *  Prior to 1.103, it wasn't double-quoted in DBClient, so it was mapped to upper case.
+     *  As of hsqldb 2.0, logins are case-sensitive, so switch to upper case now
+     */
+    public static final String DEFAULT_LOGIN = "USER";
+
+    /**
+     *  The login used for nym keys WAS case sensitive, so this is "user".
+     *  @since 1.104b
+     */
+    public static final String DEFAULT_NYMKEY_LOGIN = DEFAULT_LOGIN.toLowerCase(Locale.US);
+
+    /**
+     *  Prior to 1.103, it wasn't single-quoted in DBClient, so it was mapped to upper case.
+     *  As of hsqldb 2.0, logins are case-sensitive, so switch to upper case now
+     */
+    public static final String DEFAULT_PASS = "PASS";
+
+    /**
+     *  The password used for nym keys WAS case sensitive, so this is "pass".
+     *  @since 1.104b
+     */
+    public static final String DEFAULT_NYMKEY_PASS = DEFAULT_PASS.toLowerCase(Locale.US);
     
     private String getDefaultURL() { return "jdbc:hsqldb:file:" + getDBFile() + ";hsqldb.nio_data_file=false"; }
     
@@ -450,7 +475,7 @@ public class TextEngine {
                     lsnr.alreadyRunning();
                 }
             } else {
-                _ui.errorMessage("Error trying to login: " + se.getMessage());
+                _ui.errorMessage("Error trying to login", se);
                 for (int i = 0; i < _scriptListeners.size(); i++) {
                     ScriptListener lsnr = (ScriptListener)_scriptListeners.get(i);
                     lsnr.loginFailed(se);
@@ -807,6 +832,7 @@ public class TextEngine {
         _ui.statusMessage(" definecmd --name $commandName --class javaClassName");
         _ui.statusMessage(" exit               : exit syndie");
         _ui.statusMessage(" gobble             : suppress all normal status messages (until you 'ungobble')");
+        _ui.statusMessage(" help");
         _ui.statusMessage(" history");
         _ui.statusMessage(" init $jdbcURL      : create a new syndie database");
         if (menu != null && menu.requireLoggedIn())
@@ -823,6 +849,7 @@ public class TextEngine {
         if (menu != null && !_currentMenu.equals(LoggedInMenu.NAME))
             _ui.statusMessage(" up                 : go up a menu");
         _ui.statusMessage(" version");
+        _ui.statusMessage(" ?                  : help");
         _ui.statusMessage(" !!                 : repeat last command");
         _ui.statusMessage(" !$num              : repeat command $num from history");
         _ui.statusMessage(" !-$num             : repeat command $num back in history");
@@ -863,6 +890,9 @@ public class TextEngine {
         return rv;
     }
     
+    /**
+     *  Initializes a new database
+     */
     private void processInit(Opts opts) {
         if ( (_client != null) && (_client.isLoggedIn()) ) return;
         List args = opts.getArgs();
@@ -873,7 +903,6 @@ public class TextEngine {
             if (_client == null)
                 _client = new DBClient(I2PAppContext.getGlobalContext(), _rootDir);
             _client.connect(url);
-            //_client.close();
             _ui.statusMessage("Database created at " + url);
             _ui.commandComplete(0, null);
             return;
