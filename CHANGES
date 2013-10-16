@@ -1,5 +1,33 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
+* 2013-10-15 1.104b-2 (zzz)
+  HSQLDB 2, DB upgrades, LOBs:
+  - hsqldb 2.3.1
+  - Update to DB version 25:
+    - Add LOBs for attachments and pages
+    - Increase length limits on cancelledURI, headerValue, and others
+  - Implement offline database backup
+  - Backup database before upgrading to hsqldb 2.x
+  - Add code to migrate large things to LOBs
+  - Enable migration of large attachments and pages to LOBs
+  - Implement retrieval of pages and attachments from LOBs
+  - Implement getAttachmentAsStream for real (unused yet)
+  - Implement storage to LOBs in ImportPost
+  - Sleep a while before shutdown compact
+  - Shutdown compact immediately after upgrade, then reconnect,
+    as recommended by hsqldb
+  - Ignore shutdown compact error after upgrade, just reopen anyway,
+    but unlikely to work
+  - Use attachment size from messageAttachment table,
+    not actual size from messageAttachmentData table
+  Other:
+  - Fix NPE when using 1.8 jar
+  - Fix, or maybe just move, NPE in addURI/getURI
+  - More db things package private
+  - Use DataHelper.loadProps() to deserialize properties UTF-8-safely
+  - Add script for the hsqldb database manager tool
+  - SQLTab tweaks
+
 * 2013-02-10 1.104b-1 (zzz)
   GUI Improvements:
   - Don't open message view tab for unreadable messages or stub messages
