@@ -1108,9 +1108,9 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
     private static final int[] SYNC_DELAY = new int[] { 1, 2, 4, 6, 12, 18, 24 };
     private static final int SYNC_DELAY_DEFAULT_INDEX = 2;
     
-    private static final int[] NEWAGEDAYS = new int[] { -1, 7, 31, 62, 92, 183, 365, 1095, 1826, 3653 };
+    private static final int[] NEWAGEDAYS = new int[] { -1, 7, 14, 31, 62, 92, 183, 365, 1095, 1826, 3653 };
     /** See SyncArchive for actual default, this setting has no effect */
-    private static final int NEWAGE_DEFAULT_INDEX = 3;
+    private static final int NEWAGE_DEFAULT_INDEX = 2;
     
     /** See SyncArchive for actual default */
     private static final int SENDAGE_DEFAULT_INDEX = 0;
@@ -1155,6 +1155,7 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         _pullNewAge.removeAll();
         _pullNewAge.add(registry.getText("Whatever the archive advertises as new"));
         _pullNewAge.add(registry.ngettext("{0} week", "{0} weeks", 1));
+        _pullNewAge.add(registry.ngettext("{0} week", "{0} weeks", 2));
         _pullNewAge.add(registry.ngettext("{0} month", "{0} months", 1));
         _pullNewAge.add(registry.ngettext("{0} month", "{0} months", 2));
         _pullNewAge.add(registry.ngettext("{0} month", "{0} months", 3));
