@@ -368,7 +368,7 @@ public class TextEngine {
 
     /**
      *  The login used for nym keys WAS case sensitive, so this is "user".
-     *  @since 1.104b
+     *  @since 1.104b-2
      */
     public static final String DEFAULT_NYMKEY_LOGIN = DEFAULT_LOGIN.toLowerCase(Locale.US);
 
@@ -380,7 +380,7 @@ public class TextEngine {
 
     /**
      *  The password used for nym keys WAS case sensitive, so this is "pass".
-     *  @since 1.104b
+     *  @since 1.104b-2
      */
     public static final String DEFAULT_NYMKEY_PASS = DEFAULT_PASS.toLowerCase(Locale.US);
     

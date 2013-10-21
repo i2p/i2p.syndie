@@ -1,5 +1,9 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
+* 2013-10-21 1.104b-3 (zzz)
+  - Fix cause of DB corruption / dup forums in -2
+  - Fetch messages newest-first
+
 * 2013-10-15 1.104b-2 (zzz)
   HSQLDB 2, DB upgrades, LOBs:
   - hsqldb 2.3.1

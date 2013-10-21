@@ -27,7 +27,7 @@ import net.i2p.util.VersionComparator;
  *
  *  ref: http://hsqldb.org/doc/2.0/guide/deployment-chapt.html#dec_upgrade_database
  *
- *  @since 1.104b
+ *  @since 1.104b-2
  */
 class DBUpgrade {
 
