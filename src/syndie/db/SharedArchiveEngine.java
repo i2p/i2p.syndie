@@ -8,11 +8,14 @@ import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import net.i2p.data.Base64;
 import net.i2p.data.DataFormatException;
@@ -37,9 +40,10 @@ public class SharedArchiveEngine {
      */
     public List<SyndieURI> selectURIsToPull(DBClient client, UI ui, SharedArchive archive, PullStrategy strategy, long whitelistGroupId) {
         int totalAllocatedKB = 0;
-        List<SyndieURI> uris = new ArrayList();
+        Set<SyndieURI> scopes = new HashSet();
+        Set<SyndieURI> msgs = new TreeSet(new MsgURIComparator());
         if (strategy.pullNothing)
-            return uris;
+            return Collections.EMPTY_LIST;
         long begin = System.currentTimeMillis();
         
         List banned = client.getBannedChannels();
@@ -50,7 +54,7 @@ public class SharedArchiveEngine {
             if (!channels[i].wantNewMsg() && !channels[i].wantNewMeta() && (channels[i].getVersion() == 0) ) {
                 // the remote side has banned it, so they won't be able to give it to us, obviously
             } else if (channels[i].isNew() && strategy.includeDupForPIR) {
-                uris.add(SyndieURI.createScope(scope));
+                scopes.add(SyndieURI.createScope(scope));
             } else {
                 if (banned.contains(scope))
                     continue;
@@ -59,7 +63,7 @@ public class SharedArchiveEngine {
                     continue;
                 if (channels[i].getVersion() > knownVersion) {
                     ui.debugMessage("shared archive has a newer version than we do for " + scope.toBase64() + " [them: " + channels[i].getVersion() + ", us: " + knownVersion + "]");
-                    uris.add(SyndieURI.createScope(scope));
+                    scopes.add(SyndieURI.createScope(scope));
                 } else {
                     // already known.  no need
                 }
@@ -75,11 +79,9 @@ public class SharedArchiveEngine {
             if (messages[i].isNew() && strategy.includeDupForPIR) {
                 SyndieURI scopeURI = SyndieURI.createScope(scope);
                 SyndieURI targetURI = SyndieURI.createScope(target);
-                if (!uris.contains(scopeURI))
-                    uris.add(scopeURI);
-                if (!uris.contains(targetURI))
-                    uris.add(targetURI);
-                uris.add(SyndieURI.createMessage(scope, messages[i].getMessageId()));
+                scopes.add(scopeURI);
+                scopes.add(targetURI);
+                msgs.add(SyndieURI.createMessage(scope, messages[i].getMessageId()));
                 totalAllocatedKB += messages[i].getMaxSizeKB();
             } else {
                 if ( (strategy.maxKBPerMessage > 0) && (messages[i].getMaxSizeKB() > strategy.maxKBPerMessage) ) {
@@ -126,15 +128,18 @@ public class SharedArchiveEngine {
                 
                 SyndieURI scopeURI = SyndieURI.createScope(scope);
                 SyndieURI targetURI = SyndieURI.createScope(target);
-                if (!uris.contains(scopeURI) && (client.getChannelId(scope) < 0))
-                    uris.add(scopeURI);
-                if (!uris.contains(targetURI) && (client.getChannelId(target) < 0))
-                    uris.add(targetURI);
+                if (!scopes.contains(scopeURI) && (client.getChannelId(scope) < 0))
+                    scopes.add(scopeURI);
+                if (!scopes.contains(targetURI) && (client.getChannelId(target) < 0))
+                    scopes.add(targetURI);
                 totalAllocatedKB += messages[i].getMaxSizeKB();
                 ui.debugMessage("message meets our criteria: " + scope.toBase64() + ":" + messages[i]);
-                uris.add(SyndieURI.createMessage(scope, messages[i].getMessageId()));
+                msgs.add(SyndieURI.createMessage(scope, messages[i].getMessageId()));
             }
         }
+        List<SyndieURI> uris = new ArrayList(scopes.size() + msgs.size());
+        uris.addAll(scopes);
+        uris.addAll(msgs);
         ui.debugMessage("Selected to Pull: strategy=" + strategy + " Total allocated KB: " + totalAllocatedKB +
                         " URIs: " + uris.size() +
                         " total time = " + (System.currentTimeMillis() - begin));
@@ -143,6 +148,26 @@ public class SharedArchiveEngine {
         return uris;
     }
     
+    private static class MsgURIComparator implements Comparator<SyndieURI> {
+        public int compare(SyndieURI l, SyndieURI r) {
+            Long lid = l.getMessageId();
+            Long rid = r.getMessageId();
+            if (lid != null && rid != null) {
+                // reverse
+                int rv = rid.compareTo(lid);
+                if (rv != 0)
+                    return rv;
+            }
+            int lhc = lid.hashCode();
+            int rhc = rid.hashCode();
+            if (lhc < rhc)
+                return -1;
+            if (lhc > rhc)
+                return 1;
+            return 0;
+        }
+    }
+
     public List<SyndieURI> selectURIsToPush(DBClient client, UI ui, SharedArchive archive, PushStrategy strategy) {
         List<SyndieURI> rv = new ArrayList();
         if (strategy.sendNothing)

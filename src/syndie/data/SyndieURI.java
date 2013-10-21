@@ -674,7 +674,12 @@ public class SyndieURI {
        return target;
     }
     
-    public boolean equals(Object obj) { return (obj != null) && toString().equals(obj.toString()); }
+    public boolean equals(Object obj) {
+        if (obj == this)
+            return true;
+        return (obj != null) && toString().equals(obj.toString());
+    }
+
     public int hashCode() { return toString().hashCode(); }
 
     public static String encodeKey(byte orig[]) {
