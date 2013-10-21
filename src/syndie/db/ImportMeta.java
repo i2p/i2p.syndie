@@ -45,6 +45,8 @@ class ImportMeta {
         boolean wasPublic = false;
         EnclosureBody body = null;
         SigningPublicKey ident = enc.getHeaderSigningKey(Constants.MSG_META_HEADER_IDENTITY);
+        if (ident == null)
+            return IMPORT_NO_CHAN;
         Hash identHash = ident.calculateHash();
         if (client.getBannedChannels().contains(identHash)) {
             ui.errorMessage("Not importing banned metadata for " + identHash.toBase64());
@@ -150,12 +152,14 @@ class ImportMeta {
 
         // if we don't...
         Connection con = client.con();
-        boolean wasAuto = false;
+        boolean wasAuto = true;
         try {
             wasAuto = con.getAutoCommit();
             con.commit();
             con.setAutoCommit(false);
             long channelId = -1;
+            // FIXME race, ident is UNIQUE so insertIntoChannel can fail.
+            // retry below as update?
             if (knownEdition < 0) // brand new
                 channelId = insertIntoChannel(client, ui, nymId, passphrase, enc, body, identKey, ident, edition.longValue());
             else
