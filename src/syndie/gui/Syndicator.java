@@ -596,6 +596,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
     
     private void viewDetailArchive(SyncArchive archive, boolean fireDefaultAction) {
         if (_detail != null) _detail.dispose();
+
         // SyndicatorDetailHTTPArchive deals with HTTP and Freenet archives (and though
         // it covers for the file based archives, a separate file based archive config
         // would be better).  down the line we may need to pick different ones here
@@ -673,6 +674,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
     
     private TreeItem loadDataRoot(SyncArchive archive) {
         long nextTime = getNextTime(archive);
+        //_ui.debugMessage("loadDataRoot(" + archive + ")", new Exception("I did it"));
         _ui.debugMessage("loadDataRoot(" + archive + "): nextTime in " + (nextTime-System.currentTimeMillis()) + "ms");
         TreeItem rootItem = _archiveNameToRootItem.get(archive.getName());
         if (rootItem == null) {
@@ -1273,7 +1275,38 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
     public void archiveUpdated(final SyncArchive archive) {
         if (_disposed) return;
         _ui.debugMessage("archiveUpdated(" + archive + ")");
-        Display.getDefault().syncExec(new Runnable() { public void run() { loadData(archive); } });
+        Display.getDefault().syncExec(new Runnable() {
+            public void run() {
+                String oldName = archive.getPreviousName();
+                String newName = archive.getName();
+                if (oldName != null && newName != null && oldName != newName) {
+                    // Big fixup on archive rename
+                    TreeItem t = _archiveNameToRootItem.remove(oldName);
+                    if (t != null) {
+                        _archiveNameToRootItem.put(newName, t);
+                        t.setText(0, newName);
+                        resizeCols(t);
+                        refreshHeaders();
+                    }
+                    t = _archiveNameToIndexItem.remove(oldName);
+                    if (t != null)
+                        _archiveNameToIndexItem.put(newName, t);
+                    t = _archiveNameToIncomingItem.remove(oldName);
+                    if (t != null)
+                        _archiveNameToIncomingItem.put(newName, t);
+                    t = _archiveNameToOutgoingItem.remove(oldName);
+                    if (t != null)
+                        _archiveNameToIncomingItem.put(newName, t);
+                    Map<SyndieURI, TreeItem> m = _archiveNameToIncoming.remove(oldName);
+                    if (m != null)
+                        _archiveNameToIncoming.put(newName, m);
+                    m = _archiveNameToOutgoing.remove(oldName);
+                    if (m != null)
+                        _archiveNameToOutgoing.put(newName, m);
+                }
+                loadData(archive);
+            }
+        });
     }
 
     public void onlineStatusUpdated(boolean nowOnline) {}

@@ -27,6 +27,7 @@ public class SyncArchive {
     private final DBClient _client;
     private String _name;
     private final String _oldName;
+    private String _previousName;
     private String _archiveURL;
     private String _postKey;
     private String _readKey;
@@ -73,6 +74,7 @@ public class SyncArchive {
         _client = client;
         _name = name;
         _oldName = name;
+        _previousName = name;
         _uriId = -1;
         _lastSyncTime = -1;
         _nextSyncTime = -1;
@@ -781,7 +783,17 @@ public class SyncArchive {
     }
     
     public String getName() { return _name; }
-    public void setName(String name) { _name = name; }
+    public void setName(String name) {
+        _previousName = _name;
+        _name = name;
+    }
+
+    /**
+     *  Listeners may compare this to getName() to see if the name changed
+     *  @since 1.104b-4
+     */
+    public String getPreviousName() { return _previousName; }
+
     public String getURL() { return _archiveURL; }
     public void setURL(String url) { _archiveURL = url; }
     public String getPostKey() { return _postKey; }
@@ -1030,6 +1042,7 @@ public class SyncArchive {
     }
 
     public String toString() {
-        return "Archive " + _archiveURL;
+        return "Archive '" + _name + "': " +
+               ((_archiveURL != null && _archiveURL.length() > 0) ? _archiveURL : "URL Not Set");
     }
 }
