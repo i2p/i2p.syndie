@@ -28,6 +28,7 @@ class SyncInboundFetcher {
     private volatile boolean _die;
 
     private static final int THREADS = 3;
+    private static final int I2P_RETRIES = 1;
     
     public SyncInboundFetcher(SyncManager mgr) {
         _manager = mgr;
@@ -268,14 +269,18 @@ class SyncInboundFetcher {
         // fetch all of the meta before any of the messages, as we need the meta for the channels
         // we are importing the messages with (to verify signatures).  within these fetches there
         // are 5 concurrent fetches running through the individual files to fetch
-        fetchHTTPMeta(archive, pendingMeta, archiveURL, query, importer, whitelistScopes);
-        _manager.getUI().debugMessage("meta fetches run, waiting for the queue to finish");
-        importer.finishQueue();
-        _manager.getUI().debugMessage("meta fetches imported, fetching msgs");
-        fetchHTTPMsgs(archive, pendingMsg, archiveURL, query, importer, whitelistScopes);
-        _manager.getUI().debugMessage("msg fetches run, waiting for the queue to finish");
-        importer.finishQueue();
-        _manager.getUI().debugMessage("msgs imported, complete");
+        if (!pendingMeta.isEmpty()) {
+            fetchHTTPMeta(archive, pendingMeta, archiveURL, query, importer, whitelistScopes);
+            _manager.getUI().debugMessage("meta fetches run, waiting for the queue to finish");
+            importer.finishQueue();
+            _manager.getUI().debugMessage("meta fetches imported, fetching msgs");
+        }
+        if (!pendingMsg.isEmpty()) {
+            fetchHTTPMsgs(archive, pendingMsg, archiveURL, query, importer, whitelistScopes);
+            _manager.getUI().debugMessage("msg fetches run, waiting for the queue to finish");
+            importer.finishQueue();
+            _manager.getUI().debugMessage("msgs imported, complete");
+        }
         importer.complete();
     }
     
@@ -283,8 +288,9 @@ class SyncInboundFetcher {
     
     private void fetchHTTPMeta(SyncArchive archive, List<SyncArchive.IncomingAction> actions,
                                String archiveURL, String query, DataImporter importer, Set whitelistScopes) {
-        List<Thread> fetchers = new ArrayList(CONCURRENT_FETCHES);
-        for (int i = 0; i < CONCURRENT_FETCHES; i++) {
+        int cnt = Math.min(actions.size(), CONCURRENT_FETCHES);
+        List<Thread> fetchers = new ArrayList(cnt);
+        for (int i = 0; i < cnt; i++) {
             Thread t = new Thread(new Fetch(archive, actions, archiveURL, query, importer, whitelistScopes), "MetaFetcher " + i);
             t.start();
             fetchers.add(t);
@@ -297,8 +303,9 @@ class SyncInboundFetcher {
     
     private void fetchHTTPMsgs(SyncArchive archive, List<SyncArchive.IncomingAction> actions,
                                String archiveURL, String query, DataImporter importer, Set whitelistScopes) {
-        List<Thread> fetchers = new ArrayList(CONCURRENT_FETCHES);
-        for (int i = 0; i < CONCURRENT_FETCHES; i++) {
+        int cnt = Math.min(actions.size(), CONCURRENT_FETCHES);
+        List<Thread> fetchers = new ArrayList(cnt);
+        for (int i = 0; i < cnt; i++) {
             Thread t = new Thread(new Fetch(archive, actions, archiveURL, query, importer, whitelistScopes), "MsgFetcher " + i);
             t.start();
             fetchers.add(t);
@@ -366,7 +373,7 @@ class SyncInboundFetcher {
                     _manager.getUI().debugMessage(Thread.currentThread().getName() + ": Fetching [" + url + "]");
                 try {
                     File dataFile = SecureFile.createTempFile("httpget", "dat", _manager.getClient().getTempDir());
-                    EepGet get = new EepGet(I2PAppContext.getGlobalContext(), _archive.getHTTPProxyHost(), _archive.getHTTPProxyPort(), 3, dataFile.getAbsolutePath(), url);
+                    EepGet get = new EepGet(I2PAppContext.getGlobalContext(), _archive.getHTTPProxyHost(), _archive.getHTTPProxyPort(), I2P_RETRIES, dataFile.getAbsolutePath(), url);
                     GetListener lsnr = new GetListener(action, dataFile, _importer, _whitelistScopes);
                     get.addStatusListener(lsnr);
                     // 1m for headers, 10m total, 60s idle
