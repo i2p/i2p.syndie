@@ -803,7 +803,7 @@ public class NymChannelTree implements Themeable, Translatable {
                 r.channelId = chanId;
                 
                 if (hash!= null && hash.length == Hash.HASH_LENGTH)
-                    r.name = UIUtil.displayName(name, Hash.create(hash));
+                    r.name = UIUtil.displayName(name, new Hash(hash));
                 else
                     r.name = UIUtil.displayName(name, null);
                 

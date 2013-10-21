@@ -354,7 +354,7 @@ public class DBClient {
      *  The current hsqldb library version
      *
      *  @return library version or "unknown"
-     *  @since 1.104b
+     *  @since 1.104b-2
      */
     public String getHsqldbVersion() {
         return DBUpgrade.getHsqldbVersion(_con);
@@ -1064,7 +1064,7 @@ public class DBClient {
                     continue;
                 if (hash.length != Hash.HASH_LENGTH)
                     continue;
-                rv.put(Long.valueOf(id), Hash.create(hash));
+                rv.put(Long.valueOf(id), new Hash(hash));
             }
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
@@ -1089,7 +1089,7 @@ public class DBClient {
             if (rs.next()) {
                 byte chanHash[] = rs.getBytes(1);
                 if ( (chanHash != null) && (chanHash.length == Hash.HASH_LENGTH) )
-                    return Hash.create(chanHash);
+                    return new Hash(chanHash);
                 return null;
             } else {
                 return null;
@@ -1332,7 +1332,7 @@ public class DBClient {
                 if (rs.wasNull())
                     return null;
                 else
-                    return PublicKey.create(rv, 0);
+                    return new PublicKey(rv);
             } else {
                 return null;
             }
@@ -1444,7 +1444,7 @@ public class DBClient {
                      */
                 }
                 
-                rv.add(new NymKey(type, data, _context.sha().calculateHash(data).toBase64(), auth, function, nymId, (chan != null ? Hash.create(chan) : null)));
+                rv.add(new NymKey(type, data, _context.sha().calculateHash(data).toBase64(), auth, function, nymId, (chan != null ? new Hash(chan) : null)));
             }
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
@@ -1508,7 +1508,7 @@ public class DBClient {
                 if (rs.wasNull()) {
                     continue;
                 } else {
-                    SigningPublicKey pub = SigningPublicKey.create(key, 0);
+                    SigningPublicKey pub = new SigningPublicKey(key);
                     if (!rv.contains(pub))
                         rv.add(pub);
                 }
@@ -1538,7 +1538,7 @@ public class DBClient {
                 if (rs.wasNull())
                     return null;
                 else
-                    return SigningPublicKey.create(rv, 0);
+                    return new SigningPublicKey(rv);
             } else {
                 return null;
             }
@@ -1569,7 +1569,7 @@ public class DBClient {
                 if (rs.wasNull()) chanId = -1;
                 boolean isExpired = (rs.getDate(4) == null);
                 if ( (chan != null) && (chan.length == Hash.HASH_LENGTH) && (key != null) && (key.length == SessionKey.KEYSIZE_BYTES) )
-                    rv.add(new NymKey(Constants.KEY_TYPE_AES256, key, true, Constants.KEY_FUNCTION_READ, _nymId, Hash.create(chan), isExpired));
+                    rv.add(new NymKey(Constants.KEY_TYPE_AES256, key, true, Constants.KEY_FUNCTION_READ, _nymId, new Hash(chan), isExpired));
             }
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
@@ -2196,9 +2196,9 @@ public class DBClient {
                 String petdesc = rs.getString(15);
                 
                 info.setChannelId(channelId);
-                info.setChannelHash(Hash.create(chanHash));
-                info.setIdentKey(SigningPublicKey.create(identKey, 0));
-                info.setEncryptKey(PublicKey.create(encryptKey, 0));
+                info.setChannelHash(new Hash(chanHash));
+                info.setIdentKey(new SigningPublicKey(identKey));
+                info.setEncryptKey(new PublicKey(encryptKey));
                 info.setEdition(edition);
                 info.setName(petname == null ? name : petname);
                 info.setDescription(petdesc == null ? desc : petdesc);
@@ -2503,7 +2503,7 @@ public class DBClient {
                 // authPub
                 byte key[] = rs.getBytes(1);
                 if (!rs.wasNull())
-                    keys.add(SigningPublicKey.create(key, 0));
+                    keys.add(new SigningPublicKey(key));
             }
             return keys;
         } catch (SQLException se) {
@@ -2528,7 +2528,7 @@ public class DBClient {
                 // authPub
                 byte key[] = rs.getBytes(1);
                 if (!rs.wasNull())
-                    keys.add(SigningPublicKey.create(key, 0));
+                    keys.add(new SigningPublicKey(key));
             }
             return keys;
         } catch (SQLException se) {
@@ -2879,7 +2879,7 @@ public class DBClient {
             while (rs.next()) {
                 byte hash[] = rs.getBytes(1);
                 if ( (hash != null) && (hash.length == Hash.HASH_LENGTH) )
-                    rv.add(SyndieURI.createScope(Hash.create(hash)));
+                    rv.add(SyndieURI.createScope(new Hash(hash)));
             }
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
@@ -2905,7 +2905,7 @@ public class DBClient {
                 if (rs.wasNull())
                     continue;
                 if ( (hash != null) && (hash.length == Hash.HASH_LENGTH) )
-                    rv.add(SyndieURI.createMessage(Hash.create(hash), messageId));
+                    rv.add(SyndieURI.createMessage(new Hash(hash), messageId));
             }
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
@@ -3141,7 +3141,7 @@ public class DBClient {
             if (rs.next()) {
                 byte hash[] = rs.getBytes(1);
                 if ( (hash != null) && (hash.length == Hash.HASH_LENGTH) )
-                    return Hash.create(hash);
+                    return new Hash(hash);
                 else
                     return null;
             } else {
@@ -3237,7 +3237,7 @@ public class DBClient {
             if (rs.next()) {
                 byte data[] = rs.getBytes(1);
                 if ( (data != null) && (data.length == SigningPublicKey.KEYSIZE_BYTES) )
-                    return SigningPublicKey.create(data, 0);
+                    return new SigningPublicKey(data);
                 else
                     return null;
             } else {
@@ -3266,7 +3266,7 @@ public class DBClient {
             if (rs.next()) {
                 byte data[] = rs.getBytes(1);
                 if ( (data != null) && (data.length == PublicKey.KEYSIZE_BYTES) )
-                    return PublicKey.create(data, 0);
+                    return new PublicKey(data);
                 else
                     return null;
             } else {
@@ -3405,7 +3405,7 @@ public class DBClient {
                     info.setTargetChannel(chan);//chan.getChannelHash());
                 info.setSubject(subject);
                 if ( (overwriteChannel != null) && (overwriteMessage >= 0) ) {
-                    info.setOverwriteChannel(Hash.create(overwriteChannel));
+                    info.setOverwriteChannel(new Hash(overwriteChannel));
                     info.setOverwriteMessage(overwriteMessage);
                 }
                 info.setForceNewThread(forceNewThread);
@@ -3447,7 +3447,7 @@ public class DBClient {
                 byte chan[] = rs.getBytes(1);
                 long refId = rs.getLong(2);
                 if (!rs.wasNull() && (chan != null) )
-                    uris.add(SyndieURI.createMessage(Hash.create(chan), refId));
+                    uris.add(SyndieURI.createMessage(new Hash(chan), refId));
             }
             info.setHierarchy(uris);
         } catch (SQLException se) {
@@ -3942,7 +3942,7 @@ public class DBClient {
     /**
      *  Get as stream
      *  @return null on error
-     *  @since 1.104b
+     *  @since 1.104b-2
      */
     public InputStream getMessageAttachmentAsStream(long internalMessageId, int attachmentNum) {
         ensureLoggedIn();
@@ -4069,7 +4069,7 @@ public class DBClient {
      *
      *  @param col1 primary key (long)
      *  @param col2 primary key (int)
-     *  @since 1.104b
+     *  @since 1.104b-2
      */
     private void migrateToLob(String table, String col1, String col2, String bigColumn, long maxLen, boolean isBinary) {
         ensureLoggedIn();
@@ -4193,7 +4193,7 @@ public class DBClient {
                 if ( (chan != null) && (chan.length == Hash.HASH_LENGTH) ) {
                     if (newOnly && (when != null) && (when.getTime() <= (System.currentTimeMillis()-SharedArchiveBuilder.PERIOD_NEW)) )
                         continue;
-                    rv.add(Hash.create(chan));
+                    rv.add(new Hash(chan));
                 }
             }
             return rv;
@@ -4498,10 +4498,33 @@ public class DBClient {
     void deleteFromDB(SyndieURI uri, UI ui) { deleteFromDB(uri, ui, DELETION_CAUSE_OTHER); }
 
     void deleteFromDB(SyndieURI uri, UI ui, int deletionCause) {
+        long scopeId = getChannelId(uri.getScope());
         if (uri.getMessageId() == null) {
             // delete the whole channel, though all of the posts
             // will be deleted separately
-            long scopeId = getChannelId(uri.getScope());
+            if (deletionCause < 0)
+                ui.debugMessage("Deleting the channel " + uri.getScope().toBase64() + " from the database" +
+                                " cause = " + deletionCause, new Exception("I did it"));
+            deleteFromDB(scopeId, ui);
+        } else {
+            // delete just the given message
+            long internalId = getMessageId(scopeId, uri.getMessageId().longValue());
+            Exception exception = deleteMessageFromDB(internalId, deletionCause);
+            if (exception == null) {
+                if (deletionCause < 0)
+                    ui.debugMessage("Deleted the post " + uri.getScope().toBase64() + ":" + uri.getMessageId() + " from the database" +
+                                 " cause = " + deletionCause, new Exception("I did it"));
+            } else {
+                ui.errorMessage("Error deleting the post " + uri, exception);
+            }
+        }
+    }
+
+    /**
+     *  Delete a channel
+     *  @since 1.104b-3 from method above
+     */
+    private void deleteFromDB(long scopeId, UI ui) {
             try {
                 exec(ImportMeta.SQL_DELETE_TAGS, scopeId);
                 exec(ImportMeta.SQL_DELETE_POSTKEYS, scopeId);
@@ -4515,27 +4538,11 @@ public class DBClient {
                 exec(ImportMeta.SQL_DELETE_CHANNEL_REFERENCES, scopeId);
                 exec(SQL_DELETE_CHANNEL, scopeId);
                 exec(SQL_DELETE_UNREAD_CHANNELS, scopeId);
-                if (deletionCause < 0)
-                    ui.debugMessage("Deleted the channel " + uri.getScope().toBase64() + " from the database" +
-                                    " cause = " + deletionCause, new Exception("I did it"));
             } catch (SQLException se) {
-                ui.errorMessage("Unable to delete the channel " + uri.getScope().toBase64(), se);
+                ui.errorMessage("Unable to delete the channel " + scopeId, se);
             }
-        } else {
-            // delete just the given message
-            long scopeId = getChannelId(uri.getScope());
-            long internalId = getMessageId(scopeId, uri.getMessageId().longValue());
-            Exception exception = deleteMessageFromDB(internalId, deletionCause);
-            if (exception == null) {
-                if (deletionCause < 0)
-                    ui.debugMessage("Deleted the post " + uri.getScope().toBase64() + ":" + uri.getMessageId() + " from the database" +
-                                 " cause = " + deletionCause, new Exception("I did it"));
-            } else {
-                ui.errorMessage("Error deleting the post " + uri, exception);
-            }
-        }
     }
-    
+
     public Exception expireMessageFromDB(long msgId) { return deleteMessageFromDB(msgId, DELETION_CAUSE_EXPIRE); }
 
     Exception deleteMessageFromDB(long msgId, int deletionCause) {
@@ -5537,7 +5544,7 @@ public class DBClient {
      *  @param dbFileRoot /path/to/.syndie/db/syndie (i.e. without the .data suffix)
      *  @param out /path/to/zipfile
      *  @return success
-     *  @since 1.104b
+     *  @since 1.104b-2
      */
     static void offlineBackup(String dbFileRoot, String out) throws IOException {
         List<String> suffixes = new ArrayList(4);
@@ -5551,7 +5558,7 @@ public class DBClient {
      *  Do the backup
      *  @param dbFileRoot /path/to/.syndie/db/syndie (i.e. without the .data suffix)
      *  @param out /path/to/zipfile
-     *  @since 1.104b
+     *  @since 1.104b-2
      */
     private static void backup(String dbFileRoot, String prefix, List<String> suffixes, String out) throws IOException {
         ZipOutputStream zos = new ZipOutputStream(new SecureFileOutputStream(out));
@@ -6855,7 +6862,7 @@ public class DBClient {
                 data.periodBegin = rs.getDate(5);
                 data.periodEnd = rs.getDate(6);
                 data.function = rs.getString(7);
-                data.channel = Hash.create(rs.getBytes(8));
+                data.channel = new Hash(rs.getBytes(8));
                 
                 if (data.keySalt != null) {
                     byte key[] = pbeDecrypt(data.keyData, oldPass, data.keySalt);
