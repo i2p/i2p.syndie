@@ -32,6 +32,7 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
+import org.eclipse.swt.widgets.MessageBox;
 
 import net.i2p.data.DataHelper;
 import net.i2p.data.Hash;
@@ -658,35 +659,86 @@ public class StatusBar extends BaseComponent implements Translatable, Themeable,
         for (int i = 0; i < items.length; i++)
             items[i].dispose();
         
-        List uris = _client.getPBERequired(true, true);
-        for (int i = 0; i < uris.size(); i++) {
-            final SyndieURI uri = (SyndieURI)uris.get(i);
-            String name = _client.getChannelName(uri.getScope());
-            String displayName = UIUtil.displayName(name, uri.getScope());
+        final List<SyndieURI> meta = _client.getPBERequired(true, false);
+        if (!meta.isEmpty()) {
+            MenuItem item = new MenuItem(_pbeMenu, SWT.NONE);
+            item.setText(getText("Forums requiring password"));
+            item.setImage(ImageUtil.ICON_MSG_TYPE_NORMAL);
+            item = new MenuItem(_pbeMenu, SWT.PUSH);
+            item.setText(getText("Ban these forums"));
+            item.setImage(ImageUtil.ICON_MSG_TYPE_NORMAL);
+            item.addSelectionListener(new FireSelectionListener() {
+                public void fire() {
+                    MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_QUESTION | SWT.YES | SWT.NO);
+                    box.setMessage(getText("Are you sure?"));
+                    box.setText(getText("Delete?"));
+                    int rc = box.open();
+                    if (rc == SWT.YES) {
+                        for (SyndieURI uri : meta) {
+                             Hash hash = uri.getScope();
+                             if (hash == null)
+                                 continue;
+                             _client.ban(hash, _ui, true);
+                        }
+                        refreshPBE();
+                    }
+                }
+            });
+            new MenuItem(_pbeMenu, SWT.SEPARATOR);
+            for (final SyndieURI uri : meta) {
+                String name = _client.getChannelName(uri.getScope());
+                String displayName = UIUtil.displayName(name, uri.getScope());
 
-            if (uri.getMessageId() == null) {
                 if (uri.getScope() == null)
                     continue;
-                MenuItem item = new MenuItem(_pbeMenu, SWT.PUSH);
+                item = new MenuItem(_pbeMenu, SWT.PUSH);
                 item.setText(displayName);
                 item.setImage(ImageUtil.ICON_MSG_TYPE_META);
-                item.addSelectionListener(new SelectionListener() {
-                    public void widgetDefaultSelected(SelectionEvent selectionEvent) { _navControl.view(uri); }
-                    public void widgetSelected(SelectionEvent selectionEvent) { _navControl.view(uri); }
-                });
-            } else {
-                // TODO we shouldn't show if deleted, but previous bug deleted the
-                // message when attempting to reimport it, so we have to show it
-                MenuItem item = new MenuItem(_pbeMenu, SWT.PUSH);
-                item.setText(displayName);
-                item.setImage(ImageUtil.ICON_MSG_TYPE_NORMAL);
-                item.addSelectionListener(new SelectionListener() {
-                    public void widgetDefaultSelected(SelectionEvent selectionEvent) { _navControl.view(uri); }
-                    public void widgetSelected(SelectionEvent selectionEvent) { _navControl.view(uri); }
+                item.addSelectionListener(new FireSelectionListener() {
+                    public void fire() { _navControl.view(uri); }
                 });
             }
         }
-        return uris.size();
+        final List<SyndieURI> msgs = _client.getPBERequired(false, true);
+        if (!msgs.isEmpty()) {
+            if (!meta.isEmpty())
+                new MenuItem(_pbeMenu, SWT.SEPARATOR);
+            MenuItem item = new MenuItem(_pbeMenu, SWT.NONE);
+            item.setText(getText("Messages requiring password"));
+            item.setImage(ImageUtil.ICON_MSG_TYPE_NORMAL);
+            item = new MenuItem(_pbeMenu, SWT.PUSH);
+            item.setText(getText("Delete these messages"));
+            item.setImage(ImageUtil.ICON_MSG_TYPE_NORMAL);
+            item.addSelectionListener(new FireSelectionListener() {
+                public void fire() {
+                    MessageBox box = new MessageBox(_root.getShell(), SWT.ICON_QUESTION | SWT.YES | SWT.NO);
+                    box.setMessage(getText("Are you sure?"));
+                    box.setText(getText("Delete?"));
+                    int rc = box.open();
+                    if (rc == SWT.YES) {
+                        for (SyndieURI uri : msgs) {
+                             _client.deleteMessage(uri, _ui, true);
+                        }
+                        refreshPBE();
+                    }
+                }
+            });
+            new MenuItem(_pbeMenu, SWT.SEPARATOR);
+            for (final SyndieURI uri : msgs) {
+                String name = _client.getChannelName(uri.getScope());
+                String displayName = UIUtil.displayName(name, uri.getScope());
+
+                // TODO we shouldn't show if deleted, but previous bug deleted the
+                // message when attempting to reimport it, so we have to show it
+                item = new MenuItem(_pbeMenu, SWT.PUSH);
+                item.setText(displayName);
+                item.setImage(ImageUtil.ICON_MSG_TYPE_NORMAL);
+                item.addSelectionListener(new FireSelectionListener() {
+                    public void fire() { _navControl.view(uri); }
+                });
+            }
+        }
+        return meta.size() + msgs.size();
     }
 
     /** @return number of draft messages */

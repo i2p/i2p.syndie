@@ -2890,7 +2890,9 @@ public class DBClient {
         }
     }
 
-    private static final String SQL_GET_PBEREQUIRED_MSGS = "SELECT channelHash, messageId FROM channelMessage JOIN channel ON channelId = scopeChannelId WHERE pbePrompt IS NOT NULL";
+    //private static final String SQL_GET_PBEREQUIRED_MSGS = "SELECT channelHash, messageId FROM channelMessage JOIN channel ON channelId = scopeChannelId WHERE pbePrompt IS NOT NULL";
+    // as of 1.104b-5, don't return deleted messages
+    private static final String SQL_GET_PBEREQUIRED_MSGS = "SELECT channelHash, messageId FROM channelMessage JOIN channel ON channelId = scopeChannelId WHERE pbePrompt IS NOT NULL AND deletionCause IS NULL";
 
     /** @param rv out parameter */
     private void getPBERequiredMsgs(List<SyndieURI> rv) {
