@@ -50,9 +50,9 @@ archive.6.url=http://syndie.welterde.i2p/?i2paddresshelper=tYPP3G3Ul1wXDxyotkqzT
 archive.6.proxy=127.0.0.1:4444
 archive.6.pullpolicy=RecentMessagesOnly
 archive.6.pushpolicy=SendNothing
-archive.6.syncbydefault=true
+archive.6.syncbydefault=false
 ##########################################
-archive.7.name=syndie.welterde.de (not anonymous)
+archive.7.name=syndie.welterde.de (clearnet)
 archive.7.url=http://syndie.welterde.de/
 archive.7.pushpolicy=SendNothing
 archive.7.syncbydefault=false

@@ -15,6 +15,8 @@ public class PullStrategy {
         includeRecentMessagesOnly = SharedArchive.DEFAULT_RECENT_ONLY;
         discoverArchives = true;
         newAgeDays = SharedArchive.DEFAULT_NEWAGE_DAYS;
+        // TODO serialization
+        requiredChannelsOnly = true;
     }
 
     public PullStrategy(String serialized) {
@@ -59,34 +61,41 @@ public class PullStrategy {
             }
         }
     }
+
     /**
      * if a message exceeds this size, do not pull it
      */
     public int maxKBPerMessage;
+
     /**
      * how much data we will pull across all of the messages (ignoring metadata size
      * and transmission overhead)
      */
     public int maxKBTotal;
+
     /** 
      * if true, only pull down messages and/or metadata for channels we already
      * know locally
      */
     public boolean knownChannelsOnly;
+
     /**
      * if true, pull down messages encrypted to forum owner(s) (even if that
      * isn't us)
      */
     public boolean includePrivateMessages;
+
     /**
      * if true, pull down messages that are encrypted with a passphrase 
      */
     public boolean includePBEMessages;
+
     /**
      * should we only fetch messages the archive advertises as 'recent', even if they
      * have messages we would otherwise want but are flagged as 'old'?
      */
     public boolean includeRecentMessagesOnly;
+
     /**
      * if true, we want to use trivial single-database private information retrieval:
      * get everything the archive advertises as "new", and their dependencies, even if
@@ -121,6 +130,16 @@ public class PullStrategy {
      * messages.
      */
     public boolean pullWhitelistOnly;
+
+    /** 
+     * if true, only pull down messages and/or metadata for channels where there
+     * are messages to pull also.
+     * Default true and can't be changed atm.
+     * @since 1.104b-3
+     */
+    public boolean requiredChannelsOnly;
+
+
     
     public String toString() {
         StringBuilder buf = new StringBuilder();

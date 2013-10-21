@@ -61,6 +61,12 @@ public class SharedArchiveEngine {
                 long knownVersion = client.getChannelVersion(scope);
                 if (strategy.knownChannelsOnly && (knownVersion < 0))
                     continue;
+                if (strategy.requiredChannelsOnly && knownVersion < 0) {
+                    // Don't fetch all channels. If we find a message for the scope below,
+                    // we will add the scope then.
+                    // In effect we won't fetch empty channels.
+                    continue;
+                }
                 if (channels[i].getVersion() > knownVersion) {
                     ui.debugMessage("shared archive has a newer version than we do for " + scope.toBase64() + " [them: " + channels[i].getVersion() + ", us: " + knownVersion + "]");
                     scopes.add(SyndieURI.createScope(scope));

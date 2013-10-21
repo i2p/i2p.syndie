@@ -1303,6 +1303,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                     m = _archiveNameToOutgoing.remove(oldName);
                     if (m != null)
                         _archiveNameToOutgoing.put(newName, m);
+                    // TODO does not resort
                 }
                 loadData(archive);
             }

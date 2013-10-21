@@ -1,5 +1,10 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
+* 2013-10-xx 1.104b-4 (zzz)
+  - Fix dup archive in Syndicator Tab after rename
+  - Reduce default pull policy to 14 days
+  - Only pull indexes needed for pulled messages
+
 * 2013-10-21 1.104b-3 (zzz)
   - Fix cause of DB corruption / dup forums in -2
   - Fetch messages newest-first
