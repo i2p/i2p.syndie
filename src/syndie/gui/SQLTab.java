@@ -131,8 +131,9 @@ class SQLTab extends BrowserTab implements Translatable, Themeable {
         if (val == null)
             return "[null]";
         int len = val.length;
-        int clen = Math.min(len, 32);
-        return Base64.encode(val, 0, clen) + " len: " + len;
+        if (len <= 32)
+            return Base64.encode(val) + " len: " + len;
+        return Base64.encode(val, 0, 30) + "... len: " + len;
     }
     
     private void runCommand() {
