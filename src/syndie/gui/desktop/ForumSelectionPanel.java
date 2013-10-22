@@ -47,7 +47,7 @@ import syndie.gui.URIHelper;
 /**
  *
  */
-public class ForumSelectionPanel extends DesktopPanel {
+class ForumSelectionPanel extends DesktopPanel {
     private NymChannelTree _channels;
     private BanControl _banControl;
     private NavigationControl _navControl;

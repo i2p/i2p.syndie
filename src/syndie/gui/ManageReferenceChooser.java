@@ -45,7 +45,7 @@ import syndie.db.UI;
 /**
  *
  */
-public class ManageReferenceChooser extends BaseComponent implements Translatable, Themeable {
+class ManageReferenceChooser extends BaseComponent implements Translatable, Themeable {
     private NavigationControl _navControl;
     private BookmarkControl _bookmarkControl;
     private BanControl _banControl;

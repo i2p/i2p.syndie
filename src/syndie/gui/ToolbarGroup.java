@@ -17,7 +17,7 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 
-public class ToolbarGroup {
+class ToolbarGroup {
     CoolBar _coolBar;
     CoolItem _coolItem;
     Composite _toolBar;

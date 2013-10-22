@@ -41,7 +41,7 @@ import syndie.gui.Wizard.Page;
 /**
  *
  */
-public class WelcomeScreen extends Wizard {
+class WelcomeScreen extends Wizard {
     private final Browser _browser;
     private final CompleteListener _lsnr;
     

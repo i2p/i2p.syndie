@@ -27,7 +27,6 @@ import syndie.data.ChannelInfo;
 import syndie.data.NymKey;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
-import syndie.gui.*;
 
 /**
  *  See MessageCreatorDirect extension

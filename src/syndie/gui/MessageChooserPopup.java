@@ -16,7 +16,7 @@ import syndie.data.SyndieURI;
 /**
  *
  */
-public class MessageChooserPopup implements MessageTree.MessageTreeListener, Themeable, Translatable {
+class MessageChooserPopup implements MessageTree.MessageTreeListener, Themeable, Translatable {
     private Shell _parentShell;
     private Shell _shell;
     private ThemeRegistry _themeRegistry;

@@ -16,7 +16,7 @@ import syndie.data.WatchedChannel;
 import syndie.db.DBClient;
 import syndie.db.UI;
 
-public class ReferenceChooserTreeDnDSource {
+class ReferenceChooserTreeDnDSource {
     private DBClient _client;
     private UI _ui;
     private ReferenceChooserTree _tree;

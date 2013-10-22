@@ -28,7 +28,7 @@ import syndie.util.StringUtil;
 /**
  *
  */
-public class WebRipPostPopup extends BaseComponent implements Themeable, Translatable, WebRipPageControl.RipControlListener {
+class WebRipPostPopup extends BaseComponent implements Themeable, Translatable, WebRipPageControl.RipControlListener {
     private DataCallback _dataCallback;
     private NavigationControl _navControl;
     private Shell _parent;

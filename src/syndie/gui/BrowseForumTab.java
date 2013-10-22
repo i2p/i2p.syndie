@@ -10,7 +10,7 @@ import syndie.data.SyndieURI;
 /**
  *  Contains a BrowseForum
  */
-public class BrowseForumTab extends BrowserTab {
+class BrowseForumTab extends BrowserTab {
     private BrowseForum _browse;
     private String _name;
     private String _description;

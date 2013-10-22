@@ -75,7 +75,7 @@ import syndie.util.StringUtil;
 /**
  *  Contains the top header section and a MessageViewBody.
  */
-public class MessageView extends BaseComponent implements DataCallback, Translatable, Themeable {
+class MessageView extends BaseComponent implements DataCallback, Translatable, Themeable {
     private final NavigationControl _navControl;
     private final URIControl _uriControl;
     private final BookmarkControl _bookmarkControl;

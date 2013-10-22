@@ -29,7 +29,7 @@ import syndie.gui.URIHelper;
 /**
  *
  */
-public class SyndicatorPanel extends DesktopPanel implements Themeable, Translatable {
+class SyndicatorPanel extends DesktopPanel implements Themeable, Translatable {
     private Syndicator _syndicator;
     
     public SyndicatorPanel(Desktop desktop, DBClient client, ThemeRegistry themes, TranslationRegistry trans, Composite parent, UI ui, SyndieURI origURI) {

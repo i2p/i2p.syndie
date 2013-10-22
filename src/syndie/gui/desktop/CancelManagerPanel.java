@@ -11,7 +11,7 @@ import syndie.gui.CancelManager;
 import syndie.gui.ThemeRegistry;
 import syndie.gui.TranslationRegistry;
 
-public class CancelManagerPanel extends DesktopPanel {
+class CancelManagerPanel extends DesktopPanel {
     private CancelManager _manager;
     
     public CancelManagerPanel(Desktop desktop, DBClient client, ThemeRegistry themes, TranslationRegistry trans, Composite parent, UI ui, SyndieURI origURI) {

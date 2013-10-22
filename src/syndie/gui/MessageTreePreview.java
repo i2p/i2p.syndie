@@ -57,7 +57,7 @@ import syndie.db.UI;
 /**
  *  Popup in a MessageTree
  */
-public class MessageTreePreview extends BaseComponent implements Themeable, Translatable {
+class MessageTreePreview extends BaseComponent implements Themeable, Translatable {
     private NavigationControl _navControl;
     private BookmarkControl _bookmarkControl;
     private URIControl _uriControl;

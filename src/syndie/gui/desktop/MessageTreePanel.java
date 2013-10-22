@@ -48,7 +48,7 @@ import syndie.gui.URIHelper;
 import syndie.gui.WatchedMessageTree;
 import syndie.thread.MessageIterator;
 
-public class MessageTreePanel extends DesktopPanel implements Themeable, Translatable {
+class MessageTreePanel extends DesktopPanel implements Themeable, Translatable {
     private WatchedMessageTree _tree;
     private Listener _keyListener;
     private Hash _actionScope;

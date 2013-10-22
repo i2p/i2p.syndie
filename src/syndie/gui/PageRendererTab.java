@@ -20,7 +20,7 @@ import syndie.data.SyndieURI;
  *
  *  These are not the pages inside PageRenderer.
  */
-public class PageRendererTab extends BrowserTab implements Translatable, Themeable, PageRenderer.PageActionListener {
+class PageRendererTab extends BrowserTab implements Translatable, Themeable, PageRenderer.PageActionListener {
     protected PageRenderer _renderer;
     private String _name;
     private String _desc;

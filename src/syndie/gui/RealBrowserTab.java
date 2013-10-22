@@ -34,7 +34,7 @@ import syndie.data.SyndieURI;
  *
  *  @since 1.102b-12
  */
-public class RealBrowserTab extends BrowserTab implements Translatable, Themeable {
+class RealBrowserTab extends BrowserTab implements Translatable, Themeable {
     
     private org.eclipse.swt.browser.Browser _browser;
     private String _name;

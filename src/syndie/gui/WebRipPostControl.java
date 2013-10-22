@@ -18,7 +18,7 @@ import syndie.db.UI;
 /**
  * rip a web page to create a brand new post
  */
-public class WebRipPostControl extends WebRipPageControl {
+class WebRipPostControl extends WebRipPageControl {
     private MenuItem _privacyPublic;
     private MenuItem _privacyPBE;
     private MenuItem _privacyAuthorized;

@@ -65,7 +65,7 @@ import syndie.util.StringUtil;
  * Used for both the MessageViewBody and the PageEditor preview.
  *
  */
-public class PageRenderer extends BaseComponent implements Themeable {
+class PageRenderer extends BaseComponent implements Themeable {
     private final DataCallback _dataCallback;
     private final Composite _parent;
     private final StyledText _text;

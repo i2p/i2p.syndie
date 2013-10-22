@@ -13,7 +13,7 @@ import syndie.db.UI;
 /**
  *
  */
-public class DummyBrowserControl implements BrowserControl, NavigationControl {
+class DummyBrowserControl implements BrowserControl, NavigationControl {
     private DBClient _client;
     private UI _ui;
     private ThemeRegistry _themeRegistry;

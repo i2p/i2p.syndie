@@ -4,7 +4,7 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.FillLayout;
 import syndie.data.SyndieURI;
 
-public class SyndicatorTab extends BrowserTab {
+class SyndicatorTab extends BrowserTab {
     private Syndicator _syndicator;
     public SyndicatorTab(BrowserControl browser, SyndieURI uri) { super(browser, uri); }
     

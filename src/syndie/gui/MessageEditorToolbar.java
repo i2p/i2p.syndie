@@ -25,7 +25,7 @@ import org.eclipse.swt.events.SelectionListener;
 import syndie.data.SyndieURI;
 import syndie.db.DBClient;
 
-public class MessageEditorToolbar implements MessageEditor.EditorStatusListener {
+class MessageEditorToolbar implements MessageEditor.EditorStatusListener {
     private final Composite _parent;
     private final MessageEditor _editor;
     private final BookmarkControl _bookmarkControl;

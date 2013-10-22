@@ -7,7 +7,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import syndie.db.UI;
 
-public class CustomStyledText extends StyledText {
+class CustomStyledText extends StyledText {
     /**
      * when retheming, the whole browser is relaid out, but this styled text
      * is also redrawn, as is the containing PageRenderer.  so, when thats going

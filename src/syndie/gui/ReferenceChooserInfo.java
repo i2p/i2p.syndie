@@ -31,7 +31,7 @@ import syndie.db.UI;
  * summarize the currently selected reference
  *
  */
-public class ReferenceChooserInfo extends BaseComponent implements ReferenceChooserTree.ChoiceListener, Translatable {
+class ReferenceChooserInfo extends BaseComponent implements ReferenceChooserTree.ChoiceListener, Translatable {
     private Composite _parent;
     private ReferenceChooserTree _chooser;
     private ReferenceChooserTree.AcceptanceListener _listener;

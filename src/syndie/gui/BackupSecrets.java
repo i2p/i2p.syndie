@@ -58,7 +58,7 @@ import syndie.db.UI;
 /**
  *
  */
-public class BackupSecrets extends BaseComponent implements Themeable, Translatable {
+class BackupSecrets extends BaseComponent implements Themeable, Translatable {
     private Composite _parent;
     private NavigationControl _navControl;
     private SyndieURI _uri;

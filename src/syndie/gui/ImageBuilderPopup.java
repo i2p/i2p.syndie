@@ -53,7 +53,7 @@ import syndie.util.StringUtil;
 /**
  *
  */
-public class ImageBuilderPopup {
+class ImageBuilderPopup {
     private final Shell _parent;
     private final TranslationRegistry _translationRegistry;
     private Shell _shell;

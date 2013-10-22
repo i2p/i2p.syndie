@@ -12,7 +12,7 @@ import syndie.db.DBClient;
  * database.  however, this falls back on the database when referring to
  * elements not in the given message
  */
-public class PageRendererSourceMem extends PageRendererSource {
+class PageRendererSourceMem extends PageRendererSource {
     /** contents of each page (as String) */
     private List _pageData;
     /** ordered attachment data (byte[]) */

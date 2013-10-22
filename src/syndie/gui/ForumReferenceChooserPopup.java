@@ -31,7 +31,7 @@ import syndie.db.UI;
  * needs some small changes for that case.
  * and also has the "only include forums" text at the top
  */
-public class ForumReferenceChooserPopup extends BaseComponent implements ReferenceChooserPopup, Themeable, Translatable {
+class ForumReferenceChooserPopup extends BaseComponent implements ReferenceChooserPopup, Themeable, Translatable {
     private Composite _parent;
     private Shell _shell;
     private NymChannelTree _channels;

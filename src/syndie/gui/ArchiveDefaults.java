@@ -41,7 +41,7 @@ import syndie.util.StringUtil;
 /**
  *
  */
-public class ArchiveDefaults extends Composite implements Themeable, Translatable {
+class ArchiveDefaults extends Composite implements Themeable, Translatable {
     private final DBClient _client;
     private final UI _ui;
     private final ThemeRegistry _themeRegistry;

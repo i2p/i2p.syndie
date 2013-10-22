@@ -40,7 +40,7 @@ import syndie.gui.URIHelper;
 /**
  *
  */
-public class MessageEditorPanel extends DesktopPanel implements LocalMessageCallback, MessageEditor.EditorStatusListener, Translatable, Themeable {
+class MessageEditorPanel extends DesktopPanel implements LocalMessageCallback, MessageEditor.EditorStatusListener, Translatable, Themeable {
     private MessageEditor _editor;
     private Listener _keyListener;
     

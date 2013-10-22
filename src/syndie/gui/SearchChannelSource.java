@@ -12,7 +12,7 @@ import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
 import syndie.db.DBClient;
 
-public class SearchChannelSource implements NymChannelTree.ChannelSource {
+class SearchChannelSource implements NymChannelTree.ChannelSource {
     private DBClient _client;
     private TranslationRegistry _translationRegistry;
     private String _term;

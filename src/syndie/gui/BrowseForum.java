@@ -54,7 +54,7 @@ import syndie.db.UI;
  *
  *  Includes the header at the top, the MessageTree in the middle, and the FilterBar at the bottom.
  */
-public class BrowseForum extends BaseComponent implements MessageTree.MessageTreeListener, Translatable, Themeable {
+class BrowseForum extends BaseComponent implements MessageTree.MessageTreeListener, Translatable, Themeable {
     private final NavigationControl _navControl;
     private final BookmarkControl _bookmarkControl;
     private final URIControl _uriControl;

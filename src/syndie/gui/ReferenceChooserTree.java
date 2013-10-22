@@ -65,7 +65,7 @@ import syndie.db.UI;
  *  - $forumName
  *   - $archive|$ban|$bookmark
  */
-public class ReferenceChooserTree extends BaseComponent implements Translatable, Themeable, DBClient.WatchEventListener {
+class ReferenceChooserTree extends BaseComponent implements Translatable, Themeable, DBClient.WatchEventListener {
     /** unset, always null? */
     protected BanControl _dataControl;
     protected final NavigationControl _navControl;

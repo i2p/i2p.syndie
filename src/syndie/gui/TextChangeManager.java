@@ -22,7 +22,7 @@ import syndie.db.UI;
  * maintain the text / caret position / scroll index for the text, undoing
  * them on ^Z and redoing them on ^Y (clearing any redoables on a non-redo text change)
  */
-public class TextChangeManager {
+class TextChangeManager {
     private UI _ui;
     private Text _text;
     /** list of mementos */

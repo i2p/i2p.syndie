@@ -50,7 +50,7 @@ import syndie.db.UI;
 /**
  *  Unused except for static allowedToReply()
  */
-public class MessagePreview extends BaseComponent implements Themeable, Translatable {
+class MessagePreview extends BaseComponent implements Themeable, Translatable {
     private NavigationControl _navControl;
     private BookmarkControl _bookmarkControl;
     private URIControl _uriControl;

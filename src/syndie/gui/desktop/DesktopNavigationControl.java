@@ -8,7 +8,7 @@ import syndie.gui.BrowserTab;
 import syndie.gui.NavigationControl;
 import syndie.gui.URIHelper;
 
-public class DesktopNavigationControl implements NavigationControl {
+class DesktopNavigationControl implements NavigationControl {
     private Desktop _desktop;
     
     public DesktopNavigationControl(Desktop desktop) {

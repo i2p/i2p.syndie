@@ -18,7 +18,7 @@ import syndie.gui.Splash;
 import syndie.gui.ThemeRegistry;
 import syndie.gui.TranslationRegistry;
 
-public class ChangePassPopup {
+class ChangePassPopup {
     private Desktop _desktop;
     private UI _ui;
     private Shell _parent;

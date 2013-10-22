@@ -11,7 +11,7 @@ import syndie.db.DBClient;
  * allow simple and safe subclassing in the PageRendererSourceMem,
  * for instance)
  */
-public class PageRendererSource {
+class PageRendererSource {
     private DBClient _client;
     private ThemeRegistry _themes;
     private RenderListener _renderListener;

@@ -48,7 +48,7 @@ import syndie.gui.*;
 /**
  *
  */
-public class ControlMenuPanel extends DesktopPanel implements Themeable, Translatable {
+class ControlMenuPanel extends DesktopPanel implements Themeable, Translatable {
     private Label _importLabel;
     private Button _importFile;
     private Button _importBulk;

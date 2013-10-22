@@ -53,7 +53,7 @@ import syndie.util.DateTime;
 /**
  *
  */
-public class MessagePanel extends DesktopPanel implements Translatable, Themeable, DBClient.MessageStatusListener {
+class MessagePanel extends DesktopPanel implements Translatable, Themeable, DBClient.MessageStatusListener {
     private NavigationControl _navControl;
     private MessageViewBody _body;
     private MessageInfo _msg;

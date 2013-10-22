@@ -35,7 +35,7 @@ import syndie.gui.URIHelper;
  * show the list of previously postponed messages, allowing the user to resume one of
  * them, cancel one or more of them, or to create a brand new message
  */
-public class ResumeablePanel extends DesktopPanel implements Themeable, Translatable {
+class ResumeablePanel extends DesktopPanel implements Themeable, Translatable {
     private Button _resumeExisting;
     private Button _abortExisting;
     private Tree _existingTree;

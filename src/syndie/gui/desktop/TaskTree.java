@@ -33,7 +33,7 @@ import syndie.data.SyndieURI;
 import syndie.db.JobRunner;
 import syndie.gui.*;
 
-public class TaskTree extends BaseComponent implements Themeable, Translatable {
+class TaskTree extends BaseComponent implements Themeable, Translatable {
     private Desktop _desktop;
     private Composite _parent;
     

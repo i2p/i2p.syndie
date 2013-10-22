@@ -15,7 +15,7 @@ import syndie.data.SyndieURI;
 /**
  *
  */
-public class BugReportTab extends BrowserTab implements Translatable, Themeable {
+class BugReportTab extends BrowserTab implements Translatable, Themeable {
     private BugReport _report;
     
     public BugReportTab(BrowserControl browser, SyndieURI uri) {

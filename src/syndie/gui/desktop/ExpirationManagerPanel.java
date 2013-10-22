@@ -11,7 +11,7 @@ import syndie.gui.ExpirationManager;
 import syndie.gui.ThemeRegistry;
 import syndie.gui.TranslationRegistry;
 
-public class ExpirationManagerPanel extends DesktopPanel {
+class ExpirationManagerPanel extends DesktopPanel {
     private ExpirationManager _manager;
     
     public ExpirationManagerPanel(Desktop desktop, DBClient client, ThemeRegistry themes, TranslationRegistry trans, Composite parent, UI ui, SyndieURI origURI) {

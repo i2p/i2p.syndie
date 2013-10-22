@@ -38,7 +38,7 @@ import syndie.db.SyncArchive;
 import syndie.db.SyncManager;
 import syndie.db.UI;
 
-public class ManageForumArchives extends BaseComponent implements Themeable, Translatable {
+class ManageForumArchives extends BaseComponent implements Themeable, Translatable {
     private final ManageForum _manage;
     private Shell _shell;
     private Table _table;

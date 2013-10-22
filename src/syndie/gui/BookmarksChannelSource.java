@@ -12,7 +12,7 @@ import syndie.db.DBClient;
 /**
  *  Used by NymChannelTree
  */
-public class BookmarksChannelSource implements NymChannelTree.ChannelSource {
+class BookmarksChannelSource implements NymChannelTree.ChannelSource {
     private DBClient _client;
     private TranslationRegistry _translationRegistry;
     private List _refNodes;

@@ -12,7 +12,7 @@ import syndie.data.SyndieURI;
  * but on winxp it seemed to do some funky things, so just fall back on using
  * strings for now
  */
-public class BookmarkDnD {
+class BookmarkDnD {
     public SyndieURI uri;
     public String name;
     public String desc;    

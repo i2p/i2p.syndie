@@ -24,7 +24,7 @@ import syndie.db.UI;
  *
  * Can this just extend TextChangeManager?
  */
-public class StyledTextChangeManager {
+class StyledTextChangeManager {
     private UI _ui;
     private StyledText _text;
     /** list of mementos */

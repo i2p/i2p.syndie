@@ -12,7 +12,7 @@ import syndie.gui.NavigationControl;
 import syndie.gui.ThemeRegistry;
 import syndie.gui.TranslationRegistry;
 
-public class ArchiveManagerPanel extends DesktopPanel {
+class ArchiveManagerPanel extends DesktopPanel {
     private ArchiveManager _manager;
     private NavigationControl _navControl;
     

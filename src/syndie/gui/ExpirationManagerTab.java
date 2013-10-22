@@ -10,7 +10,7 @@ import syndie.data.SyndieURI;
 /**
  *
  */
-public class ExpirationManagerTab extends BrowserTab {
+class ExpirationManagerTab extends BrowserTab {
     private ExpirationManager _manager;
     
     public ExpirationManagerTab(BrowserControl browser, SyndieURI uri) { super(browser, uri); }

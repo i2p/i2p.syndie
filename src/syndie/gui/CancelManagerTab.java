@@ -10,7 +10,7 @@ import syndie.data.SyndieURI;
 /**
  *
  */
-public class CancelManagerTab extends BrowserTab {
+class CancelManagerTab extends BrowserTab {
     private CancelManager _manager;
     
     public CancelManagerTab(BrowserControl browser, SyndieURI uri) { super(browser, uri); }

@@ -28,7 +28,7 @@ import syndie.gui.Translatable;
 import syndie.gui.TranslationRegistry;
 import syndie.gui.URIHelper;
 
-public class StandaloneMessageViewer implements Translatable, Themeable {
+class StandaloneMessageViewer implements Translatable, Themeable {
     private DBClient _client;
     private UI _ui;
     private Shell _parent;

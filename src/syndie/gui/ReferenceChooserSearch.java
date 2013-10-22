@@ -28,7 +28,7 @@ import syndie.db.UI;
 /**
  * search control for a ReferenceChooserTree
  */
-public class ReferenceChooserSearch extends BaseComponent implements Translatable {
+class ReferenceChooserSearch extends BaseComponent implements Translatable {
     private ReferenceChooserTree _chooser;
     private Composite _parent;
     private Group _root;

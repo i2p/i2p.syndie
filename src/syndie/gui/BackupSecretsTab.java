@@ -8,7 +8,7 @@ import syndie.data.SyndieURI;
 /**
  *
  */
-public class BackupSecretsTab extends BrowserTab {
+class BackupSecretsTab extends BrowserTab {
     private BackupSecrets _backup;
     
     public BackupSecretsTab(BrowserControl browser, SyndieURI uri) { super(browser, uri); }

@@ -33,7 +33,7 @@ import syndie.db.UI;
 /**
  *
  */
-public class ReferencesPanel extends BaseComponent implements Translatable, Themeable {
+class ReferencesPanel extends BaseComponent implements Translatable, Themeable {
     private NavigationControl _nav;
     private BookmarkControl _bookmark;
     private Composite _parent;

@@ -54,7 +54,7 @@ import syndie.util.DateTime;
 /**
  *  The bottom strip
  */
-public class StatusBar extends BaseComponent implements Translatable, Themeable, DBClient.WatchEventListener {
+class StatusBar extends BaseComponent implements Translatable, Themeable, DBClient.WatchEventListener {
     private final BookmarkControl _bookmarkControl;
     private final NavigationControl _navControl;
     private final URIControl _uriControl;

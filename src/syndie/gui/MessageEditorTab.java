@@ -10,7 +10,7 @@ import syndie.data.SyndieURI;
 /**
  *  Contains a MessageEditor
  */
-public class MessageEditorTab extends BrowserTab implements LocalMessageCallback, Translatable {
+class MessageEditorTab extends BrowserTab implements LocalMessageCallback, Translatable {
     private MessageEditor _editor;
     private Hash _forum;
     private SyndieURI _parent;

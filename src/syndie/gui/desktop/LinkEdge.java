@@ -43,7 +43,7 @@ import syndie.gui.TranslationRegistry;
  * left edge serving as a drag and drop target to bookmark/watch forums/resources as
  * well as to access the forum selection panel
  */
-public class LinkEdge extends DesktopEdge implements Themeable, Translatable {
+class LinkEdge extends DesktopEdge implements Themeable, Translatable {
     private Desktop _desktop;
     private Button _specialChannels;
     private Button _bookmarks;

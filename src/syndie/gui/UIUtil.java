@@ -10,7 +10,7 @@ import net.i2p.data.Hash;
  *  Misc. stuff
  *  @since 1.102b-5
  */
-public class UIUtil {
+class UIUtil {
 
     public static final int MAX_NAME_LEN = 28;
     public static final int MAX_DESCRIPTION_LEN = 100;

@@ -20,7 +20,7 @@ import syndie.db.UI;
 /**
  *
  */
-public class ManageReferenceChooserPopup extends BaseComponent implements Themeable, Translatable {
+class ManageReferenceChooserPopup extends BaseComponent implements Themeable, Translatable {
     private Shell _parentShell;
     private Shell _shell;
     private ManageReferenceChooser _refs;

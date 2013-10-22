@@ -18,7 +18,7 @@ import syndie.data.SyndieURI;
  *  The URI params "file" supplies the location of the file, relative to the doc/ directory.
  *  @since 1.102b-8
  */
-public class HelpTab extends  PageRendererTab {
+class HelpTab extends  PageRendererTab {
     
     private static final int MAX_LINES = 2000;
 

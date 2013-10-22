@@ -25,7 +25,7 @@ import syndie.gui.URIHelper;
 /**
  *
  */
-public class WelcomePopup implements Themeable, Translatable {
+class WelcomePopup implements Themeable, Translatable {
     private Desktop _desktop;
     private UI _ui;
     private ThemeRegistry _themeRegistry;

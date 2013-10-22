@@ -18,7 +18,7 @@ import org.eclipse.swt.widgets.Shell;
 /**
  *  Used for WelcomeScreen
  */
-abstract public class Wizard implements Themeable, Translatable {
+abstract class Wizard implements Themeable, Translatable {
     protected final Display _display;
     protected final Shell _shell;
     

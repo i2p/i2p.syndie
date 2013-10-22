@@ -46,7 +46,7 @@ import syndie.html.WebRipRunner;
 /**
  *
  */
-public class BugReport extends BaseComponent implements Themeable, Translatable {
+class BugReport extends BaseComponent implements Themeable, Translatable {
     private Composite _parent;
     private BanControl _dataControl;
     private DataCallback _dataCallback;

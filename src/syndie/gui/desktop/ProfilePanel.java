@@ -43,7 +43,7 @@ import syndie.gui.ViewForum;
 /**
  *
  */
-public class ProfilePanel extends DesktopPanel implements Themeable, Translatable {
+class ProfilePanel extends DesktopPanel implements Themeable, Translatable {
     private ViewForum _view;
     private ManageForum _manage;
     private Hash _scope;

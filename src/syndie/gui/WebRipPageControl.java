@@ -25,7 +25,7 @@ import syndie.html.WebRipRunner;
 /**
  * rip a web page to add as a new page to an existing post
  */
-public class WebRipPageControl extends BaseComponent implements Translatable, Themeable, WebRipRunner.RipListener {
+class WebRipPageControl extends BaseComponent implements Translatable, Themeable, WebRipRunner.RipListener {
     private Composite _parent;
     private Composite _root;
     private Label _urlLabel;

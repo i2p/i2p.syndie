@@ -12,7 +12,7 @@ import syndie.data.SyndieURI;
 /**
  *  Contains an ArchiveManager
  */
-public class ArchiveManagerTab extends BrowserTab {
+class ArchiveManagerTab extends BrowserTab {
     private ArchiveManager _manager;
     
     public ArchiveManagerTab(BrowserControl browser, SyndieURI uri) { super(browser, uri); }

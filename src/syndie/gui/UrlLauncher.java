@@ -37,7 +37,7 @@ import net.i2p.util.SystemVersion;
  * @author hypercubus
  * @since 1.102b-12 adapted from I2P app/systray
  */
-public class UrlLauncher implements Runnable {
+class UrlLauncher implements Runnable {
 
     private final ShellCommand _shellCommand = new ShellCommand();
     private final String _url;
