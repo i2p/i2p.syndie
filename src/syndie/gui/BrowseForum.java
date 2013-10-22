@@ -361,14 +361,15 @@ class BrowseForum extends BaseComponent implements MessageTree.MessageTreeListen
         });
 
         _metaRefCombo = new Combo(_meta, SWT.DROP_DOWN | SWT.BORDER | SWT.READ_ONLY);
-        _metaRefCombo.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false, 9, 1));
+        _metaRefCombo.setLayoutData(new GridData(GridData.END, GridData.FILL, false, false, 9, 1));
         ((GridData)_metaRefCombo.getLayoutData()).exclude = true;
         _metaRefCombo.setVisible(false);
         _metaRefCombo.addSelectionListener(new FireSelectionListener() {
             public void fire() {
                 int idx = _metaRefCombo.getSelectionIndex();
+                idx--;  // index 0 is now the "references" label
                 if ( (idx >= 0) && (idx < _refs.size()) ) {
-                    SyndieURI uri = (SyndieURI)_refs.get(idx);
+                    SyndieURI uri = _refs.get(idx);
                     _navControl.view(uri);
                 }
             }
@@ -537,8 +538,13 @@ class BrowseForum extends BaseComponent implements MessageTree.MessageTreeListen
         
             if (inclRefs) {
                 addRefs(refs);
-                _metaRefCombo.setVisible(true);
-                ((GridData)_metaRefCombo.getLayoutData()).exclude = false;
+                if (!_refs.isEmpty()) {
+                    _metaRefCombo.setVisible(true);
+                    ((GridData)_metaRefCombo.getLayoutData()).exclude = false;
+                } else {
+                    _metaRefCombo.setVisible(false);
+                    ((GridData)_metaRefCombo.getLayoutData()).exclude = true;
+                }
             } else {
                 _metaRefCombo.setVisible(false);
                 ((GridData)_metaRefCombo.getLayoutData()).exclude = true;
@@ -579,17 +585,20 @@ class BrowseForum extends BaseComponent implements MessageTree.MessageTreeListen
         _sash.layout(true, true);
     }
 
-    private List _refs;
+    private List<SyndieURI> _refs;
+
     private void addRefs(List refRoots) {
         _refs = new ArrayList();
         _metaRefCombo.removeAll();
+        _metaRefCombo.add(getText("Advertised references"));
+        _metaRefCombo.select(0);
         ReferenceNode.walk(refRoots, new ReferenceNode.Visitor() {
             public void visit(ReferenceNode node, int depth, int siblingOrder) {
                 SyndieURI uri = node.getURI();
                 if (uri == null) return;
                 String name = node.getName();
                 String desc = node.getDescription();
-                String val = null;
+                String val;
                 if ( (name != null) && (desc != null) )
                     val = name + ": " + desc;
                 else if (name != null)
@@ -602,6 +611,10 @@ class BrowseForum extends BaseComponent implements MessageTree.MessageTreeListen
                     val = val + " - " + uri.getURL();
                 else
                     val = val + " - " + uri.toString();
+                if (val.length() <= 0)
+                    return;
+                if (val.length() > 100)
+                    val = val.substring(0, 98) + "...";
                 
                 _metaRefCombo.add(val);
                 _refs.add(uri);

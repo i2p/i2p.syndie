@@ -1,11 +1,11 @@
 package syndie.data;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+
 import net.i2p.data.DataHelper;
 
 /**
@@ -16,7 +16,7 @@ public class ReferenceNode {
     protected SyndieURI _uri;
     protected String _description;
     protected String _refType;
-    protected List<ReferenceNode> _children;
+    protected final List<ReferenceNode> _children;
     protected ReferenceNode _parent;
     /**
      * contains the node's index in a tree of nodes.  For instance, "1.3.2.15"
@@ -268,6 +268,7 @@ public class ReferenceNode {
         public void visit(ReferenceNode node, int depth, int siblingOrder);
     }
     
+/****
     public static void main(String args[]) {
         test(TEST_TREE1);
         test(TEST_TREE2);
@@ -286,6 +287,7 @@ public class ReferenceNode {
         else
             System.out.println("Trees do not match: tree content = \n" + treeContent + "\n\nwalked = \n" + walked.toString());
     }
+****/
     
     private static void append(StringBuilder walked, ReferenceNode node, int indent) {
         for (int i = 0; i < indent; i++)
@@ -306,6 +308,7 @@ public class ReferenceNode {
             append(walked, node.getChild(i), indent+1);
     }
 
+/****
     private static final String TEST_TREE1 = "rootName\t\t\tfirst grouping\n" +
                                              "\tchildName\t\t\t\n" +
                                              "\tsecondChild\t\t\t\n" +
@@ -329,4 +332,5 @@ public class ReferenceNode {
                                              "s\turn:syndie:dummy:de\ta\td\n" +
                                              "thirdRoot\t\t\t\n" +
                                              "\tchildOfThirdRoot\t\t\t\n\t\t\t\t\t\n";
+****/
 }
