@@ -45,6 +45,7 @@ public class MessageFlagBar extends BaseComponent implements Translatable {
     public Control getControl() {
         return _root;
     }
+
     public Image[] getFlags() {
         return (Image[])_images.toArray(new Image[0]);
         /*
@@ -55,6 +56,7 @@ public class MessageFlagBar extends BaseComponent implements Translatable {
         return rv;
          */
     }
+
     public String getTooltip() {
         if (!_realized) realizeComponents();
         Control ctl[] = _root.getChildren();
@@ -69,6 +71,7 @@ public class MessageFlagBar extends BaseComponent implements Translatable {
     }
     
     public void setMessage(MessageInfo msg) { setMessage(msg, true); }
+
     public void setMessage(MessageInfo msg, boolean relayout) { 
         _msg = msg;
         rebuildFlags(relayout);
@@ -87,6 +90,13 @@ public class MessageFlagBar extends BaseComponent implements Translatable {
         }
     }
     
+    /**
+     *  @since 1.104b-5
+     */
+    public void rebuildFlags() {
+        rebuildFlags(true);
+    }
+
     private void rebuildFlags(boolean relayout) {
         if (_realized) {
             //_browser.getUI().debugMessage("rebuilding flags for " + (_msg != null ? _msg.getURI().toString() : "no message"));
@@ -105,6 +115,7 @@ public class MessageFlagBar extends BaseComponent implements Translatable {
             buildImages();
         }
     }
+
     private void clearFlags() {
         disposeImages();
         Control ctl[] = _root.getChildren();
@@ -113,26 +124,30 @@ public class MessageFlagBar extends BaseComponent implements Translatable {
                 ctl[i].dispose();
         }
     }
+
     private void createLabels() {
         for (int i = 0; i < _images.size(); i++) {
             ImageCanvas c = new ImageCanvas(_root, false, false, false);
             c.forceSize(16, 16);
             //Label l = new Label(_root, SWT.NONE);
             //l.setImage((Image)_images.get(i));
-            c.setImage((Image)_images.get(i));
+            c.setImage(_images.get(i));
             if (_bg != null)
                c.setBackground(_bg);
         }
     }
+
     private void finishRebuild() {
         _root.layout(true, true);
     }
+
     private void disposeImages() {
         for (int i = 0; i < _images.size(); i++) {
-            Image img = (Image)_images.get(i);
+            Image img = _images.get(i);
             ImageUtil.dispose(img);
         }
     }
+
     private void buildImages() {
         if (_msg == null) return;
         
@@ -176,8 +191,9 @@ public class MessageFlagBar extends BaseComponent implements Translatable {
             boolean hasAttachments = _msg.getAttachmentCount() > 0;
             // the flagbar is shown when you're looking at the message, so
             // doesn't seem like we should ever display the unread icon
-            //boolean isNew = _client.getMessageStatus(_msg.getInternalId(), _msg.getTargetChannelId()) == DBClient.MSG_STATUS_UNREAD;
-            boolean isNew = false;
+            // Well, now we can mark it unread again
+            boolean isNew = _client.getMessageStatus(_msg.getInternalId(), _msg.getTargetChannelId()) == DBClient.MSG_STATUS_UNREAD;
+            //boolean isNew = false;
             
             for (int i = 0; i < refs.size(); i++) {
                 if (hasArchives((ReferenceNode)refs.get(i))) {
@@ -283,7 +299,7 @@ public class MessageFlagBar extends BaseComponent implements Translatable {
         for (int i = 0; i < ctl.length; i++) {
             if (!ctl[i].isDisposed()) {
                 _ui.debugMessage("translating icon " + i);
-                Image img = (Image)_images.get(i); //l.getImage();
+                Image img = _images.get(i); //l.getImage();
                 if (img == ImageUtil.ICON_MSG_FLAG_PBE)
                     ctl[i].setToolTipText(registry.getText("Post is passphrase protected"));
                 else if (img == ImageUtil.ICON_MSG_FLAG_READKEYUNKNOWN)

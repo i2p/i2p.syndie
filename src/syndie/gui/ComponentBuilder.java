@@ -74,6 +74,14 @@ public class ComponentBuilder {
         return new PageRenderer(_client, _ui, _themes, _trans, parent, scrollbars, showForumMenu, _dataCallback);
     }
     
+    /**
+     * Specify the data callback
+     * @since 1.104b-5
+     */
+    public PageRenderer createPageRenderer(Composite parent, boolean scrollbars, boolean showForumMenu, DataCallback dataCallback) {
+        return new PageRenderer(_client, _ui, _themes, _trans, parent, scrollbars, showForumMenu, dataCallback);
+    }
+    
     /** @deprecated unused */
     public MessagePreview createMessagePreview(Composite parent) {
         return new MessagePreview(_client, _ui, _themes, _trans, _navControl, _bookmarkControl, _uriControl, parent);

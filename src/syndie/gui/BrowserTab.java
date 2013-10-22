@@ -185,6 +185,13 @@ public abstract class BrowserTab extends BaseComponent implements Themeable {
      */
     public void tabShown() { _root.layout(true); }
 
+    /**
+     * Will be called when another tab is selected.
+     * Not called before close().
+     * @since 1.104b-5
+     */
+    public void tabHidden() {}
+
     protected void configItem() {
         reconfigItem();
         _item.addDisposeListener(new DisposeListener() {

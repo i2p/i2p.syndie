@@ -1424,6 +1424,9 @@ public class PageRenderer extends BaseComponent implements Themeable {
                     _bodyReplyToForum.setEnabled(true);
                 else
                     _bodyReplyToForum.setEnabled(false);
+                boolean read = _client.getMessageStatus(_msg.getInternalId()) == DBClient.MSG_STATUS_READ;
+                _bodyMarkAsRead.setEnabled(!read);
+                _bodyMarkAsUnread.setEnabled(read);
             }
         });
 

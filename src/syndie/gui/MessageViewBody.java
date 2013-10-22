@@ -241,7 +241,8 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
             _tabs[i].setImage(ImageUtil.ICON_MSG_TYPE_NORMAL);
             
             _tabRoots[i].setLayout(new FillLayout());
-            _body[i] = ComponentBuilder.instance().createPageRenderer(_tabRoots[i], true, true);
+            // specify the call back so mark read/unread will change the icon in MessageView
+            _body[i] = ComponentBuilder.instance().createPageRenderer(_tabRoots[i], true, true, _dataCallback);
             timer.addEvent("initBody n-page renderer constructed");
             _body[i].setListener(lsnr);
             SyndieURI uri = SyndieURI.createMessage(msg.getScopeChannel(), msg.getMessageId(), i+1);

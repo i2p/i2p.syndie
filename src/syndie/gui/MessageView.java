@@ -45,7 +45,9 @@ import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.MessageBox;
@@ -73,7 +75,7 @@ import syndie.util.StringUtil;
 /**
  *  Contains the top header section and a MessageViewBody.
  */
-public class MessageView extends BaseComponent implements Translatable, Themeable {
+public class MessageView extends BaseComponent implements DataCallback, Translatable, Themeable {
     private final NavigationControl _navControl;
     private final URIControl _uriControl;
     private final BookmarkControl _bookmarkControl;
@@ -125,11 +127,14 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
     //private MessagePreview _preview;
     
     private final SyndieURI _uri;
+    private SyndieURI _prevUri;
+    private SyndieURI _nextUri;
     private int _page;
     private Hash _author;
     private Hash _target;
     private boolean _enabled;
     private long _msgId;
+    private final Listener _keyListener;
     
     public MessageView(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl navControl, URIControl uriControl, BookmarkControl bookmarkControl, BanControl ban, Composite parent, SyndieURI uri, DataCallback dataCallback) {
         super(client, ui, themes, trans);
@@ -147,13 +152,78 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
             _page = 1;
         else
             _page = page.intValue();
+        _keyListener = new KeyListener();
         Timer timer = new Timer("view page " + Integer.toHexString(System.identityHashCode(this)), _ui);
         initComponents(timer);
         showPage(timer);
         timer.complete();
     }
     
+    /**
+     *  @since 1.104b-5
+     */
+    private class KeyListener implements Listener {
+        private final int MODS = SWT.CTRL | SWT.ALT | SWT.COMMAND;
+        public void handleEvent(Event evt) {
+            if (_msg == null)
+                return;
+            if ((evt.stateMask & MODS) != 0)
+                return;
+            if (evt.character == 'M' || evt.character == 'm') {
+                evt.type = SWT.None;
+                evt.doit = false;
+                boolean read = _client.getMessageStatus(_msg.getInternalId()) == DBClient.MSG_STATUS_READ;
+                long id = _msg.getInternalId();
+                if (read)
+                    _client.markMessageUnread(id);
+                else
+                    _client.markMessageRead(id);
+                readStatusUpdated();
+            } else if (evt.character == 'B' || evt.character == 'b' ||
+                       evt.character == 'P' || evt.character == 'p') {  // should be prev unread
+                if (!_headerGoToPrevInThread.getEnabled())
+                    return;
+                SyndieURI uri = _prevUri;
+                if (uri != null) {
+                    evt.type = SWT.None;
+                    evt.doit = false;
+                    _navControl.unview(_uri);
+                    _navControl.view(uri);
+                }
+            } else if (evt.character == 'F' || evt.character == 'f' ||
+                       evt.character == 'N' || evt.character == 'n') {  // should be next unread
+                if (!_headerGoToNextInThread.getEnabled())
+                    return;
+                SyndieURI uri = _nextUri;
+                if (uri != null) {
+                    evt.type = SWT.None;
+                    evt.doit = false;
+                    _navControl.unview(_uri);
+                    _navControl.view(uri);
+                }
+            } else if (evt.character == 'R' || evt.character == 'r' ||
+                       evt.character == 'L' || evt.character == 'l') {  // should be reply to list
+                if (allowedPublicReply()) {
+                    evt.type = SWT.None;
+                    evt.doit = false;
+                    replyPublicForum();
+                }
+            }
+        }
+    }
+
+    /**
+     *  @since 1.104b-5
+     */
+    public void setKeyListener(boolean enable) {
+        if (enable)
+            _parent.getDisplay().addFilter(SWT.KeyDown, _keyListener);
+        else
+            _parent.getDisplay().removeFilter(SWT.KeyDown, _keyListener);
+    }
+
     public Control getControl() { return _root; }
+
     void enable() { 
         // wtf.  workaround for swt3.3M4 on linux/gtk where it fires the first button it finds
         // as part of an extra event when hitting return on a MessageTree.  by adding a new
@@ -251,8 +321,13 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
                 prompt.open();
             } else {
                 _root.setVisible(true);
-                if (MessageTree.shouldMarkReadOnView(_client))
+                if (MessageTree.shouldMarkReadOnView(_client) &&
+                    _client.getMessageStatus(msg.getInternalId()) == DBClient.MSG_STATUS_UNREAD) {
                     _client.markMessageRead(msg.getInternalId());
+                    // clear the read icon that was already drawn
+                    _headerFlags.rebuildFlags();
+                    _dataCallback.readStatusUpdated();
+                }
             }
             // perhaps we should check for the message avatar too...
             byte authorAvatar[] = _client.getChannelAvatar(msg.getAuthorChannelId());
@@ -346,7 +421,7 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
         _root.layout(true, true);
         timer.addEvent("layout complete");
     }
-    
+
     private String calculateSubject(MessageInfo msg) { return calculateSubject(_client, _translationRegistry, msg); }
 
     public static String calculateSubject(DBClient client, TranslationRegistry trans, MessageInfo msg) {
@@ -722,7 +797,8 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
         _bodyContainer.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true, 9, 1));
         _bodyContainer.setLayout(new FillLayout());
         
-        _messageViewBody = new MessageViewBody(_client, _ui, _themeRegistry, _translationRegistry, _navControl, _uriControl, _bookmarkControl, _banControl, _bodyContainer, _dataCallback);
+        _messageViewBody = new MessageViewBody(_client, _ui, _themeRegistry, _translationRegistry, _navControl,
+                                               _uriControl, _bookmarkControl, _banControl, _bodyContainer, this);
         _messageViewBody.addThreadLoadedListener(new MessageViewBody.ThreadLoadedListener() {
             public void threadLoaded(List threadReferenceNodes, ThreadMsgId curMsg, int threadSize) {
                 configGoTo(threadReferenceNodes, curMsg, threadSize);
@@ -736,6 +812,22 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
         timer.addEvent("initialized");
     }
     
+    /////// begin DataCallback methods for MessageViewBody
+    
+    public void messageImported() { _dataCallback.messageImported(); }
+
+    public void metaImported() { _dataCallback.metaImported(); }
+
+    /** update the header flags */
+    public void readStatusUpdated() {
+        _headerFlags.rebuildFlags();
+        _dataCallback.readStatusUpdated();
+    }
+
+    public void forumCreated() { _dataCallback.forumCreated(); }
+
+    /////// end DataCallback methods
+
     private static class ThreadLocator implements ReferenceNode.Visitor {
         private ThreadMsgId _target;
         private SyndieURI _prevURI;
@@ -769,19 +861,13 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
             ThreadLocator loc = new ThreadLocator(curMsg);
             ReferenceNode.walk(threadReferenceNodes, loc);
             final SyndieURI nextURI = loc.getNextURI();
+            _nextUri = nextURI;
             final SyndieURI prevURI = loc.getPrevURI();
+            _prevUri = prevURI;
             if (nextURI != null) {
                 _headerGoToNextInThread.setEnabled(true);
-                _headerGoToNextInThread.addSelectionListener(new SelectionListener() {
-                    public void widgetDefaultSelected(SelectionEvent evt) {
-                        if (!_enabled) {
-                            // gobble the extra event. see enable()
-                            return;
-                        }
-                        _navControl.unview(_uri);
-                        _navControl.view(nextURI);
-                    }
-                    public void widgetSelected(SelectionEvent evt) {
+                _headerGoToNextInThread.addSelectionListener(new FireSelectionListener() {
+                    public void fire() {
                         if (!_enabled) {
                             // gobble the extra event. see enable()
                             return;
@@ -795,16 +881,8 @@ public class MessageView extends BaseComponent implements Translatable, Themeabl
             }
             if (prevURI != null) {
                 _headerGoToPrevInThread.setEnabled(true);
-                _headerGoToPrevInThread.addSelectionListener(new SelectionListener() {
-                    public void widgetDefaultSelected(SelectionEvent evt) {
-                        if (!_enabled) {
-                            // gobble the extra event. see enable()
-                            return;
-                        }
-                        _navControl.unview(_uri);
-                        _navControl.view(prevURI);
-                    }
-                    public void widgetSelected(SelectionEvent evt) {
+                _headerGoToPrevInThread.addSelectionListener(new FireSelectionListener() {
+                    public void fire() {
                         if (!_enabled) {
                             // gobble the extra event. see enable()
                             return;

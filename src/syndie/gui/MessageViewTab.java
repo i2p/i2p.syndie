@@ -37,6 +37,7 @@ public class MessageViewTab extends BrowserTab implements Translatable, Themeabl
         getBrowser().getTranslationRegistry().register(this);
     }
     
+    @Override
     public void tabShown() {
         String text = null;
         String msg = null;
@@ -59,17 +60,24 @@ public class MessageViewTab extends BrowserTab implements Translatable, Themeabl
             return;
         }    
         _view.enable();
+        _view.setKeyListener(true);
         super.tabShown();
     }
     
-    
+    @Override
+    public void tabHidden() {
+        _view.setKeyListener(false);
+    }    
+
     protected void disposeDetails() { 
+        _view.setKeyListener(false);
         _view.dispose();
         getBrowser().getTranslationRegistry().unregister(this);
         getBrowser().getThemeRegistry().unregister(this);
     }
 
     
+    @Override
     public boolean canShow(SyndieURI uri) { 
         if (super.canShow(uri)) return true;
         if (uri == null) return false;
@@ -78,6 +86,7 @@ public class MessageViewTab extends BrowserTab implements Translatable, Themeabl
         return false;
     }
     
+    @Override
     public void show(SyndieURI uri) {
         if (uri.getPage() != null)
             _view.viewPage(uri.getPage().intValue());
@@ -85,11 +94,19 @@ public class MessageViewTab extends BrowserTab implements Translatable, Themeabl
             _view.viewAttachment(uri.getAttachment().intValue());
     }
     
+    @Override
     public void toggleMaxView() { _view.toggleMaxView(); }
+
+    @Override
     public void toggleMaxEditor() { _view.toggleMaxEditor(); }
     
+    @Override
     public Image getIcon() { return ImageUtil.ICON_TAB_MSG; }
+
+    @Override
     public String getName() { return _name != null ? _name : _view.getTitle(); }
+
+    @Override
     public String getDescription() { return _desc != null ? _desc : getURI().toString(); }
 
     public void translate(TranslationRegistry registry) {

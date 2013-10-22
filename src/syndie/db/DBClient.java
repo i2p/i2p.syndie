@@ -5825,8 +5825,20 @@ public class DBClient {
     public static final int MSG_STATUS_UNREAD = 3;
 
     private static final String SQL_GET_MSG_STATUS = "SELECT msgId FROM nymUnreadMessage WHERE nymId = ? AND msgId = ?";
+
+    /**
+     *  @return MSG_STATUS_READ (1) or MSG_STATUS_UNREAD (3)
+     */
+    /**
+     *  @return MSG_STATUS_READ (1) or MSG_STATUS_UNREAD (3)
+     */
     public int getMessageStatus(long msgId) { return getMessageStatus(msgId, -1); }
+
+    /**
+     *  @return MSG_STATUS_READ (1) or MSG_STATUS_UNREAD (3)
+     */
     public int getMessageStatus(long msgId, long targetChanId) { return getMessageStatus(_nymId, msgId, targetChanId); }
+
     public int getMessageStatus(long nymId, long msgId, long targetChanId) {
         PreparedStatement stmt = null;
         ResultSet rs = null;

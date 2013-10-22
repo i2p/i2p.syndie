@@ -350,8 +350,12 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
                 CTabItem item = _tabs.getSelection();
                 Object uri = _openTabURIs.get(item);
                 if (uri == null) return;
-                BrowserTab tab = (BrowserTab)_openTabs.get(uri);
+                BrowserTab tab = _openTabs.get(uri);
                 if (tab == null) return;
+                for (BrowserTab bt : _openTabs.values()) {
+                    if (bt != tab)
+                        bt.tabHidden();
+                }
                 tab.tabShown();
             }
         });
@@ -1599,6 +1603,10 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
                 _tabs.setRedraw(false);
                 _tabs.setBackgroundImage(null);
                 _tabs.setRedraw(true);
+            }
+            for (BrowserTab bt : _openTabs.values()) {
+                if (bt != tab)
+                    bt.tabHidden();
             }
             tab.show(uri);
             //debugMessage("showing tab");
