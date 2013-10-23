@@ -328,7 +328,7 @@ class StatusBar extends BaseComponent implements Translatable, Themeable, DBClie
     private void doRefreshDisplay() { doRefreshDisplay(false); }
 
     private void doRefreshDisplay(boolean onlineStateOnly) {
-        //_ui.debugMessage("SB DRD begin OSO=" + onlineStateOnly + " SN=" + _syncNow + " ER=" + _enableRefresh);
+        //_ui.debugMessage("SB DRD begin OSO=" + onlineStateOnly + " SN=" + _syncNow + " ER=" + _enableRefresh, new Exception());
         SyncManager mgr = SyncManager.getInstance(_client, _ui);
         displayOnlineState(mgr.isOnline());
         
@@ -336,26 +336,18 @@ class StatusBar extends BaseComponent implements Translatable, Themeable, DBClie
         if (_syncNow) return; // don't update the status details during a refresh
        
         if (!_enableRefresh) return;
+
         // 1 (threaded)
         refreshNewForums();
         // 2 (threaded)
         calcUnread();
-        // 3
-        int pbe = refreshPBE();
+        // 3 (threaded)
+        refreshPBE();
         // 4
         String priv = refreshPrivateMessages();
         // 5
         int postpone = refreshPostponed();
         _ui.debugMessage("statusbar dorefreshdisplay all refreshes done");
-        
-        if (pbe > 0) {
-            _pbe.setText(getText("Pass. reqd") + ": " + pbe);
-            ((GridData)_pbe.getLayoutData()).exclude = false;
-            _pbe.setVisible(true);
-        } else {
-            ((GridData)_pbe.getLayoutData()).exclude = true;
-            _pbe.setVisible(false);
-        }
         
         if (priv != null) {
             _priv.setText(getText("Private msgs") + ": " + priv);
@@ -383,7 +375,7 @@ class StatusBar extends BaseComponent implements Translatable, Themeable, DBClie
         //if (newForums == 0) cells++;
         //if (unread == null) cells++;
         if (unreadExcluded) cells++;
-        if (pbe == 0) cells++;
+        //if (pbe == 0) cells++;
         if (priv == null) cells++;
         if (postpone == 0) cells++;
         
@@ -424,7 +416,7 @@ class StatusBar extends BaseComponent implements Translatable, Themeable, DBClie
         _ui.debugMessage("statusbar calcUnread sync wait");
         synchronized (StatusBar.this) {
             if (_unreadCalcInProgress) {
-                //_browser.getUI().debugMessage("skipping calcUnread");
+                //_ui.debugMessage("skipping calcUnread");
                 return;
             }
             _unreadCalcInProgress = true;
@@ -469,6 +461,7 @@ class StatusBar extends BaseComponent implements Translatable, Themeable, DBClie
      *  UI thread
      */
     private void renderUnread(Map sortedForums, int threads) {
+        //_ui.debugMessage("RU start");
         MenuItem items[] = _unreadMenu.getItems();
         for (int i = 0; i < items.length; i++)
             items[i].dispose();
@@ -538,6 +531,7 @@ class StatusBar extends BaseComponent implements Translatable, Themeable, DBClie
         }
         
         _root.layout(true);
+        //_ui.debugMessage("RU end");
     }
     
 
@@ -654,12 +648,40 @@ class StatusBar extends BaseComponent implements Translatable, Themeable, DBClie
     }
 
 
-    private int refreshPBE() {
+    /**
+     *  UI Thread to Job Queue to UI thread
+     */
+    private void refreshPBE() {
+        JobRunner.instance().enqueue(new Runnable() {
+            public void run() {
+                calcPBE();
+            }
+        });
+    }
+
+    /**
+     *  Job Queue and back to UI thread
+     *  @since 1.104b-5
+     */
+    private void calcPBE() {
+        final List<SyndieURI> meta = _client.getPBERequired(true, false);
+        final List<SyndieURI> msgs = _client.getPBERequired(false, true);
+        Display.getDefault().asyncExec(new Runnable() {
+            public void run() {
+                redrawPBE(meta, msgs);
+            }
+        });
+    }
+
+    /**
+     *  back to UI thread
+     *  @since 1.104b-5
+     */
+    private void redrawPBE(final List<SyndieURI> meta, final List<SyndieURI> msgs) {
         MenuItem items[] = _pbeMenu.getItems();
         for (int i = 0; i < items.length; i++)
             items[i].dispose();
         
-        final List<SyndieURI> meta = _client.getPBERequired(true, false);
         if (!meta.isEmpty()) {
             MenuItem item = new MenuItem(_pbeMenu, SWT.NONE);
             item.setText(getText("Forums requiring password"));
@@ -699,7 +721,6 @@ class StatusBar extends BaseComponent implements Translatable, Themeable, DBClie
                 });
             }
         }
-        final List<SyndieURI> msgs = _client.getPBERequired(false, true);
         if (!msgs.isEmpty()) {
             if (!meta.isEmpty())
                 new MenuItem(_pbeMenu, SWT.SEPARATOR);
@@ -738,7 +759,16 @@ class StatusBar extends BaseComponent implements Translatable, Themeable, DBClie
                 });
             }
         }
-        return meta.size() + msgs.size();
+        int pbe = meta.size() + msgs.size();
+        if (pbe > 0) {
+            _pbe.setText(getText("Pass. reqd") + ": " + pbe);
+            ((GridData)_pbe.getLayoutData()).exclude = false;
+            _pbe.setVisible(true);
+        } else {
+            ((GridData)_pbe.getLayoutData()).exclude = true;
+            _pbe.setVisible(false);
+        }
+        _root.layout(true);
     }
 
     /** @return number of draft messages */
@@ -818,6 +848,7 @@ class StatusBar extends BaseComponent implements Translatable, Themeable, DBClie
      *  @param forums sorted Map of formatted channel name, including message count, to channel ID
      */
     private void refreshNewForums(Map<String, ChannelData> forums) {
+        //_ui.debugMessage("RNF start");
         MenuItem items[] = _newForumMenu.getItems();
         for (int i = 0; i < items.length; i++)
             items[i].dispose();
@@ -855,6 +886,7 @@ class StatusBar extends BaseComponent implements Translatable, Themeable, DBClie
             ((GridData)_newForum.getLayoutData()).exclude = true;
             _newForum.setVisible(false);
         }
+        //_ui.debugMessage("RNF end");
     }
     
     /**
