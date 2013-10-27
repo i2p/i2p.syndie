@@ -13,6 +13,7 @@ import net.i2p.I2PAppContext;
 import net.i2p.util.EepGet;
 import net.i2p.util.FileUtil;
 import net.i2p.util.SecureFile;
+import net.i2p.util.SSLEepGet;
 
 import syndie.Constants;
 import syndie.data.SyndieURI;
@@ -305,8 +306,20 @@ class IndexFetcher {
             long lastTime = archive.getLastSyncTime();
             String lastMod = lastTime > 0 ? RFC822Date.to822Date(lastTime) : null;
             File indexFile = SecureFile.createTempFile("httpindex", "dat", _manager.getClient().getTempDir());
-            EepGet get = new EepGet(I2PAppContext.getGlobalContext(), shouldProxy, archive.getHTTPProxyHost(), archive.getHTTPProxyPort(),
+            EepGet get;
+            if (url.startsWith("https://")) {
+                if (shouldProxy)
+                    throw new IOException("https with proxy unsupported");
+                SSLEepGet.SSLState state = _manager.getSSLState();
+                // lastmod unsupported
+                SSLEepGet sget = new SSLEepGet(I2PAppContext.getGlobalContext(), indexFile.getPath(), url, state);
+                if (state == null)
+                    _manager.setSSLState(sget.getSSLState());
+                get = sget;
+            } else {
+                get = new EepGet(I2PAppContext.getGlobalContext(), shouldProxy, archive.getHTTPProxyHost(), archive.getHTTPProxyPort(),
                                     retries, indexFile.getAbsolutePath(), url, true, null, lastMod);
+            }
             GetListener lsnr = new GetListener(get, url, archive, indexFile);
             get.addStatusListener(lsnr);
             // 1 minute for the headers, 5 minutes total, and up to 60s of inactivity

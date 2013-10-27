@@ -25,6 +25,7 @@ import net.i2p.data.Signature;
 import net.i2p.data.Hash;
 import net.i2p.util.EepGet;
 import net.i2p.util.SecureFile;
+import net.i2p.util.SSLEepGet;
 
 import syndie.Constants;
 import syndie.data.SyndieURI;
@@ -222,7 +223,19 @@ class SyndicateMenu implements TextEngine.Menu {
         } else {
             try {
                 out = SecureFile.createTempFile("syndicate", ".index", client.getTempDir());
-                EepGet get = new EepGet(client.ctx(), _shouldProxy, _proxyHost, (int)_proxyPort, 0, out.getPath(), url, false, null);
+                EepGet get;
+                if (url.startsWith("https://")) {
+                    if (_shouldProxy)
+                        throw new IOException("https with proxy unsupported");
+                    SyncManager mgr = SyncManager.getInstance(client, ui);
+                    SSLEepGet.SSLState state = mgr.getSSLState();
+                    SSLEepGet sget = new SSLEepGet(client.ctx(), out.getPath(), url);
+                    if (state == null)
+                        mgr.setSSLState(sget.getSSLState());
+                    get = sget;
+                } else {
+                    get = new EepGet(client.ctx(), _shouldProxy, _proxyHost, (int)_proxyPort, 0, out.getPath(), url, false, null);
+                }
                 get.addStatusListener(new UIStatusListener(ui));
                 boolean fetched = get.fetch();
                 if (!fetched) {

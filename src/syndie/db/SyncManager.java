@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import net.i2p.util.SSLEepGet.SSLState;
+
 import syndie.Constants;
 import syndie.data.SyndieURI;
 
@@ -39,6 +41,9 @@ public class SyncManager {
     private SyncInboundFetcher _inboundFetcher;
     private SyncOutboundPusher _outboundPusher;
     
+    private SSLState _sslState;
+    private final Object _sslStateLock = new Object();
+
     private SyncManager() {
         _archives = new ArrayList();
         _archivesLoaded = false;
@@ -145,6 +150,20 @@ public class SyncManager {
         _online = Boolean.valueOf(val).booleanValue();
     }
     
+    /** @since 1.105b */
+    SSLState getSSLState() {
+        synchronized(_sslStateLock) {
+            return _sslState;
+        }
+    }
+    
+    /** @since 1.105b */
+    void setSSLState(SSLState state) {
+        synchronized(_sslStateLock) {
+            _sslState = state;
+        }
+    }
+
     public void addListener(SyncListener lsnr) { if (!_listeners.contains(lsnr)) _listeners.add(lsnr); }
     public void removeListener(SyncListener lsnr, SyncArchive.SyncArchiveListener alsnr) { 
         _listeners.remove(lsnr);

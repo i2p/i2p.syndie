@@ -14,6 +14,7 @@ import java.util.Set;
 import net.i2p.I2PAppContext;
 import net.i2p.util.EepGet;
 import net.i2p.util.SecureFile;
+import net.i2p.util.SSLEepGet;
 
 import syndie.Constants;
 import syndie.data.SyndieURI;
@@ -367,13 +368,25 @@ class SyncInboundFetcher {
                     url = url + uri.getMessageId().toString() + Constants.FILENAME_SUFFIX;
                 url = url + _query;
 
-                if ( (_archive.getHTTPProxyHost() != null) && (_archive.getHTTPProxyHost().length() > 0) )
+                boolean shouldProxy = _archive.getHTTPProxyHost() != null && _archive.getHTTPProxyHost().length() > 0;
+                if (shouldProxy)
                     _manager.getUI().debugMessage(Thread.currentThread().getName() + ": Fetching [" + url + "] proxy " + _archive.getHTTPProxyHost() + ":" + _archive.getHTTPProxyPort());
                 else
                     _manager.getUI().debugMessage(Thread.currentThread().getName() + ": Fetching [" + url + "]");
                 try {
                     File dataFile = SecureFile.createTempFile("httpget", "dat", _manager.getClient().getTempDir());
-                    EepGet get = new EepGet(I2PAppContext.getGlobalContext(), _archive.getHTTPProxyHost(), _archive.getHTTPProxyPort(), I2P_RETRIES, dataFile.getAbsolutePath(), url);
+                    EepGet get;
+                    if (url.startsWith("https://")) {
+                        if (shouldProxy)
+                            throw new IOException("https with proxy unsupported");
+                        SSLEepGet.SSLState state = _manager.getSSLState();
+                        SSLEepGet sget = new SSLEepGet(I2PAppContext.getGlobalContext(), dataFile.getAbsolutePath(), url, state);
+                        if (state == null)
+                            _manager.setSSLState(sget.getSSLState());
+                        get = sget;
+                    } else {
+                        get = new EepGet(I2PAppContext.getGlobalContext(), _archive.getHTTPProxyHost(), _archive.getHTTPProxyPort(), I2P_RETRIES, dataFile.getAbsolutePath(), url);
+                    }
                     GetListener lsnr = new GetListener(action, dataFile, _importer, _whitelistScopes);
                     get.addStatusListener(lsnr);
                     // 1m for headers, 10m total, 60s idle

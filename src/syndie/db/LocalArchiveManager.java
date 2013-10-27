@@ -1,41 +1,21 @@
 package syndie.db;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URISyntaxException;
-import java.sql.Date;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.sql.Types;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 
 import net.i2p.data.Base64;
-import net.i2p.data.DataHelper;
-import net.i2p.data.Hash;
-import net.i2p.data.SessionKey;
-import net.i2p.util.EepGet;
 import net.i2p.util.SecureFileOutputStream;
 
 import syndie.Constants;
-import syndie.data.NymKey;
 import syndie.data.SyndieURI;
 
 /**
- *
+ *  Configuration for the local published index,
+ *  and method for rebuilding it.
  */
 public class LocalArchiveManager {
 
