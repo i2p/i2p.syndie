@@ -3,7 +3,12 @@
 * 2013-10-27 1.104b-5 (kytv)
   - Updated French, Polish, Portuguese, and Spanish translations from Transifex
 
-* 2013-10-23 1.104b-4 (zzz)
+* 2013-10-28 1.104b-6-rc (zzz)
+  - Add clearnet SSL fetch support
+  - Translation updates: French, Spanish
+  - New translations: Portuguese, Polish
+
+* 2013-10-23 1.104b-5 (zzz)
   - Don't display PBE messages after deletion
   - Add menu item to delete PBE messages and forums
   - Add keyboard shortcuts in message view tab
@@ -44,6 +49,7 @@
   - Use DataHelper.loadProps() to deserialize properties UTF-8-safely
   - Add script for the hsqldb database manager tool
   - SQLTab tweaks
+  - Translation updates: French, Spanish, Swedish
 
 * 2013-02-10 1.104b-1 (zzz)
   GUI Improvements:
