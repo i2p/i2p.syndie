@@ -1,7 +1,7 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
 * 2013-10-27 1.104b-5 (kytv)
-  - Updated French, Portuguese, and Spanish translations from Transifex
+  - Updated French, Polish, Portuguese, and Spanish translations from Transifex
 
 * 2013-10-23 1.104b-4 (zzz)
   - Don't display PBE messages after deletion
