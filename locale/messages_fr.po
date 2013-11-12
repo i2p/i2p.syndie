@@ -9,9 +9,9 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: I2P\n"
-"Report-Msgid-Bugs-To: https://trac.i2p2.de/\n"
+"Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2013-02-02 21:24+0000\n"
-"PO-Revision-Date: 2013-10-19 13:44+0000\n"
+"PO-Revision-Date: 2013-11-04 21:37+0000\n"
 "Last-Translator: Towatowa441\n"
 "Language-Team: French (http://www.transifex.com/projects/p/I2P/language/fr/)\n"
 "MIME-Version: 1.0\n"
@@ -3560,7 +3560,7 @@ msgid ""
 "This wizard will help you set up your new Syndie installation. First we'll "
 "set up your identity, and then we'll configure some archives for you to "
 "syndicate with."
-msgstr "Cet assistant va vous aider à configurer votre nouvelle installation de Syndie. D'abord, nous allons mettre en place votre identité, puis nous allons configurer quelques archives pour que vous vous syndiquiez avec."
+msgstr "Cet assistant va vous aider à configurer votre nouvelle installation de Syndie. D'abord, nous allons mettre en place votre identité, puis nous allons configurer quelques archives pour vous afin que vous vous syndiquiez avec."
 
 #: src/syndie/gui/WelcomeScreen.java:400
 msgid ""
@@ -3644,7 +3644,7 @@ msgstr "Les archives fournies avec votre installation Syndie sont énumérées c
 msgid ""
 "Please make any necessary changes and uncheck any archives that you don't "
 "want."
-msgstr "Veuillez apporter vos modifications, et décochez les archives que vous ne voulez pas."
+msgstr "Veuillez apporter vos modifications, et décocher les archives que vous ne voulez pas."
 
 #: src/syndie/gui/WelcomeScreen.java:429
 msgid "Congratulations! Your Syndie installation is configured!"
