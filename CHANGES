@@ -1,9 +1,9 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
-* 2013-10-27 1.104b-5 (kytv)
-  - Updated French, Polish, Portuguese, and Spanish translations from Transifex
+* 2013-11-12 1.105b-0 (kytv)
+  - Translation updates: French, Portuguese, Russian
 
-* 2013-10-28 1.104b-6-rc (zzz)
+* 2013-10-28 1.104b-6-rc (zzz, kytv)
   - Add clearnet SSL fetch support
   - Translation updates: French, Spanish
   - New translations: Portuguese, Polish
