@@ -380,7 +380,9 @@ class SyncInboundFetcher {
                         if (shouldProxy)
                             throw new IOException("https with proxy unsupported");
                         SSLEepGet.SSLState state = _manager.getSSLState();
-                        SSLEepGet sget = new SSLEepGet(I2PAppContext.getGlobalContext(), dataFile.getAbsolutePath(), url, state);
+                        if (true)
+                            throw new IOException("HTTPS requires I2P 0.9.9");
+                        SSLEepGet sget = null; // new SSLEepGet(I2PAppContext.getGlobalContext(), dataFile.getAbsolutePath(), url, state);
                         if (state == null)
                             _manager.setSSLState(sget.getSSLState());
                         get = sget;

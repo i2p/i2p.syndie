@@ -2,6 +2,7 @@
 
 * 2013-11-13 1.105b-0 (kytv)
   - Update to SWT 3.8.2 20130131
+  - Disable clearnet SSL, not available until I2P 0.9.9
   - Translation updates: French, Portuguese, Russian
 
 * 2013-10-28 1.104b-6-rc (zzz, kytv)
