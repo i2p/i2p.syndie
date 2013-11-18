@@ -55,7 +55,7 @@ public class SyndieTreeListener implements KeyListener, TraverseListener, Select
         _tree.setRedraw(false);
         if (evt.detail == SWT.TRAVERSE_RETURN) {
             TreeItem selected = getSelected();
-            if (collapseOnReturn() && selected.getExpanded() && (selected.getItemCount() > 0)) {
+            if (selected != null && collapseOnReturn() && selected.getExpanded() && (selected.getItemCount() > 0)) {
                 boolean expand = !selected.getExpanded();
                 selected.setExpanded(expand);
                 if (expand)

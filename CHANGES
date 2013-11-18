@@ -1,9 +1,10 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
-* 2013-11-13 1.105b-0 (kytv)
+* 2013-11-18 1.104b-7-rc (kytv, zzz)
   - Update to SWT 3.8.2 20130131
   - Disable clearnet SSL, not available until I2P 0.9.9
   - Translation updates: French, Portuguese, Russian
+  - Fix NPE in SyndieTreeListener
 
 * 2013-10-28 1.104b-6-rc (zzz, kytv)
   - Add clearnet SSL fetch support
