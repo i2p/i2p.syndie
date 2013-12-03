@@ -1107,10 +1107,10 @@
     <target name="installer-mac64" depends="installer-osx64" />
     <target name="linux-start-scripts">
         <echo file="${pkgtemp.dir}/bin/syndie.sh"><![CDATA[#!/bin/sh
-java -jar %INSTALL_PATH/bin/syndie.jar -Dsyndie.dict=/usr/share/dict/words "$@"
+java -jar %INSTALL_PATH/bin/syndie.jar "$@" -Dsyndie.dict=/usr/share/dict/words
 ]]></echo>
         <echo file="${pkgtemp.dir}/bin/syndie-desktop.sh"><![CDATA[#!/bin/sh
-java -jar %INSTALL_PATH/bin/syndie-desktop.jar -Dsyndie.dict=/usr/share/dict/words "$@"
+java -jar %INSTALL_PATH/bin/syndie-desktop.jar "$@" -Dsyndie.dict=/usr/share/dict/words
 ]]></echo>
         <echo file="${pkgtemp.dir}/bin/syndie-cli.sh"><![CDATA[#!/bin/sh
 java -jar %INSTALL_PATH/bin/syndie-cli.jar "$@"
