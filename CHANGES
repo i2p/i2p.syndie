@@ -1,5 +1,9 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
+* 2014-01-20 1.105-0 (kytv)
+  - French translation updates
+  - New Romanian translation
+
 * 2013-11-18 1.104b-7-rc (kytv, zzz)
   - Update to SWT 3.8.2 20130131
   - Disable clearnet SSL, not available until I2P 0.9.9
