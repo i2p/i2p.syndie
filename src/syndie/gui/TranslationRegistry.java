@@ -37,7 +37,7 @@ public class TranslationRegistry {
      * order not important, UI will sort
      */
     private static final String[] SUPPORTED_TRANSLATIONS = {
-        "en", "de", "ru", "sv", "es", "fr", "pt", "pl"
+        "en", "de", "ru", "sv", "es", "fr", "pt", "pl", "ro"
     };
 
     private static final List<String> AVAILABLE_TRANSLATIONS;

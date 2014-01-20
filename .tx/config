@@ -6,10 +6,11 @@ trans.es = locale/messages_es.po
 trans.fr = locale/messages_fr.po
 trans.pl = locale/messages_pl.po
 trans.pt = locale/messages_pt.po
+trans.ro = locale/messages_ro.po
 trans.ru_RU= locale/messages_ru.po
 trans.sv_SE = locale/messages_sv.po
 type = PO
 
 [main]
-host = http://www.transifex.net
+host = https://www.transifex.com
 
