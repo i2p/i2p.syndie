@@ -399,6 +399,8 @@ public class HTTPServ implements CLI.Command {
                 break;
             
             String [] header = line.split(":", 2);
+            if (header.length < 2)
+                continue;
             headers.put(header[0].trim().toUpperCase(Locale.US), header[1].trim());
         }
         
