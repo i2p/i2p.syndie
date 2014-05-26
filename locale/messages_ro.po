@@ -4,14 +4,16 @@
 # To contribute translations, see http://www.i2p2.de/newdevelopers
 #
 # Translators:
+# polearnik <polearnik@mail.ru>, 2014
+# Predator <Predator@windowslive.com>, 2014
 # Predator <Predator@windowslive.com>, 2014
 msgid ""
 msgstr ""
 "Project-Id-Version: I2P\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-01-20 22:47+0000\n"
-"PO-Revision-Date: 2014-01-08 19:52+0000\n"
-"Last-Translator: Predator <Predator@windowslive.com>\n"
+"POT-Creation-Date: 2014-05-26 14:39+0000\n"
+"PO-Revision-Date: 2014-02-12 15:22+0000\n"
+"Last-Translator: polearnik <polearnik@mail.ru>\n"
 "Language-Team: Romanian (http://www.transifex.com/projects/p/I2P/language/"
 "ro/)\n"
 "Language: ro\n"
@@ -22,9 +24,8 @@ msgstr ""
 "2:1));\n"
 
 #: src/syndie/db/ImportResult.java:18
-#, fuzzy
 msgid "Import successful"
-msgstr "Rezervarea cu succes"
+msgstr ""
 
 #: src/syndie/db/ImportResult.java:22
 msgid "Already imported"
@@ -39,24 +40,20 @@ msgid "Import forum info successful"
 msgstr ""
 
 #: src/syndie/db/ImportResult.java:34
-#, fuzzy
 msgid "Import post successful"
-msgstr "Cheie post import"
+msgstr ""
 
 #: src/syndie/db/ImportResult.java:38
-#, fuzzy
 msgid "Import keys successful"
-msgstr "resurse importate"
+msgstr ""
 
 #: src/syndie/db/ImportResult.java:43
-#, fuzzy
 msgid "Cancel requests processed"
-msgstr "Anula mesajul"
+msgstr ""
 
 #: src/syndie/db/ImportResult.java:48
-#, fuzzy
 msgid "Unreadable"
-msgstr "Necitite"
+msgstr ""
 
 #: src/syndie/db/ImportResult.java:52 src/syndie/gui/MessageFlagBar.java:306
 #: src/syndie/gui/MessageViewTab.java:48
@@ -86,9 +83,8 @@ msgid "Bad enclosure type"
 msgstr ""
 
 #: src/syndie/db/ImportResult.java:78
-#, fuzzy
 msgid "Bad message format"
-msgstr "Salvați mesajul pentru utilizare ulterioară"
+msgstr ""
 
 #: src/syndie/db/ImportResult.java:82
 msgid "No URI"
@@ -99,23 +95,20 @@ msgid "No channel"
 msgstr ""
 
 #: src/syndie/db/ImportResult.java:90
-#, fuzzy
 msgid "Banned channel"
-msgstr "domenii interzise"
+msgstr ""
 
 #: src/syndie/db/ImportResult.java:94
-#, fuzzy
 msgid "Banned author"
-msgstr "Ban autor"
+msgstr ""
 
 #: src/syndie/db/ImportResult.java:98
 msgid "Unknown channel"
 msgstr ""
 
 #: src/syndie/db/ImportResult.java:102
-#, fuzzy
 msgid "Unknown author"
-msgstr "Ban autor"
+msgstr ""
 
 #: src/syndie/db/ImportResult.java:106 src/syndie/gui/MessageEditor.java:2469
 #: src/syndie/gui/desktop/MessagePanel.java:189
@@ -127,9 +120,8 @@ msgid "Meta does not verify"
 msgstr ""
 
 #: src/syndie/db/ImportResult.java:114
-#, fuzzy
 msgid "Unable to fetch"
-msgstr "Nu se poate încărca atașament"
+msgstr ""
 
 #: src/syndie/db/ImportResult.java:118
 msgid "Invalid Freenet archive URL"
@@ -140,23 +132,20 @@ msgid "Database error"
 msgstr ""
 
 #: src/syndie/db/ImportResult.java:128
-#, fuzzy
 msgid "I/O error"
-msgstr "Eroare internă."
+msgstr ""
 
 #: src/syndie/db/ImportResult.java:132
 msgid "Corrupt"
 msgstr ""
 
 #: src/syndie/db/ImportResult.java:136
-#, fuzzy
 msgid "Unable to decrypt"
-msgstr "Nu se poate încărca atașament"
+msgstr ""
 
 #: src/syndie/db/ImportResult.java:140
-#, fuzzy
 msgid "Bad header"
-msgstr "Date incorecte"
+msgstr ""
 
 #: src/syndie/db/ImportResult.java:144 src/syndie/gui/Browser.java:1550
 #: src/syndie/gui/SWTUI.java:179
@@ -164,23 +153,20 @@ msgid "Internal error"
 msgstr "Eroare internă."
 
 #: src/syndie/db/ReadMenu.java:994
-#, fuzzy
 msgid "readKey"
-msgstr "Fir"
+msgstr ""
 
 #: src/syndie/db/ReadMenu.java:997
 msgid "postKey"
 msgstr ""
 
 #: src/syndie/db/ReadMenu.java:1000
-#, fuzzy
 msgid "manageKey"
-msgstr "Gestionează"
+msgstr ""
 
 #: src/syndie/db/ReadMenu.java:1003
-#, fuzzy
 msgid "replyKey"
-msgstr "Răspunde"
+msgstr ""
 
 #: src/syndie/db/ReadMenu.java:1017
 msgid "url"
@@ -1822,15 +1808,14 @@ msgid "Message created"
 msgstr "mesaj creat"
 
 #: src/syndie/gui/MessageEditor.java:581
-#, fuzzy
 msgid ""
 "Message created successfully! \n"
 "Please be sure to syndicate it to the arcives so others may read it. \n"
 "The message timestamp has been randomized to protect your anonymity. \n"
 msgstr ""
-"Mesaj creat cu succes! Vă rugăm să asigurați-vă că il adaugati la arhive, "
-"astfel încât ceilalți să-l citesca. Amprenta de timp a mesajului a fost "
-"randomizate pentru a proteja anonimatul."
+"Mesaj creat cu succes! Vă rugăm să asigurați-vă că il adaugati la arhive, \n"
+"astfel încât ceilalți să-l citesca. Amprenta de timp a mesajului a fost \n"
+"randomizate pentru a proteja anonimatul.\n"
 
 #: src/syndie/gui/MessageEditor.java:587
 msgid "Display this message next time"
@@ -2285,19 +2270,16 @@ msgid "Preformatted text"
 msgstr "Text preformatat"
 
 #: src/syndie/gui/MessageEditorToolbar.java:588
-#, fuzzy
 msgid "Check the spelling in the current page"
-msgstr "Comuta tipul paginii curente"
+msgstr ""
 
 #: src/syndie/gui/MessageEditorToolbar.java:596
-#, fuzzy
 msgid "Find or replace text in the current page"
-msgstr "Inserati o nouă imagine în pagina curentă"
+msgstr ""
 
 #: src/syndie/gui/MessageEditorToolbar.java:604
-#, fuzzy
 msgid "Quote a section of the previous message"
-msgstr "Citat mesajul părinte"
+msgstr ""
 
 #: src/syndie/gui/MessageFlagBar.java:304
 msgid "Post is passphrase protected"
@@ -2716,9 +2698,8 @@ msgstr "Prev"
 
 #: src/syndie/gui/MessageViewBody.java:197
 #: src/syndie/gui/MessageViewTab.java:49 src/syndie/gui/MessageViewTab.java:52
-#, fuzzy
 msgid "You do not have the keys to decrypt this message"
-msgstr "Nu sunteți autorizat să citiți acest mesaj"
+msgstr ""
 
 #: src/syndie/gui/MessageViewTab.java:45
 #: src/syndie/gui/desktop/MessagePanel.java:149
@@ -3186,18 +3167,16 @@ msgid "Mark all as read"
 msgstr "Marchează tot ca citite"
 
 #: src/syndie/gui/StatusBar.java:687
-#, fuzzy
 msgid "Forums requiring password"
-msgstr "necesită parola"
+msgstr ""
 
 #: src/syndie/gui/StatusBar.java:690
-#, fuzzy
 msgid "Ban these forums"
-msgstr "Blocarea acestui forum"
+msgstr ""
 
 #: src/syndie/gui/StatusBar.java:695 src/syndie/gui/StatusBar.java:736
 msgid "Are you sure?"
-msgstr ""
+msgstr "sunteti sigur?"
 
 #: src/syndie/gui/StatusBar.java:696 src/syndie/gui/StatusBar.java:737
 #: src/syndie/gui/Syndicator.java:293
@@ -3205,14 +3184,12 @@ msgid "Delete?"
 msgstr "Ștergeți?"
 
 #: src/syndie/gui/StatusBar.java:728
-#, fuzzy
 msgid "Messages requiring password"
-msgstr "Mesaje care necesită o nouă frază de acces"
+msgstr ""
 
 #: src/syndie/gui/StatusBar.java:731
-#, fuzzy
 msgid "Delete these messages"
-msgstr "Ștergeți mesajul local"
+msgstr ""
 
 #: src/syndie/gui/StatusBar.java:764
 msgid "Pass. reqd"
@@ -4384,6 +4361,3 @@ msgstr "Configurarea exemplu frazei de acces?"
 #: src/syndie/gui/desktop/WelcomePopup.java:167
 msgid "Continue on to Syndie?"
 msgstr "Continua la Syndie?"
-
-#~ msgid "Message is corrupt"
-#~ msgstr "Mesaj este corupt"

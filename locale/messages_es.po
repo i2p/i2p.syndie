@@ -7,14 +7,14 @@
 # Adolfo Jayme Barrientos <fitoschido@ubuntu.com>, 2013
 # Anarkia <anarkia@i2pmail.org>, 2013
 # Daniel Mustieles <daniel.mustieles@gmail.com>, 2013
-# strel, 2013
-# trolly <translatortr@i2pmail.org>, 2013
+# strel, 2013-2014
+# trolly, 2013
 msgid ""
 msgstr ""
 "Project-Id-Version: I2P\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-01-20 22:47+0000\n"
-"PO-Revision-Date: 2013-10-20 20:40+0000\n"
+"POT-Creation-Date: 2014-05-26 14:39+0000\n"
+"PO-Revision-Date: 2014-01-21 17:21+0000\n"
 "Last-Translator: strel\n"
 "Language-Team: Spanish (http://www.transifex.com/projects/p/I2P/language/"
 "es/)\n"
@@ -25,41 +25,36 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: src/syndie/db/ImportResult.java:18
-#, fuzzy
 msgid "Import successful"
-msgstr "¡Creación de copia de respaldo exitosa!"
+msgstr "Importado con éxito"
 
 #: src/syndie/db/ImportResult.java:22
 msgid "Already imported"
-msgstr ""
+msgstr "Ya importado"
 
 #: src/syndie/db/ImportResult.java:26
 msgid "Already deleted"
-msgstr ""
+msgstr "Ya eliminado"
 
 #: src/syndie/db/ImportResult.java:30
 msgid "Import forum info successful"
-msgstr ""
+msgstr "Información del foro importada con éxito"
 
 #: src/syndie/db/ImportResult.java:34
-#, fuzzy
 msgid "Import post successful"
-msgstr "Importar clave de posteo"
+msgstr "Mensaje importado con éxito"
 
 #: src/syndie/db/ImportResult.java:38
-#, fuzzy
 msgid "Import keys successful"
-msgstr "Recursos importados"
+msgstr "Claves importadas con éxito"
 
 #: src/syndie/db/ImportResult.java:43
-#, fuzzy
 msgid "Cancel requests processed"
-msgstr "Cancelar el mensaje"
+msgstr "Cancelar peticiones procesadas"
 
 #: src/syndie/db/ImportResult.java:48
-#, fuzzy
 msgid "Unreadable"
-msgstr "No leídos"
+msgstr "Ilegible"
 
 #: src/syndie/db/ImportResult.java:52 src/syndie/gui/MessageFlagBar.java:306
 #: src/syndie/gui/MessageViewTab.java:48
@@ -78,47 +73,43 @@ msgstr "Frase contraseña requerida"
 
 #: src/syndie/db/ImportResult.java:66
 msgid "No enclosure type"
-msgstr ""
+msgstr "Sin el tipo de adjunto"
 
 #: src/syndie/db/ImportResult.java:70
 msgid "Bad enclosure format"
-msgstr ""
+msgstr "Formato de adjunto erróneo"
 
 #: src/syndie/db/ImportResult.java:74
 msgid "Bad enclosure type"
-msgstr ""
+msgstr "Tipo de adjunto erróneo"
 
 #: src/syndie/db/ImportResult.java:78
-#, fuzzy
 msgid "Bad message format"
-msgstr "Guardar el mensaje para más tarde"
+msgstr "Formato de mensaje erróneo"
 
 #: src/syndie/db/ImportResult.java:82
 msgid "No URI"
-msgstr ""
+msgstr "Sin URI"
 
 #: src/syndie/db/ImportResult.java:86
 msgid "No channel"
-msgstr ""
+msgstr "Sin canal"
 
 #: src/syndie/db/ImportResult.java:90
-#, fuzzy
 msgid "Banned channel"
-msgstr "Ámbitos restringidos"
+msgstr "Canal expulsado"
 
 #: src/syndie/db/ImportResult.java:94
-#, fuzzy
 msgid "Banned author"
-msgstr "Excluir al autor"
+msgstr "Autor expulsado"
 
 #: src/syndie/db/ImportResult.java:98
 msgid "Unknown channel"
-msgstr ""
+msgstr "Canal desconocido"
 
 #: src/syndie/db/ImportResult.java:102
-#, fuzzy
 msgid "Unknown author"
-msgstr "Excluir al autor"
+msgstr "Autor desconocido"
 
 #: src/syndie/db/ImportResult.java:106 src/syndie/gui/MessageEditor.java:2469
 #: src/syndie/gui/desktop/MessagePanel.java:189
@@ -127,39 +118,35 @@ msgstr "Sin autorización"
 
 #: src/syndie/db/ImportResult.java:110
 msgid "Meta does not verify"
-msgstr ""
+msgstr "No se verifican los metadatos"
 
 #: src/syndie/db/ImportResult.java:114
-#, fuzzy
 msgid "Unable to fetch"
-msgstr "No fue posible cargar el adjunto"
+msgstr "No se pudo descargar"
 
 #: src/syndie/db/ImportResult.java:118
 msgid "Invalid Freenet archive URL"
-msgstr ""
+msgstr "URL de archivo Freenet no válido"
 
 #: src/syndie/db/ImportResult.java:124
 msgid "Database error"
-msgstr ""
+msgstr "Error de la base de datos"
 
 #: src/syndie/db/ImportResult.java:128
-#, fuzzy
 msgid "I/O error"
-msgstr "Error interno"
+msgstr "Error de E/S"
 
 #: src/syndie/db/ImportResult.java:132
 msgid "Corrupt"
-msgstr ""
+msgstr "Corrupto"
 
 #: src/syndie/db/ImportResult.java:136
-#, fuzzy
 msgid "Unable to decrypt"
-msgstr "No fue posible cargar el adjunto"
+msgstr "No se pudo descifrar"
 
 #: src/syndie/db/ImportResult.java:140
-#, fuzzy
 msgid "Bad header"
-msgstr "Fecha errónea"
+msgstr "Cabecera errónea"
 
 #: src/syndie/db/ImportResult.java:144 src/syndie/gui/Browser.java:1550
 #: src/syndie/gui/SWTUI.java:179
@@ -167,27 +154,24 @@ msgid "Internal error"
 msgstr "Error interno"
 
 #: src/syndie/db/ReadMenu.java:994
-#, fuzzy
 msgid "readKey"
-msgstr "Hilo"
+msgstr "Clave de lectura ('readKey')"
 
 #: src/syndie/db/ReadMenu.java:997
 msgid "postKey"
-msgstr ""
+msgstr "Clave de envío ('postKey')"
 
 #: src/syndie/db/ReadMenu.java:1000
-#, fuzzy
 msgid "manageKey"
-msgstr "Gestionar"
+msgstr "Clave de administración ('manageKey')"
 
 #: src/syndie/db/ReadMenu.java:1003
-#, fuzzy
 msgid "replyKey"
-msgstr "Responder"
+msgstr "Clave de respuesta ('replyKey')"
 
 #: src/syndie/db/ReadMenu.java:1017
 msgid "url"
-msgstr ""
+msgstr "url"
 
 #: src/syndie/gui/ArchiveDefaults.java:207
 #: src/syndie/gui/ArchiveDefaults.java:430
@@ -1245,7 +1229,7 @@ msgstr "SWT (kit de herramientas widget standard)"
 
 #: src/syndie/gui/BugReport.java:672
 msgid "HSQLDB"
-msgstr ""
+msgstr "HSQLDB (base de datos Hyper SQL)"
 
 #: src/syndie/gui/BugReport.java:673
 msgid "Issue summary"
@@ -1952,7 +1936,7 @@ msgstr "Privacidad"
 
 #: src/syndie/gui/MessageEditor.java:2110
 msgid "Headers"
-msgstr ""
+msgstr "Encabezados"
 
 #: src/syndie/gui/MessageEditor.java:2468
 msgid ""
@@ -2240,7 +2224,7 @@ msgstr "Enlazar a otra URI en Syndie"
 
 #: src/syndie/gui/MessageEditorToolbar.java:490
 msgid "Insert style elements"
-msgstr ""
+msgstr "Insertar elementos de estilo"
 
 #: src/syndie/gui/MessageEditorToolbar.java:552
 msgid "Styled text"
@@ -2299,19 +2283,16 @@ msgid "Preformatted text"
 msgstr "Texto preformateado "
 
 #: src/syndie/gui/MessageEditorToolbar.java:588
-#, fuzzy
 msgid "Check the spelling in the current page"
-msgstr "Cambiar el tipo de la página actual"
+msgstr "Comprobar ortografía en la página actual"
 
 #: src/syndie/gui/MessageEditorToolbar.java:596
-#, fuzzy
 msgid "Find or replace text in the current page"
-msgstr "Insertar una nueva imagen en la página actual"
+msgstr "Buscar o reemplazar texto en la página actual"
 
 #: src/syndie/gui/MessageEditorToolbar.java:604
-#, fuzzy
 msgid "Quote a section of the previous message"
-msgstr "Citar el mensaje ascendente"
+msgstr "Citar una sección del mensaje anterior"
 
 #: src/syndie/gui/MessageFlagBar.java:304
 msgid "Post is passphrase protected"
@@ -2727,9 +2708,8 @@ msgstr "Anterior"
 
 #: src/syndie/gui/MessageViewBody.java:197
 #: src/syndie/gui/MessageViewTab.java:49 src/syndie/gui/MessageViewTab.java:52
-#, fuzzy
 msgid "You do not have the keys to decrypt this message"
-msgstr "No está autorizado a leer ese mensaje"
+msgstr "No tiene las claves para descrifrar este mensaje"
 
 #: src/syndie/gui/MessageViewTab.java:45
 #: src/syndie/gui/desktop/MessagePanel.java:149
@@ -3198,18 +3178,16 @@ msgid "Mark all as read"
 msgstr "Marcar todo como leído"
 
 #: src/syndie/gui/StatusBar.java:687
-#, fuzzy
 msgid "Forums requiring password"
-msgstr "Requiere una contraseña"
+msgstr "Los foros requieren contraseña"
 
 #: src/syndie/gui/StatusBar.java:690
-#, fuzzy
 msgid "Ban these forums"
-msgstr "Excluir el foro"
+msgstr "Expulsar estos foros"
 
 #: src/syndie/gui/StatusBar.java:695 src/syndie/gui/StatusBar.java:736
 msgid "Are you sure?"
-msgstr ""
+msgstr "¿Está seguro?"
 
 #: src/syndie/gui/StatusBar.java:696 src/syndie/gui/StatusBar.java:737
 #: src/syndie/gui/Syndicator.java:293
@@ -3217,14 +3195,12 @@ msgid "Delete?"
 msgstr "¿Borrar?"
 
 #: src/syndie/gui/StatusBar.java:728
-#, fuzzy
 msgid "Messages requiring password"
-msgstr "Mensajes que requieren una nueva frase contraseña"
+msgstr "Mensajes que requieren contraseña"
 
 #: src/syndie/gui/StatusBar.java:731
-#, fuzzy
 msgid "Delete these messages"
-msgstr "Borrar el mensaje localmente"
+msgstr "Eliminar estos mensajes"
 
 #: src/syndie/gui/StatusBar.java:764
 msgid "Pass. reqd"
@@ -4403,6 +4379,3 @@ msgstr "¿Configurar su frase contraseña para esta instancia?"
 #: src/syndie/gui/desktop/WelcomePopup.java:167
 msgid "Continue on to Syndie?"
 msgstr "¿Continuar con Syndie?"
-
-#~ msgid "Message is corrupt"
-#~ msgstr "El mensaje es defectuoso"
