@@ -16,4 +16,5 @@ ban --scope LN2NCaoy2CZf~z89rLEfhDfslHh6D1u1cIqKUGGO46Y= --delete true
 ban --scope j~VOSgkaPGeeA-8aHxaj21VPQgMzU5SPnjVZ3Hdw~Y8= --delete true
 ban --scope hrsSFNHZufj78~YnpAC2oT3SVoTiNRCQSsoBAEZ1rt0= --delete true
 ban --scope Q~vl9qyZARLWC80iCBJyPEQOCaQkxEcC8BkUJ3FQvME= --delete true
+ban --scope Uk3OEOxQ37DiPl1JttSX-xXpejl7k7pyzSlzYXu88jc= --delete true
 menu start
