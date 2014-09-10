@@ -67,15 +67,15 @@ class ControlServer implements CLI.Command {
     }
     
     private class ControlServerClientHandler extends Thread implements UI {
-        private UI _ui;
+        private final UI _ui;
         
-        private Socket _clientSocket;
-        private InputStream _inputStream;
-        private OutputStream _outputStream;
+        private final Socket _clientSocket;
+        private final InputStream _inputStream;
+        private final OutputStream _outputStream;
         
-        private boolean _debug;
+        private final boolean _debug;
         
-        private boolean _shutdown;
+        private volatile boolean _shutdown;
         
         ControlServerClientHandler(UI ui, Socket clientSocket, boolean debug) throws IOException {
             _ui = ui;
@@ -112,7 +112,7 @@ class ControlServer implements CLI.Command {
        }
         
         void send(String s, Exception e) {
-            StringBuffer b = new StringBuffer();
+            StringBuilder b = new StringBuilder();
             
             if (s != null) {
                 b.append(s);
@@ -126,7 +126,10 @@ class ControlServer implements CLI.Command {
                 b.append('\n');
             }
             
-            try { _outputStream.write(b.toString().getBytes()); } catch (IOException ioe) { _shutdown = true; }
+            try {
+                _outputStream.write(b.toString().getBytes());
+                _outputStream.flush();
+            } catch (IOException ioe) { _shutdown = true; }
         }
         
         public void errorMessage(String msg) { send(msg, null); }
@@ -135,7 +138,7 @@ class ControlServer implements CLI.Command {
         public void debugMessage(String msg) { if (_debug) send(msg, null); }
         public void debugMessage(String msg, Exception cause) { if (_debug) send(msg, cause); }
         public void commandComplete(final int status, final List location) {
-            StringBuffer buf = new StringBuffer();
+            StringBuilder buf = new StringBuilder();
             buf.append("* Command execution complete.\n");
             buf.append("* Status: ");
             buf.append(status);
