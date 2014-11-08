@@ -402,7 +402,7 @@ class WelcomeScreen extends Wizard {
         }));
         
         _description.setText(reflow(registry, new String [] {
-                _x("Syndie will create a new identity for you to use with which to post messages in other forums and to run" +
+                _x("Syndie will create a new identity for you to use with which to post messages in other forums and to run " +
                 "your own blog/forum.")}));
 
         _nameLabel.setText(registry.getText("What name would you like to use for your new identity?"));
