@@ -139,7 +139,6 @@ public class SyncOutboundPusher {
             if (action.getCompletionTime() > 0) continue; // already complete
             if (action.isPaused()) continue; // dont wanna do it
             if (!action.setIsExecuting(true)) continue; // someone else is doing it
-            
             SyndieURI uri = action.getURI();
             uris.add(uri);
             actionsPushed.add(action);
@@ -149,9 +148,9 @@ public class SyncOutboundPusher {
             err = pushFreenet(archive, uris);
         if (err == null) {
             for (int i = 0; i < actionsPushed.size(); i++) {
-                SyncArchive.OutgoingAction action = (SyncArchive.OutgoingAction)actionsPushed.get(i);
-                action.pushOK();
-            }
+            SyncArchive.OutgoingAction action = (SyncArchive.OutgoingAction)actionsPushed.get(i);
+            action.pushOK();
+        }
         } else {
             for (int i = 0; i < actionsPushed.size(); i++) {
                 SyncArchive.OutgoingAction action = (SyncArchive.OutgoingAction)actionsPushed.get(i);
@@ -162,39 +161,61 @@ public class SyncOutboundPusher {
     
     private String pushFreenet(SyncArchive archive, List uris) {
         String error = null;
-        // shove all of the files specified to the fcp host
+        
         String host = archive.getFCPHost();
         int port = archive.getFCPPort();
         if (host != null) host = host.trim();
         if ( (host == null) || (port <= 0) )
-            return "No FCP settings defined";
+            return "FCP Host Failed, check your settings.";
         if (archive.getPostKey() == null)
-            return "No posting key defined";
+            return "You lack a post key";
         
-        _manager.getUI().debugMessage("Pushing to freenet (fcp host " + host + " port " + port + ")");
+        
         try {
             Socket s = new Socket(host, port);
             OutputStream out = s.getOutputStream();
             long msgId = System.currentTimeMillis();
+            
+            // say hello to FCP
+            _manager.getUI().debugMessage("Saying hello to freenet (fcp host " + host + " port " + port + ")");
             out.write(DataHelper.getUTF8("ClientHello\r\n" +
                        "Name=syndie" + msgId + "\r\n" +
                        "ExpectedVersion=2.0\r\n" +
                        "Identifier=" + msgId + "\r\n" +
                        "EndMessage\r\n"));
             
+            Map rv = readResults(s.getInputStream());
+            //check for clienthello success here
+            //CloseConnectionDuplicateClientName or lack of response
+            if (rv.get("cmd") == null) {
+                error = "Error communicating with the Freenet server";
+                _manager.getUI().errorMessage(error);
+                s.close();
+                return error;
+            }else{
+                String cmd = (String) rv.get("cmd");
+                if(cmd.startsWith("CloseConnectionDuplicateClientName")){
+                    error = "Error communicating with the Freenet server";
+                    _manager.getUI().errorMessage(error);
+                    s.close(); 
+                    return error;
+                }
+            }
+            
+            
             String target = getTarget(archive.getPostKey());
             
             _manager.getUI().debugMessage("Posting to " + target);
             
             out.write(("ClientPutComplexDir\r\n" +
+                       "URI=" + target + "\r\n" + 
                        "Identifier=" + (msgId+1) + "\r\n" +
-                       "URI=" + target + "\r\n" +
-                       "Verbosity=1023\r\n" + // we don't care about anyting
-                       "Global=true\r\n" + // let it be seen on fproxy's /queue/
-                       "MaxRetries=10\r\n" +
-                       "PriorityClass=3\r\n" + // 3 is lower than interactive
-                       "Persistence=reboot\r\n" // runs until success or the freenet instance restarts
+                       "ClientToken=" + (msgId+3) + "\r\n" +
+                       "Verbosity=1111111\r\n" + // we want everything
+                       "Persistence=forever\r\n" //seems to ensure you recieve PutSuccessfull
                        ).getBytes());
+            
+            
             
             // dont use UploadFrom=disk, because that breaks if the fcpHost != localhost,
             // or if the freenet instance doesn't have read permissions on the archive
@@ -225,7 +246,7 @@ public class SyncOutboundPusher {
                            "Files." + i + ".DataLength=" + f.length() + "\r\n").getBytes());
             }
             // now include an index.html, if it exists
-            File htmlIndex = new File(_manager.getClient().getArchiveDir(), "index.html");
+            File htmlIndex = new File(_manager.getClient().getWebDir(), "index.html");
             if (htmlIndex.exists()) {
                 _manager.getUI().debugMessage("including HTML index");
                 out.write(("Files." + uris.size() + ".Name=index.html\r\n" +
@@ -235,6 +256,7 @@ public class SyncOutboundPusher {
             }
             // don't forget the sharedIndex
             File sharedIndex = new File(_manager.getClient().getWebDir(), LocalArchiveManager.SHARED_INDEX_FILE);
+            _manager.getUI().debugMessage("******"+sharedIndex.getAbsoluteFile());
             if (sharedIndex.exists()) {
                 _manager.getUI().debugMessage("including shared index");
                 out.write(("Files." + (uris.size()+1) + ".Name=" + LocalArchiveManager.SHARED_INDEX_FILE + "\r\n" +
@@ -314,25 +336,39 @@ public class SyncOutboundPusher {
             // since we are doing a persistent put, this does not block waiting
             // for the actual full posting, merely schedules the posting through
             // freenet
-            Map rv = readResults(s.getInputStream());
-            if (rv == null) {
+            rv = readResults(s.getInputStream());
+            
+            if (rv.get("cmd") == null) {
                 error = "Error communicating with the Freenet server";
                 _manager.getUI().errorMessage(error);
-            } else {
-                String code = (String)rv.get("Code");
-                if ( (code != null) && !("0".equals(code))) {
-                    error = "Error posting the archive";
+                s.close();
+                //return error;
+                
+            }else {
+                //_manager.getUI().debugMessage("Freenet archive publishing queued on the freenet server");
+                _manager.getUI().debugMessage("Total size queued: " + (bytes+1023)/1024 + "KBytes");
+                //maybe use debugs to give rough estimates of precentage left/done 
+               
+                //while loop to adjust error to null if sucess or error if put failed
+                String cmd = (String) rv.get("cmd");
+                while(!(cmd.startsWith("PutFailed")) && !(cmd.startsWith("PutSuccessful"))){
+                    _manager.getUI().debugMessage(cmd);
+                    rv = readResults(s.getInputStream());
+                    out.write(("Void\r\nEndMessage\r\n").getBytes());
+                    cmd = (String)rv.get("cmd");
+                }if(cmd.startsWith("PutFailed")){
+                    error = "Pushing failed try again later";
                     _manager.getUI().errorMessage(error);
-                    _manager.getUI().debugMessage("FCP response: " + rv);
-                } else {
-                    _manager.getUI().debugMessage("Freenet archive publishing queued on the freenet server");
-                    _manager.getUI().debugMessage("Total size queued: " + (bytes+1023)/1024 + "KBytes");
-                    _manager.getUI().debugMessage("It may take a long time for the archive to be visible for others");
-                    _manager.getUI().debugMessage("Please see the Freenet fproxy for status information.");
+                    s.close();
+                    return error;
+                }else{
+                    s.close();
+                    return null;
                 }
+                
             }
-            s.close();
-        } catch (IOException ioe) {
+        }
+        catch (IOException ioe) {
             error = "Error posting the archive to Freenet (fcp " + host + ":"+ port + ")";
             _manager.getUI().errorMessage(error, ioe);
         }
@@ -340,18 +376,27 @@ public class SyncOutboundPusher {
     }
     
     private String getTarget(String privateSSK) {
-	String key = privateSSK;
-	if ( privateSSK.indexOf("SSK@")==0 || privateSSK.indexOf("USK@")==0 ) {
-            key = key.substring(4);
-	}
-        while (key.endsWith("/"))
-            key = key.substring(0, key.length()-1);
-        return "USK@" + key + "/archive/0/";
+        String key = privateSSK;
+        if ( privateSSK.indexOf("USK@")!=0 && privateSSK.indexOf("USK@")!=-1 ) {
+            key = key.substring(privateSSK.indexOf("USK@"));
+        }
+        else if ( privateSSK.indexOf("SSK@")!=0 && privateSSK.indexOf("SSK@")!=-1 ){
+            key = key.substring(privateSSK.indexOf("SSK@"));
+        }
+        else if ( privateSSK.indexOf("KSK@")!=0 && privateSSK.indexOf("KSK@")!=-1 ){
+            key = key.substring(privateSSK.indexOf("KSK@"));
+        }
+        else if ( privateSSK.indexOf("CHK@")!=0 && privateSSK.indexOf("CHK@")!=-1 ){
+            key = key.substring(privateSSK.indexOf("CHK@"));
+        }
+        
+        return key;
     }
     
     private Map readResults(InputStream in) throws IOException { return readResults(in, _manager.getUI()); }
     public static Map readResults(InputStream in, UI ui) throws IOException {
-        // read the result map, ignoring the NodeHello message
+        // I dont think the node hello message should be ignored... check for the unlikely 
+        // CloseConnectionDuplicateClientName
         BufferedReader bin = new BufferedReader(new InputStreamReader(in, "UTF-8"));
         String line = null;
         Map rv = new HashMap();
@@ -361,14 +406,9 @@ public class SyncOutboundPusher {
             if (cmd == null) {
                 cmd = line;
             } else if (line.startsWith("EndMessage")) {
-                if ("NodeHello".equals(cmd)) {
-                    // ignore this message
-                    rv.clear();
-                    cmd = null;
-                } else {
-                    // return this message
-                    return rv;
-                }
+                // Save message types now for polling
+                rv.put("cmd",cmd);
+                return rv;
             } else {
                 int split = line.indexOf('=');
                 if (split < 0) throw new IOException("Invalid format of a line [" + line + "]");
@@ -565,12 +605,12 @@ public class SyncOutboundPusher {
         	timeout.cancel();
             error = "Internal error: " + dfe.getMessage();
             _manager.getUI().debugMessage("Error posting", dfe);
-            _manager.getUI().commandComplete(-1, null);
+            return error;
         } catch (IOException ioe) {
         	timeout.cancel();
             error = ioe.getMessage();
             _manager.getUI().debugMessage("Error posting", ioe);
-            _manager.getUI().commandComplete(-1, null);
+            return error;
         }
         return error;
     }
