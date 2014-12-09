@@ -605,12 +605,12 @@ public class SyncOutboundPusher {
         	timeout.cancel();
             error = "Internal error: " + dfe.getMessage();
             _manager.getUI().debugMessage("Error posting", dfe);
-            return error;
+            _manager.getUI().commandComplete(-1, null);
         } catch (IOException ioe) {
         	timeout.cancel();
             error = ioe.getMessage();
             _manager.getUI().debugMessage("Error posting", ioe);
-            return error;
+            _manager.getUI().commandComplete(-1, null);
         }
         return error;
     }
