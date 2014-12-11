@@ -139,18 +139,19 @@ public class SyncOutboundPusher {
             if (action.getCompletionTime() > 0) continue; // already complete
             if (action.isPaused()) continue; // dont wanna do it
             if (!action.setIsExecuting(true)) continue; // someone else is doing it
+            
             SyndieURI uri = action.getURI();
             uris.add(uri);
             actionsPushed.add(action);
         }
         String err = null;
         if (uris.size() > 0)
-            err = pushFreenet(archive, uris);
+            err = pushFreenet(archive, uris, actionsPushed);
         if (err == null) {
             for (int i = 0; i < actionsPushed.size(); i++) {
-            SyncArchive.OutgoingAction action = (SyncArchive.OutgoingAction)actionsPushed.get(i);
-            action.pushOK();
-        }
+                SyncArchive.OutgoingAction action = (SyncArchive.OutgoingAction)actionsPushed.get(i);
+                action.pushOK();
+            }
         } else {
             for (int i = 0; i < actionsPushed.size(); i++) {
                 SyncArchive.OutgoingAction action = (SyncArchive.OutgoingAction)actionsPushed.get(i);
@@ -159,23 +160,22 @@ public class SyncOutboundPusher {
         }
     }
     
-    private String pushFreenet(SyncArchive archive, List uris) {
+    private String pushFreenet(SyncArchive archive, List uris, List actionsPushed) {
         String error = null;
-        
+        // shove all of the files specified to the fcp host
         String host = archive.getFCPHost();
+        int actions = archive.getOutgoingActionCount();
         int port = archive.getFCPPort();
         if (host != null) host = host.trim();
         if ( (host == null) || (port <= 0) )
-            return "FCP Host Failed, check your settings.";
+            return "No FCP settings defined";
         if (archive.getPostKey() == null)
-            return "You lack a post key";
-        
+            return "No posting key defined";
         
         try {
             Socket s = new Socket(host, port);
             OutputStream out = s.getOutputStream();
             long msgId = System.currentTimeMillis();
-            
             // say hello to FCP
             _manager.getUI().debugMessage("Saying hello to freenet (fcp host " + host + " port " + port + ")");
             out.write(DataHelper.getUTF8("ClientHello\r\n" +
@@ -201,21 +201,22 @@ public class SyncOutboundPusher {
                     return error;
                 }
             }
-            
-            
             String target = getTarget(archive.getPostKey());
             
             _manager.getUI().debugMessage("Posting to " + target);
             
+            //using set pushing meta here for UI user sanity and it sort of makes sense for FCP
+            for (int i = 0; i < actions; i++) {
+                SyncArchive.OutgoingAction action = (SyncArchive.OutgoingAction)actionsPushed.get(i);
+                action.setPushingMeta();
+            }
             out.write(("ClientPutComplexDir\r\n" +
-                       "URI=" + target + "\r\n" + 
                        "Identifier=" + (msgId+1) + "\r\n" +
+                       "URI=" + target + "\r\n" +  
                        "ClientToken=" + (msgId+3) + "\r\n" +
                        "Verbosity=1111111\r\n" + // we want everything
                        "Persistence=forever\r\n" //seems to ensure you recieve PutSuccessfull
                        ).getBytes());
-            
-            
             
             // dont use UploadFrom=disk, because that breaks if the fcpHost != localhost,
             // or if the freenet instance doesn't have read permissions on the archive
@@ -256,7 +257,6 @@ public class SyncOutboundPusher {
             }
             // don't forget the sharedIndex
             File sharedIndex = new File(_manager.getClient().getWebDir(), LocalArchiveManager.SHARED_INDEX_FILE);
-            _manager.getUI().debugMessage("******"+sharedIndex.getAbsoluteFile());
             if (sharedIndex.exists()) {
                 _manager.getUI().debugMessage("including shared index");
                 out.write(("Files." + (uris.size()+1) + ".Name=" + LocalArchiveManager.SHARED_INDEX_FILE + "\r\n" +
@@ -337,38 +337,52 @@ public class SyncOutboundPusher {
             // for the actual full posting, merely schedules the posting through
             // freenet
             rv = readResults(s.getInputStream());
-            
+            //Do your error checking
             if (rv.get("cmd") == null) {
                 error = "Error communicating with the Freenet server";
                 _manager.getUI().errorMessage(error);
+                out.write(("Disconnect EndMessage\r\n").getBytes());
                 s.close();
-                //return error;
+                return error;
                 
             }else {
-                //_manager.getUI().debugMessage("Freenet archive publishing queued on the freenet server");
+                _manager.getUI().debugMessage("Freenet archive publishing queued on the freenet server");
                 _manager.getUI().debugMessage("Total size queued: " + (bytes+1023)/1024 + "KBytes");
                 //maybe use debugs to give rough estimates of precentage left/done 
                
                 //while loop to adjust error to null if sucess or error if put failed
                 String cmd = (String) rv.get("cmd");
+                if (cmd.startsWith("ProtocolError")){
+                    error = "Most likely non existent files or inproper formating of message.";
+                    _manager.getUI().errorMessage(error);
+                    out.write(("Disconnect EndMessage\r\n").getBytes());
+                    s.close();
+                    return error;
+                }
+                for (int i = 0; i < actions; i++) {
+                    SyncArchive.OutgoingAction action = (SyncArchive.OutgoingAction)actionsPushed.get(i);
+                    action.setPushingBody();
+                }
                 while(!(cmd.startsWith("PutFailed")) && !(cmd.startsWith("PutSuccessful"))){
                     _manager.getUI().debugMessage(cmd);
                     rv = readResults(s.getInputStream());
-                    out.write(("Void\r\nEndMessage\r\n").getBytes());
+                    //Simple keep alive method
+                    out.write(("Void\r\nEndMessage\r\n").getBytes()); 
                     cmd = (String)rv.get("cmd");
                 }if(cmd.startsWith("PutFailed")){
                     error = "Pushing failed try again later";
                     _manager.getUI().errorMessage(error);
+                    out.write(("Disconnect EndMessage\r\n").getBytes());
                     s.close();
                     return error;
                 }else{
+                    out.write(("Disconnect EndMessage\r\n").getBytes());
                     s.close();
                     return null;
                 }
                 
             }
-        }
-        catch (IOException ioe) {
+        } catch (IOException ioe) {
             error = "Error posting the archive to Freenet (fcp " + host + ":"+ port + ")";
             _manager.getUI().errorMessage(error, ioe);
         }
@@ -395,19 +409,30 @@ public class SyncOutboundPusher {
     
     private Map readResults(InputStream in) throws IOException { return readResults(in, _manager.getUI()); }
     public static Map readResults(InputStream in, UI ui) throws IOException {
+        //Buffered reader was possibly tossing results
         // I dont think the node hello message should be ignored... check for the unlikely 
         // CloseConnectionDuplicateClientName
-        BufferedReader bin = new BufferedReader(new InputStreamReader(in, "UTF-8"));
-        String line = null;
+        int c;
+        InputStreamReader isr = new InputStreamReader(in, "UTF-8");
+        StringBuilder sb = new StringBuilder();
+        for (c = isr.read(); c != '\n' && c != -1 ; c = isr.read()) {
+            sb.append((char)c);
+        }
+        if (c == -1 && sb.length() == 0) return null;
+        String line = sb.toString();
         Map rv = new HashMap();
-        String cmd = null;
-        while ( (line = bin.readLine()) != null) {
+        // Save message types now for polling
+        rv.put("cmd",line);
+        while ( line != null) {
+            sb = new StringBuilder();
+            for (c = isr.read(); c != '\n' && c != -1 ; c = isr.read()) {
+                sb.append((char)c);
+            }
+            if (c == -1 && sb.length() == 0) return null;
+            line = sb.toString();
+            
             ui.debugMessage("Line read: " + line);
-            if (cmd == null) {
-                cmd = line;
-            } else if (line.startsWith("EndMessage")) {
-                // Save message types now for polling
-                rv.put("cmd",cmd);
+            if (line.startsWith("EndMessage")) {
                 return rv;
             } else {
                 int split = line.indexOf('=');
