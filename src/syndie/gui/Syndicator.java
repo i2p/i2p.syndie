@@ -364,11 +364,24 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
     }
     
     public void syncNowRecurring() {
-        if (_tree.getSelectionCount() != 1) return;
-        TreeItem item = _tree.getSelection()[0];
-        Object val = _items.get(item);
-        if (val instanceof SyncArchive)
-            syncNowRecurring((SyncArchive) val);
+        if (_tree.getSelectionCount() == 0){
+            TreeItem[] items = _tree.getItems();
+            int count = _tree.getItemCount(); 
+            for(int c = 0; c < count; c++){
+                Object val = _items.get(items[c]);
+                if (val instanceof SyncArchive)
+                    syncNowRecurring((SyncArchive) val);
+            }
+        }
+        else{
+            TreeItem[] items = _tree.getSelection();
+            int count = _tree.getSelectionCount();
+            for(int c = 0; c < count; c++){
+                Object val = _items.get(items[c]);
+                if (val instanceof SyncArchive)
+                    syncNowRecurring((SyncArchive) val);
+            }
+        }
     }
     private void syncNowRecurring(SyncArchive archive) {
         archive.setNextSyncOneOff(false);
@@ -376,11 +389,24 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
     }
     
     public void syncNowOneTime() {
-        if (_tree.getSelectionCount() != 1) return;
-        TreeItem item = _tree.getSelection()[0];
-        Object val = _items.get(item);
-        if (val instanceof SyncArchive)
-            syncNowOneTime((SyncArchive) val);
+        if (_tree.getSelectionCount() == 0){
+            TreeItem[] items = _tree.getItems();
+            int count = _tree.getItemCount(); 
+            for(int c = 0; c < count; c++){
+                Object val = _items.get(items[c]);
+                if (val instanceof SyncArchive)
+                    syncNowOneTime((SyncArchive) val);
+            }
+        }
+        else{
+            TreeItem[] items = _tree.getSelection();
+            int count = _tree.getSelectionCount();
+            for(int c = 0; c < count; c++){
+                Object val = _items.get(items[c]);
+                if (val instanceof SyncArchive)
+                    syncNowOneTime((SyncArchive) val);
+            }
+        }
     }
     private void syncNowOneTime(SyncArchive archive) {
         archive.setNextSyncOneOff(true);

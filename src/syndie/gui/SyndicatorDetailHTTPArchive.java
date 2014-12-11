@@ -662,6 +662,7 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
                 //   InsertURI=freenet:SSK@AKTTKG6YwjrHzWo67laRcoPqibyiTdyYufjVg54fBlWr,AwUSJG5ZS-FDZTqnt6skTzhxQe08T-fbKXj8aEHZsXM/
                 //   RequestURI=freenet:SSK@BnHXXv3Fa43w~~iz1tNUd~cj4OpUuDjVouOWZ5XlpX0,AwUSJG5ZS-FDZTqnt6skTzhxQe08T-fbKXj8aEHZsXM,AQABAAE/
                 
+                rv = SyncOutboundPusher.readResults(s.getInputStream(), _ui);
                 targetPub.setText(getRequestURI((String)rv.get("RequestURI")));
                 targetPriv.setText(getInsertURI((String)rv.get("InsertURI")));
             }
