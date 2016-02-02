@@ -2,7 +2,7 @@
 # Copyright (C) 2013 The I2P Project
 # This file is distributed under the same license as the Syndie package.
 # To contribute translations, see http://www.i2p2.de/newdevelopers
-#
+# 
 # Translators:
 # Danton Medrado, 2013
 # hxdcmls, 2013
@@ -12,20 +12,18 @@ msgstr ""
 "Project-Id-Version: I2P\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-01-20 22:47+0000\n"
-"PO-Revision-Date: 2013-11-09 01:31+0000\n"
-"Last-Translator: Danton Medrado\n"
-"Language-Team: Portuguese (http://www.transifex.com/projects/p/I2P/language/"
-"pt/)\n"
-"Language: pt\n"
+"PO-Revision-Date: 2015-11-09 03:40+0000\n"
+"Last-Translator: kytv <killyourtv@i2pmail.org>\n"
+"Language-Team: Portuguese (http://www.transifex.com/otf/I2P/language/pt/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Language: pt\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: src/syndie/db/ImportResult.java:18
-#, fuzzy
 msgid "Import successful"
-msgstr "Backup bem sucedido"
+msgstr ""
 
 #: src/syndie/db/ImportResult.java:22
 msgid "Already imported"
@@ -40,19 +38,16 @@ msgid "Import forum info successful"
 msgstr ""
 
 #: src/syndie/db/ImportResult.java:34
-#, fuzzy
 msgid "Import post successful"
-msgstr "Backup bem sucedido"
+msgstr ""
 
 #: src/syndie/db/ImportResult.java:38
-#, fuzzy
 msgid "Import keys successful"
-msgstr "Backup bem sucedido"
+msgstr ""
 
 #: src/syndie/db/ImportResult.java:43
-#, fuzzy
 msgid "Cancel requests processed"
-msgstr "Cancelar a mensagem"
+msgstr ""
 
 #: src/syndie/db/ImportResult.java:48
 msgid "Unreadable"
@@ -86,9 +81,8 @@ msgid "Bad enclosure type"
 msgstr ""
 
 #: src/syndie/db/ImportResult.java:78
-#, fuzzy
 msgid "Bad message format"
-msgstr "Salvar a mensagem para depois"
+msgstr ""
 
 #: src/syndie/db/ImportResult.java:82
 msgid "No URI"
@@ -99,14 +93,12 @@ msgid "No channel"
 msgstr ""
 
 #: src/syndie/db/ImportResult.java:90
-#, fuzzy
 msgid "Banned channel"
-msgstr "Cancelar mudanças"
+msgstr ""
 
 #: src/syndie/db/ImportResult.java:94
-#, fuzzy
 msgid "Banned author"
-msgstr "Mudar autor"
+msgstr ""
 
 #: src/syndie/db/ImportResult.java:98
 msgid "Unknown channel"
@@ -138,9 +130,8 @@ msgid "Database error"
 msgstr ""
 
 #: src/syndie/db/ImportResult.java:128
-#, fuzzy
 msgid "I/O error"
-msgstr "Erro interno"
+msgstr ""
 
 #: src/syndie/db/ImportResult.java:132
 msgid "Corrupt"
@@ -168,9 +159,8 @@ msgid "postKey"
 msgstr ""
 
 #: src/syndie/db/ReadMenu.java:1000
-#, fuzzy
 msgid "manageKey"
-msgstr "Gerenciar"
+msgstr ""
 
 #: src/syndie/db/ReadMenu.java:1003
 msgid "replyKey"
@@ -325,19 +315,13 @@ msgstr "Arquivos Padrões"
 msgid ""
 "You have no remote archives configured, preventing you from either reading "
 "other people's posts or from sharing your own posts with them."
-msgstr ""
-"Não tens arquivos remotos configurados, o que te impede de ou ler as "
-"mensagens das outras pessoas ou compartilhar suas próprias mensagens com os "
-"outros."
+msgstr "Não tens arquivos remotos configurados, o que te impede de ou ler as mensagens das outras pessoas ou compartilhar suas próprias mensagens com os outros."
 
 #: src/syndie/gui/ArchiveDefaultsPopup.java:96
 msgid ""
 "The default archives shipped with your Syndie instance are listed above.  "
 "Please make any necessary changes, unchecking any that you don't want"
-msgstr ""
-"Os arquivos padrão que vieram junto com tua instância do Syndie estão "
-"listados acima. Por favor, fazei quaisquer mudanças necessárias, desmarcando "
-"aquelas que não precisas."
+msgstr "Os arquivos padrão que vieram junto com tua instância do Syndie estão listados acima. Por favor, fazei quaisquer mudanças necessárias, desmarcando aquelas que não precisas."
 
 #: src/syndie/gui/ArchiveDefaultsPopup.java:97
 msgid "Save archives as your own"
@@ -363,9 +347,7 @@ msgstr "Banido"
 msgid ""
 "These authors and forums are completely ignored, with all of the associated "
 "messages refused"
-msgstr ""
-"Esses autores e fóruns são completamente ignorados, com todas as mensagens "
-"associadas a eles recusadas"
+msgstr "Esses autores e fóruns são completamente ignorados, com todas as mensagens associadas a eles recusadas"
 
 #: src/syndie/gui/ArchiveManager.java:270
 msgid "Full hash"
@@ -499,11 +481,9 @@ msgstr "Navegador"
 
 #: src/syndie/gui/BackupSecrets.java:152
 msgid ""
-"A blank passphrase is not allowed - if you don't want to protect your secret "
-"keys, please uncheck the passphrase checkbox"
-msgstr ""
-"Uma senha em branco não é permitida - se você não quer proteger suas chaves "
-"secretas, por favor desmarque a caixa de seleção de senha"
+"A blank passphrase is not allowed - if you don't want to protect your secret"
+" keys, please uncheck the passphrase checkbox"
+msgstr "Uma senha em branco não é permitida - se você não quer proteger suas chaves secretas, por favor desmarque a caixa de seleção de senha"
 
 #: src/syndie/gui/BackupSecrets.java:187
 msgid "File to write the backup to"
@@ -713,11 +693,7 @@ msgid ""
 "in the browser of your choice, but doing so may be risky, as Syndie cannot "
 "protect your browser, and even following this link may compromise your "
 "identity or security."
-msgstr ""
-"A URL selecionada se refere a um recurso fora do Syndie. Podeis carregar "
-"isso no navegador que quiseres, mas fazê-lo pode ser arriscado, pois Syndie "
-"não pode proteger teu navegador, e seguir tal ligação pode comprometer tua "
-"identidade e segurança."
+msgstr "A URL selecionada se refere a um recurso fora do Syndie. Podeis carregar isso no navegador que quiseres, mas fazê-lo pode ser arriscado, pois Syndie não pode proteger teu navegador, e seguir tal ligação pode comprometer tua identidade e segurança."
 
 #: src/syndie/gui/Browser.java:1633
 msgid "DO NOT OPEN THE URL IF YOU ARE UNSURE!!!"
@@ -768,12 +744,9 @@ msgstr "Interface baseada em texto"
 #: src/syndie/gui/Browser.java:1889 src/syndie/gui/desktop/Desktop.java:1065
 msgid ""
 "All of the messages in it will be removed and you will never receive any "
-"messages in it again, or posts written by the forum's owner.  Do you want to "
-"ban"
-msgstr ""
-"Todas as mensagens contidas serão removidas e não receberás nenhuma outra "
-"mensagem nele novamente, ou mensagens escritas pelo proprietário do fórum. "
-"Desejas banir"
+"messages in it again, or posts written by the forum's owner.  Do you want to"
+" ban"
+msgstr "Todas as mensagens contidas serão removidas e não receberás nenhuma outra mensagem nele novamente, ou mensagens escritas pelo proprietário do fórum. Desejas banir"
 
 #: src/syndie/gui/Browser.java:1892 src/syndie/gui/desktop/Desktop.java:1068
 msgid "Confirm ban"
@@ -1944,8 +1917,8 @@ msgstr ""
 
 #: src/syndie/gui/MessageEditor.java:2547
 msgid ""
-"The attachment could not be added, as it exceeds the maximum attachment size "
-"("
+"The attachment could not be added, as it exceeds the maximum attachment size"
+" ("
 msgstr ""
 
 #: src/syndie/gui/MessageEditor.java:2548
@@ -2615,8 +2588,8 @@ msgstr ""
 #: src/syndie/gui/MessageView.java:589
 #: src/syndie/gui/desktop/MessagePanel.java:233
 msgid ""
-"The message could not be reimported - the passphrase was not correct.  Would "
-"you like to try again?"
+"The message could not be reimported - the passphrase was not correct.  Would"
+" you like to try again?"
 msgstr ""
 
 #. duplicate the reply menu
@@ -2991,7 +2964,8 @@ msgid "Forum search criteria"
 msgstr ""
 
 #: src/syndie/gui/ReferenceChooserSearch.java:172
-msgid "-tag excludes, +tag requires all, without a prefix requires one or more"
+msgid ""
+"-tag excludes, +tag requires all, without a prefix requires one or more"
 msgstr ""
 
 #: src/syndie/gui/ReferenceChooserSearch.java:174
@@ -3140,9 +3114,8 @@ msgid "Forums requiring password"
 msgstr ""
 
 #: src/syndie/gui/StatusBar.java:690
-#, fuzzy
 msgid "Ban these forums"
-msgstr "Mudar fórum"
+msgstr ""
 
 #: src/syndie/gui/StatusBar.java:695 src/syndie/gui/StatusBar.java:736
 msgid "Are you sure?"
@@ -3158,9 +3131,8 @@ msgid "Messages requiring password"
 msgstr ""
 
 #: src/syndie/gui/StatusBar.java:731
-#, fuzzy
 msgid "Delete these messages"
-msgstr "Cancelar a mensagem"
+msgstr ""
 
 #: src/syndie/gui/StatusBar.java:764
 msgid "Pass. reqd"
@@ -3765,7 +3737,8 @@ msgstr ""
 
 #: src/syndie/gui/WelcomeScreen.java:400
 msgid ""
-"It is strongly recommended that you have I2P running before you start Syndie."
+"It is strongly recommended that you have I2P running before you start "
+"Syndie."
 msgstr ""
 
 #: src/syndie/gui/WelcomeScreen.java:401
@@ -3775,8 +3748,8 @@ msgstr ""
 
 #: src/syndie/gui/WelcomeScreen.java:405
 msgid ""
-"Syndie will create a new identity for you to use with which to post messages "
-"in other forums and to runyour own blog/forum."
+"Syndie will create a new identity for you to use with which to post messages"
+" in other forums and to runyour own blog/forum."
 msgstr ""
 
 #: src/syndie/gui/WelcomeScreen.java:408

@@ -1,6 +1,17 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
-* 2014-01-20 1.105-0 (kytv)
+* 2016-xx-xx 1.105b-1 (zzz)
+  - Eliminate dependency on deprecated Sha256Standalone
+  - Allow pushing without "http://" (ticket #1137)
+  - Update swt (ticket #1297)
+  - Control Server: Flush output stream (thx EinMByte https://github.com/i2p/i2p.syndie/issues/2)
+  - Update banlist, default archives, and URLs for the I2P, Tor, and Frost sites
+  - Update toolbar icons with higher quality versions courtesy of hummingbird
+  - Fix HTTPServ AIOOBE (ticket #1282)
+  - Translation updates
+  - New translations: Greek, Italian, Dutch, Brazilian Portuguese, Ukrainian, Chinese
+
+* 2014-01-20 1.105b-0 (kytv)
   - French translation updates
   - New Romanian translation
 

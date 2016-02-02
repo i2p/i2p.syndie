@@ -2,61 +2,59 @@
 # Copyright (C) 2013 The I2P Project
 # This file is distributed under the same license as the Syndie package.
 # To contribute translations, see http://www.i2p2.de/newdevelopers
-#
+# 
 # Translators:
-# Sergey V. Soroka, 2013
+# Cleoss KSA <nemets39@ya.ru>, 2015
+# cthat, 2013
+# Petr Polyakov, 2014
+# Nikolay Parukhin <parukhin@gmail.com>, 2014
+# Omega9 <nullnine@gmail.com>, 2014
+# yume, 2014
 msgid ""
 msgstr ""
 "Project-Id-Version: I2P\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-01-20 22:48+0000\n"
-"PO-Revision-Date: 2013-02-09 14:25+0000\n"
-"Last-Translator: Sergey V. Soroka\n"
-"Language-Team: Russian (Russia) (http://www.transifex.com/projects/p/I2P/"
-"language/ru_RU/)\n"
-"Language: ru_RU\n"
+"POT-Creation-Date: 2014-01-20 22:47+0000\n"
+"PO-Revision-Date: 2015-11-15 12:18+0000\n"
+"Last-Translator: Cleoss KSA <nemets39@ya.ru>\n"
+"Language-Team: Russian (Russia) (http://www.transifex.com/otf/I2P/language/ru_RU/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
-"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Language: ru_RU\n"
+"Plural-Forms: nplurals=4; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : n%10==0 || (n%10>=5 && n%10<=9) || (n%100>=11 && n%100<=14)? 2 : 3);\n"
 
 #: src/syndie/db/ImportResult.java:18
-#, fuzzy
 msgid "Import successful"
-msgstr "Успешное резервное копирование"
+msgstr "Успешный импорт"
 
 #: src/syndie/db/ImportResult.java:22
 msgid "Already imported"
-msgstr ""
+msgstr "Уже импортировано"
 
 #: src/syndie/db/ImportResult.java:26
 msgid "Already deleted"
-msgstr ""
+msgstr "Уже удалено"
 
 #: src/syndie/db/ImportResult.java:30
 msgid "Import forum info successful"
-msgstr ""
+msgstr "Информация импортирована успешно"
 
 #: src/syndie/db/ImportResult.java:34
-#, fuzzy
 msgid "Import post successful"
-msgstr "Импортировать ключ для записи"
+msgstr "Запись импортирована успешно"
 
 #: src/syndie/db/ImportResult.java:38
-#, fuzzy
 msgid "Import keys successful"
-msgstr "Импортированные ресурсы"
+msgstr "Ключи импортированы успешно"
 
 #: src/syndie/db/ImportResult.java:43
-#, fuzzy
 msgid "Cancel requests processed"
-msgstr "Отменить сообщение"
+msgstr "Отмена обрабатываемых запросов"
 
 #: src/syndie/db/ImportResult.java:48
-#, fuzzy
 msgid "Unreadable"
-msgstr "Не прочитано"
+msgstr "Нечитаемо"
 
 #: src/syndie/db/ImportResult.java:52 src/syndie/gui/MessageFlagBar.java:306
 #: src/syndie/gui/MessageViewTab.java:48
@@ -75,47 +73,43 @@ msgstr "Необходим пароль"
 
 #: src/syndie/db/ImportResult.java:66
 msgid "No enclosure type"
-msgstr ""
+msgstr "Не указан тип вложения"
 
 #: src/syndie/db/ImportResult.java:70
 msgid "Bad enclosure format"
-msgstr ""
+msgstr "Неправильный формат вложения"
 
 #: src/syndie/db/ImportResult.java:74
 msgid "Bad enclosure type"
-msgstr ""
+msgstr "Неправильный тип вложения"
 
 #: src/syndie/db/ImportResult.java:78
-#, fuzzy
 msgid "Bad message format"
-msgstr "Сохранить сообщение на потом"
+msgstr "Некорректный формат сообщения"
 
 #: src/syndie/db/ImportResult.java:82
 msgid "No URI"
-msgstr ""
+msgstr "Отсутствует URI"
 
 #: src/syndie/db/ImportResult.java:86
 msgid "No channel"
-msgstr ""
+msgstr "Отсутствует канал"
 
 #: src/syndie/db/ImportResult.java:90
-#, fuzzy
 msgid "Banned channel"
-msgstr "Заблокированные области"
+msgstr "Заблокированный канал"
 
 #: src/syndie/db/ImportResult.java:94
-#, fuzzy
 msgid "Banned author"
-msgstr "Заблокировать автора"
+msgstr "Заблокированный автор"
 
 #: src/syndie/db/ImportResult.java:98
 msgid "Unknown channel"
-msgstr ""
+msgstr "Неизвестный канал"
 
 #: src/syndie/db/ImportResult.java:102
-#, fuzzy
 msgid "Unknown author"
-msgstr "Заблокировать автора"
+msgstr "Неизвестный автор"
 
 #: src/syndie/db/ImportResult.java:106 src/syndie/gui/MessageEditor.java:2469
 #: src/syndie/gui/desktop/MessagePanel.java:189
@@ -124,39 +118,35 @@ msgstr "Не авторизован"
 
 #: src/syndie/db/ImportResult.java:110
 msgid "Meta does not verify"
-msgstr ""
+msgstr "МЕТА не проверяема"
 
 #: src/syndie/db/ImportResult.java:114
-#, fuzzy
 msgid "Unable to fetch"
-msgstr "Невозможно загрузить вложение"
+msgstr "Не могу загрузить"
 
 #: src/syndie/db/ImportResult.java:118
 msgid "Invalid Freenet archive URL"
-msgstr ""
+msgstr "Некорректный URL Freenet-архива"
 
 #: src/syndie/db/ImportResult.java:124
 msgid "Database error"
-msgstr ""
+msgstr "Ошибка базы данных"
 
 #: src/syndie/db/ImportResult.java:128
-#, fuzzy
 msgid "I/O error"
-msgstr "Внутренняя ошибка"
+msgstr "Ошибка ввода/вывода"
 
 #: src/syndie/db/ImportResult.java:132
 msgid "Corrupt"
-msgstr ""
+msgstr "Повреждён"
 
 #: src/syndie/db/ImportResult.java:136
-#, fuzzy
 msgid "Unable to decrypt"
-msgstr "Невозможно загрузить вложение"
+msgstr "Не могу расшифровать"
 
 #: src/syndie/db/ImportResult.java:140
-#, fuzzy
 msgid "Bad header"
-msgstr "Неверная дата"
+msgstr "Некорректный заголовок"
 
 #: src/syndie/db/ImportResult.java:144 src/syndie/gui/Browser.java:1550
 #: src/syndie/gui/SWTUI.java:179
@@ -164,27 +154,24 @@ msgid "Internal error"
 msgstr "Внутренняя ошибка"
 
 #: src/syndie/db/ReadMenu.java:994
-#, fuzzy
 msgid "readKey"
-msgstr "Нить обсуждения"
+msgstr "readKey"
 
 #: src/syndie/db/ReadMenu.java:997
 msgid "postKey"
-msgstr ""
+msgstr "postKey"
 
 #: src/syndie/db/ReadMenu.java:1000
-#, fuzzy
 msgid "manageKey"
-msgstr "Управлять"
+msgstr "manageKey"
 
 #: src/syndie/db/ReadMenu.java:1003
-#, fuzzy
 msgid "replyKey"
-msgstr "Ответить"
+msgstr "replyKey"
 
 #: src/syndie/db/ReadMenu.java:1017
 msgid "url"
-msgstr ""
+msgstr "url"
 
 #: src/syndie/gui/ArchiveDefaults.java:207
 #: src/syndie/gui/ArchiveDefaults.java:430
@@ -331,18 +318,13 @@ msgstr "Умолчания архивов"
 msgid ""
 "You have no remote archives configured, preventing you from either reading "
 "other people's posts or from sharing your own posts with them."
-msgstr ""
-"У вас нет сконфигурированных архивов, что препятствует чтению записей других "
-"людей или разделению ваших записей с ними."
+msgstr "У вас нет сконфигурированных архивов, что препятствует чтению записей других людей или разделению ваших записей с ними."
 
 #: src/syndie/gui/ArchiveDefaultsPopup.java:96
 msgid ""
 "The default archives shipped with your Syndie instance are listed above.  "
 "Please make any necessary changes, unchecking any that you don't want"
-msgstr ""
-"Архивы по-умолчанию, поставляемые с вашей копией Syndie перечислены выше. "
-"Пожалуйста, сделайте необходимые изменения, убрав отметки с тех архивов, "
-"которые вам не нужны."
+msgstr "Архивы по умолчанию, поставляемые с вашей копией Syndie, перечислены выше. Пожалуйста, сделайте необходимые изменения, убрав отметки с тех архивов, которые вам не нужны."
 
 #: src/syndie/gui/ArchiveDefaultsPopup.java:97
 msgid "Save archives as your own"
@@ -357,9 +339,7 @@ msgstr "Распространяемые архивы"
 msgid ""
 "If you allow people to sync off your archive, you can tell them about some "
 "alternate archives they can sync off as well"
-msgstr ""
-"Если вы позволяете другим синхронизироваться с вашим архивом, вы можете "
-"рассказать им о других архивах, с которыми они тоже могут синхронизироваться."
+msgstr "Если вы позволяете другим синхронизироваться с вашим архивом, вы можете рассказать им о других архивах, с которыми они тоже могут синхронизироваться."
 
 #: src/syndie/gui/ArchiveManager.java:252 src/syndie/gui/Browser.java:1906
 #: src/syndie/gui/Browser.java:1907
@@ -370,9 +350,7 @@ msgstr "Заблокированые"
 msgid ""
 "These authors and forums are completely ignored, with all of the associated "
 "messages refused"
-msgstr ""
-"Эти авторы и форумы полностью игнорируются и отбрасываются со всеми "
-"связанными сообщениями"
+msgstr "Эти авторы и форумы полностью игнорируются и отбрасываются со всеми связанными сообщениями"
 
 #: src/syndie/gui/ArchiveManager.java:270
 msgid "Full hash"
@@ -506,11 +484,9 @@ msgstr "Просмотреть"
 
 #: src/syndie/gui/BackupSecrets.java:152
 msgid ""
-"A blank passphrase is not allowed - if you don't want to protect your secret "
-"keys, please uncheck the passphrase checkbox"
-msgstr ""
-"Пустой пароль не разрешен, если вы не хотите защищать ваши секретные ключи, "
-"пожалуйста снимите флажок пароля"
+"A blank passphrase is not allowed - if you don't want to protect your secret"
+" keys, please uncheck the passphrase checkbox"
+msgstr "Пустой пароль не разрешен, если вы не хотите защищать ваши секретные ключи, пожалуйста снимите флажок пароля"
 
 #: src/syndie/gui/BackupSecrets.java:187
 msgid "File to write the backup to"
@@ -720,11 +696,7 @@ msgid ""
 "in the browser of your choice, but doing so may be risky, as Syndie cannot "
 "protect your browser, and even following this link may compromise your "
 "identity or security."
-msgstr ""
-"Выбранный URL относится к ресурсу за пределами Syndie. Вы можете загрузить "
-"его в вашем любимом браузере, но это может быть рискованно, т.к. Syndie не "
-"может защитить ваш браузер, к тому же прохождение по этой ссылке может "
-"скомпрометировать вашу личность или безопасность."
+msgstr "Выбранный URL относится к ресурсу за пределами Syndie. Вы можете загрузить его в вашем любимом браузере, но это может быть рискованно, т.к. Syndie не может защитить ваш браузер, к тому же прохождение по этой ссылке может скомпрометировать вашу личность или безопасность."
 
 #: src/syndie/gui/Browser.java:1633
 msgid "DO NOT OPEN THE URL IF YOU ARE UNSURE!!!"
@@ -775,11 +747,9 @@ msgstr "Текстовый интерфейс"
 #: src/syndie/gui/Browser.java:1889 src/syndie/gui/desktop/Desktop.java:1065
 msgid ""
 "All of the messages in it will be removed and you will never receive any "
-"messages in it again, or posts written by the forum's owner.  Do you want to "
-"ban"
-msgstr ""
-"Все сообщения будут удалены и вы никогда не получите сообщений или записей "
-"сделанных владельцем форума. Хотите заблокировать"
+"messages in it again, or posts written by the forum's owner.  Do you want to"
+" ban"
+msgstr "Все сообщения будут удалены и вы никогда не получите сообщений или записей сделанных владельцем форума. Хотите заблокировать"
 
 #: src/syndie/gui/Browser.java:1892 src/syndie/gui/desktop/Desktop.java:1068
 msgid "Confirm ban"
@@ -1240,7 +1210,7 @@ msgstr "Версия SWT"
 
 #: src/syndie/gui/BugReport.java:672
 msgid "HSQLDB"
-msgstr ""
+msgstr "HSQLDB"
 
 #: src/syndie/gui/BugReport.java:673
 msgid "Issue summary"
@@ -1283,9 +1253,7 @@ msgstr "Написать в"
 
 #: src/syndie/gui/BugReport.java:681
 msgid "Report includes sensitive data (so only let the admins read it)"
-msgstr ""
-"Отчет содержит чувствительные данные (поэтому только администраторам можно "
-"прочитать его)"
+msgstr "Отчет содержит чувствительные данные (поэтому только администраторам можно прочитать его)"
 
 #: src/syndie/gui/BugReport.java:682
 msgid "Sign report as"
@@ -1339,8 +1307,7 @@ msgstr "Соблюсти отмену сообщений от любого уп�
 
 #: src/syndie/gui/CancelManager.java:404
 msgid "Honor cancel messages from any explicitly authorized forum posters"
-msgstr ""
-"Соблюсти отмену сообщений от любого явно уполномоченного участника форума"
+msgstr "Соблюсти отмену сообщений от любого явно уполномоченного участника форума"
 
 #: src/syndie/gui/CancelManagerTab.java:47
 #: src/syndie/gui/desktop/CancelManagerPanel.java:50
@@ -1565,11 +1532,7 @@ msgid ""
 "read a forum's posts, those allowed to post to a forum, those allowed to "
 "manage a forum, and those allowed to read the private replies to forum "
 "administrators"
-msgstr ""
-"Авторизация и аутентификация на форуме принимает четыре формы: те, кому "
-"позволено читать форум; те, кому позволено писать в форум; те, кому "
-"позволено управлять форумом и те, кому позволено читать приватные сообщения "
-"администраторам форума."
+msgstr "Авторизация и аутентификация на форуме принимает четыре формы: те, кому позволено читать форум; те, кому позволено писать в форум; те, кому позволено управлять форумом и те, кому позволено читать приватные сообщения администраторам форума."
 
 #: src/syndie/gui/ManageForum.java:1165
 msgid "Read posts"
@@ -1644,9 +1607,7 @@ msgstr "Послать новый идентификационный ключ а
 #: src/syndie/gui/ManageForumAuthPost.java:419
 msgid ""
 "Post the new identity's key in a passphrase protected message to the forum"
-msgstr ""
-"Отправить новый идентификационный ключ на форум в сообщении, защищенном "
-"паролем"
+msgstr "Отправить новый идентификационный ключ на форум в сообщении, защищенном паролем"
 
 #: src/syndie/gui/ManageForumAuthManage.java:309
 #: src/syndie/gui/ManageForumAuthPost.java:420
@@ -1805,9 +1766,7 @@ msgstr "Вы действительно хотите отправить сооб
 msgid ""
 "There was an error creating the message.  Please view the log for more "
 "information."
-msgstr ""
-"Возникла ошибка при создании сообщения. Пожалуйста посмотрите журнал, чтобы "
-"получить больше информации."
+msgstr "Возникла ошибка при создании сообщения. Пожалуйста посмотрите журнал, чтобы получить больше информации."
 
 #: src/syndie/gui/MessageEditor.java:551 src/syndie/gui/MessageEditor.java:557
 msgid "Error creating the message"
@@ -1822,12 +1781,7 @@ msgid ""
 "Message created successfully! \n"
 "Please be sure to syndicate it to the arcives so others may read it. \n"
 "The message timestamp has been randomized to protect your anonymity. \n"
-msgstr ""
-"Сообщение создано успешно!\n"
-"Пожалуйста удостоверьтесь, что отправили его в архив, чтобы другие могли его "
-"прочитать.\n"
-"Временной отпечаток сообщения был выбран случайно, чтобы защитить вашу "
-"анонимность.\n"
+msgstr "Сообщение создано успешно!\nПожалуйста удостоверьтесь, что отправили его в архив, чтобы другие могли его прочитать.\nВременной отпечаток сообщения был выбран случайно, чтобы защитить вашу анонимность.\n"
 
 #: src/syndie/gui/MessageEditor.java:587
 msgid "Display this message next time"
@@ -1935,15 +1889,13 @@ msgstr "Приватность"
 
 #: src/syndie/gui/MessageEditor.java:2110
 msgid "Headers"
-msgstr ""
+msgstr "Заголовки"
 
 #: src/syndie/gui/MessageEditor.java:2468
 msgid ""
 "The selected author does not have permission to write in the selected forum "
 "- please adjust your selection"
-msgstr ""
-"Выбранные авторы не имеют разрешения для записи в выбранный форум, "
-"пожалуйста откорректируйте свой выбор"
+msgstr "Выбранные авторы не имеют разрешения для записи в выбранный форум, пожалуйста откорректируйте свой выбор"
 
 #: src/syndie/gui/MessageEditor.java:2512
 msgid "Change author"
@@ -1968,11 +1920,9 @@ msgstr "Вложить файл"
 
 #: src/syndie/gui/MessageEditor.java:2547
 msgid ""
-"The attachment could not be added, as it exceeds the maximum attachment size "
-"("
-msgstr ""
-"Вложение не может быть добавлено, т.к. превышает максимальный размер "
-"вложения ("
+"The attachment could not be added, as it exceeds the maximum attachment size"
+" ("
+msgstr "Вложение не может быть добавлено, т.к. превышает максимальный размер вложения ("
 
 #: src/syndie/gui/MessageEditor.java:2548
 msgid "Too large"
@@ -2163,8 +2113,7 @@ msgstr "Удалить эту страницу"
 
 #: src/syndie/gui/MessageEditorToolbar.java:380
 msgid "Rip a web page and add it as a new page in the message"
-msgstr ""
-"Сделать копию web-страницы и добвить ее как новую страницу в этом сообщении"
+msgstr "Сделать копию web-страницы и добвить ее как новую страницу в этом сообщении"
 
 #: src/syndie/gui/MessageEditorToolbar.java:388
 msgid "Insert a new image into the current page"
@@ -2224,7 +2173,7 @@ msgstr "Ссылка на другой Syndie URI"
 
 #: src/syndie/gui/MessageEditorToolbar.java:490
 msgid "Insert style elements"
-msgstr ""
+msgstr "Вставить элементы стиля"
 
 #: src/syndie/gui/MessageEditorToolbar.java:552
 msgid "Styled text"
@@ -2283,19 +2232,16 @@ msgid "Preformatted text"
 msgstr "Отформатированный текст"
 
 #: src/syndie/gui/MessageEditorToolbar.java:588
-#, fuzzy
 msgid "Check the spelling in the current page"
-msgstr "Переключить тип текущей страницы"
+msgstr "Проверить правописание на текущей странице"
 
 #: src/syndie/gui/MessageEditorToolbar.java:596
-#, fuzzy
 msgid "Find or replace text in the current page"
-msgstr "Вставить новое изображение в текущую страницу"
+msgstr "Найти или заменить текст на текущей странице"
 
 #: src/syndie/gui/MessageEditorToolbar.java:604
-#, fuzzy
 msgid "Quote a section of the previous message"
-msgstr "Цитировать родительское сообщение"
+msgstr "Цитировать часть предыдущего сообщения"
 
 #: src/syndie/gui/MessageFlagBar.java:304
 msgid "Post is passphrase protected"
@@ -2395,18 +2341,20 @@ msgstr "Ошибка при обработке даты"
 #, java-format
 msgid "Last day"
 msgid_plural "Last {0} days"
-msgstr[0] "За последний {0} день"
+msgstr[0] "За последний день"
 msgstr[1] "За последние {0} дня"
 msgstr[2] "За последние {0} дней"
+msgstr[3] "За последние {0} дней"
 
 #. translators: you may use "Last {0} week" for the singular if that's better
 #: src/syndie/gui/MessageTree.java:752 src/syndie/gui/MessageTree.java:753
 #, java-format
 msgid "Last week"
 msgid_plural "Last {0} weeks"
-msgstr[0] "За последнюю {0} неделю"
+msgstr[0] "За последнюю неделю"
 msgstr[1] "За последние {0} недели"
 msgstr[2] "За последние {0} недель"
+msgstr[3] "За последние {0} недель"
 
 #. translators: you may use "Last {0} month" for the singular if that's better
 #: src/syndie/gui/MessageTree.java:755 src/syndie/gui/MessageTree.java:756
@@ -2414,9 +2362,10 @@ msgstr[2] "За последние {0} недель"
 #, java-format
 msgid "Last month"
 msgid_plural "Last {0} months"
-msgstr[0] "За последний {0} месяц"
+msgstr[0] "За последний месяц"
 msgstr[1] "За последние {0} месяца"
 msgstr[2] "За последние {0} месяцев"
+msgstr[3] "За последние {0} месяцев"
 
 #. translators: you may use "Last {0} year" for the singular if that's better
 #: src/syndie/gui/MessageTree.java:759 src/syndie/gui/MessageTree.java:760
@@ -2424,9 +2373,10 @@ msgstr[2] "За последние {0} месяцев"
 #, java-format
 msgid "Last year"
 msgid_plural "Last {0} years"
-msgstr[0] "За последний {0} год"
+msgstr[0] "За последний год"
 msgstr[1] "За последние {0} года"
 msgstr[2] "За последние {0} лет"
+msgstr[3] "За последние {0} лет"
 
 #: src/syndie/gui/MessageTree.java:780
 msgid "Any tags"
@@ -2482,9 +2432,7 @@ msgstr "Доступные для чтения для: администрато�
 
 #: src/syndie/gui/MessageTree.java:972
 msgid "Use local import date instead of (unreliable) message creation date"
-msgstr ""
-"Использовать дату локального импорта вместо (не заслуживающей доверия) даты "
-"создания сообщения"
+msgstr "Использовать дату локального импорта вместо (не заслуживающей доверия) даты создания сообщения"
 
 #: src/syndie/gui/MessageTree.java:973
 msgid "Organize results in threads"
@@ -2651,11 +2599,9 @@ msgstr "Пароль неверен"
 #: src/syndie/gui/MessageView.java:589
 #: src/syndie/gui/desktop/MessagePanel.java:233
 msgid ""
-"The message could not be reimported - the passphrase was not correct.  Would "
-"you like to try again?"
-msgstr ""
-"Сообщение не может быть реимпортировано, т.к. пароль неверен. Вы хотите "
-"попробовать еще раз?"
+"The message could not be reimported - the passphrase was not correct.  Would"
+" you like to try again?"
+msgstr "Сообщение не может быть реимпортировано, т.к. пароль неверен. Вы хотите попробовать еще раз?"
 
 #. duplicate the reply menu
 #: src/syndie/gui/MessageView.java:1005 src/syndie/gui/MessageView.java:1010
@@ -2715,9 +2661,8 @@ msgstr "Предыдущее"
 
 #: src/syndie/gui/MessageViewBody.java:197
 #: src/syndie/gui/MessageViewTab.java:49 src/syndie/gui/MessageViewTab.java:52
-#, fuzzy
 msgid "You do not have the keys to decrypt this message"
-msgstr "Вы не авторизованы для чтения этого сообщения"
+msgstr "У Вас отсутствуют ключи для расшифровки этого сообщения"
 
 #: src/syndie/gui/MessageViewTab.java:45
 #: src/syndie/gui/desktop/MessagePanel.java:149
@@ -3030,9 +2975,9 @@ msgid "Forum search criteria"
 msgstr "Критерий поиска форума"
 
 #: src/syndie/gui/ReferenceChooserSearch.java:172
-msgid "-tag excludes, +tag requires all, without a prefix requires one or more"
-msgstr ""
-"-tag исключает, +tag требует все, без префикса требуется один или больше"
+msgid ""
+"-tag excludes, +tag requires all, without a prefix requires one or more"
+msgstr "-tag исключает, +tag требует все, без префикса требуется один или больше"
 
 #: src/syndie/gui/ReferenceChooserSearch.java:174
 msgid "The channel hash must start with this string"
@@ -3046,9 +2991,7 @@ msgstr "Если истинно, включать каналы в которые
 msgid ""
 "To use Syndie, you need to 'syndicate' messages between you and some remote "
 "archives.  Would you like to configure your syndication now?"
-msgstr ""
-"Для использования Syndie, вы должны \"синдицировать\" сообщения с удаленными "
-"архивами. Хотите настроить синдицикацию?"
+msgstr "Для использования Syndie, вы должны \"синдицировать\" сообщения с удаленными архивами. Хотите настроить синдицикацию?"
 
 #: src/syndie/gui/ReferenceChooserTree.java:616
 msgid "Schedule syndication?"
@@ -3139,8 +3082,7 @@ msgstr "Уже выполняется"
 
 #: src/syndie/gui/SWTUI.java:148 src/syndie/gui/desktop/Desktop.java:357
 msgid "Syndie is already running - please use the existing Syndie window"
-msgstr ""
-"Syndie уже выполняется, пожалуйста воспользуйтесь существующим окном Syndie"
+msgstr "Syndie уже выполняется, пожалуйста воспользуйтесь существующим окном Syndie"
 
 #: src/syndie/gui/SWTUI.java:151 src/syndie/gui/SWTUI.java:189
 #: src/syndie/gui/desktop/ControlMenuPanel.java:636
@@ -3152,9 +3094,7 @@ msgstr "Выход"
 #: src/syndie/gui/SWTUI.java:185
 msgid ""
 "Syndie ran into an internal error trying to start up - please see the logs"
-msgstr ""
-"Syndie столкнулась с внутренней ошибкой при старте, пожалуйста ознакомьтесь "
-"с журналами"
+msgstr "Syndie столкнулась с внутренней ошибкой при старте, пожалуйста ознакомьтесь с журналами"
 
 #: src/syndie/gui/StatusBar.java:353
 msgid "Private msgs"
@@ -3181,18 +3121,16 @@ msgid "Mark all as read"
 msgstr "Пометить все как прочитанное"
 
 #: src/syndie/gui/StatusBar.java:687
-#, fuzzy
 msgid "Forums requiring password"
-msgstr "Требуется пароль"
+msgstr "Форумы, требующие пароль"
 
 #: src/syndie/gui/StatusBar.java:690
-#, fuzzy
 msgid "Ban these forums"
-msgstr "Заблокировать форум"
+msgstr "Заблокировать эти форумы"
 
 #: src/syndie/gui/StatusBar.java:695 src/syndie/gui/StatusBar.java:736
 msgid "Are you sure?"
-msgstr ""
+msgstr "Вы уверены?"
 
 #: src/syndie/gui/StatusBar.java:696 src/syndie/gui/StatusBar.java:737
 #: src/syndie/gui/Syndicator.java:293
@@ -3200,14 +3138,12 @@ msgid "Delete?"
 msgstr "Удалить?"
 
 #: src/syndie/gui/StatusBar.java:728
-#, fuzzy
 msgid "Messages requiring password"
-msgstr "Сообщения, требующие нового пароля"
+msgstr "Сообщения, требующие пароль"
 
 #: src/syndie/gui/StatusBar.java:731
-#, fuzzy
 msgid "Delete these messages"
-msgstr "Удалить сообщение локально"
+msgstr "Удалить эти сообщения"
 
 #: src/syndie/gui/StatusBar.java:764
 msgid "Pass. reqd"
@@ -3403,8 +3339,7 @@ msgstr "Сводка"
 
 #: src/syndie/gui/Syndicator.java:1158
 msgid "No archives defined - click 'Add archive' to add one"
-msgstr ""
-"Не определено ни одного архива, нажмите \"Добавить архив\" для добавления"
+msgstr "Не определено ни одного архива, нажмите \"Добавить архив\" для добавления"
 
 #: src/syndie/gui/Syndicator.java:1169
 #: src/syndie/gui/desktop/SyndicatorPanel.java:225
@@ -3550,15 +3485,11 @@ msgstr "Категория в белом списке"
 msgid ""
 "Forums that are referenced in the specified category (and posts to those "
 "forums) are allowed to be imported"
-msgstr ""
-"Форумы, упомянутые в указанной категории (и записи в эти форумы), можно "
-"импортировать"
+msgstr "Форумы, упомянутые в указанной категории (и записи в эти форумы), можно импортировать"
 
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1085
 msgid "Only pull whitelisted content (reduces anonymity but saves bandwidth)"
-msgstr ""
-"Загрузить контент только из белого списка (уменьшает анонимность но "
-"сохраняет полосу)"
+msgstr "Загрузить контент только из белого списка (уменьшает анонимность но сохраняет полосу)"
 
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1123
 msgid "Send all messages they don't have"
@@ -3615,6 +3546,7 @@ msgid_plural "{0} weeks"
 msgstr[0] "{0} неделя"
 msgstr[1] "{0} недели"
 msgstr[2] "{0} недель"
+msgstr[3] "{0} недель"
 
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1159
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1160
@@ -3629,6 +3561,7 @@ msgid_plural "{0} months"
 msgstr[0] "{0} месяц"
 msgstr[1] "{0} месяца"
 msgstr[2] "{0} месяцев"
+msgstr[3] "{0} месяцев"
 
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1163
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1164
@@ -3641,6 +3574,7 @@ msgid_plural "{0} years"
 msgstr[0] "{0} год"
 msgstr[1] "{0} года"
 msgstr[2] "{0} лет"
+msgstr[3] "{0} лет"
 
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1178
 msgid "Unlimited"
@@ -3653,6 +3587,7 @@ msgid_plural "{0} hours"
 msgstr[0] "{0} час"
 msgstr[1] "{0} часа"
 msgstr[2] "{0} часов"
+msgstr[3] "{0} часов"
 
 #: src/syndie/gui/SyndicatorTab.java:28
 msgid "Gather and share messages"
@@ -3801,9 +3736,7 @@ msgstr "Web-копирование не удалось"
 
 #: src/syndie/gui/WebRipPostPopup.java:160
 msgid "Web rip created - please syndicate it to others if you want to share"
-msgstr ""
-"Web-копия создана, пожалуйста распространите ее среди других, если хотите "
-"поделиться"
+msgstr "Web-копия создана, пожалуйста распространите ее среди других, если хотите поделиться"
 
 #: src/syndie/gui/WebRipPostPopup.java:161
 msgid "Web rip created"
@@ -3819,30 +3752,24 @@ msgid ""
 "This wizard will help you set up your new Syndie installation. First we'll "
 "set up your identity, and then we'll configure some archives for you to "
 "syndicate with."
-msgstr ""
-"Этот мастер поможет вам настроить вашу установку Syndie. Для начала настроим "
-"ваше персональное удостоверение, а затем настроим архивы, с которыми можно "
-"синхронизироваться."
+msgstr "Этот мастер поможет вам настроить вашу установку Syndie. Для начала настроим ваше персональное удостоверение, а затем настроим архивы, с которыми можно синхронизироваться."
 
 #: src/syndie/gui/WelcomeScreen.java:400
 msgid ""
-"It is strongly recommended that you have I2P running before you start Syndie."
+"It is strongly recommended that you have I2P running before you start "
+"Syndie."
 msgstr "Настоятельно рекомендуется запустить I2P перед запуском Syndie. "
 
 #: src/syndie/gui/WelcomeScreen.java:401
 msgid ""
 "If I2P is not running, please start it and wait 5 minutes before proceeding."
-msgstr ""
-"Если I2P не запущен, пожалуйста запустите его и подождите 5 минут, прежде "
-"чем продолжить."
+msgstr "Если I2P не запущен, пожалуйста запустите его и подождите 5 минут, прежде чем продолжить."
 
 #: src/syndie/gui/WelcomeScreen.java:405
 msgid ""
-"Syndie will create a new identity for you to use with which to post messages "
-"in other forums and to runyour own blog/forum."
-msgstr ""
-"Syndie создаст для вас новое персональное удостоверение для возможности "
-"записи на других форумах и создания собственного блога или форума."
+"Syndie will create a new identity for you to use with which to post messages"
+" in other forums and to runyour own blog/forum."
+msgstr "Syndie создаст для вас новое персональное удостоверение для возможности записи на других форумах и создания собственного блога или форума."
 
 #: src/syndie/gui/WelcomeScreen.java:408
 msgid "What name would you like to use for your new identity?"
@@ -3860,9 +3787,7 @@ msgstr "Нажмите на изображение для выбора ават�
 msgid ""
 "In your new identity's blog/forum, would  you like to allow other people to "
 "post?"
-msgstr ""
-"Хотите ли вы позволить другим делать записи в блог или форум вашего "
-"удостоверения?"
+msgstr "Хотите ли вы позволить другим делать записи в блог или форум вашего удостоверения?"
 
 #: src/syndie/gui/WelcomeScreen.java:412
 msgid "Yes, let anyone reply to existing posts and post new topics"
@@ -3878,16 +3803,13 @@ msgstr "Нет"
 
 #: src/syndie/gui/WelcomeScreen.java:417
 msgid "Next it's time to select some archives to syndicate with."
-msgstr ""
-"Далее, пришло время выбрать какие-нибудь архивы для синхронизации с ними."
+msgstr "Далее, пришло время выбрать какие-нибудь архивы для синхронизации с ними."
 
 #: src/syndie/gui/WelcomeScreen.java:418
 msgid ""
 "Syndie messages are propagated from one Syndie instance to another by a "
 "process called 'syndication'."
-msgstr ""
-"Сообщения Syndie распространяются от одного экземпляра Syndie к другому с "
-"помощью процесса, называемого \"синдицикацией\"."
+msgstr "Сообщения Syndie распространяются от одного экземпляра Syndie к другому с помощью процесса, называемого \"синдицикацией\"."
 
 #: src/syndie/gui/WelcomeScreen.java:419
 msgid ""
@@ -3896,36 +3818,25 @@ msgid ""
 "the archive has, but the client does not. In this way messages are "
 "propagated from client to client and archive to archive within a Syndie "
 "community."
-msgstr ""
-"Каждый клиент соединяется с одним или больше архивом и выгружает сообщения "
-"которые есть у клиента, но нет у архива, а так же загружает сообщения "
-"которые есть в архиве, но нет в клиенте. Таким способом сообщения "
-"распространяются от клиента к клиенту и от архива к архиву внутри сообщеста "
-"Syndie."
+msgstr "Каждый клиент соединяется с одним или больше архивом и выгружает сообщения которые есть у клиента, но нет у архива, а так же загружает сообщения которые есть в архиве, но нет в клиенте. Таким способом сообщения распространяются от клиента к клиенту и от архива к архиву внутри сообщеста Syndie."
 
 #: src/syndie/gui/WelcomeScreen.java:422
 msgid ""
 "To join a Syndie community, you need to syndicate with one or more archives "
 "of that community."
-msgstr ""
-"Для присоединения к сообществу Syndie, вам нужно синхронизироваться с одним "
-"или более архивами этого сообщества."
+msgstr "Для присоединения к сообществу Syndie, вам нужно синхронизироваться с одним или более архивами этого сообщества."
 
 #: src/syndie/gui/WelcomeScreen.java:425
 msgid ""
 "The default archives shipped with your Syndie install are listed above. "
 "Double-click a field to edit it."
-msgstr ""
-"Архивы по-умолчанию, поставляемые с вашей Syndie перечисленны выше. Дважды "
-"нажмите на поле для того, чтобы отредактировать его."
+msgstr "Архивы по умолчанию, поставляемые с Syndie, перечислены выше. Дважды нажмите на поле для того, чтобы отредактировать его."
 
 #: src/syndie/gui/WelcomeScreen.java:426
 msgid ""
 "Please make any necessary changes and uncheck any archives that you don't "
 "want."
-msgstr ""
-"Пожалуйста сделайте необходимые изменения и снимите отметки с тех архивов, "
-"которые вам не нужны."
+msgstr "Пожалуйста сделайте необходимые изменения и снимите отметки с тех архивов, которые вам не нужны."
 
 #: src/syndie/gui/WelcomeScreen.java:429
 msgid "Congratulations! Your Syndie installation is configured!"
@@ -4185,7 +4096,7 @@ msgstr "Добавить ссылку"
 
 #: src/syndie/gui/desktop/MessageEditorPanel.java:684
 msgid "HTML style helper"
-msgstr "Помошник по HTML-стилю"
+msgstr "Помощник по HTML-стилю"
 
 #: src/syndie/gui/desktop/MessageEditorPanel.java:685
 msgid "Check spelling"
@@ -4379,6 +4290,3 @@ msgstr "Настроить пароль вашего экземпляра?"
 #: src/syndie/gui/desktop/WelcomePopup.java:167
 msgid "Continue on to Syndie?"
 msgstr "Продолжить работу с Syndie?"
-
-#~ msgid "Message is corrupt"
-#~ msgstr "Сообщение повреждено"

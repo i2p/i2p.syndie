@@ -2,50 +2,49 @@
 # Copyright (C) 2013 The I2P Project
 # This file is distributed under the same license as the Syndie package.
 # To contribute translations, see http://www.i2p2.de/newdevelopers
-#
+# 
 # Translators:
-# polearnik <polearnik@mail.ru>, 2014
+# pol polearnik <polearnik@mail.ru>, 2014
 # Predator <Predator@windowslive.com>, 2014
 # Predator <Predator@windowslive.com>, 2014
+# titus <titus0818@gmail.com>, 2015
 msgid ""
 msgstr ""
 "Project-Id-Version: I2P\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-05-26 14:39+0000\n"
-"PO-Revision-Date: 2014-02-12 15:22+0000\n"
-"Last-Translator: polearnik <polearnik@mail.ru>\n"
-"Language-Team: Romanian (http://www.transifex.com/projects/p/I2P/language/"
-"ro/)\n"
-"Language: ro\n"
+"POT-Creation-Date: 2014-01-20 22:47+0000\n"
+"PO-Revision-Date: 2015-11-25 17:59+0000\n"
+"Last-Translator: titus <titus0818@gmail.com>\n"
+"Language-Team: Romanian (http://www.transifex.com/otf/I2P/language/ro/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n==1?0:(((n%100>19)||((n%100==0)&&(n!=0)))?"
-"2:1));\n"
+"Language: ro\n"
+"Plural-Forms: nplurals=3; plural=(n==1?0:(((n%100>19)||((n%100==0)&&(n!=0)))?2:1));\n"
 
 #: src/syndie/db/ImportResult.java:18
 msgid "Import successful"
-msgstr ""
+msgstr "Importat cu succes"
 
 #: src/syndie/db/ImportResult.java:22
 msgid "Already imported"
-msgstr ""
+msgstr "Deja importat"
 
 #: src/syndie/db/ImportResult.java:26
 msgid "Already deleted"
-msgstr ""
+msgstr "Deja șters"
 
 #: src/syndie/db/ImportResult.java:30
 msgid "Import forum info successful"
-msgstr ""
+msgstr "Informație forum importată cu succes"
 
 #: src/syndie/db/ImportResult.java:34
 msgid "Import post successful"
-msgstr ""
+msgstr "Postare importată cu succes"
 
 #: src/syndie/db/ImportResult.java:38
 msgid "Import keys successful"
-msgstr ""
+msgstr "Chei importate cu succes"
 
 #: src/syndie/db/ImportResult.java:43
 msgid "Cancel requests processed"
@@ -53,7 +52,7 @@ msgstr ""
 
 #: src/syndie/db/ImportResult.java:48
 msgid "Unreadable"
-msgstr ""
+msgstr "Necitibil"
 
 #: src/syndie/db/ImportResult.java:52 src/syndie/gui/MessageFlagBar.java:306
 #: src/syndie/gui/MessageViewTab.java:48
@@ -84,31 +83,31 @@ msgstr ""
 
 #: src/syndie/db/ImportResult.java:78
 msgid "Bad message format"
-msgstr ""
+msgstr "Format mesaj necorespunzător"
 
 #: src/syndie/db/ImportResult.java:82
 msgid "No URI"
-msgstr ""
+msgstr "Nici un URI"
 
 #: src/syndie/db/ImportResult.java:86
 msgid "No channel"
-msgstr ""
+msgstr "Nici un canal"
 
 #: src/syndie/db/ImportResult.java:90
 msgid "Banned channel"
-msgstr ""
+msgstr "Canal interzis"
 
 #: src/syndie/db/ImportResult.java:94
 msgid "Banned author"
-msgstr ""
+msgstr "Autor interzis"
 
 #: src/syndie/db/ImportResult.java:98
 msgid "Unknown channel"
-msgstr ""
+msgstr "Canal necunoscut"
 
 #: src/syndie/db/ImportResult.java:102
 msgid "Unknown author"
-msgstr ""
+msgstr "Autor necunoscut"
 
 #: src/syndie/db/ImportResult.java:106 src/syndie/gui/MessageEditor.java:2469
 #: src/syndie/gui/desktop/MessagePanel.java:189
@@ -129,23 +128,23 @@ msgstr ""
 
 #: src/syndie/db/ImportResult.java:124
 msgid "Database error"
-msgstr ""
+msgstr "Eroare bază de date"
 
 #: src/syndie/db/ImportResult.java:128
 msgid "I/O error"
-msgstr ""
+msgstr "Eroare I/O"
 
 #: src/syndie/db/ImportResult.java:132
 msgid "Corrupt"
-msgstr ""
+msgstr "Corupt"
 
 #: src/syndie/db/ImportResult.java:136
 msgid "Unable to decrypt"
-msgstr ""
+msgstr "Nu se poate decripta"
 
 #: src/syndie/db/ImportResult.java:140
 msgid "Bad header"
-msgstr ""
+msgstr "Antet necorespunzător"
 
 #: src/syndie/db/ImportResult.java:144 src/syndie/gui/Browser.java:1550
 #: src/syndie/gui/SWTUI.java:179
@@ -170,7 +169,7 @@ msgstr ""
 
 #: src/syndie/db/ReadMenu.java:1017
 msgid "url"
-msgstr ""
+msgstr "url"
 
 #: src/syndie/gui/ArchiveDefaults.java:207
 #: src/syndie/gui/ArchiveDefaults.java:430
@@ -317,18 +316,13 @@ msgstr "Arhiva implicite"
 msgid ""
 "You have no remote archives configured, preventing you from either reading "
 "other people's posts or from sharing your own posts with them."
-msgstr ""
-"Nu aveți niciun arhiv la distanță configurat, care vă împiedică să fie "
-"citite mesajele altor oameni sau de la partajarea propriilor mesaje cu ei."
+msgstr "Nu aveți niciun arhiv la distanță configurat, care vă împiedică să fie citite mesajele altor oameni sau de la partajarea propriilor mesaje cu ei."
 
 #: src/syndie/gui/ArchiveDefaultsPopup.java:96
 msgid ""
 "The default archives shipped with your Syndie instance are listed above.  "
 "Please make any necessary changes, unchecking any that you don't want"
-msgstr ""
-"Arhivele implicite livrate împreună cu dumneavoastră instanță Syndie sunt "
-"enumerate mai sus. Vă rugăm să faceți modificările necesare, debifarea "
-"oricarei bife care nu doriți"
+msgstr "Arhivele implicite livrate împreună cu dumneavoastră instanță Syndie sunt enumerate mai sus. Vă rugăm să faceți modificările necesare, debifarea oricarei bife care nu doriți"
 
 #: src/syndie/gui/ArchiveDefaultsPopup.java:97
 msgid "Save archives as your own"
@@ -343,9 +337,7 @@ msgstr "arhive publicate"
 msgid ""
 "If you allow people to sync off your archive, you can tell them about some "
 "alternate archives they can sync off as well"
-msgstr ""
-"Dacă permiteti oamenilor să sincronizați cu arhiva dvs., le puteți spune "
-"despre unele arhive alternative sa poate sincroniza și pe acestea"
+msgstr "Dacă permiteti oamenilor să sincronizați cu arhiva dvs., le puteți spune despre unele arhive alternative sa poate sincroniza și pe acestea"
 
 #: src/syndie/gui/ArchiveManager.java:252 src/syndie/gui/Browser.java:1906
 #: src/syndie/gui/Browser.java:1907
@@ -356,9 +348,7 @@ msgstr "Blocat"
 msgid ""
 "These authors and forums are completely ignored, with all of the associated "
 "messages refused"
-msgstr ""
-"Acești autori și forumuri sunt complet ignorate, cu toate mesajele asociate "
-"refuzate"
+msgstr "Acești autori și forumuri sunt complet ignorate, cu toate mesajele asociate refuzate"
 
 #: src/syndie/gui/ArchiveManager.java:270
 msgid "Full hash"
@@ -492,12 +482,9 @@ msgstr "Selectare"
 
 #: src/syndie/gui/BackupSecrets.java:152
 msgid ""
-"A blank passphrase is not allowed - if you don't want to protect your secret "
-"keys, please uncheck the passphrase checkbox"
-msgstr ""
-"O frază de acces gol nu este permis - în cazul în care nu doriți să "
-"protejeze cheile secrete, vă rugăm să debifați caseta de selectare fraza de "
-"autentificare"
+"A blank passphrase is not allowed - if you don't want to protect your secret"
+" keys, please uncheck the passphrase checkbox"
+msgstr "O frază de acces gol nu este permis - în cazul în care nu doriți să protejeze cheile secrete, vă rugăm să debifați caseta de selectare fraza de autentificare"
 
 #: src/syndie/gui/BackupSecrets.java:187
 msgid "File to write the backup to"
@@ -707,11 +694,7 @@ msgid ""
 "in the browser of your choice, but doing so may be risky, as Syndie cannot "
 "protect your browser, and even following this link may compromise your "
 "identity or security."
-msgstr ""
-"URL-ul selectat se referă la o resursă în afara Syndie. Este posibil să "
-"încărcați acest lucru în browser-ul la alegerea ta, dar acest lucru poate fi "
-"riscant, pentru ca Syndie nu poate proteja browser-ul dvs., și chiar și după "
-"această legătură ar putea compromite identitatea sau siguranța dumneavoastră."
+msgstr "URL-ul selectat se referă la o resursă în afara Syndie. Este posibil să încărcați acest lucru în browser-ul la alegerea ta, dar acest lucru poate fi riscant, pentru ca Syndie nu poate proteja browser-ul dvs., și chiar și după această legătură ar putea compromite identitatea sau siguranța dumneavoastră."
 
 #: src/syndie/gui/Browser.java:1633
 msgid "DO NOT OPEN THE URL IF YOU ARE UNSURE!!!"
@@ -762,11 +745,9 @@ msgstr "Interfață de tip text"
 #: src/syndie/gui/Browser.java:1889 src/syndie/gui/desktop/Desktop.java:1065
 msgid ""
 "All of the messages in it will be removed and you will never receive any "
-"messages in it again, or posts written by the forum's owner.  Do you want to "
-"ban"
-msgstr ""
-"Toate mesajele vor fi sterse  și nu vei mai primi mesaje din nou, sau mesaje "
-"scrise de către proprietarul forumului. Vrei să interzici?"
+"messages in it again, or posts written by the forum's owner.  Do you want to"
+" ban"
+msgstr "Toate mesajele vor fi sterse  și nu vei mai primi mesaje din nou, sau mesaje scrise de către proprietarul forumului. Vrei să interzici?"
 
 #: src/syndie/gui/Browser.java:1892 src/syndie/gui/desktop/Desktop.java:1068
 msgid "Confirm ban"
@@ -1227,7 +1208,7 @@ msgstr "SWT"
 
 #: src/syndie/gui/BugReport.java:672
 msgid "HSQLDB"
-msgstr ""
+msgstr "HSQLDB"
 
 #: src/syndie/gui/BugReport.java:673
 msgid "Issue summary"
@@ -1324,8 +1305,7 @@ msgstr "Onoare anula mesaje de la orice manager de forum"
 
 #: src/syndie/gui/CancelManager.java:404
 msgid "Honor cancel messages from any explicitly authorized forum posters"
-msgstr ""
-"Onoarea anuleză mesajele de la orice mesaje explicit autorizate pe forum"
+msgstr "Onoarea anuleză mesajele de la orice mesaje explicit autorizate pe forum"
 
 #: src/syndie/gui/CancelManagerTab.java:47
 #: src/syndie/gui/desktop/CancelManagerPanel.java:50
@@ -1550,11 +1530,7 @@ msgid ""
 "read a forum's posts, those allowed to post to a forum, those allowed to "
 "manage a forum, and those allowed to read the private replies to forum "
 "administrators"
-msgstr ""
-"Autorizare Forum și autentificarea are patru forme - permis pentru a citi "
-"mesajele de pe forum, permise pentru a posta la un forum, permis pentru a "
-"gestiona un forum, si cei permise de a citi răspunsurile private la "
-"administratorii de forum"
+msgstr "Autorizare Forum și autentificarea are patru forme - permis pentru a citi mesajele de pe forum, permise pentru a posta la un forum, permis pentru a gestiona un forum, si cei permise de a citi răspunsurile private la administratorii de forum"
 
 #: src/syndie/gui/ManageForum.java:1165
 msgid "Read posts"
@@ -1623,17 +1599,13 @@ msgstr "A crea o nouă identitate și să îi permită să gestioneze forum"
 
 #: src/syndie/gui/ManageForumAuthManage.java:305
 msgid "Send the new identity key to the administrators of the selected forums"
-msgstr ""
-"Trimite o cheia noua de identitate pentru administratorii de forumuri "
-"selectate"
+msgstr "Trimite o cheia noua de identitate pentru administratorii de forumuri selectate"
 
 #: src/syndie/gui/ManageForumAuthManage.java:308
 #: src/syndie/gui/ManageForumAuthPost.java:419
 msgid ""
 "Post the new identity's key in a passphrase protected message to the forum"
-msgstr ""
-"Publica cheia noua identitatii într-un mesaj protejat prin frază de acces la "
-"forum"
+msgstr "Publica cheia noua identitatii într-un mesaj protejat prin frază de acces la forum"
 
 #: src/syndie/gui/ManageForumAuthManage.java:309
 #: src/syndie/gui/ManageForumAuthPost.java:420
@@ -1682,9 +1654,7 @@ msgstr "A crea o nouă identitate și să îi permită să publice mesaje"
 #: src/syndie/gui/ManageForumAuthPost.java:416
 msgid ""
 "Send the new identity's key to the administrators of the selected forums"
-msgstr ""
-"Trimite o cheia noua de identitate pentru administratorii de forumuri "
-"selectate"
+msgstr "Trimite o cheia noua de identitate pentru administratorii de forumuri selectate"
 
 #: src/syndie/gui/ManageForumAuthRead.java:328
 msgid "Who can read posts?"
@@ -1712,8 +1682,7 @@ msgstr "Oricine care are o cheie nou creata"
 
 #: src/syndie/gui/ManageForumAuthRead.java:335
 msgid "Send the key explicitly to the managers of the following forums"
-msgstr ""
-"Trimite cheia în mod explicit pentru  manageri de la următoarele forumuri"
+msgstr "Trimite cheia în mod explicit pentru  manageri de la următoarele forumuri"
 
 #: src/syndie/gui/ManageForumAuthRead.java:338
 msgid "Post the key in a passphrase protected message to the forum"
@@ -1795,9 +1764,7 @@ msgstr "Chiar vrei sa postezi un mesaj fără subiect?"
 msgid ""
 "There was an error creating the message.  Please view the log for more "
 "information."
-msgstr ""
-"A fost o eroare la crearea mesajului. Vă rugăm să vizualizați jurnalul "
-"pentru mai multe informații."
+msgstr "A fost o eroare la crearea mesajului. Vă rugăm să vizualizați jurnalul pentru mai multe informații."
 
 #: src/syndie/gui/MessageEditor.java:551 src/syndie/gui/MessageEditor.java:557
 msgid "Error creating the message"
@@ -1812,10 +1779,7 @@ msgid ""
 "Message created successfully! \n"
 "Please be sure to syndicate it to the arcives so others may read it. \n"
 "The message timestamp has been randomized to protect your anonymity. \n"
-msgstr ""
-"Mesaj creat cu succes! Vă rugăm să asigurați-vă că il adaugati la arhive, \n"
-"astfel încât ceilalți să-l citesca. Amprenta de timp a mesajului a fost \n"
-"randomizate pentru a proteja anonimatul.\n"
+msgstr "Mesaj creat cu succes! Vă rugăm să asigurați-vă că il adaugati la arhive, astfel încât ceilalți să-l citesca. Amprenta de timp a mesajului a fost randomizate pentru a proteja anonimatul. \n"
 
 #: src/syndie/gui/MessageEditor.java:587
 msgid "Display this message next time"
@@ -1923,15 +1887,13 @@ msgstr "Securitate"
 
 #: src/syndie/gui/MessageEditor.java:2110
 msgid "Headers"
-msgstr ""
+msgstr "Antete"
 
 #: src/syndie/gui/MessageEditor.java:2468
 msgid ""
 "The selected author does not have permission to write in the selected forum "
 "- please adjust your selection"
-msgstr ""
-"Autorul selectat nu are permisiunea de a scrie în forum selectat - vă rugăm "
-"să ajustați selecția"
+msgstr "Autorul selectat nu are permisiunea de a scrie în forum selectat - vă rugăm să ajustați selecția"
 
 #: src/syndie/gui/MessageEditor.java:2512
 msgid "Change author"
@@ -1956,11 +1918,9 @@ msgstr "Atașare fișier"
 
 #: src/syndie/gui/MessageEditor.java:2547
 msgid ""
-"The attachment could not be added, as it exceeds the maximum attachment size "
-"("
-msgstr ""
-"Atașamentul nu a putut fi adăugat, deoarece depășește dimensiunea maximă de "
-"atașare ("
+"The attachment could not be added, as it exceeds the maximum attachment size"
+" ("
+msgstr "Atașamentul nu a putut fi adăugat, deoarece depășește dimensiunea maximă de atașare ("
 
 #: src/syndie/gui/MessageEditor.java:2548
 msgid "Too large"
@@ -2271,11 +2231,11 @@ msgstr "Text preformatat"
 
 #: src/syndie/gui/MessageEditorToolbar.java:588
 msgid "Check the spelling in the current page"
-msgstr ""
+msgstr "Verifică ortografia în pagina curentă"
 
 #: src/syndie/gui/MessageEditorToolbar.java:596
 msgid "Find or replace text in the current page"
-msgstr ""
+msgstr "Găsește sau înlocuiește text în pagina curentă"
 
 #: src/syndie/gui/MessageEditorToolbar.java:604
 msgid "Quote a section of the previous message"
@@ -2466,8 +2426,7 @@ msgstr "Poate fi citit de: administratorii de forum"
 
 #: src/syndie/gui/MessageTree.java:972
 msgid "Use local import date instead of (unreliable) message creation date"
-msgstr ""
-"Utilizați data de import local în loc de  data creării mesajului(nesigure)"
+msgstr "Utilizați data de import local în loc de  data creării mesajului(nesigure)"
 
 #: src/syndie/gui/MessageTree.java:973
 msgid "Organize results in threads"
@@ -2634,11 +2593,9 @@ msgstr "frază de acces incorect"
 #: src/syndie/gui/MessageView.java:589
 #: src/syndie/gui/desktop/MessagePanel.java:233
 msgid ""
-"The message could not be reimported - the passphrase was not correct.  Would "
-"you like to try again?"
-msgstr ""
-"Mesajul nu a putut fi reimportat - fraza de acces nu a fost corecta. Doriți "
-"să încercați din nou?"
+"The message could not be reimported - the passphrase was not correct.  Would"
+" you like to try again?"
+msgstr "Mesajul nu a putut fi reimportat - fraza de acces nu a fost corecta. Doriți să încercați din nou?"
 
 #. duplicate the reply menu
 #: src/syndie/gui/MessageView.java:1005 src/syndie/gui/MessageView.java:1010
@@ -2699,7 +2656,7 @@ msgstr "Prev"
 #: src/syndie/gui/MessageViewBody.java:197
 #: src/syndie/gui/MessageViewTab.java:49 src/syndie/gui/MessageViewTab.java:52
 msgid "You do not have the keys to decrypt this message"
-msgstr ""
+msgstr "Nu aveți cheia pentru decriptat acest mesaj"
 
 #: src/syndie/gui/MessageViewTab.java:45
 #: src/syndie/gui/desktop/MessagePanel.java:149
@@ -3012,10 +2969,9 @@ msgid "Forum search criteria"
 msgstr "Criterii de căutare Forum"
 
 #: src/syndie/gui/ReferenceChooserSearch.java:172
-msgid "-tag excludes, +tag requires all, without a prefix requires one or more"
-msgstr ""
-"-tag exclude, + tag-ul necesită toate, fără un prefix necesita unul sau mai "
-"multe"
+msgid ""
+"-tag excludes, +tag requires all, without a prefix requires one or more"
+msgstr "-tag exclude, + tag-ul necesită toate, fără un prefix necesita unul sau mai multe"
 
 #: src/syndie/gui/ReferenceChooserSearch.java:174
 msgid "The channel hash must start with this string"
@@ -3023,17 +2979,13 @@ msgstr "hash-ul canalului trebuie să înceapă cu acest șir"
 
 #: src/syndie/gui/ReferenceChooserSearch.java:176
 msgid "If true, include channels that anyone is allowed to post to"
-msgstr ""
-"Dacă este adevărat, se includ canale la care oricine este permis să posteze "
-"la"
+msgstr "Dacă este adevărat, se includ canale la care oricine este permis să posteze la"
 
 #: src/syndie/gui/ReferenceChooserTree.java:615
 msgid ""
 "To use Syndie, you need to 'syndicate' messages between you and some remote "
 "archives.  Would you like to configure your syndication now?"
-msgstr ""
-"Pentru a utiliza Syndie, aveți nevoie de mesaje \"de sindicat\" între tine "
-"și unele arhive la distanță. Doriți să configurați sindicalizare dvs. acum?"
+msgstr "Pentru a utiliza Syndie, aveți nevoie de mesaje \"de sindicat\" între tine și unele arhive la distanță. Doriți să configurați sindicalizare dvs. acum?"
 
 #: src/syndie/gui/ReferenceChooserTree.java:616
 msgid "Schedule syndication?"
@@ -3124,9 +3076,7 @@ msgstr "Rulează deja"
 
 #: src/syndie/gui/SWTUI.java:148 src/syndie/gui/desktop/Desktop.java:357
 msgid "Syndie is already running - please use the existing Syndie window"
-msgstr ""
-"Syndie este deja în execuție - vă rugăm să folosiți fereastra Syndie "
-"existenta"
+msgstr "Syndie este deja în execuție - vă rugăm să folosiți fereastra Syndie existenta"
 
 #: src/syndie/gui/SWTUI.java:151 src/syndie/gui/SWTUI.java:189
 #: src/syndie/gui/desktop/ControlMenuPanel.java:636
@@ -3138,9 +3088,7 @@ msgstr "Ieșire"
 #: src/syndie/gui/SWTUI.java:185
 msgid ""
 "Syndie ran into an internal error trying to start up - please see the logs"
-msgstr ""
-"Syndie are o eroare internă încearcă să porneasca - vă rugăm să consultați "
-"jurnalele"
+msgstr "Syndie are o eroare internă încearcă să porneasca - vă rugăm să consultați jurnalele"
 
 #: src/syndie/gui/StatusBar.java:353
 msgid "Private msgs"
@@ -3172,7 +3120,7 @@ msgstr ""
 
 #: src/syndie/gui/StatusBar.java:690
 msgid "Ban these forums"
-msgstr ""
+msgstr "Interzice aceste forumuri"
 
 #: src/syndie/gui/StatusBar.java:695 src/syndie/gui/StatusBar.java:736
 msgid "Are you sure?"
@@ -3189,7 +3137,7 @@ msgstr ""
 
 #: src/syndie/gui/StatusBar.java:731
 msgid "Delete these messages"
-msgstr ""
+msgstr "Șterge aceste mesaje"
 
 #: src/syndie/gui/StatusBar.java:764
 msgid "Pass. reqd"
@@ -3385,8 +3333,7 @@ msgstr "Sumar"
 
 #: src/syndie/gui/Syndicator.java:1158
 msgid "No archives defined - click 'Add archive' to add one"
-msgstr ""
-"Nu sunt arhive definit - faceți clic pe \"Add arhivă\" pentru a adăuga "
+msgstr "Nu sunt arhive definit - faceți clic pe \"Add arhivă\" pentru a adăuga "
 
 #: src/syndie/gui/Syndicator.java:1169
 #: src/syndie/gui/desktop/SyndicatorPanel.java:225
@@ -3532,15 +3479,11 @@ msgstr "categorie din lista albă"
 msgid ""
 "Forums that are referenced in the specified category (and posts to those "
 "forums) are allowed to be imported"
-msgstr ""
-"Forumuri care fac referire în categoria specificată (și mesaje la aceste "
-"forumuri) sunt permise a fi importate"
+msgstr "Forumuri care fac referire în categoria specificată (și mesaje la aceste forumuri) sunt permise a fi importate"
 
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1085
 msgid "Only pull whitelisted content (reduces anonymity but saves bandwidth)"
-msgstr ""
-"Trage doar conținutul din lista albă (reduce anonimatul, dar salvează lățime "
-"de bandă)"
+msgstr "Trage doar conținutul din lista albă (reduce anonimatul, dar salvează lățime de bandă)"
 
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1123
 msgid "Send all messages they don't have"
@@ -3783,8 +3726,7 @@ msgstr "Web rip nu a reușit"
 
 #: src/syndie/gui/WebRipPostPopup.java:160
 msgid "Web rip created - please syndicate it to others if you want to share"
-msgstr ""
-"Rip web creat - vă rugăm să-l sindicat pentru alții, dacă doriți să partajați"
+msgstr "Rip web creat - vă rugăm să-l sindicat pentru alții, dacă doriți să partajați"
 
 #: src/syndie/gui/WebRipPostPopup.java:161
 msgid "Web rip created"
@@ -3800,30 +3742,24 @@ msgid ""
 "This wizard will help you set up your new Syndie installation. First we'll "
 "set up your identity, and then we'll configure some archives for you to "
 "syndicate with."
-msgstr ""
-"Acest asistent vă va ajuta să configurați noua instalare Syndie. În primul "
-"rând vom stabili identitatea ta, iar apoi vom configura unele arhive pentru "
-"tine de a sindicat cu."
+msgstr "Acest asistent vă va ajuta să configurați noua instalare Syndie. În primul rând vom stabili identitatea ta, iar apoi vom configura unele arhive pentru tine de a sindicat cu."
 
 #: src/syndie/gui/WelcomeScreen.java:400
 msgid ""
-"It is strongly recommended that you have I2P running before you start Syndie."
+"It is strongly recommended that you have I2P running before you start "
+"Syndie."
 msgstr "Este recomandat pe care le au I2P rulează înainte de a începe Syndie."
 
 #: src/syndie/gui/WelcomeScreen.java:401
 msgid ""
 "If I2P is not running, please start it and wait 5 minutes before proceeding."
-msgstr ""
-"Dacă I2P nu este pornit, vă rugăm să porniți-l și așteptați 5 minute înainte "
-"de a continua."
+msgstr "Dacă I2P nu este pornit, vă rugăm să porniți-l și așteptați 5 minute înainte de a continua."
 
 #: src/syndie/gui/WelcomeScreen.java:405
 msgid ""
-"Syndie will create a new identity for you to use with which to post messages "
-"in other forums and to runyour own blog/forum."
-msgstr ""
-"Syndie va crea o noua identitate pentru tine pentru a posta mesaje în alte "
-"forumuri și să porneasca propriul blog / forum."
+"Syndie will create a new identity for you to use with which to post messages"
+" in other forums and to runyour own blog/forum."
+msgstr "Syndie va crea o noua identitate pentru tine pentru a posta mesaje în alte forumuri și să porneasca propriul blog / forum."
 
 #: src/syndie/gui/WelcomeScreen.java:408
 msgid "What name would you like to use for your new identity?"
@@ -3841,14 +3777,11 @@ msgstr "Click pe imagine pentru a selecta avatarul dorit de utilizat"
 msgid ""
 "In your new identity's blog/forum, would  you like to allow other people to "
 "post?"
-msgstr ""
-"În noua identitate blogului/forumului, doriți să permiteti altor persoane "
-"pentru a posta?"
+msgstr "În noua identitate blogului/forumului, doriți să permiteti altor persoane pentru a posta?"
 
 #: src/syndie/gui/WelcomeScreen.java:412
 msgid "Yes, let anyone reply to existing posts and post new topics"
-msgstr ""
-"Da,fiecare poate raspunde la mesaje existente și crearea unui subiect nou"
+msgstr "Da,fiecare poate raspunde la mesaje existente și crearea unui subiect nou"
 
 #: src/syndie/gui/WelcomeScreen.java:413
 msgid "Yes, let anyone reply to existing posts"
@@ -3866,9 +3799,7 @@ msgstr "următorul pas este selectarea anumitor arhive pentru sindicat ."
 msgid ""
 "Syndie messages are propagated from one Syndie instance to another by a "
 "process called 'syndication'."
-msgstr ""
-"Mesajele Syndie sunt propagate de la un caz la altul Syndie printr-un proces "
-"numit \"sindicalizare '."
+msgstr "Mesajele Syndie sunt propagate de la un caz la altul Syndie printr-un proces numit \"sindicalizare '."
 
 #: src/syndie/gui/WelcomeScreen.java:419
 msgid ""
@@ -3877,36 +3808,25 @@ msgid ""
 "the archive has, but the client does not. In this way messages are "
 "propagated from client to client and archive to archive within a Syndie "
 "community."
-msgstr ""
-"Fiecare client se conectează la una sau mai multe arhive și încarcă toate "
-"mesajele pe care clientul le are, dar arhive nu, și descarcă toate mesajele "
-"pe care arhiva are, dar clientul nu are. În acest fel de mesaje sunt "
-"propagate de la client la client și arhivă pentru a arhiva într-o comunitate "
-"Syndie."
+msgstr "Fiecare client se conectează la una sau mai multe arhive și încarcă toate mesajele pe care clientul le are, dar arhive nu, și descarcă toate mesajele pe care arhiva are, dar clientul nu are. În acest fel de mesaje sunt propagate de la client la client și arhivă pentru a arhiva într-o comunitate Syndie."
 
 #: src/syndie/gui/WelcomeScreen.java:422
 msgid ""
 "To join a Syndie community, you need to syndicate with one or more archives "
 "of that community."
-msgstr ""
-"Să adere la o comunitate Syndie, aveți nevoie pentru a sindicat cu una sau "
-"mai multe arhive ale acelei comunități."
+msgstr "Să adere la o comunitate Syndie, aveți nevoie pentru a sindicat cu una sau mai multe arhive ale acelei comunități."
 
 #: src/syndie/gui/WelcomeScreen.java:425
 msgid ""
 "The default archives shipped with your Syndie install are listed above. "
 "Double-click a field to edit it."
-msgstr ""
-"Arhivele implicite livrate împreună cu Syndie dvs. din instalare sunt "
-"enumerate mai sus. Dublu-clic pe un câmp pentru a o edita."
+msgstr "Arhivele implicite livrate împreună cu Syndie dvs. din instalare sunt enumerate mai sus. Dublu-clic pe un câmp pentru a o edita."
 
 #: src/syndie/gui/WelcomeScreen.java:426
 msgid ""
 "Please make any necessary changes and uncheck any archives that you don't "
 "want."
-msgstr ""
-"Vă rugăm să faceți modificările necesare și debifați orice arhive care nu "
-"doriți."
+msgstr "Vă rugăm să faceți modificările necesare și debifați orice arhive care nu doriți."
 
 #: src/syndie/gui/WelcomeScreen.java:429
 msgid "Congratulations! Your Syndie installation is configured!"
@@ -3926,8 +3846,7 @@ msgstr "locație de referință"
 
 #: src/syndie/gui/desktop/AddReferenceSource.java:70
 msgid "Please specify where you want to store this reference"
-msgstr ""
-"Vă rugăm să specificați în cazul în care doriți să memorați această referință"
+msgstr "Vă rugăm să specificați în cazul în care doriți să memorați această referință"
 
 #: src/syndie/gui/desktop/AddReferenceSource.java:82
 msgid "Store"
