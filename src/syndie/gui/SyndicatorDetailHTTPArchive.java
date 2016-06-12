@@ -46,6 +46,7 @@ import syndie.db.SyncManager;
 import syndie.db.SyncOutboundPusher;
 import syndie.db.UI;
 import syndie.util.DateTime;
+import syndie.db.FreenetHelper;
 
 /**
  *
@@ -648,7 +649,7 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
             "GenerateSSK\r\n" +
             "Identifier=" + (msgId+1) + "\r\n" +
             "EndMessage\r\n"));
-            Map rv = SyncOutboundPusher.readResults(s.getInputStream(), _ui);
+            Map<String, String> rv = FreenetHelper.readResults(s.getInputStream(), _ui);
             if (rv == null) {
                 MessageBox box = new MessageBox(parent, SWT.ICON_ERROR | SWT.OK);
                 box.setMessage(getText("Error communicating with the Freenet server"));
@@ -662,6 +663,7 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
                 //   InsertURI=freenet:SSK@AKTTKG6YwjrHzWo67laRcoPqibyiTdyYufjVg54fBlWr,AwUSJG5ZS-FDZTqnt6skTzhxQe08T-fbKXj8aEHZsXM/
                 //   RequestURI=freenet:SSK@BnHXXv3Fa43w~~iz1tNUd~cj4OpUuDjVouOWZ5XlpX0,AwUSJG5ZS-FDZTqnt6skTzhxQe08T-fbKXj8aEHZsXM,AQABAAE/
                 
+                rv = FreenetHelper.readResults(s.getInputStream(), _ui);
                 targetPub.setText(getRequestURI((String)rv.get("RequestURI")));
                 targetPriv.setText(getInsertURI((String)rv.get("InsertURI")));
             }

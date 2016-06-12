@@ -105,8 +105,6 @@ class SyndicateMenu implements TextEngine.Menu {
             processPut(client, ui, opts);
         } else if ("bulkimport".equalsIgnoreCase(cmd)) {
             processBulkImport(client, ui, opts);
-        } else if ("freenetpost".equalsIgnoreCase(cmd)) {
-            processFreenetPost(client, ui, opts);
         } else if ("listban".equalsIgnoreCase(cmd)) {
             processListBan(client, ui, opts);
         } else if ("unban".equalsIgnoreCase(cmd)) {
@@ -628,54 +626,6 @@ class SyndicateMenu implements TextEngine.Menu {
         }
     }
 
-    /** freenetpost --privateSSK ($key|new) [--fcpHost localhost] [--fcpPort 9481] */
-    private void processFreenetPost(DBClient client, UI ui, Opts opts) {
-        String fcpHost = opts.getOptValue("fcpHost");
-        if (fcpHost == null)
-            fcpHost = client.getDefaultFreenetHost();
-        if (fcpHost == null)
-            fcpHost = "localhost";
-        int fcpPort = (int)opts.getOptLong("fcpPort", -1);
-        if (fcpPort <= 0)
-            fcpPort = client.getDefaultFreenetPort();
-        if (fcpPort <= 0)
-            fcpPort = 9481;
-        String ssk = opts.getOptValue("privateSSK");
-        if (ssk == null)
-            ssk = client.getDefaultFreenetPrivateKey();
-        if (ssk == null)
-            ssk = "new";
-
-        
-        SyncManager mgr = SyncManager.getInstance(client, ui);
-        processBuildIndex(client, new NestedUI(ui), new Opts(), mgr.getDefaultPullStrategy());
-        // ignore the results
-
-        //FreenetArchivePusher pusher = new FreenetArchivePusher(ui, fcpHost, fcpPort);
-        if ("new".equalsIgnoreCase(ssk)) {
-            //pusher.generateSSK();
-            ssk = null; //pusher.getPrivateSSK();
-            if (ssk != null) {
-                String pubSSK = null; //pusher.getPublicSSK();
-                ui.statusMessage("Published results will be visible under " + pubSSK);
-                // save the ssk to the prefs at the next opportunity
-                ui.insertCommand("prefs --freenetPublicKey " + CommandImpl.strip(pubSSK) +
-                                 " --freenetPrivateKey " + CommandImpl.strip(ssk) + 
-                                 " --fcpHost " + CommandImpl.strip(fcpHost) + 
-                                 " --fcpPort " + fcpPort);
-            } else {
-                ui.errorMessage("Unable to post the archive to Freenet");
-                ui.commandComplete(-1, null);
-                return;
-            }
-        } else {
-            //pusher.setPrivateSSK(ssk);
-            //pusher.setPublicSSK(client.getDefaultFreenetPublicKey());
-        }
-        //pusher.putArchive(client.getArchiveDir());
-    }
-    
-    
     private void processListBan(DBClient client, UI ui, Opts opts) {
         List chans = client.getBannedChannels();
         ui.statusMessage("Total of " + chans.size() + " banned channels");

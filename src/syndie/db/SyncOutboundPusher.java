@@ -133,10 +133,16 @@ public class SyncOutboundPusher {
         synchronized (_runnerToArchive) { _runnerToArchive.remove(runner); }
     }
     
+    /**
+     *
+     * See http://trac.i2p2.i2p/ticket/1424
+     * for background and limitations of Freenet support
+     *
+     */
     private void pushFreenet(SyncArchive archive) {
         int actions = archive.getOutgoingActionCount();
-        List uris = new ArrayList();
-        List actionsPushed = new ArrayList();
+        List<SyndieURI> uris = new ArrayList<SyndieURI>();
+        List<SyncArchive.OutgoingAction> actionsPushed = new ArrayList<SyncArchive.OutgoingAction>();
         for (int i = 0; i < actions; i++) {
             SyncArchive.OutgoingAction action = archive.getOutgoingAction(i);
             if (action.getCompletionTime() > 0) continue; // already complete
@@ -149,7 +155,7 @@ public class SyncOutboundPusher {
         }
         String err = null;
         if (uris.size() > 0)
-            err = pushFreenet(archive, uris);
+            err = pushFreenet(archive, uris, actionsPushed);
         if (err == null) {
             for (int i = 0; i < actionsPushed.size(); i++) {
                 SyncArchive.OutgoingAction action = (SyncArchive.OutgoingAction)actionsPushed.get(i);
@@ -163,10 +169,18 @@ public class SyncOutboundPusher {
         }
     }
     
-    private String pushFreenet(SyncArchive archive, List uris) {
+    /**
+     *
+     * See http://trac.i2p2.i2p/ticket/1424
+     * for background and limitations of Freenet support
+     *
+     */
+    private String pushFreenet(SyncArchive archive, List<SyndieURI> uris, List<SyncArchive.OutgoingAction> actionsPushed) {
         String error = null;
         // shove all of the files specified to the fcp host
         String host = archive.getFCPHost();
+        
+        int actions = archive.getOutgoingActionCount();
         int port = archive.getFCPPort();
         if (host != null) host = host.trim();
         if ( (host == null) || (port <= 0) )
@@ -174,215 +188,72 @@ public class SyncOutboundPusher {
         if (archive.getPostKey() == null)
             return "No posting key defined";
         
-        _manager.getUI().debugMessage("Pushing to freenet (fcp host " + host + " port " + port + ")");
         try {
+            LocalArchiveManager.buildFreenetIndex(_manager.getClient(), _manager.getUI());
+            //using set pushing meta here for UI user sanity and it sort of makes sense for FCP
+            for (int i = 0; i < actions; i++) {
+                SyncArchive.OutgoingAction action = actionsPushed.get(i);
+                action.setPushingMeta();
+            }
             Socket s = new Socket(host, port);
+            error = FreenetHelper.pushFreenetArchive(archive,uris,s,"false",_manager.getUI(),_manager.getClient());
+            if (error != null) return error;
             OutputStream out = s.getOutputStream();
-            long msgId = System.currentTimeMillis();
-            out.write(DataHelper.getUTF8("ClientHello\r\n" +
-                       "Name=syndie" + msgId + "\r\n" +
-                       "ExpectedVersion=2.0\r\n" +
-                       "Identifier=" + msgId + "\r\n" +
-                       "EndMessage\r\n"));
-            
-            String target = getTarget(archive.getPostKey());
-            
-            _manager.getUI().debugMessage("Posting to " + target);
-            
-            out.write(("ClientPutComplexDir\r\n" +
-                       "Identifier=" + (msgId+1) + "\r\n" +
-                       "URI=" + target + "\r\n" +
-                       "Verbosity=1023\r\n" + // we don't care about anyting
-                       "Global=true\r\n" + // let it be seen on fproxy's /queue/
-                       "MaxRetries=10\r\n" +
-                       "PriorityClass=3\r\n" + // 3 is lower than interactive
-                       "Persistence=reboot\r\n" // runs until success or the freenet instance restarts
-                       ).getBytes());
-            
-            // dont use UploadFrom=disk, because that breaks if the fcpHost != localhost,
-            // or if the freenet instance doesn't have read permissions on the archive
-            for (int i = 0; i < uris.size(); i++) {
-                SyndieURI uri = (SyndieURI)uris.get(i);
-                File f = null;
-                if (uri.getMessageId() == null)
-                    f = new File(new File(_manager.getClient().getOutboundDir(), uri.getScope().toBase64()), "meta" + Constants.FILENAME_SUFFIX);
-                else
-                    f = new File(new File(_manager.getClient().getOutboundDir(), uri.getScope().toBase64()), uri.getMessageId().toString() + Constants.FILENAME_SUFFIX);
-                if (!f.exists()) {
-                    if (uri.getMessageId() == null)
-                        f = new File(new File(_manager.getClient().getArchiveDir(), uri.getScope().toBase64()), "meta" + Constants.FILENAME_SUFFIX);
-                    else
-                        f = new File(new File(_manager.getClient().getArchiveDir(), uri.getScope().toBase64()), uri.getMessageId().toString() + Constants.FILENAME_SUFFIX);
-                }
-                
-                String path = uri.getScope().toBase64() + "/";
-                if (uri.getMessageId() == null)
-                    path = path + "meta" + Constants.FILENAME_SUFFIX;
-                else
-                    path = path + uri.getMessageId().toString() + Constants.FILENAME_SUFFIX;
-                
-                _manager.getUI().debugMessage("including path: " + path);
-                out.write(("Files." + i + ".Name=" + path + "\r\n" +
-                           "Files." + i + ".UploadFrom=direct\r\n" +
-                           "Files." + i + ".Metadata.ContentType=application/x-syndie\r\n" +
-                           "Files." + i + ".DataLength=" + f.length() + "\r\n").getBytes());
-            }
-            // now include an index.html, if it exists
-            File htmlIndex = new File(_manager.getClient().getArchiveDir(), "index.html");
-            if (htmlIndex.exists()) {
-                _manager.getUI().debugMessage("including HTML index");
-                out.write(("Files." + uris.size() + ".Name=index.html\r\n" +
-                           "Files." + uris.size() + ".UploadFrom=direct\r\n" +
-                           "Files." + uris.size() + ".Metadata.ContentType=text/html\r\n" +
-                           "Files." + uris.size() + ".DataLength=" + htmlIndex.length() + "\r\n").getBytes());
-            }
-            // don't forget the sharedIndex
-            File sharedIndex = new File(_manager.getClient().getWebDir(), LocalArchiveManager.SHARED_INDEX_FILE);
-            if (sharedIndex.exists()) {
-                _manager.getUI().debugMessage("including shared index");
-                out.write(("Files." + (uris.size()+1) + ".Name=" + LocalArchiveManager.SHARED_INDEX_FILE + "\r\n" +
-                           "Files." + (uris.size()+1) + ".UploadFrom=direct\r\n" +
-                           "Files." + (uris.size()+1) + ".Metadata.ContentType=application/x-syndie-index\r\n" +
-                           "Files." + (uris.size()+1) + ".DataLength=" + sharedIndex.length() + "\r\n").getBytes());
-            }
-            out.write(DataHelper.getUTF8("EndMessage\r\n"));
-            
-            int bytes = 0;
-            for (int i = 0; i < uris.size(); i++) {
-                SyndieURI uri = (SyndieURI)uris.get(i);
-                File f = null;
-                if (uri.getMessageId() == null)
-                    f = new File(new File(_manager.getClient().getOutboundDir(), uri.getScope().toBase64()), "meta" + Constants.FILENAME_SUFFIX);
-                else
-                    f = new File(new File(_manager.getClient().getOutboundDir(), uri.getScope().toBase64()), uri.getMessageId().toString() + Constants.FILENAME_SUFFIX);
-                if (!f.exists()) {
-                    if (uri.getMessageId() == null)
-                        f = new File(new File(_manager.getClient().getArchiveDir(), uri.getScope().toBase64()), "meta" + Constants.FILENAME_SUFFIX);
-                    else
-                        f = new File(new File(_manager.getClient().getArchiveDir(), uri.getScope().toBase64()), uri.getMessageId().toString() + Constants.FILENAME_SUFFIX);
-                }
-            
-                byte buf[] = new byte[4096];
-                FileInputStream fin = null;
-                try {
-                    fin = new FileInputStream(f);
-                    int read = -1;
-                    while ( (read = fin.read(buf)) != -1) {
-                        out.write(buf, 0, read);
-                        bytes += read;
-                    }
-                    fin.close();
-                    fin = null;
-                } finally {
-                    if (fin != null) try { fin.close(); } catch (IOException ioe) {}
-                }
-            }
-            
-            if (htmlIndex.exists()) {
-                byte buf[] = new byte[4096];
-                FileInputStream fin = null;
-                try {
-                    fin = new FileInputStream(htmlIndex);
-                    int read = -1;
-                    while ( (read = fin.read(buf)) != -1) {
-                        out.write(buf, 0, read);
-                        bytes += read;
-                    }
-                    fin.close();
-                    fin = null;
-                } finally {
-                    if (fin != null) try { fin.close(); } catch (IOException ioe) {}
-                }
-            }
-            
-            if (sharedIndex.exists()) {
-                byte buf[] = new byte[4096];
-                FileInputStream fin = null;
-                try {
-                    fin = new FileInputStream(sharedIndex);
-                    int read = -1;
-                    while ( (read = fin.read(buf)) != -1) {
-                        out.write(buf, 0, read);
-                        bytes += read;
-                    }
-                    fin.close();
-                    fin = null;
-                } finally {
-                    if (fin != null) try { fin.close(); } catch (IOException ioe) {}
-                }
-            }
-            
-            _manager.getUI().debugMessage("FCP message written, now reading the response");
-            
             // since we are doing a persistent put, this does not block waiting
             // for the actual full posting, merely schedules the posting through
             // freenet
-            Map rv = readResults(s.getInputStream());
-            if (rv == null) {
+            Map rv = FreenetHelper.readResults(s.getInputStream(),_manager.getUI());
+            //Do your error checking
+            if (rv.get("cmd") == null) {
                 error = "Error communicating with the Freenet server";
                 _manager.getUI().errorMessage(error);
+                out.write(("Disconnect EndMessage\r\n").getBytes());
+                s.close();
+                return error;
+                
             } else {
-                String code = (String)rv.get("Code");
-                if ( (code != null) && !("0".equals(code))) {
-                    error = "Error posting the archive";
+                _manager.getUI().debugMessage("Freenet archive publishing queued on the freenet server");
+               
+                //while loop to adjust error to null if sucess or error if put failed
+                String cmd = (String) rv.get("cmd");
+                if (cmd.startsWith("ProtocolError")) {
+                    error = "Most likely non existent files or inproper formating of message.";
                     _manager.getUI().errorMessage(error);
-                    _manager.getUI().debugMessage("FCP response: " + rv);
-                } else {
-                    _manager.getUI().debugMessage("Freenet archive publishing queued on the freenet server");
-                    _manager.getUI().debugMessage("Total size queued: " + (bytes+1023)/1024 + "KBytes");
-                    _manager.getUI().debugMessage("It may take a long time for the archive to be visible for others");
-                    _manager.getUI().debugMessage("Please see the Freenet fproxy for status information.");
+                    out.write(("Disconnect EndMessage\r\n").getBytes());
+                    s.close();
+                    return error;
                 }
+                for (int i = 0; i < actions; i++) {
+                    SyncArchive.OutgoingAction action = (SyncArchive.OutgoingAction)actionsPushed.get(i);
+                    action.setPushingBody();
+                }
+                while (!(cmd.startsWith("PutFailed")) && !(cmd.startsWith("PutSuccessful"))) {
+                    _manager.getUI().debugMessage(cmd);
+                    rv = FreenetHelper.readResults(s.getInputStream(),_manager.getUI());
+                    //Simple keep alive method
+                    out.write(("Void\r\nEndMessage\r\n").getBytes()); 
+                    cmd = (String)rv.get("cmd");
+                }
+                if (cmd.startsWith("PutFailed")) {
+                    error = "Pushing failed try again later";
+                    _manager.getUI().errorMessage(error);
+                    out.write(("Disconnect EndMessage\r\n").getBytes());
+                    s.close();
+                    return error;
+                } else {
+                    out.write(("Disconnect EndMessage\r\n").getBytes());
+                    s.close();
+                    return null;
+                }
+                
             }
-            s.close();
         } catch (IOException ioe) {
             error = "Error posting the archive to Freenet (fcp " + host + ":"+ port + ")";
             _manager.getUI().errorMessage(error, ioe);
         }
         return error;
     }
-    
-    private String getTarget(String privateSSK) {
-	String key = privateSSK;
-	if ( privateSSK.indexOf("SSK@")==0 || privateSSK.indexOf("USK@")==0 ) {
-            key = key.substring(4);
-	}
-        while (key.endsWith("/"))
-            key = key.substring(0, key.length()-1);
-        return "USK@" + key + "/archive/0/";
-    }
-    
-    private Map readResults(InputStream in) throws IOException { return readResults(in, _manager.getUI()); }
-    public static Map readResults(InputStream in, UI ui) throws IOException {
-        // read the result map, ignoring the NodeHello message
-        BufferedReader bin = new BufferedReader(new InputStreamReader(in, "UTF-8"));
-        String line = null;
-        Map rv = new HashMap();
-        String cmd = null;
-        while ( (line = bin.readLine()) != null) {
-            ui.debugMessage("Line read: " + line);
-            if (cmd == null) {
-                cmd = line;
-            } else if (line.startsWith("EndMessage")) {
-                if ("NodeHello".equals(cmd)) {
-                    // ignore this message
-                    rv.clear();
-                    cmd = null;
-                } else {
-                    // return this message
-                    return rv;
-                }
-            } else {
-                int split = line.indexOf('=');
-                if (split < 0) throw new IOException("Invalid format of a line [" + line + "]");
-                String name = line.substring(0, split);
-                String val = line.substring(split+1);
-                rv.put(name, val);
-            }
-        }
-        return rv;
-    }
-    
+        
     private void pushFile(SyncArchive archive) {
         int actions = archive.getOutgoingActionCount();
         for (int i = 0; i < actions; i++) {

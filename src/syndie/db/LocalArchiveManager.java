@@ -94,6 +94,14 @@ public class LocalArchiveManager {
     
     /**
      *  @return success
+     *  @since 1.106
+     */
+    public static boolean buildFreenetIndex(DBClient client, UI ui) {
+        return buildIndex(client, ui, new PullStrategy("RecentMessagesOnly"), new File(client.getArchiveDir(), SHARED_INDEX_FILE));
+    }
+    
+    /**
+     *  @return success
      */
     public static boolean buildIndex(DBClient client, UI ui, PullStrategy pullStrategy) {
         return buildIndex(client, ui, pullStrategy, new File(client.getWebDir(), SHARED_INDEX_FILE));
