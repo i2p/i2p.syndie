@@ -2,8 +2,21 @@
 <project name="Fetch SWT" default="usage" basedir=".">
     <description>Fetches and validates checksums of SWT</description>
 
+    <target name="help" depends="usage" />
+    <target name="usage">
+        <echo message="Useful targets:" />
+        <echo message="       fetch-SWT (set checksum.ignore=true in override.properties)" />
+        <echo message="       ensure-SWT" />
+        <echo message="       ensure-lin32-swt" />
+        <echo message="       ensure-lin64-swt" />
+        <echo message="       ensure-mac64-swt" />
+        <echo message="       ensure-win32-swt" />
+        <echo message="       ensure-win64-swt" />
+    </target>
+
     <property file="override.properties"/>
     <property file="swt.properties"/>
+    <property name="checksum.ignore" value="false" />
 
     <!-- Set some global properties up -->
     <property name="swt.dir" value="${basedir}/lib" />
@@ -43,7 +56,12 @@
             <checksum file="${tempjar}" algorithm="sha" property="@{hash}"
                 verifyproperty="checksum.matches"/>
             <condition property="checksum.matches.fail">
-                <equals arg1="${checksum.matches}" arg2="false"/>
+                <and>
+                    <not>
+                        <equals arg1="${checksum.ignore}" arg2="true"/>
+                    </not>
+                    <equals arg1="${checksum.matches}" arg2="false"/>
+                </and>
             </condition>
             <fail if="checksum.matches.fail">Checksum error</fail>
             <move file="${tempjar}" tofile="@{dest}" />
@@ -102,9 +120,14 @@
     </target>
 
     <target name="ensure-SWT"
-        depends="ensure-lin32-swt, ensure-lin64-swt, ensure-mac32-swt,
+        depends="ensure-lin32-swt, ensure-lin64-swt,
         ensure-mac64-swt, ensure-win32-swt, ensure-win64-swt"
         description="Ensure all of the SWT libs are present and verify their checksums"/>
+
+    <target name="fetch-SWT"
+        depends="fetch-lin32-swt, fetch-lin64-swt,
+        fetch-mac64-swt, fetch-win32-swt, fetch-win64-swt"
+        description="Fetch all of the SWT libs but do not verify their checksums"/>
 
     <target name="verify-lin32-swt" if="swt.lin32.available" unless="swt.lin32.verified">
         <checksha1 file="${swt.lin32}" hash="${swt.lin32.sha1}" />

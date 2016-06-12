@@ -3,14 +3,14 @@
 * 2016-xx-xx 1.106b-1 (zzz)
   - Eliminate dependency on deprecated Sha256Standalone and HMAC256Generator
   - Allow pushing without "http://" (ticket #1137)
-  - Update SWT (ticket #1297)
+  - Update to SWT 4.5 (ticket #1297)
   - Update to HSQLDB 2.3.4
   - Control Server: Flush output stream (thx EinMByte https://github.com/i2p/i2p.syndie/issues/2)
   - Update banlist, default archives, and URLs for the I2P, Tor, and Frost sites
   - Update toolbar icons with higher quality versions courtesy of hummingbird
   - Fix HTTPServ AIOOBE (ticket #1282)
-  - Sync buttons sync all or selected (ticket #1233)
-  - Refactor and fix freenet support (ticket #1424)
+  - Sync buttons sync all or selected (ticket #1233) (thx hikiko)
+  - Refactor and fix freenet support (ticket #1424) (thx hikiko)
   - Translation updates
   - New translations: Greek, Italian, Dutch, Brazilian Portuguese, Ukrainian, Chinese, Turkish
 
