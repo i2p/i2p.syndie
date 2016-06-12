@@ -1,6 +1,6 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
-* 2016-xx-xx 1.105b-1 (zzz)
+* 2016-xx-xx 1.106b-1 (zzz)
   - Eliminate dependency on deprecated Sha256Standalone
   - Allow pushing without "http://" (ticket #1137)
   - Update swt (ticket #1297)

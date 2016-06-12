@@ -31,6 +31,8 @@
     <property name="swt.mac32" value="${swt.dir}/swt-mac32.jar" />
     <property name="swt.mac64" value="${swt.dir}/swt-mac64.jar" />
     <property name="tab" value="    " />
+    <property name="javac.compilerargs" value="" />
+    <property name="javac.version" value="1.6" />
     <property name="require.gettext" value="true" />
     <condition property="no.bundle">
         <isfalse value="${require.gettext}" />
@@ -434,8 +436,9 @@
                 </not>
             </condition>
         </fail>
-        <javac srcdir="${src.dir}" destdir="${build.dir}/obj" debug="true" source="1.6" target="1.6"
+        <javac srcdir="${src.dir}" destdir="${build.dir}/obj" debug="true" source="${javac.version}" target="${javac.version}"
                deprecation="on" includeAntRuntime="false">
+            <compilerarg line="${javac.compilerargs}" />
             <classpath>
                 <path refid="classpath.build" />
             </classpath>
@@ -445,9 +448,10 @@
     <target name="compile-cli" depends="init" description="compile just the cli">
         <delete dir="${build.dir}/cli-obj" />
         <mkdir dir="${build.dir}/cli-obj" />
-        <javac srcdir="${src.dir}" destdir="${build.dir}/cli-obj" debug="true" source="1.6" target="1.6"
+        <javac srcdir="${src.dir}" destdir="${build.dir}/cli-obj" debug="true" source="${javac.version}" target="${javac.version}"
                excludes="syndie/gui/** syndie/trac/** com/** syndie/locale/** imports/Browser/** imports/DesktopUI/**"
                deprecation="on" includeAntRuntime="false">
+            <compilerarg line="${javac.compilerargs}" />
             <classpath>
                 <pathelement location="${i2p.jar}" />
                 <pathelement location="${hsqldb.jar}" />
@@ -456,6 +460,7 @@
     </target>
 
     <target name="bundle" depends="compile" description="process the translations" unless="no.bundle">
+        <mkdir dir="build/messages-src" />
         <!-- Update the messages_*.po files -->
         <exec executable="sh" osfamily="unix" failifexecutionfails="true" failonerror="${require.gettext}" >
             <arg value="./bundle-messages.sh" />
@@ -466,6 +471,11 @@
         <exec executable="sh" osfamily="windows" failifexecutionfails="false" >
             <arg value="./bundle-messages.sh" />
         </exec>
+        <javac source="${javac.version}" target="${javac.version}" 
+               includeAntRuntime="false"
+               srcdir="build/messages-src" destdir="build/obj">
+            <compilerarg line="${javac.compilerargs}" />
+        </javac>
     </target>
 
     <target name="poupdate" depends="compile" description="generate the translation files">
