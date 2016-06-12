@@ -13,6 +13,7 @@ trans.pt_BR = locale/messages_pt_BR.po
 trans.ro = locale/messages_ro.po
 trans.ru_RU= locale/messages_ru.po
 trans.sv_SE = locale/messages_sv.po
+trans.tr_TR = locale/messages_tr.po
 trans.uk_UA = locale/messages_uk.po
 trans.zh_CN = locale/messages_zh.po
 type = PO

@@ -7,14 +7,14 @@
 # nobody <oiiu19@yahoo.com>, 2015
 # nobody <oiiu19@yahoo.com>, 2015
 # Huang Yanru <r1235613@gmail.com>, 2014
-# YF <yfdyh000@gmail.com>, 2014-2015
+# Y.F Yang <yfdyh000@gmail.com>, 2014-2016
 msgid ""
 msgstr ""
 "Project-Id-Version: I2P\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-01-20 22:47+0000\n"
-"PO-Revision-Date: 2015-12-27 04:17+0000\n"
-"Last-Translator: nobody <oiiu19@yahoo.com>\n"
+"PO-Revision-Date: 2016-03-19 23:14+0000\n"
+"Last-Translator: Y.F Yang <yfdyh000@gmail.com>\n"
 "Language-Team: Chinese (China) (http://www.transifex.com/otf/I2P/language/zh_CN/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -2332,7 +2332,7 @@ msgstr "错误的日期"
 
 #: src/syndie/gui/MessageTree.java:680
 msgid "Error parsing date"
-msgstr ""
+msgstr "解析日期出错"
 
 #. translators: you may use "Last {0} day" for the singular if that's better
 #: src/syndie/gui/MessageTree.java:749 src/syndie/gui/MessageTree.java:750
@@ -2418,7 +2418,7 @@ msgstr "可阅读：论坛管理员"
 
 #: src/syndie/gui/MessageTree.java:972
 msgid "Use local import date instead of (unreliable) message creation date"
-msgstr ""
+msgstr "使用本地的导入日期而不是(不可靠的)消息创建日期"
 
 #: src/syndie/gui/MessageTree.java:973
 msgid "Organize results in threads"
@@ -2450,7 +2450,7 @@ msgstr "没有项目可现实"
 
 #: src/syndie/gui/MessageTree.java:2115
 msgid "agelocal"
-msgstr ""
+msgstr "本地年龄"
 
 #. message is not locally known
 #: src/syndie/gui/MessageTree.java:2125
@@ -3268,7 +3268,7 @@ msgstr "获取完成"
 #. text doesn't change
 #: src/syndie/gui/Syndicator.java:833
 msgid "Fetches"
-msgstr ""
+msgstr "获取"
 
 #: src/syndie/gui/Syndicator.java:841 src/syndie/gui/Syndicator.java:1025
 msgid "Complete"
@@ -3284,7 +3284,7 @@ msgstr "获取失败"
 
 #: src/syndie/gui/Syndicator.java:929
 msgid "Fetching keys"
-msgstr ""
+msgstr "正在获取键值"
 
 #: src/syndie/gui/Syndicator.java:942
 msgid "Fetching message"
@@ -3325,7 +3325,7 @@ msgstr "摘要"
 
 #: src/syndie/gui/Syndicator.java:1158
 msgid "No archives defined - click 'Add archive' to add one"
-msgstr ""
+msgstr "没有定义存档 - 点击“添加存档”添加一个"
 
 #: src/syndie/gui/Syndicator.java:1169
 #: src/syndie/gui/desktop/SyndicatorPanel.java:225
@@ -3351,7 +3351,7 @@ msgstr "立即同步（仅一次）"
 
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:451
 msgid "Whitelist"
-msgstr ""
+msgstr "白名单"
 
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:515
 msgid "Freenet configuration"
@@ -3380,7 +3380,7 @@ msgstr "生成新的"
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:654
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:673
 msgid "Error communicating with the Freenet server"
-msgstr ""
+msgstr "与 Freenet 服务器通信出错"
 
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:923
 msgid "ASAP"
@@ -3457,7 +3457,7 @@ msgstr "失败后的后备？"
 
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1080
 msgid "Age to treat as 'recent'"
-msgstr ""
+msgstr "年龄视为“近期”"
 
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1081
 msgid "Oldest message to send"
@@ -3674,15 +3674,15 @@ msgstr "保存为我的默认 HTTP 代理"
 
 #: src/syndie/gui/WebRipPostControl.java:204
 msgid "Anyone can read the rip"
-msgstr ""
+msgstr "任何人都可以阅读此 rip"
 
 #: src/syndie/gui/WebRipPostControl.java:205
 msgid "Passphrase required to read the rip"
-msgstr ""
+msgstr "阅读这个rip需要口令"
 
 #: src/syndie/gui/WebRipPostControl.java:206
 msgid "Only authorized people can read the rip"
-msgstr ""
+msgstr "只有被授权的人能阅读此 rip"
 
 #: src/syndie/gui/WebRipPostControl.java:207
 msgid "Tag the post with the URL?"
@@ -4046,7 +4046,7 @@ msgstr "移除页面"
 
 #: src/syndie/gui/desktop/MessageEditorPanel.java:678
 msgid "Rip a web page"
-msgstr ""
+msgstr "Rip 一个网页"
 
 #: src/syndie/gui/desktop/MessageEditorPanel.java:679
 msgid "Toggle HTML/plain text"

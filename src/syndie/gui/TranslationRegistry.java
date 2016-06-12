@@ -37,13 +37,13 @@ public class TranslationRegistry {
      * order not important, UI will sort
      */
     private static final String[] SUPPORTED_TRANSLATIONS = {
-        "en", "de", "ru", "sv", "es", "fr", "pt", "pl", "ro", "el", "it", "nl", "pt_BR", "uk", "zh"
+        "en", "de", "ru", "sv", "es", "fr", "pt", "pl", "ro", "el", "it", "nl", "pt_BR", "tr", "uk", "zh"
     };
 
     private static final List<String> AVAILABLE_TRANSLATIONS;
 
     static {
-        List<String> avail = new ArrayList(16);
+        List<String> avail = new ArrayList(24);
         avail.addAll(Arrays.asList(SUPPORTED_TRANSLATIONS));
         String cur = Locale.getDefault().getLanguage();
         if (!avail.contains(cur))
