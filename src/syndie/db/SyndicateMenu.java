@@ -556,31 +556,35 @@ class SyndicateMenu implements TextEngine.Menu {
         
         File f = new File(dir);
         File files[] = f.listFiles(_metafilter);
-        SharedArchiveBuilder.sortFiles(files);
-        for (int i = 0; files != null && i < files.length; i++) {
-            importMsg(client, ui, files[i], opts.getOptBoolean("reimport", false));
-            if (del) {
-                boolean deleted = files[i].delete();
-                if (!deleted)
-                    ui.statusMessage("Unable to delete " + files[i].getPath());
-                else
-                    ui.statusMessage("Metadata deleted from " + files[i].getPath());
+        if (files != null) {
+            SharedArchiveBuilder.sortFiles(files);
+            for (int i = 0; files != null && i < files.length; i++) {
+                importMsg(client, ui, files[i], opts.getOptBoolean("reimport", false));
+                if (del) {
+                    boolean deleted = files[i].delete();
+                    if (!deleted)
+                        ui.statusMessage("Unable to delete " + files[i].getPath());
+                    else
+                        ui.statusMessage("Metadata deleted from " + files[i].getPath());
+                }
+                metaImported++;
             }
-            metaImported++;
         }
         
         files = f.listFiles(_postfilter);
-        SharedArchiveBuilder.sortFiles(files);
-        for (int i = 0; files != null && i < files.length; i++) {
-            importMsg(client, ui, files[i], opts.getOptBoolean("reimport", false));
-            if (del) {
-                boolean deleted = files[i].delete();
-                if (!deleted)
-                    ui.statusMessage("Unable to delete " + files[i].getPath());
-                else
-                    ui.statusMessage("Post deleted from " + files[i].getPath());
+        if (files != null) {
+            SharedArchiveBuilder.sortFiles(files);
+            for (int i = 0; files != null && i < files.length; i++) {
+                importMsg(client, ui, files[i], opts.getOptBoolean("reimport", false));
+                if (del) {
+                    boolean deleted = files[i].delete();
+                    if (!deleted)
+                        ui.statusMessage("Unable to delete " + files[i].getPath());
+                    else
+                        ui.statusMessage("Post deleted from " + files[i].getPath());
+                }
+                postImported++;
             }
-            postImported++;
         }
         
         if (del && rmdir)

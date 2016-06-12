@@ -239,6 +239,8 @@ public class SharedArchiveEngine {
                 return pathname.isDirectory() && !pathname.getName().startsWith(".");
             }
         });
+        if (dirs == null)
+            return;
         
         // rather than sort to hide OS type, we shuffle later
         // no dont shuffle
@@ -286,6 +288,8 @@ public class SharedArchiveEngine {
                     return (name.endsWith(Constants.FILENAME_SUFFIX) && !name.startsWith("meta"));
                 }
             });
+            if (files == null)
+                continue;
 
             // rather than sort to hide OS type, we shuffle later
             // no dont shuffle

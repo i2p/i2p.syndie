@@ -157,6 +157,8 @@ public class SharedArchiveBuilder {
     /**
      * sort them alphabetically, so any os-dependence on file.listFiles() is avoided 
      * (listFiles has no specified order)
+     *
+     * @param files non-null
      */
     static void sortFiles(File files[]) {        
         TreeMap sorted = new TreeMap(FILENAME_COMPARATOR);
@@ -178,6 +180,8 @@ public class SharedArchiveBuilder {
                 return (pathname.isDirectory() && !pathname.getName().startsWith("."));
             }
         });
+        if (dirs == null)
+            return rv;
         sortFiles(dirs);
         for (int i = 0; i < dirs.length; i++) {
             Hash scope = Hash.create(Base64.decode(dirs[i].getName()));
@@ -195,6 +199,8 @@ public class SharedArchiveBuilder {
                 }
             });
             //_ui.debugMessage("# message files in " + scope.toBase64() + ": " + msgFiles.length);
+            if (msgFiles == null)
+                continue;
             sortFiles(msgFiles);
             for (int j = 0; j < msgFiles.length; j++) {
                 long messageId = getMessageId(msgFiles[j]);
@@ -356,6 +362,8 @@ public class SharedArchiveBuilder {
                 return (pathname.isDirectory() && !pathname.getName().startsWith("."));
             }
         });
+        if (dirs == null)
+            return rv;
         sortFiles(dirs);
         for (int i = 0; i < dirs.length; i++) {
             File metaFile = new File(dirs[i], "meta" + Constants.FILENAME_SUFFIX);
