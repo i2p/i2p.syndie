@@ -1,8 +1,8 @@
 package syndie.db;
 
-import gnu.crypto.hash.Sha256Standalone;
 import java.io.*;
 import java.net.URISyntaxException;
+import java.security.MessageDigest;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.zip.ZipEntry;
@@ -10,6 +10,7 @@ import java.util.zip.ZipOutputStream;
 
 import net.i2p.I2PAppContext;
 import net.i2p.crypto.KeyGenerator;
+import net.i2p.crypto.SHA256Generator;
 import net.i2p.data.Base64;
 import net.i2p.data.DataHelper;
 import net.i2p.data.SessionKey;
@@ -27,6 +28,7 @@ import syndie.data.EnclosureBody;
 import syndie.data.NymKey;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
+import static syndie.db.ChanGen.CLONEABLE_DIGEST;
 import syndie.util.StringUtil;
 
 /**
@@ -320,18 +322,47 @@ public class MessageGen extends CommandImpl {
                 _replyIV = iv;
             }
             fos = new SecureFileOutputStream(out);
-            Sha256Standalone hash = new Sha256Standalone();
-            DataHelper.write(fos, DataHelper.getUTF8(Constants.TYPE_CURRENT+"\n"), hash);
+            // we need two hashes because we don't know if
+            // MessageDigest supports clone()
+            // authorization hash
+            MessageDigest hash = SHA256Generator.getDigestInstance();
+            // authentication hash
+            MessageDigest hash2;
+            if (CLONEABLE_DIGEST)
+                hash2 = hash;
+            else
+                hash2 = SHA256Generator.getDigestInstance();
+            byte[] data = DataHelper.getUTF8(Constants.TYPE_CURRENT + '\n');
+            DataHelper.write(fos, data, hash);
+            if (!CLONEABLE_DIGEST)
+                hash2.update(data);
             TreeSet ordered = new TreeSet(pubHeaders.keySet());
             for (Iterator iter = ordered.iterator(); iter.hasNext(); ) {
                 String key = (String)iter.next();
                 String val = (String)pubHeaders.get(key);
-                DataHelper.write(fos, DataHelper.getUTF8(key + '=' + val + '\n'), hash);
+                data = DataHelper.getUTF8(key + '=' + val + '\n');
+                DataHelper.write(fos, data, hash);
+                if (!CLONEABLE_DIGEST)
+                    hash2.update(data);
             }
-            DataHelper.write(fos, DataHelper.getUTF8("\nSize=" + encBody.length + "\n"), hash);
+            data = DataHelper.getUTF8("\nSize=" + encBody.length + '\n');
+            DataHelper.write(fos, data, hash);
+            if (!CLONEABLE_DIGEST)
+                hash2.update(data);
             DataHelper.write(fos, encBody, hash);
+            if (!CLONEABLE_DIGEST)
+                hash2.update(encBody);
             
-            byte authorizationHash[] = ((Sha256Standalone)hash.clone()).digest(); // digest() reset()s
+            byte[] authorizationHash;
+            if (CLONEABLE_DIGEST) {
+                try {
+                    authorizationHash = ((MessageDigest) hash.clone()).digest();
+                } catch (CloneNotSupportedException e) {
+                    throw new RuntimeException("shouldn't happen", e);
+                }
+            } else {
+                authorizationHash = hash.digest();
+            }
             byte sig[] = null;
             if (authorizationPrivate != null) {
                 sig = client.ctx().dsa().sign(new Hash(authorizationHash), authorizationPrivate).getData();
@@ -340,9 +371,9 @@ public class MessageGen extends CommandImpl {
                 client.ctx().random().nextBytes(sig);
             }
             ui.debugMessage("Authorization hash: " + Base64.encode(authorizationHash) + " sig: " + Base64.encode(sig));
-            DataHelper.write(fos, DataHelper.getUTF8("AuthorizationSig=" + Base64.encode(sig) + "\n"), hash);
+            DataHelper.write(fos, DataHelper.getUTF8("AuthorizationSig=" + Base64.encode(sig) + '\n'), hash2);
             
-            byte authenticationHash[] = hash.digest();
+            byte authenticationHash[] = hash2.digest();
             sig = null;
             if (authenticationPrivate != null) {
                 sig = client.ctx().dsa().sign(new Hash(authenticationHash), authenticationPrivate).getData();
@@ -353,7 +384,7 @@ public class MessageGen extends CommandImpl {
                 client.ctx().random().nextBytes(sig);
             }
             ui.debugMessage("Authentication hash: " + Base64.encode(authenticationHash) + " sig: " + Base64.encode(sig));
-            DataHelper.write(fos, DataHelper.getUTF8("AuthenticationSig=" + Base64.encode(sig) + "\n"), hash);
+            fos.write(DataHelper.getUTF8("AuthenticationSig=" + Base64.encode(sig) + '\n'));
             
             fos.close();
             fos = null;

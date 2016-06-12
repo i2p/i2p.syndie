@@ -1,14 +1,14 @@
 package syndie.db;
 
-import gnu.crypto.hash.Sha256Standalone;
-
 import java.io.*;
+import java.security.MessageDigest;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import net.i2p.I2PAppContext;
 import net.i2p.crypto.KeyGenerator;
+import net.i2p.crypto.SHA256Generator;
 import net.i2p.data.Base64;
 import net.i2p.data.DataHelper;
 import net.i2p.data.SessionKey;
@@ -65,6 +65,18 @@ public class ChanGen extends CommandImpl {
     public ChanGen(I2PAppContext ctx) { _ctx = ctx; }
     public ChanGen() { this(I2PAppContext.getGlobalContext()); }
     
+    static final boolean CLONEABLE_DIGEST;
+    static {
+        boolean ok = false;
+        try {
+            MessageDigest md = SHA256Generator.getDigestInstance();
+            md.update((byte) 42);
+            Object o = md.clone();
+            ok = true;
+        } catch (CloneNotSupportedException e) {}
+        CLONEABLE_DIGEST = ok;
+    }
+
     public static String getHelp(String cmd) {
         return "--name $name --keyManageOut $keyFile --keyReplyOut $keyFile (see source for more options)";
     }
@@ -410,26 +422,55 @@ public class ChanGen extends CommandImpl {
         try {
             byte encBody[] = encryptBody(_ctx, writeRawBody(refStr, privHeaders, avatar), bodyKey);
             fos = new SecureFileOutputStream(metaOut);
-            Sha256Standalone hash = new Sha256Standalone();
-            DataHelper.write(fos, DataHelper.getUTF8(Constants.TYPE_CURRENT+"\n"), hash);
+            // we need two hashes because we don't know if
+            // MessageDigest supports clone()
+            // authorization hash
+            MessageDigest hash = SHA256Generator.getDigestInstance();
+            // authentication hash
+            MessageDigest hash2;
+            if (CLONEABLE_DIGEST)
+                hash2 = hash;
+            else
+                hash2 = SHA256Generator.getDigestInstance();
+            byte[] data = DataHelper.getUTF8(Constants.TYPE_CURRENT + '\n');
+            DataHelper.write(fos, data, hash);
+            if (!CLONEABLE_DIGEST)
+                hash2.update(data);
             TreeSet ordered = new TreeSet(pubHeaders.keySet());
             for (Iterator iter = ordered.iterator(); iter.hasNext(); ) {
                 String key = (String)iter.next();
                 String val = (String)pubHeaders.get(key);
-                DataHelper.write(fos, DataHelper.getUTF8(key + '=' + val + '\n'), hash);
+                data = DataHelper.getUTF8(key + '=' + val + '\n');
+                DataHelper.write(fos, data, hash);
+                if (!CLONEABLE_DIGEST)
+                    hash2.update(data);
             }
-            DataHelper.write(fos, DataHelper.getUTF8("\nSize=" + encBody.length + "\n"), hash);
+            data = DataHelper.getUTF8("\nSize=" + encBody.length + '\n');
+            DataHelper.write(fos, data, hash);
+            if (!CLONEABLE_DIGEST)
+                hash2.update(data);
             DataHelper.write(fos, encBody, hash);
+            if (!CLONEABLE_DIGEST)
+                hash2.update(encBody);
             
-            byte authorizationHash[] = ((Sha256Standalone)hash.clone()).digest(); // digest() reset()s
+            byte[] authorizationHash;
+            if (CLONEABLE_DIGEST) {
+                try {
+                    authorizationHash = ((MessageDigest) hash.clone()).digest();
+                } catch (CloneNotSupportedException e) {
+                    throw new RuntimeException("shouldn't happen", e);
+                }
+            } else {
+                authorizationHash = hash.digest();
+            }
             Signature authorizationSig = _ctx.dsa().sign(new Hash(authorizationHash), identPrivate);
             ui.debugMessage("Authorization hash: " + Base64.encode(authorizationHash) + " sig: " + authorizationSig.toBase64());
-            DataHelper.write(fos, DataHelper.getUTF8("AuthorizationSig=" + authorizationSig.toBase64() + "\n"), hash);
+            DataHelper.write(fos, DataHelper.getUTF8("AuthorizationSig=" + authorizationSig.toBase64() + '\n'), hash2);
             
-            byte authenticationHash[] = hash.digest();
+            byte authenticationHash[] = hash2.digest();
             Signature authenticationSig = _ctx.dsa().sign(new Hash(authenticationHash), identPrivate);
             ui.debugMessage("Authentication hash: " + Base64.encode(authenticationHash) + " sig: " + authenticationSig.toBase64());
-            DataHelper.write(fos, DataHelper.getUTF8("AuthenticationSig=" + authenticationSig.toBase64() + "\n"), hash);
+            fos.write(DataHelper.getUTF8("AuthenticationSig=" + authenticationSig.toBase64() + '\n'));
             
             fos.close();
             fos = null;

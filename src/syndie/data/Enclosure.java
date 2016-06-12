@@ -2,13 +2,13 @@ package syndie.data;
 
 import java.io.*;
 import java.net.URISyntaxException;
+import java.security.MessageDigest;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-import gnu.crypto.hash.Sha256Standalone;
-
 import net.i2p.I2PAppContext;
+import net.i2p.crypto.SHA256Generator;
 import net.i2p.data.Base64;
 import net.i2p.data.DataHelper;
 import net.i2p.data.Hash;
@@ -354,14 +354,12 @@ public class Enclosure {
     /**
      * Caller must close the InputStream
      */
-    @SuppressWarnings("deprecation")
     public Enclosure(InputStream raw) throws IOException {
         _publicHeaders = new Properties();
         if (raw instanceof FileInputStream)
             raw = new BufferedInputStream(raw);
 
-        Sha256Standalone hash = new Sha256Standalone();
-        hash.reset();
+        MessageDigest hash = SHA256Generator.getDigestInstance();
         _enclosureType = DataHelper.readLine(raw, hash);
         if (_enclosureType == null) throw new IOException("Corrupt enclosure, no type line");
         int rawSize = _enclosureType.length();
@@ -409,7 +407,12 @@ public class Enclosure {
         // load the data into _data
         loadData(raw, bytes, hash);
         
-        _authorizationHash = new Hash(((Sha256Standalone)hash.clone()).digest());
+        try {
+            _authorizationHash = new Hash(((MessageDigest)hash.clone()).digest());
+        } catch (CloneNotSupportedException cnse) {
+            // too hard to support non-cloneable
+            throw new IOException("Internal error", cnse);
+        }
         _authorizationSig = readSig(raw, hash);
         
         _authenticationHash = new Hash(hash.digest());
@@ -448,7 +451,7 @@ public class Enclosure {
         }
     }
     
-    private void loadData(InputStream raw, int numBytes, Sha256Standalone hash) throws IOException {
+    private void loadData(InputStream raw, int numBytes, MessageDigest hash) throws IOException {
         /*
         File bufDir = new File("./syndb_temp");
         bufDir.mkdir();
@@ -486,8 +489,7 @@ public class Enclosure {
         _data = baos.toByteArray();
     }
     
-    @SuppressWarnings("deprecation")
-    private Signature readSig(InputStream raw, Sha256Standalone hash) throws IOException {
+    private Signature readSig(InputStream raw, MessageDigest hash) throws IOException {
         String rem = DataHelper.readLine(raw, hash);
         if (rem != null) {
             int start = rem.indexOf('=');
