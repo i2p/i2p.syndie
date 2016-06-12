@@ -19,6 +19,7 @@ import net.i2p.util.Log;
 import net.i2p.util.SecureFileOutputStream;
 
 import syndie.Constants;
+import syndie.crypto.HMAC256Generator;
 import syndie.data.ReferenceNode;
 
 public abstract class CommandImpl implements CLI.Command {
@@ -124,7 +125,6 @@ public abstract class CommandImpl implements CLI.Command {
         return encryptBody(ctx, raw, bodyKey, getClass());
     }
 
-    @SuppressWarnings("deprecation")
     public static byte[] encryptBody(I2PAppContext ctx, byte raw[], SessionKey bodyKey, Class cls) {
         byte iv[] = new byte[16];
         byte hmac[] = new byte[Hash.HASH_LENGTH];
@@ -169,7 +169,7 @@ public abstract class CommandImpl implements CLI.Command {
         System.arraycopy(bodyKey.getData(), 0, hmacPreKey, 0, SessionKey.KEYSIZE_BYTES);
         System.arraycopy(iv, 0, hmacPreKey, SessionKey.KEYSIZE_BYTES, iv.length);
         byte hmacKey[] = ctx.sha().calculateHash(hmacPreKey).getData();
-        ctx.hmac256().calculate(new SessionKey(hmacKey), rv, 16, prep.length, hmac, 0);
+        HMAC256Generator.calculate(new SessionKey(hmacKey), rv, 16, prep.length, hmac, 0);
         System.arraycopy(hmac, 0, rv, iv.length+prep.length, hmac.length);
         
         if (true) {
@@ -258,7 +258,7 @@ public abstract class CommandImpl implements CLI.Command {
         System.arraycopy(key.getData(), 0, hmacPreKey, 0, SessionKey.KEYSIZE_BYTES);
         System.arraycopy(iv, 0, hmacPreKey, SessionKey.KEYSIZE_BYTES, iv.length);
         byte hmacKey[] = ctx.sha().calculateHash(hmacPreKey).getData();
-        ctx.hmac256().calculate(new SessionKey(hmacKey), rv, enc.length, prep.length, hmac, 0);
+        HMAC256Generator.calculate(new SessionKey(hmacKey), rv, enc.length, prep.length, hmac, 0);
         System.arraycopy(hmac, 0, rv, enc.length+prep.length, hmac.length);
         
         return rv;

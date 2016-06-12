@@ -20,6 +20,7 @@ import net.i2p.data.SigningPrivateKey;
 import net.i2p.data.SigningPublicKey;
 import net.i2p.util.Log;
 
+import syndie.crypto.HMAC256Generator;
 import syndie.db.CommandImpl;
 
 /**
@@ -69,7 +70,6 @@ public class EnclosureBody {
      *
      * Caller must close the InputStream
      */
-    @SuppressWarnings("deprecation")
     public EnclosureBody(I2PAppContext ctx, InputStream data, int size, SessionKey key) throws IOException, DataFormatException {
         this(ctx);
         byte iv[] = new byte[16];
@@ -116,7 +116,7 @@ public class EnclosureBody {
         System.arraycopy(key.getData(), 0, hmacPreKey, 0, SessionKey.KEYSIZE_BYTES);
         System.arraycopy(iv, 0, hmacPreKey, SessionKey.KEYSIZE_BYTES, iv.length);
         byte hmacKey[] = ctx.sha().calculateHash(hmacPreKey).getData();
-        boolean hmacOK = ctx.hmac256().verify(new SessionKey(hmacKey), enc, 0, enc.length-32, enc, enc.length-32, 32);
+        boolean hmacOK = HMAC256Generator.verify(new SessionKey(hmacKey), enc, 0, enc.length-32, enc, enc.length-32, 32);
         if (!hmacOK) {
             if (_log.shouldLog(Log.DEBUG)) {
                 _log.debug("borked hmac: hmacKey: " + Base64.encode(hmacKey));
@@ -134,7 +134,6 @@ public class EnclosureBody {
      *
      * Caller must close the InputStream
      */
-    @SuppressWarnings("deprecation")
     public EnclosureBody(I2PAppContext ctx, InputStream data, int size, PrivateKey key) throws IOException, DataFormatException {
         this(ctx);
         //if (true) throw new RuntimeException("Not yet implemented");
@@ -176,7 +175,7 @@ public class EnclosureBody {
         System.arraycopy(bodyKeyData, 0, hmacPreKey, 0, SessionKey.KEYSIZE_BYTES);
         System.arraycopy(ivCalc.getData(), 0, hmacPreKey, SessionKey.KEYSIZE_BYTES, 16);
         byte hmacKey[] = ctx.sha().calculateHash(hmacPreKey).getData();
-        boolean hmacOK = ctx.hmac256().verify(new SessionKey(hmacKey), enc, 0, enc.length, macRead, 0, macRead.length);
+        boolean hmacOK = HMAC256Generator.verify(new SessionKey(hmacKey), enc, 0, enc.length, macRead, 0, macRead.length);
         if (!hmacOK) {
             if (_log.shouldLog(Log.DEBUG)) {
                 _log.debug("borked hmac: hmacKey: " + Base64.encode(hmacKey));
@@ -195,7 +194,6 @@ public class EnclosureBody {
      *
      * Caller must close the InputStream
      */
-    @SuppressWarnings("deprecation")
     public EnclosureBody(I2PAppContext ctx, InputStream data, int size, byte explicitIV[], SessionKey explicitSessionKey) throws IOException, DataFormatException {
         this(ctx);
         //if (true) throw new RuntimeException("Not yet implemented");
@@ -242,7 +240,7 @@ public class EnclosureBody {
         System.arraycopy(bodyKey.getData(), 0, hmacPreKey, 0, SessionKey.KEYSIZE_BYTES);
         System.arraycopy(explicitIV, 0, hmacPreKey, SessionKey.KEYSIZE_BYTES, 16);
         byte hmacKey[] = ctx.sha().calculateHash(hmacPreKey).getData();
-        boolean hmacOK = ctx.hmac256().verify(new SessionKey(hmacKey), enc, 0, enc.length, macRead, 0, macRead.length);
+        boolean hmacOK = HMAC256Generator.verify(new SessionKey(hmacKey), enc, 0, enc.length, macRead, 0, macRead.length);
         if (!hmacOK) {
             if (_log.shouldLog(Log.DEBUG)) {
                 _log.debug("borked hmac: hmacKey: " + Base64.encode(hmacKey));
