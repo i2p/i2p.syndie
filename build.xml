@@ -629,10 +629,18 @@
             <arg value="plugin/lib/hsqldb.jar.pack" />
             <arg value="${hsqldb.jar}" />
         </exec>
-        <exec executable="scripts/makeplugin.sh" failonerror="true">
+        <input message="Enter su3 signing key password:" addproperty="release.password.su3" />
+        <fail message="You must enter a password." >
+            <condition>
+                <equals arg1="${release.password.su3}" arg2=""/>
+            </condition>
+        </fail>
+        <!-- this will fail if no su3 keys exist, as it needs the password twice -->
+        <exec executable="scripts/makeplugin.sh" inputstring="${release.password.su3}" failonerror="true" >
             <arg value="plugin" />
         </exec>
         <move file="syndie.xpi2p" tofile="syndie-linux-i386-update.xpi2p" />
+        <move file="syndie.su3" tofile="syndie-linux-i386-update.su3" />
 
         <!-- make the windows update xpi2p (32/64) -->
         <copy file="scripts/plugin-windows.config" tofile="plugin/plugin.config" overwrite="true" />
@@ -643,10 +651,11 @@
             <arg value="update-only=true" />
         </exec>
         <copy file="scripts/clients-windows.config" tofile="plugin/clients.config" overwrite="true" />
-        <exec executable="scripts/makeplugin.sh" failonerror="true">
+        <exec executable="scripts/makeplugin.sh" inputstring="${release.password.su3}" failonerror="true" >
             <arg value="plugin" />
         </exec>
         <move file="syndie.xpi2p" tofile="syndie-win32-update.xpi2p" />
+        <move file="syndie.su3" tofile="syndie-win32-update.su3" />
 
         <!-- make the 32 bit linux install xpi2p -->
         <ant dir="swt" target="ensure-lin32-swt" />
@@ -661,10 +670,11 @@
             <arg value="plugin/lib/swt.jar.pack" />
             <arg value="${swt.lin32}" />
         </exec>
-        <exec executable="scripts/makeplugin.sh" failonerror="true">
+        <exec executable="scripts/makeplugin.sh" inputstring="${release.password.su3}" failonerror="true" >
             <arg value="plugin" />
         </exec>
         <move file="syndie.xpi2p" tofile="syndie-linux-i386.xpi2p" />
+        <move file="syndie.su3" tofile="syndie-linux-i386.su3" />
 
         <!-- make the 64 bit linux install xpi2p -->
         <ant dir="swt" target="ensure-lin64-swt" />
@@ -673,24 +683,13 @@
             <arg value="plugin/lib/swt.jar.pack" />
             <arg value="${swt.lin64}" />
         </exec>
-        <exec executable="scripts/makeplugin.sh" failonerror="true">
+        <exec executable="scripts/makeplugin.sh" inputstring="${release.password.su3}" failonerror="true" >
             <arg value="plugin" />
         </exec>
         <move file="syndie.xpi2p" tofile="syndie-linux-x86-64.xpi2p" />
+        <move file="syndie.su3" tofile="syndie-linux-x86-64.su3" />
 
         <!-- macs use the linux plugin config and clients config files -->
-        <!-- make the 32 bit mac install xpi2p -->
-        <ant dir="swt" target="ensure-mac32-swt" />
-        <exec executable="${java.home}/bin/pack200" failonerror="true">
-            <arg value="-g" />
-            <arg value="plugin/lib/swt.jar.pack" />
-            <arg value="${swt.mac32}" />
-        </exec>
-        <exec executable="scripts/makeplugin.sh" failonerror="true">
-            <arg value="plugin" />
-        </exec>
-        <move file="syndie.xpi2p" tofile="syndie-mac32.xpi2p" />
-
         <!-- make the 64 bit mac install xpi2p -->
         <ant dir="swt" target="ensure-mac64-swt" />
         <exec executable="${java.home}/bin/pack200" failonerror="true">
@@ -698,10 +697,11 @@
             <arg value="plugin/lib/swt.jar.pack" />
             <arg value="${swt.mac64}" />
         </exec>
-        <exec executable="scripts/makeplugin.sh" failonerror="true">
+        <exec executable="scripts/makeplugin.sh" inputstring="${release.password.su3}" failonerror="true" >
             <arg value="plugin" />
         </exec>
         <move file="syndie.xpi2p" tofile="syndie-mac64.xpi2p" />
+        <move file="syndie.su3" tofile="syndie-mac64.su3" />
 
         <!-- make the 32 bit windows install xpi2p -->
         <ant dir="swt" target="ensure-win32-swt" />
@@ -715,10 +715,11 @@
             <arg value="plugin/lib/swt.jar.pack" />
             <arg value="${swt.win32}" />
         </exec>
-        <exec executable="scripts/makeplugin.sh" failonerror="true">
+        <exec executable="scripts/makeplugin.sh" inputstring="${release.password.su3}" failonerror="true" >
             <arg value="plugin" />
         </exec>
         <move file="syndie.xpi2p" tofile="syndie-win32.xpi2p" />
+        <move file="syndie.su3" tofile="syndie-win32.su3" />
 
         <!-- make the 64 bit windows install xpi2p -->
         <ant dir="swt" target="ensure-win64-swt" />
@@ -727,10 +728,11 @@
             <arg value="plugin/lib/swt.jar.pack" />
             <arg value="${swt.win64}" />
         </exec>
-        <exec executable="scripts/makeplugin.sh" failonerror="true">
+        <exec executable="scripts/makeplugin.sh" inputstring="${release.password.su3}" failonerror="true" >
             <arg value="plugin" />
         </exec>
         <move file="syndie.xpi2p" tofile="syndie-win64.xpi2p" />
+        <move file="syndie.su3" tofile="syndie-win64.su3" />
 
     </target>
 
