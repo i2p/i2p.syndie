@@ -610,7 +610,7 @@
         <copy file="src/com/LICENSE.txt" tofile="plugin/LICENSE-jazzy.txt" />
         <copy file="LICENSE-EPL-v1.0.html" todir="plugin" />
         <copy file="lib/hsqldb_lic.txt" todir="plugin" />
-        <copy file="scripts/plugin-linux.config" tofile="plugin/plugin.config" overwrite="true" />
+        <copy file="scripts/plugin-linux32.config" tofile="plugin/plugin.config" overwrite="true" />
         <copy file="scripts/clients-linux.config" tofile="plugin/clients.config" overwrite="true" />
         <exec executable="echo" osfamily="unix" failonerror="true" output="plugin/plugin.config" append="true">
             <arg value="version=${full.version}-b${build.number}" />
@@ -640,10 +640,21 @@
             <arg value="plugin" />
         </exec>
         <move file="syndie.xpi2p" tofile="syndie-linux-i386-update.xpi2p" />
+        <!--
+          -  These will not be used until the next update.
+          -  At that time, we could put an updated swt.jar in the 64-bit updates,
+          -  but NOT the 32-bit one, since old 64-bit linux and mac installs
+          -  will point to the 32-bit linux update.
+          -  If we ever want to include swt.jar in the udpate, they cannot remain identical.
+          -->
+        <copy file="syndie-linux-i386-update.xpi2p" tofile="syndie-linux-x86-64-update.xpi2p" />
+        <copy file="syndie-linux-i386-update.xpi2p" tofile="syndie-mac64-update.xpi2p" />
         <move file="syndie.su3" tofile="syndie-linux-i386-update.su3" />
+        <copy file="syndie-linux-i386-update.su3" tofile="syndie-linux-x86-64-update.su3" />
+        <copy file="syndie-linux-i386-update.su3" tofile="syndie-linux-mac64-update.su3" />
 
         <!-- make the windows update xpi2p (32/64) -->
-        <copy file="scripts/plugin-windows.config" tofile="plugin/plugin.config" overwrite="true" />
+        <copy file="scripts/plugin-windows32.config" tofile="plugin/plugin.config" overwrite="true" />
         <exec executable="echo" osfamily="unix" failonerror="true" output="plugin/plugin.config" append="true">
             <arg value="version=${full.version}-b${build.number}" />
         </exec>
@@ -655,12 +666,21 @@
             <arg value="plugin" />
         </exec>
         <move file="syndie.xpi2p" tofile="syndie-win32-update.xpi2p" />
+        <!--
+          -  These will not be used until the next update.
+          -  At that time, we could put an updated swt.jar in the 64-bit updates,
+          -  but NOT the 32-bit one, since old 64-bit windows installs
+          -  will point to the 32-bit update.
+          -  If we ever want to include swt.jar in the udpate, they cannot remain identical.
+          -->
+        <copy file="syndie-win32-update.xpi2p" tofile="syndie-win64-update.xpi2p" />
         <move file="syndie.su3" tofile="syndie-win32-update.su3" />
+        <copy file="syndie-win32-update.su3" tofile="syndie-win64-update.su3" />
 
         <!-- make the 32 bit linux install xpi2p -->
         <ant dir="swt" target="ensure-lin32-swt" />
         <copy file="scripts/LICENSE-swt.txt" todir="plugin" />
-        <copy file="scripts/plugin-linux.config" tofile="plugin/plugin.config" overwrite="true" />
+        <copy file="scripts/plugin-linux32.config" tofile="plugin/plugin.config" overwrite="true" />
         <copy file="scripts/clients-linux.config" tofile="plugin/clients.config" overwrite="true" />
         <exec executable="echo" osfamily="unix" failonerror="true" output="plugin/plugin.config" append="true">
             <arg value="version=${full.version}-b${build.number}" />
@@ -678,6 +698,10 @@
 
         <!-- make the 64 bit linux install xpi2p -->
         <ant dir="swt" target="ensure-lin64-swt" />
+        <copy file="scripts/plugin-linux64.config" tofile="plugin/plugin.config" overwrite="true" />
+        <exec executable="echo" osfamily="unix" failonerror="true" output="plugin/plugin.config" append="true">
+            <arg value="version=${full.version}-b${build.number}" />
+        </exec>
         <exec executable="${java.home}/bin/pack200" failonerror="true">
             <arg value="-g" />
             <arg value="plugin/lib/swt.jar.pack" />
@@ -689,9 +713,13 @@
         <move file="syndie.xpi2p" tofile="syndie-linux-x86-64.xpi2p" />
         <move file="syndie.su3" tofile="syndie-linux-x86-64.su3" />
 
-        <!-- macs use the linux plugin config and clients config files -->
+        <!-- macs use the linux clients config file -->
         <!-- make the 64 bit mac install xpi2p -->
         <ant dir="swt" target="ensure-mac64-swt" />
+        <copy file="scripts/plugin-mac64.config" tofile="plugin/plugin.config" overwrite="true" />
+        <exec executable="echo" osfamily="unix" failonerror="true" output="plugin/plugin.config" append="true">
+            <arg value="version=${full.version}-b${build.number}" />
+        </exec>
         <exec executable="${java.home}/bin/pack200" failonerror="true">
             <arg value="-g" />
             <arg value="plugin/lib/swt.jar.pack" />
@@ -705,7 +733,7 @@
 
         <!-- make the 32 bit windows install xpi2p -->
         <ant dir="swt" target="ensure-win32-swt" />
-        <copy file="scripts/plugin-windows.config" tofile="plugin/plugin.config" overwrite="true" />
+        <copy file="scripts/plugin-windows32.config" tofile="plugin/plugin.config" overwrite="true" />
         <copy file="scripts/clients-windows.config" tofile="plugin/clients.config" overwrite="true" />
         <exec executable="echo" osfamily="unix" failonerror="true" output="plugin/plugin.config" append="true">
             <arg value="version=${full.version}-b${build.number}" />
@@ -723,6 +751,10 @@
 
         <!-- make the 64 bit windows install xpi2p -->
         <ant dir="swt" target="ensure-win64-swt" />
+        <copy file="scripts/plugin-windows64.config" tofile="plugin/plugin.config" overwrite="true" />
+        <exec executable="echo" osfamily="unix" failonerror="true" output="plugin/plugin.config" append="true">
+            <arg value="version=${full.version}-b${build.number}" />
+        </exec>
         <exec executable="${java.home}/bin/pack200" failonerror="true">
             <arg value="-g" />
             <arg value="plugin/lib/swt.jar.pack" />
