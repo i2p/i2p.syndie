@@ -509,6 +509,7 @@ public class KeyImport extends CommandImpl {
         }    
     }
     
+/****
     public static void main(String args[]) {
         try {
         CLI.main(new String[] { "keyimport", 
@@ -517,4 +518,5 @@ public class KeyImport extends CommandImpl {
                                 "--keyfile", "/tmp/manageOut" });
         } catch (Exception e) { e.printStackTrace(); }
     }
+****/
 }

@@ -410,6 +410,7 @@ public class MessageExtract extends CommandImpl {
         return ok;
     }
     
+/****
     public static void main(String args[]) {
         try {
         CLI.main(new String[] { "messageextract", 
@@ -420,4 +421,5 @@ public class MessageExtract extends CommandImpl {
                                 "--out", "/tmp/messageExtract" });
         } catch (Exception e) { e.printStackTrace(); }
     }
+****/
 }

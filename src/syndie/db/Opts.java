@@ -198,6 +198,7 @@ public class Opts {
         return buf.toString();
     }
     
+/****
     public static void main(String args[]) {
         System.out.println("Starting tests");
         System.out.println(splitLine("justOneToken").toString());
@@ -208,6 +209,8 @@ public class Opts {
         System.out.println(splitLine("a \"\" val \"\""));
         System.out.println(splitLine("\\\"you 'all had' \\\"best answer\\\" me").toString());
     }
+****/
+
     /**
      * split up the line into tokens, removing intertoken whitespace, grouping
      * quoted tokens, etc. 

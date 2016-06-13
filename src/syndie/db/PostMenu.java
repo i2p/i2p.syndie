@@ -1862,6 +1862,7 @@ class PostMenu implements TextEngine.Menu {
         ui.commandComplete(0, null);
     }
     
+/****
     public static void main(String args[]) {
         String rootDir = TextEngine.getRootPath();
         TextUI ui = new TextUI(true);
@@ -1877,4 +1878,5 @@ class PostMenu implements TextEngine.Menu {
         ui.insertCommand("execute");
         engine.run();
     }
+****/
 }

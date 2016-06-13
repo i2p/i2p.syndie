@@ -36,7 +36,7 @@ public class SharedArchive {
     /** See also SyndicatorDetailHTTPArchive */
     public static final int DEFAULT_MAX_SIZE_KB = 512;
     /** See also SyndicatorDetailHTTPArchive */
-    public static final int DEFAULT_NEWAGE_DAYS = 14;
+    public static final int DEFAULT_NEWAGE_DAYS = 92;
     public static final boolean DEFAULT_RECENT_ONLY = true;
     
     void setChannels(List channels) { _channels = (Channel[])channels.toArray(new Channel[0]); }
@@ -519,6 +519,10 @@ public class SharedArchive {
         return buf.toString();
     }
     
+    /**
+     *  Dump out the contents of a shared-index.dat file.
+     *  Useful for debugging.
+     */
     public static void main(String args[]) {
         String filename;
         if (args.length > 0)

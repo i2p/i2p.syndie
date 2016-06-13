@@ -503,10 +503,15 @@ public class Enclosure {
         return new Signature(val);
     }
 
-    /** @since 1.102b-7 */
+    /**
+     *  Dump out the contents of a shared-index.dat file.
+     *  Useful for debugging.
+     *
+     *  @since 1.102b-7
+     */
     public static void main(String[] args) {
         if (args.length == 0) {
-            System.out.println("Usage: Enclosure files....]");
+            System.out.println("Usage: Enclosure files....");
             System.exit(1);
         }
         if (args[0].equals("copytest") && args.length == 3) {

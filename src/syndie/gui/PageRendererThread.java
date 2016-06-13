@@ -4,6 +4,8 @@ import java.util.ArrayList;
 
 /**
  *
+ *  TODO switch from ArrayList to Queue
+ *
  */
 public final class PageRendererThread implements Runnable {
     private static final ArrayList _enqueued = new ArrayList();

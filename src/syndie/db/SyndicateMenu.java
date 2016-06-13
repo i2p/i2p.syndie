@@ -227,9 +227,7 @@ class SyndicateMenu implements TextEngine.Menu {
                         throw new IOException("https with proxy unsupported");
                     SyncManager mgr = SyncManager.getInstance(client, ui);
                     SSLEepGet.SSLState state = mgr.getSSLState();
-                    if (true)
-                        throw new IOException("HTTPS requires I2P 0.9.9");
-                    SSLEepGet sget = null; // new SSLEepGet(client.ctx(), out.getPath(), url);
+                    SSLEepGet sget = new SSLEepGet(client.ctx(), out.getPath(), url);
                     if (state == null)
                         mgr.setSSLState(sget.getSSLState());
                     get = sget;

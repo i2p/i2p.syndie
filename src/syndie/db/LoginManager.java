@@ -254,6 +254,7 @@ public class LoginManager extends CommandImpl {
         return true;
     }
     
+/****
     public static void main(String args[]) {
         if ( (args == null) || (args.length == 0) )
             args = new String[] { "nymgen", "jdbc:hsqldb:mem:test", "jr", "jrPass", "jay arr" };
@@ -275,4 +276,5 @@ public class LoginManager extends CommandImpl {
             if (client != null) client.close();
         }
     }
+****/
 }

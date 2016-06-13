@@ -78,6 +78,7 @@ public class MessageList extends CommandImpl {
         return client;
     }
     
+/****
     public static void main(String args[]) {
         try {
         CLI.main(new String[] { "messagelist", 
@@ -87,4 +88,5 @@ public class MessageList extends CommandImpl {
                                 "--channel", "2klF2vDob7M82j8ZygZ-s9LmOHfaAdso5V0DzLvHISI=" });
         } catch (Exception e) { e.printStackTrace(); }
     }
+****/
 }

@@ -132,6 +132,7 @@ public class Importer extends CommandImpl {
         return client;
     }
     
+/****
     public static void main(String args[]) {
         try {
         CLI.main(new String[] { "import", 
@@ -167,6 +168,7 @@ public class Importer extends CommandImpl {
             if (client != null) client.close();
         }
     }
+****/
     
     /*
      * A "message" could be a post or a meta.syndie file.

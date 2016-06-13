@@ -121,6 +121,7 @@ public class KeyList extends CommandImpl {
         }
     }
 
+/****
     public static void main(String args[]) {
         try {
         CLI.main(new String[] { "keylist", 
@@ -129,4 +130,5 @@ public class KeyList extends CommandImpl {
                                 "--pass", "j" });
         } catch (Exception e) { e.printStackTrace(); }
     }
+****/
 }

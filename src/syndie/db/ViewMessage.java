@@ -184,6 +184,7 @@ public class ViewMessage extends CommandImpl {
         }
     }
     
+/****
     public static void main(String args[]) {
         try {
         CLI.main(new String[] { "viewmessage", 
@@ -194,4 +195,5 @@ public class ViewMessage extends CommandImpl {
                                 "--out", "/tmp/msgOut" });
         } catch (Exception e) { e.printStackTrace(); }
     }
+****/
 }

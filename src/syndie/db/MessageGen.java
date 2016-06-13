@@ -759,6 +759,7 @@ public class MessageGen extends CommandImpl {
         }
     }
     
+/****
     public static void omain(String args[]) {
         try {
         CLI.main(new String[] { "messagegen", 
@@ -776,8 +777,8 @@ public class MessageGen extends CommandImpl {
                                  });
         } catch (Exception e) { e.printStackTrace(); }
     }
+
     // example of the scriptability:
-    /*
     public static void main(String args[]) {
         TextUI ui = new TextUI(true);
         ui.insertCommand("login --db jdbc:hsqldb:file:/tmp/textui --login j --pass j");
@@ -788,7 +789,7 @@ public class MessageGen extends CommandImpl {
         TextEngine engine = new TextEngine(ui);
         engine.run();
     }
-     */
+
     public static void main(String args[]) {
         try {
         CLI.main(new String[] { "messagegen", 
@@ -802,4 +803,5 @@ public class MessageGen extends CommandImpl {
                                  });
         } catch (Exception e) { e.printStackTrace(); }
     }
+****/
 }

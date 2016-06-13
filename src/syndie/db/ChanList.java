@@ -52,6 +52,7 @@ public class ChanList extends CommandImpl {
         return client;
     }
     
+/****
     public static void main(String args[]) {
         try {
         CLI.main(new String[] { "chanlist", 
@@ -60,4 +61,5 @@ public class ChanList extends CommandImpl {
                                 "--pass", "j" });
         } catch (Exception e) { e.printStackTrace(); }
     }
+****/
 }

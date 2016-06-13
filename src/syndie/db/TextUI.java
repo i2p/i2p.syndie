@@ -169,7 +169,7 @@ public class TextUI implements UI {
     private void beforeDisplayLine() {
         _linesSinceInput++;
         if (_paginate && _readStdin) {
-            if (_linesSinceInput > 10) {
+            if (_linesSinceInput > 40) {
                 System.out.print("[Hit enter to continue]");
                 readLine();
                 _linesSinceInput = 0;

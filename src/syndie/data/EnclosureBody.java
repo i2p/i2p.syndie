@@ -398,9 +398,11 @@ public class EnclosureBody {
         return rv;
     }
 
+/****
     public static void main(String args[]) {
         Properties props = new Properties();
         CommandImpl.parseProps("a=b\nc=d".getBytes(), props);
         System.out.println("props: " + props);
     }
+****/
 }

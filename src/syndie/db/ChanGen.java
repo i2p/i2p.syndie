@@ -517,6 +517,7 @@ public class ChanGen extends CommandImpl {
         return raw;
     }
     
+/****
     public static void main(String args[]) {
         try {
         CLI.main(new String[] { "changen", 
@@ -530,4 +531,5 @@ public class ChanGen extends CommandImpl {
                                 "--keyReplyOut", "/tmp/replyOut"});
         } catch (Exception e) { e.printStackTrace(); }
     }
+****/
 }

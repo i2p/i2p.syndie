@@ -46,6 +46,7 @@ public class CLI {
         _commands.put("viewmetadata", ViewMetadata.class);
     }
     
+/****
     public static void main(String args[]) {
         //args = new String[] { "Importer" };
         if ( (args == null) || (args.length <= 0) ) {
@@ -71,6 +72,7 @@ public class CLI {
             usage();
         }
     }
+****/
 
     public synchronized static Command getCommand(String name) {
         name = name.toLowerCase(Locale.US);

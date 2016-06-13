@@ -716,6 +716,7 @@ public class DBClient {
         return _uriDAO.add(uri);
     }
     
+/****
     public static void main(String args[]) {
         DBClient client = new DBClient(I2PAppContext.getGlobalContext(), new SecureFile(TextEngine.getRootPath()));
         try {
@@ -725,6 +726,7 @@ public class DBClient {
             se.printStackTrace();
         }
     }
+****/
     
     public void saveProxyConfig() {
         Properties props = getNymPrefs(_nymId);
