@@ -163,7 +163,7 @@ class MessageView extends BaseComponent implements DataCallback, Translatable, T
      *  @since 1.104b-5
      */
     private class KeyListener implements Listener {
-        private final int MODS = SWT.CTRL | SWT.ALT | SWT.COMMAND;
+        private static final int MODS = SWT.CTRL | SWT.ALT | SWT.COMMAND;
         public void handleEvent(Event evt) {
             if (_msg == null)
                 return;

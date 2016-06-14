@@ -6277,7 +6277,7 @@ public class DBClient {
 
     private static final Comparator INVERSE_COMPARATOR = new Comparator() {
         public int compare(Object o1, Object o2) { return ((Comparable)o2).compareTo(o1); }
-        public boolean equals(Object obj) { return obj == INVERSE_COMPARATOR; }
+        //public boolean equals(Object obj) { return obj == INVERSE_COMPARATOR; }
     };
 
     public boolean reimport(SyndieURI uri, String passphrase) {
@@ -6838,7 +6838,7 @@ public class DBClient {
         }
     }
 
-    private class NymKeyData {
+    private static class NymKeyData {
         String keyType;
         byte keyData[];
         byte keySalt[];
@@ -6878,6 +6878,7 @@ public class DBClient {
                 data.periodEnd = rs.getDate(6);
                 data.function = rs.getString(7);
                 data.channel = new Hash(rs.getBytes(8));
+                data.nymId = _nymId;
                 
                 if (data.keySalt != null) {
                     byte key[] = pbeDecrypt(data.keyData, oldPass, data.keySalt);
@@ -6939,7 +6940,7 @@ public class DBClient {
         }
     }
     
-    private class PostponedData {
+    private static class PostponedData {
         long nymId;
         long postponeId;
         int version;

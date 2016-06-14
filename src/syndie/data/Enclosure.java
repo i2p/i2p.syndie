@@ -159,18 +159,26 @@ public class Enclosure {
             return StringUtil.split("\t,", val);
         }
     }
+
+    /** @return null if not found */
     public Boolean getHeaderBoolean(String key) {
         return toBoolean(_publicHeaders.getProperty(key));
     }
+
+    /** @return null if val is null */
     public static Boolean toBoolean(String val) {
         if (val == null)
             return null;
         else
             return Boolean.valueOf(val);
     }
+
+    /** @return null if not found */
     public Long getHeaderLong(String key) {
         return toLong(_publicHeaders.getProperty(key));
     }
+
+    /** @return null if val is null */
     public static Long toLong(String val) {
         if (val == null) {
             return null;
@@ -182,10 +190,14 @@ public class Enclosure {
             }
         }
     }
+
+    /** @return null if not found */
     public Date getHeaderDate(String key) {
         return toDate(_publicHeaders.getProperty(key));
     }
     private static final SimpleDateFormat _dateFormat = new SimpleDateFormat("yyyyMMdd");
+
+    /** @return null if val is null */
     public static Date toDate(String val) {
         if (val == null) {
             return null;

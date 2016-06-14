@@ -63,19 +63,19 @@ class DesktopUI implements Runnable, UI {
                         DesktopUI.this.wait();
                     } else {
                         Object type = _typeOrder.remove(0);
-                        if (type == TYPE_ORDER_ERROR) {
+                        if (type.equals(TYPE_ORDER_ERROR)) {
                             errMsg = (String)_errMsgs.remove(0);
                             errCause = (Exception)_errCauses.remove(0);
                             if (errCause == NO_CAUSE)
                                 errCause = null;
-                        } else if (type == TYPE_ORDER_STATUS) {
+                        } else if (type.equals(TYPE_ORDER_STATUS)) {
                             statusMsg = (String)_statusMsgs.remove(0);
-                        } else if (type == TYPE_ORDER_DEBUG) {
+                        } else if (type.equals(TYPE_ORDER_DEBUG)) {
                             debugMsg = (String)_debugMsgs.remove(0);
                             debugCause = (Exception)_debugCauses.remove(0);
                             if (debugCause == NO_CAUSE)
                                 debugCause = null;
-                        } else if (type == TYPE_ORDER_COMMAND_COMPLETE) {
+                        } else if (type.equals(TYPE_ORDER_COMMAND_COMPLETE)) {
                             completeStatus = (Integer)_completeStatus.remove(0);
                             completeLocation = (List)_completeLocations.remove(0);
                             if (completeLocation == NO_LOCATIONS)

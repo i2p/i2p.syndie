@@ -103,7 +103,7 @@ public class SharedArchiveEngine {
                     // if the server hasn't marked it as 'new' and the author gave it a date earlier 
                     // than what we want, skip
                     if (!messages[i].isNew() && 
-                        (messages[i].getMessageId() < System.currentTimeMillis()-strategy.newAgeDays*24*60*60*1000L))
+                        (messages[i].getMessageId() < System.currentTimeMillis()-strategy.newAgeDays*24L*60*60*1000L))
                         continue;
                 }
                 

@@ -718,7 +718,7 @@ class ImportMeta {
         } finally {
             if (rs != null) rs.close();
             if (enableStmt != null) enableStmt.close();
-            if (enableStmt != null) insertStmt.close();
+            if (insertStmt != null) insertStmt.close();
             if (existsStmt != null) existsStmt.close();
         }
     }

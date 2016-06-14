@@ -574,7 +574,7 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
                 //_linkTypeSyndieText.setText(uri.toString());
             }
         } else {
-            _ui.debugMessage("uri is null: " + uri);
+            _ui.debugMessage("uri is null");
         }
         
         if (linkText != null)

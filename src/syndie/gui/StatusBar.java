@@ -325,7 +325,7 @@ class StatusBar extends BaseComponent implements Translatable, Themeable, DBClie
         if (enable) refreshDisplay();
     }
 
-    private void doRefreshDisplay() { doRefreshDisplay(false); }
+    //private void doRefreshDisplay() { doRefreshDisplay(false); }
 
     private void doRefreshDisplay(boolean onlineStateOnly) {
         //_ui.debugMessage("SB DRD begin OSO=" + onlineStateOnly + " SN=" + _syncNow + " ER=" + _enableRefresh, new Exception());

@@ -1535,7 +1535,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         String filter = null;
         for (int i = 0; i < _bars.size() && filter == null; i++) {
             String newfilter = ((FilterBar)_bars.get(i)).buildFilter();
-            if (filter != null)
+            if (newfilter != null)
                 _ui.debugMessage("overwriting filter [" + filter + "] with [" + newfilter + "]");
             filter = newfilter;
         }

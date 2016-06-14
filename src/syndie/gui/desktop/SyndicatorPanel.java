@@ -110,7 +110,7 @@ class SyndicatorPanel extends DesktopPanel implements Themeable, Translatable {
         }
     }
     
-    private class NorthEdge extends DesktopEdge implements Themeable, Translatable {
+    private static class NorthEdge extends DesktopEdge implements Themeable, Translatable {
         private Label _title;
         public NorthEdge(Composite edge, UI ui) {
             super(edge, ui);

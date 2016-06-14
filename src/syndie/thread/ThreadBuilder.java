@@ -430,7 +430,7 @@ public class ThreadBuilder {
         }
     }
 
-    private class Container {
+    private static class Container {
         Message msg;
         Container parent;
         Container child;

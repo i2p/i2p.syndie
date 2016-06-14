@@ -15,12 +15,12 @@ public class HTMLTag {
     public int startIndex;
     /** the tag was closed at the given body index */
     public int endIndex;
-    public int srcLine;
+    public final int srcLine;
     /** 
      * the tag is at least partly within the parent: <a><b/></a> and <a><b></a><c/></b> both use 'a' as
      * the parent for 'b'
      */
-    public HTMLTag parent;
+    public final HTMLTag parent;
     public boolean consumed;
     
     public HTMLTag(String tagBody, int startIndex, HTMLTag parent, int srcLine) {
@@ -154,6 +154,8 @@ public class HTMLTag {
         return rv;
     }
     public boolean equals(Object o) {
+        if (o == null)
+            return false;
         HTMLTag tag = (HTMLTag)o;
         return ( (tag.name.equals(name)) &&
                  (tag.startIndex == startIndex) &&

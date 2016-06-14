@@ -114,7 +114,8 @@ public class Splash {
                     if (tmp != null)
                         tmp.delete();
                     in = Splash.class.getResourceAsStream(resource);
-                    return new Image(Display.getDefault(), in);
+                    if (in != null)
+                        return new Image(Display.getDefault(), in);
                 }
 
                 Image img = new Image(Display.getDefault(), tmp.getAbsolutePath()); //new ByteArrayInputStream(data));
@@ -124,6 +125,8 @@ public class Splash {
                 return null;
             } catch (SWTException se) {
                 return null;
+            } finally {
+                if (in != null) try { in.close(); } catch (IOException ioe) {}
             }
         } else {
             return null;

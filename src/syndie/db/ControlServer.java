@@ -67,7 +67,7 @@ class ControlServer implements CLI.Command {
         return client;
     }
     
-    private class ControlServerClientHandler extends Thread implements UI {
+    private static class ControlServerClientHandler extends Thread implements UI {
         private final UI _ui;
         
         private final Socket _clientSocket;

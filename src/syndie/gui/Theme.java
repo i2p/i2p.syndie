@@ -382,9 +382,11 @@ public class Theme {
         return adjustHeight(src, old, mod, bold, italic, null, false);
     }
 
+/****
     private Font adjustHeight(String src, Font old, int mod, Boolean bold, Boolean italic, String newFace) {
         return adjustHeight(src, old, mod, bold, italic, newFace, false);
     }
+****/
 
     /** disposes */
     private Font adjustHeight(String src, Font old, int mod, Boolean bold, Boolean italic, String newFace, boolean modFromSys) {
@@ -461,9 +463,11 @@ public class Theme {
     }
 
     /**  @since 1.102b-5 */
+/****
     private String getFace() {
         return getFace(_fontData);
     }
+****/
 
     /**  @since 1.102b-5 */
     private static String getFace(FontData[] fd) {
@@ -489,9 +493,11 @@ public class Theme {
      *  Actual size
      *  @since 1.102b-5
      */
+/****
     private int getSize() {
         return getSize(_fontData);
     }
+****/
 
     /**
      *  Actual size

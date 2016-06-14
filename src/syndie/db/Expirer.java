@@ -165,7 +165,7 @@ public class Expirer {
         _sharedArchive = builder.buildSharedArchive();
     }
     
-    class ChannelData {
+    private static class ChannelData {
         ArrayList ids = new ArrayList();
         ArrayList dates = new ArrayList();
         ArrayList sizes = new ArrayList();

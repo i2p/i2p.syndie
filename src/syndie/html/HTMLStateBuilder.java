@@ -775,7 +775,7 @@ public class HTMLStateBuilder {
     private static final Character getDecimalChar(String decimal) {
         try {
             int i = Integer.parseInt(decimal, 10);
-            return new Character((char)i);
+            return Character.valueOf((char)i);
         } catch (NumberFormatException nfe) {
             throw new RuntimeException("wtf: " + decimal);
         }

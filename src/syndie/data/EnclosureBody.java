@@ -284,8 +284,12 @@ public class EnclosureBody {
     /** split by tabs and optionally commas too */
     public String[] getHeaderStrings(String key, boolean splitByCommaToo) { return Enclosure.toStrings(_headers.getProperty(key), splitByCommaToo); }
 
+    /** @return null if not found */
     public Boolean getHeaderBoolean(String key) { return Enclosure.toBoolean(_headers.getProperty(key)); }
+
+    /** @return null if not found */
     public Long getHeaderLong(String key) { return Enclosure.toLong(_headers.getProperty(key)); }
+
     public SessionKey getHeaderSessionKey(String key) { return Enclosure.toSessionKey(_headers.getProperty(key)); }
     public SessionKey[] getHeaderSessionKeys(String key) { return Enclosure.toSessionKeys(_headers.getProperty(key)); }
     public SigningPublicKey getHeaderSigningKey(String key) { return Enclosure.toSigningKey(_headers.getProperty(key)); }

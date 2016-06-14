@@ -402,7 +402,7 @@ class PageRenderer extends BaseComponent implements Themeable {
                 _ui.debugMessage("pageDown(" + fake + "): bar=" + bar + " sel=" + bar.getSelection() + " max=" + bar.getMaximum() + " min=" + bar.getMinimum() + " incr=" + bar.getIncrement() + "/" + bar.getPageIncrement());
             }
         } else {
-            _ui.debugMessage("pageDown(" + fake + "): bar=" + bar);
+            _ui.debugMessage("pageDown(" + fake + "): bar=null");
         }
         if (fake)
             _text.invokeAction(ST.PAGE_DOWN);
@@ -419,7 +419,7 @@ class PageRenderer extends BaseComponent implements Themeable {
                 _ui.debugMessage("pageUp(" + fake + "): bar=" + bar + " sel=" + bar.getSelection() + " max=" + bar.getMaximum() + " min=" + bar.getMinimum() + " incr=" + bar.getIncrement() + "/" + bar.getPageIncrement());
             }
         } else {
-            _ui.debugMessage("pageUp(" + fake + "): bar=" + bar);
+            _ui.debugMessage("pageUp(" + fake + "): bar=null");
         }
         if (fake)
             _text.invokeAction(ST.PAGE_UP);

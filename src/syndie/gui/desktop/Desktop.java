@@ -1186,14 +1186,14 @@ class Desktop {
         public boolean isBookmarked(SyndieURI syndieURI) { return false; }
     }
     
-    private class DesktopDataCallback implements DataCallback {
+    private static class DesktopDataCallback implements DataCallback {
         public void messageImported() {}
         public void metaImported() {}
         public void readStatusUpdated() {}
         public void forumCreated() {}
     }
     
-    private class DesktopLocalMessageCallback implements LocalMessageCallback {
+    private static class DesktopLocalMessageCallback implements LocalMessageCallback {
         public void messageCreated(SyndieURI postedURI) {}
         public void messagePostponed(long postponementId) {}
         public void messageCancelled() {}

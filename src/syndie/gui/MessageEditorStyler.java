@@ -91,7 +91,8 @@ class MessageEditorStyler extends BaseComponent implements Themeable, Translatab
             return null; 
         }
     }
-    private Image ifDiff(Image child, Image parent) { if (!child.equals(parent)) return child; else return null; }
+
+    //private Image ifDiff(Image child, Image parent) { if (!child.equals(parent)) return child; else return null; }
 
     private void initComponents() {
         _txtShell = new Shell(_editor.getPageRoot().getShell(), SWT.DIALOG_TRIM);

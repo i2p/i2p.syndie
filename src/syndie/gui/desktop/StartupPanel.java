@@ -164,11 +164,11 @@ class StartupPanel extends DesktopPanel implements Themeable {
 
     private static class Record {
         long when;
-        int type;
+        //int type;
         String msg;
         Exception e;
         public Record(int stat, String newMsg) { this(stat, newMsg, null); }
-        public Record(int stat, String newMsg, Exception cause) { when = System.currentTimeMillis(); type = stat; msg = newMsg; e = cause; }
+        public Record(int stat, String newMsg, Exception cause) { when = System.currentTimeMillis(); /* type = stat; */ msg = newMsg; e = cause; }
     }
     
     public String getPanelName() { return "console"; }
