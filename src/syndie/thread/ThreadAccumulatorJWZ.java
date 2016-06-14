@@ -309,20 +309,20 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         // filter by date and scope only
         Set matchingThreadMsgIds = getMatchingThreadMsgIds();
         _ui.debugMessage("matching msgIds: " + matchingThreadMsgIds.size());
-        long beforeFilterStatus = System.currentTimeMillis();
+        //long beforeFilterStatus = System.currentTimeMillis();
         
         if (_unreadOnly && matchingThreadMsgIds.size() > 0) {
-            long beforePrep = System.currentTimeMillis();
+            //long beforePrep = System.currentTimeMillis();
             long msgIds[] = new long[matchingThreadMsgIds.size()];
             int i = 0;
             for (Iterator iter = matchingThreadMsgIds.iterator(); iter.hasNext(); i++) {
                 ThreadMsgId tmi = (ThreadMsgId)iter.next();
                 msgIds[i] = tmi.msgId;
             }
-            long afterPrep = System.currentTimeMillis();
+            //long afterPrep = System.currentTimeMillis();
             List unread = _client.getUnread(msgIds);
             int removed = 0;
-            long beforeStrip = System.currentTimeMillis();
+            //long beforeStrip = System.currentTimeMillis();
             for (Iterator iter = matchingThreadMsgIds.iterator(); iter.hasNext(); ) {
                 ThreadMsgId tmi = (ThreadMsgId)iter.next();
                 if (!unread.contains(Long.valueOf(tmi.msgId))) {
@@ -331,13 +331,13 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                     removed++;
                 }
             }
-            long afterStrip = System.currentTimeMillis();
-            if (VERBOSE_DEBUG)
-                _ui.debugMessage("filtering unread: prep: " + (afterPrep-beforePrep) +
-                                 " getRead: " + (beforeStrip-afterPrep) + " strip: " + (afterStrip-beforeStrip) + " removed: " + removed);
+            //long afterStrip = System.currentTimeMillis();
+            //if (VERBOSE_DEBUG)
+            //    _ui.debugMessage("filtering unread: prep: " + (afterPrep-beforePrep) +
+            //                     " getRead: " + (beforeStrip-afterPrep) + " strip: " + (afterStrip-beforeStrip) + " removed: " + removed);
         }
-        long afterFilterStatus = System.currentTimeMillis();
-        if (VERBOSE_DEBUG) _ui.debugMessage("filter messages by message status took " + (afterFilterStatus-beforeFilterStatus));
+        //long afterFilterStatus = System.currentTimeMillis();
+        //if (VERBOSE_DEBUG) _ui.debugMessage("filter messages by message status took " + (afterFilterStatus-beforeFilterStatus));
 
         boolean tagFilter = true;
         if ( ( (_rejectedTags == null) || (_rejectedTags.size() <= 0) ) &&
@@ -366,11 +366,11 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             }
         }
         // now we gather threads out of the remaining (inserting stubs between them as necessary)
-        long beforeGather = System.currentTimeMillis();
-        if (VERBOSE_DEBUG) _ui.debugMessage("filter individual messages by thread took " + (beforeGather-afterFilterStatus));
+        //long beforeGather = System.currentTimeMillis();
+        //if (VERBOSE_DEBUG) _ui.debugMessage("filter individual messages by thread took " + (beforeGather-afterFilterStatus));
         ThreadReferenceNode threads[] = buildThreads(matchingThreadMsgIds);
-        long afterGather = System.currentTimeMillis();
-        if (VERBOSE_DEBUG) _ui.debugMessage("Build threads took " + (afterGather-beforeGather) + "ms to gather " + threads.length + " threads");
+        //long afterGather = System.currentTimeMillis();
+        //if (VERBOSE_DEBUG) _ui.debugMessage("Build threads took " + (afterGather-beforeGather) + "ms to gather " + threads.length + " threads");
         
         // then drop the threads who do not match the tags (if !_applyTagFilterToMessages)
         if (tagFilter) {
@@ -386,7 +386,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 }
             }
         }
-        long afterThreadTagFilter = System.currentTimeMillis();
+        //long afterThreadTagFilter = System.currentTimeMillis();
         // now filter the remaining threads by authorization status (owner/manager/authPoster/authReply/unauth)
         // (done against the thread so as to allow simple authReply)
         for (int i = 0; i < threads.length; i++) {
@@ -398,7 +398,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 }
             }
         }
-        long afterAuthorizationFilter = System.currentTimeMillis();
+        //long afterAuthorizationFilter = System.currentTimeMillis();
 
         // filter the messages in the threads by type (pbe/private/public/authorized)
         if ( !_pbe || !_privateMessage || !_publicMessage || !_authorizedMessage) {
@@ -412,7 +412,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 }
             }
         }
-        long afterThreadPrivacyFilter = System.currentTimeMillis();
+        //long afterThreadPrivacyFilter = System.currentTimeMillis();
         
         // filter the messages in the threads by keyword (we do this so late in the game in the
         // hopes that the above will minimize how much we have to filter w/ fulltext searches..)
@@ -427,19 +427,20 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 }
             }
         }
-        long afterThreadKeywordFilter = System.currentTimeMillis();
+        //long afterThreadKeywordFilter = System.currentTimeMillis();
         
         // prune like crazy,
         // and store the results in the accumulator's vars
         ThreadReferenceNode pruned[] = prune(threads, matchingThreadMsgIds);
-        long afterPrune = System.currentTimeMillis();
+        //long afterPrune = System.currentTimeMillis();
         //_ui.debugMessage("threads pruned: " + (pruned != null ? pruned.length +"" : "none"));
         ThreadReferenceNode sorted[] = sort(pruned);
-        long afterSort = System.currentTimeMillis();
+        //long afterSort = System.currentTimeMillis();
         //_ui.debugMessage("threads sorted: " + (pruned != null ? pruned.length +"" : "none"));
         storePruned(sorted);
-        long afterStore = System.currentTimeMillis();
+        //long afterStore = System.currentTimeMillis();
            
+/****
         if (VERBOSE_DEBUG) _ui.debugMessage("gather threads trace: " + _client.completeTrace());
         if (VERBOSE_DEBUG) _ui.debugMessage("gather: " + (afterGather-beforeGather));
         if (VERBOSE_DEBUG) _ui.debugMessage("threadTagFilter: " + (afterThreadTagFilter-afterGather));
@@ -450,6 +451,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         if (VERBOSE_DEBUG) _ui.debugMessage("sort: " + (afterSort-afterPrune));
         if (VERBOSE_DEBUG) _ui.debugMessage("store: " + (afterStore-afterSort));
         //_ui.debugMessage("threads: " + _roots);
+****/
     }
     
     private static final String SQL_GET_BASE_MSGS_BY_TARGET = "SELECT msgId, cs.channelHash, messageId, wasAuthorized, authorChannelId FROM channelMessage m " +
@@ -611,12 +613,12 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         if (VERBOSE_DEBUG) _ui.debugMessage("building threads w/ matching msgIds: " + matchingThreadMsgIds.size());
         if (_showThreaded) {
             ThreadBuilder b = new ThreadBuilder(_client, _ui);
-            long before = System.currentTimeMillis();
+            //long before = System.currentTimeMillis();
             rv = b.buildThread(matchingThreadMsgIds);
-            long after = System.currentTimeMillis();
-            if (VERBOSE_DEBUG) _ui.debugMessage("build threads took " + (after-before) + " to build: " + rv.size());
+            //long after = System.currentTimeMillis();
+            //if (VERBOSE_DEBUG) _ui.debugMessage("build threads took " + (after-before) + " to build: " + rv.size());
         } else {
-            long before = System.currentTimeMillis();
+            //long before = System.currentTimeMillis();
             rv = new ArrayList(matchingThreadMsgIds.size());
             for (Iterator iter = matchingThreadMsgIds.iterator(); iter.hasNext(); ) {
                 ThreadMsgId id = (ThreadMsgId)iter.next();
@@ -628,8 +630,8 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 }
                 rv.add(node);
             }
-            long after = System.currentTimeMillis();
-            if (VERBOSE_DEBUG) _ui.debugMessage("build (un)threads took " + (after-before) + " to build: \n" + rv);
+            //long after = System.currentTimeMillis();
+            //if (VERBOSE_DEBUG) _ui.debugMessage("build (un)threads took " + (after-before) + " to build: \n" + rv);
         }
         return (ThreadReferenceNode[])rv.toArray(new ThreadReferenceNode[0]);
     }

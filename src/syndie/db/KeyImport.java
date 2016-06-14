@@ -147,7 +147,8 @@ public class KeyImport extends CommandImpl {
      *  FIXME fails w/o exception or return code
      */
     public static DBClient importKey(UI ui, DBClient client, String db, String login, String pass, String type, Hash scope, byte[] raw, boolean authenticated, boolean expireExisting) {
-        client.clearNymChannelCache();
+        if (client != null)
+            client.clearNymChannelCache();
         PreparedStatement stmt = null;
         try {
             long nymId = -1;

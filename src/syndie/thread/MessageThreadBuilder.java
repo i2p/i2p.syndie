@@ -41,6 +41,8 @@ public class MessageThreadBuilder {
      * the root.  each node has the author's preferred name stored in node.getName()
      * and the message subject in node.getDescription(), with the message URI in
      * node.getURI().
+     *
+     * @return may be null
      */
     public ReferenceNode buildThread(MessageInfo msg) {
         long chanId = msg.getScopeChannelId();
@@ -53,6 +55,7 @@ public class MessageThreadBuilder {
         buildTree();
         return _root;
     }
+
     private void processNextMessage() {
         SyndieURI uri = (SyndieURI)_pendingURI.remove(0);
         if ( (uri.getScope() == null) || (uri.getMessageId() == null) )
@@ -180,7 +183,7 @@ public class MessageThreadBuilder {
                 if (!rs.wasNull() && (scope != null) && (scope.length == Hash.HASH_LENGTH)) {
                     rv.add(SyndieURI.createMessage(Hash.create(scope), childMessageId));
                 } else {
-                    _ui.errorMessage("error getting children of " + channel.toBase64() + ":" + messageId + ": messageId=" + childMessageId + " scope=" + scope);
+                    _ui.errorMessage("error getting children of " + channel.toBase64() + ":" + messageId + ": messageId=" + childMessageId);
                 }
             }
             return rv;

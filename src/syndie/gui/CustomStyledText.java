@@ -7,6 +7,11 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import syndie.db.UI;
 
+/**
+ *  This seems to be solely for debugging,
+ *  and for overriding the size computation during layout.
+ *  See mtn log.
+ */
 class CustomStyledText extends StyledText {
     /**
      * when retheming, the whole browser is relaid out, but this styled text
@@ -19,7 +24,7 @@ class CustomStyledText extends StyledText {
      * though.
      */
     public static boolean IGNORE_FORCE = false;
-    private UI _ui;
+    private final UI _ui;
     private Point _lastSize;
     
     public CustomStyledText(UI ui, Composite composite, int attr) {
@@ -27,6 +32,7 @@ class CustomStyledText extends StyledText {
         _ui = ui;
     }
 
+/****
     public Rectangle getClientArea() {
         long before = System.currentTimeMillis();
         Rectangle rv = super.getClientArea();
@@ -46,7 +52,6 @@ class CustomStyledText extends StyledText {
         //        trace("cst: getChildren(): child " + i + ": " + rv[i].getClass().getName());
         return rv;
     }
-
     public void layout() {
         long before = System.currentTimeMillis();
         super.layout();
@@ -78,8 +83,10 @@ class CustomStyledText extends StyledText {
         //trace("cst: computeSize(" + wHint + ", " + hHint+ "): " + (after-before));
         return rv;
     }
+****/
+
     public Point computeSize(int wHint, int hHint, boolean changed) {
-        long before = System.currentTimeMillis();
+        //long before = System.currentTimeMillis();
         Point rv = null;
         boolean ignored = false;
         if (IGNORE_FORCE && (_lastSize != null)) {
@@ -89,11 +96,13 @@ class CustomStyledText extends StyledText {
             rv = super.computeSize(wHint, hHint, changed);
         }
         _lastSize = rv;
-        long after = System.currentTimeMillis();
-        if ((after-before > 200) && (ignored == false))
-            trace("cst: computeSize(" + wHint + ", " + hHint+ ", " + changed + "): " + (after-before) + " [" + rv + "] [ignored? " + ignored + "]");
+        //long after = System.currentTimeMillis();
+        //if ((after-before > 200) && (ignored == false))
+        //    trace("cst: computeSize(" + wHint + ", " + hHint+ ", " + changed + "): " + (after-before) + " [" + rv + "] [ignored? " + ignored + "]");
         return rv;
     }
+
+/****
     public Point getSize() {
         long before = System.currentTimeMillis();
         Point rv = super.getSize();
@@ -123,7 +132,8 @@ class CustomStyledText extends StyledText {
         else
             System.err.println(str);
     }
+****/
 
-    // lets us cheat
+    /** lets us cheat */
     protected void checkSubclass() {}
 }

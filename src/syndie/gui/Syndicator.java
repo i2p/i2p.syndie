@@ -1305,7 +1305,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
             public void run() {
                 String oldName = archive.getPreviousName();
                 String newName = archive.getName();
-                if (oldName != null && newName != null && oldName != newName) {
+                if (oldName != null && newName != null && !oldName.equals(newName)) {
                     // Big fixup on archive rename
                     TreeItem t = _archiveNameToRootItem.remove(oldName);
                     if (t != null) {

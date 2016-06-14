@@ -716,7 +716,6 @@ public class NymChannelTree implements Themeable, Translatable {
 
     private void findNodes(Set rv, ReferenceNode node, boolean groupNodes) {
         SyndieURI uri = node.getURI();
-        Record r = new Record();
         if (uri == null) {
             if (groupNodes)
                 rv.add(node);

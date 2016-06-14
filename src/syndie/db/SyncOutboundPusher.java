@@ -91,7 +91,6 @@ public class SyncOutboundPusher {
             archives.add(_manager.getArchive(i));
         }
         Collections.shuffle(archives);
-        long now = System.currentTimeMillis();
         for (SyncArchive archive : archives) {
             synchronized (_runnerToArchive) {
                 _runnerToArchive.remove(runner);
@@ -123,9 +122,10 @@ public class SyncOutboundPusher {
             pushFreenet(archive);
         } else if (url.startsWith("/") || url.startsWith("file://") || url.startsWith("C:\\")) {
             pushFile(archive);
-        }
-        else if (url.indexOf("://") == -1) {
+        } else if (url.indexOf("://") == -1) {
             url = "http://" + url;
+            archive.setURL(url);
+            pushHTTP(archive);
         } else { // we don't speak https yet so use http as the fallthrough
             pushHTTP(archive);
         }
@@ -267,6 +267,7 @@ public class SyncOutboundPusher {
     
     /** send HTTP posts in batches of 100KB */
     private static final int HTTP_SEND_BATCH_SIZE = 100*1024;
+
     private void pushHTTP(SyncArchive archive) {
         while (true) {
             int actions = archive.getOutgoingActionCount();
@@ -321,7 +322,7 @@ public class SyncOutboundPusher {
         StringTokenizer tok = new StringTokenizer(initialLine, " ");
         if (!tok.hasMoreTokens())
             return -1;
-        String protocol = tok.nextToken(); // ignored
+        tok.nextToken(); // ignored
         if (!tok.hasMoreTokens())
             return -1;
         String rc = tok.nextToken();
@@ -436,11 +437,13 @@ public class SyncOutboundPusher {
             _manager.getUI().debugMessage("Files posted");
             _manager.getUI().commandComplete(0, null);
         } catch (DataFormatException dfe) {
+            if (timeout != null)
         	timeout.cancel();
             error = "Internal error: " + dfe.getMessage();
             _manager.getUI().debugMessage("Error posting", dfe);
             _manager.getUI().commandComplete(-1, null);
         } catch (IOException ioe) {
+            if (timeout != null)
         	timeout.cancel();
             error = ioe.getMessage();
             _manager.getUI().debugMessage("Error posting", ioe);

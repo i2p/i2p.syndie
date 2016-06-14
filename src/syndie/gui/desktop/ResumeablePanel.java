@@ -159,7 +159,6 @@ class ResumeablePanel extends DesktopPanel implements Themeable, Translatable {
         int maxSubjectWidth = 0;
         int maxForumWidth = 0;
         
-        int forums = forumToResumeableMeta.size();
         for (Iterator iter = forumToResumeableMeta.values().iterator(); iter.hasNext(); ) {
             TreeMap metaMap = (TreeMap)iter.next();
             TreeItem forumItem = new TreeItem(_existingTree, SWT.NONE);

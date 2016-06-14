@@ -401,7 +401,7 @@ public class ThreadBuilder {
                     long messageId = rs.getLong(2);
                     if (rs.wasNull()) continue;
                     byte chan[] = rs.getBytes(3);
-                    if ( (chan == null) && (chan.length != Hash.HASH_LENGTH) ) continue;
+                    if ( (chan == null) || (chan.length != Hash.HASH_LENGTH) ) continue;
                     Boolean wasAuth = rs.getBoolean(4) ? Boolean.TRUE : Boolean.FALSE;
                     if (rs.wasNull()) wasAuth = null;
                     long author = rs.getLong(5);
@@ -460,7 +460,7 @@ public class ThreadBuilder {
         
         public String toString() { return (id != null ? id.toString() : "nomsg"); }
         public boolean equals(Object o) {
-            if (id == null)
+            if (id != null)
                 return id.equals(((Message)o).id);
             else
                 return super.equals(o);

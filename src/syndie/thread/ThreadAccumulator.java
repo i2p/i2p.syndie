@@ -335,7 +335,8 @@ AND
                 _ui.debugMessage("thread built for root msgId: " + msgId + " - " + (root != null ? root.getURI() : null));
                 // loads up the details (tags, etc), and if the thread matches the
                 // criteria, the details are added to _rootURIs, _threadMessages, etc
-                loadInfo(root);
+                if (root != null)
+                    loadInfo(root);
                 //_ui.debugMessage("thread loaded for root msgId: " + msgId);// + ": " + root);
             }
         } catch (SQLException se) {
@@ -399,6 +400,9 @@ AND
         }        
     }
     
+    /**
+     *  @param threadRoot non-null
+     */
     private void loadInfo(ReferenceNode threadRoot) {
         // walk the thread to find the latest post / message count / tags
         Harvester visitor = new Harvester();

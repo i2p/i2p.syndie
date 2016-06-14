@@ -433,7 +433,7 @@ public class Theme {
         try {
             rv = new Font(Display.getDefault(), newData);
         } catch (SWTError error) {
-            System.out.println("error loading font " + newData);
+            System.out.println("error loading font " + old);
             error.printStackTrace();
             return SYSFONT;
         }

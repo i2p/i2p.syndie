@@ -163,13 +163,13 @@ public class SharedArchiveEngine {
                 int rv = rid.compareTo(lid);
                 if (rv != 0)
                     return rv;
+                int lhc = lid.hashCode();
+                int rhc = rid.hashCode();
+                if (lhc < rhc)
+                    return -1;
+                if (lhc > rhc)
+                    return 1;
             }
-            int lhc = lid.hashCode();
-            int rhc = rid.hashCode();
-            if (lhc < rhc)
-                return -1;
-            if (lhc > rhc)
-                return 1;
             return 0;
         }
     }

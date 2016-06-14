@@ -451,10 +451,12 @@ class MessageView extends BaseComponent implements DataCallback, Translatable, T
     }
 
     static String calculateSubject(DBClient client, UI ui, TranslationRegistry trans, SyndieURI uri) {
-        long msgId = -1;
-        if (uri != null)
-            msgId = client.getMessageId(uri.getScope(), uri.getMessageId());
-        return calculateSubject(client, ui, trans, msgId, uri.getScope(), uri.getMessageId(), true);
+        if (uri != null) {
+            long msgId = client.getMessageId(uri.getScope(), uri.getMessageId());
+            return calculateSubject(client, ui, trans, msgId, uri.getScope(), uri.getMessageId(), true);
+        } else {
+            return trans.getText("No subject");
+        }
     }
 
     static String calculateSubject(DBClient client, UI ui, TranslationRegistry trans, long msgId, Hash scope, Long messageId, boolean mayHaveSubject) {

@@ -71,7 +71,7 @@ public class ChanGen extends CommandImpl {
         try {
             MessageDigest md = SHA256Generator.getDigestInstance();
             md.update((byte) 42);
-            Object o = md.clone();
+            md.clone();
             ok = true;
         } catch (CloneNotSupportedException e) {}
         CLONEABLE_DIGEST = ok;

@@ -2,6 +2,7 @@ package syndie.gui;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
@@ -15,20 +16,23 @@ import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+
 import syndie.db.NullUI;
 import syndie.db.UI;
 
 /**
  * maintain the text / caret position / scroll index for the text, undoing
  * them on ^Z and redoing them on ^Y (clearing any redoables on a non-redo text change)
+ *
+ * See also unused StyledTextChangeManager
  */
 class TextChangeManager {
-    private UI _ui;
-    private Text _text;
+    private final UI _ui;
+    private final Text _text;
     /** list of mementos */
-    private List _undoable;
+    private final List _undoable;
     /** list of mementos */
-    private List _redoable;
+    private final List _redoable;
     /** we are currently executing an undo/redo, so don't count this change as an undoable action */
     private boolean _changeUpdateInProgress;
     private String _beforeText;
@@ -158,6 +162,7 @@ class TextChangeManager {
         public long size() { return _before.length() + _after.length(); }
     }
     
+/****
     public static void main(String args[]) {
         UI ui = new NullUI() { 
             public void debugMessage(String msg) { debugMessage(msg, null); }
@@ -192,4 +197,5 @@ class TextChangeManager {
         }
     
     }
+****/
 }

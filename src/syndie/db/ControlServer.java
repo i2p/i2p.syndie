@@ -10,6 +10,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import net.i2p.data.DataHelper;
 
 class ControlServer implements CLI.Command {
@@ -18,7 +20,7 @@ class ControlServer implements CLI.Command {
     private UI _ui;
     private DBClient _client;
     
-    private Boolean _shutdown = Boolean.valueOf(false);
+    private final AtomicBoolean _ashutdown = new AtomicBoolean();
     
     public static String getHelp(String cmd) {
         return "[--port $port (default 10111)]";
@@ -36,15 +38,14 @@ class ControlServer implements CLI.Command {
             
             Thread listenThread = new Thread(new Runnable() {
                 public void run() {
-                    boolean shutdown = _shutdown.booleanValue();
-                    while (!shutdown) {
+                    // TODO boolean is always false, no way to stop
+                    while (!_ashutdown.get()) {
                         try {
                             _ui.debugMessage("ControlServer: waiting for connection");
                             Thread clientThread = new ControlServerClientHandler(ui, _listenSocket.accept(), false);
                             clientThread.start();
                             _ui.debugMessage("ControlServer: connection accepted");
                         } catch (SocketTimeoutException e) {
-                            synchronized(_shutdown) { shutdown = _shutdown.booleanValue(); }
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -86,8 +87,6 @@ class ControlServer implements CLI.Command {
             _outputStream = _clientSocket.getOutputStream();
             
             _debug = debug;
-            
-            _shutdown = false;
         }
         
         public void run() {

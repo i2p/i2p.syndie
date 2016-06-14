@@ -336,7 +336,6 @@ class BackupSecrets extends BaseComponent implements Themeable, Translatable {
             try {
                 zin = new ZipInputStream(new ByteArrayInputStream(decrypted));
                 ZipEntry entry = null;
-                byte buf[] = new byte[4096];
                 int keysRead = 0;
                 int metaRead = 0;
                 int failedMeta = 0;

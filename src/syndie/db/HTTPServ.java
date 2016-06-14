@@ -539,27 +539,29 @@ public class HTTPServ implements CLI.Command {
     private SharedArchive getSharedArchive() {
         File indexFile = new File(_client.getWebDir(), LocalArchiveManager.SHARED_INDEX_FILE);
         boolean needsLoad = false;
-        if (_archive == null)
-            needsLoad = true;
-        else if (_archive.getLoadDate() < indexFile.lastModified())
-            needsLoad = true;
+        synchronized(HTTPServ.class) {
+            if (_archive == null)
+                needsLoad = true;
+            else if (_archive.getLoadDate() < indexFile.lastModified())
+                needsLoad = true;
         
-        if (needsLoad && indexFile.exists()) {
-            FileInputStream fin = null;
-            try {
-                fin = new FileInputStream(indexFile);
-                SharedArchive archive = new SharedArchive();
-                archive.read(fin);
-                fin.close();
-                fin = null;
-                _archive = archive;
-            } catch (IOException ioe) {
-                _ui.errorMessage("Error loading the archive index", ioe);
-            } finally {
-                if (fin != null) try { fin.close(); } catch (IOException ioe) {}
+            if (needsLoad && indexFile.exists()) {
+                FileInputStream fin = null;
+                try {
+                    fin = new FileInputStream(indexFile);
+                    SharedArchive archive = new SharedArchive();
+                    archive.read(fin);
+                    fin.close();
+                    fin = null;
+                    _archive = archive;
+                } catch (IOException ioe) {
+                    _ui.errorMessage("Error loading the archive index", ioe);
+                } finally {
+                    if (fin != null) try { fin.close(); } catch (IOException ioe) {}
+                }
             }
+            return _archive;
         }
-        return _archive;
     }
     
     private void sendIfAllowed(String chan, String sub, Socket socket, InputStream in, OutputStream out, SocketTimeout timeout) throws IOException {
@@ -745,12 +747,16 @@ public class HTTPServ implements CLI.Command {
             
             _ui.debugMessage("handlePost: header read, remaining: " + remaining);
             
+         /****
+            ** unimplemented **
+
             SessionKey authKey = getAuthorizationKey(header);
             SessionKey encKey = getEncryptionKey(header);
             if (!authorized(authKey)) {
                 fail403(socket, in, out, timeout);
                 return;
             }
+          ****/
             
             timeout.resetTimer();
             
@@ -811,14 +817,17 @@ public class HTTPServ implements CLI.Command {
         }
     }
     
+    // TODO
+
     /** key used to verify they're authorized to post */
-    private SessionKey getAuthorizationKey(byte header[]) { return null; }
+    //private SessionKey getAuthorizationKey(byte header[]) { return null; }
     /** key used to decrypt the content (to extract the .syndie files) */
-    private SessionKey getEncryptionKey(byte header[]) { return null; }
+    //private SessionKey getEncryptionKey(byte header[]) { return null; }
     /** true if they're authorized to post */
-    private boolean authorized(SessionKey authorizationKey) { return true; }
+    //private boolean authorized(SessionKey authorizationKey) { return true; }
     
-    private void delete(File dir) {
+    /** */
+    private static void delete(File dir) {
         File files[] = dir.listFiles();
         for (int i = 0; i < files.length; i++) {
             if (!files[i].getName().startsWith("."))

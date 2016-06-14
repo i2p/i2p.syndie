@@ -260,15 +260,18 @@ class AttachmentPreview extends BaseComponent implements Translatable, Themeable
             _type.setText(type);
         } else {
             _typeLabel.setVisible(false);
-            _type.setVisible(false);
+            if (_type != null)
+                _type.setVisible(false);
         }
         
         _size.setText(DataHelper.formatSize2(bytes).replace("&nbsp;", " ") + 'B');
         
         timer.addEvent("options displayed");
         timer.addEvent("data fetched");
-        showPreviewIfPossible(type, bytes, source, internalAttachmentNum, timer);
-        timer.addEvent("data displayed");
+        if (_type != null) {
+            showPreviewIfPossible(type, bytes, source, internalAttachmentNum, timer);
+            timer.addEvent("data displayed");
+        }
         
         _saveAs.setText(_name.getText());
         timer.complete();
@@ -279,6 +282,7 @@ class AttachmentPreview extends BaseComponent implements Translatable, Themeable
     
     /**
      *  Don't load the data into memory until here
+     *  @param contentType non-null
      */
     private void showPreviewIfPossible(String contentType, long size, AttachmentSource source,
                                        int internalAttachmentNum, Timer timer) {

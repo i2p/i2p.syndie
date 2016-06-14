@@ -707,12 +707,22 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
                 _filterTag.setText(tags[0]);
             }
             
-            if (uri.isChannel() && (uri.getScope() != null) )
-                _forumScopeOther = new Hash[] { uri.getScope() };
-            else if (uri.isSearch()) {
-                _forumScopeOther = uri.getSearchScopes();
+            if (uri != null) { 
+                if (uri.isChannel() && (uri.getScope() != null) )
+                    _forumScopeOther = new Hash[] { uri.getScope() };
+                else if (uri.isSearch())
+                     _forumScopeOther = uri.getSearchScopes();
+                _filterUnreadOnly.setSelection(uri.getBoolean("unreadonly", false));
+                _ui.debugMessage("filterBar.setFilter has private? (" + uri.getString(PRIVATE) + "): "+ uri + ")");
+                _advancedPrivacyPBE.setSelection(uri.getBoolean("pbe", true));
+                _advancedPrivacyAuthorized.setSelection(uri.getBoolean("authorized", true));
+                _advancedPrivacyPublic.setSelection(uri.getBoolean("public", true));
+            } else {
+                _filterUnreadOnly.setSelection(false);
+                _advancedPrivacyPBE.setSelection(true);
+                _advancedPrivacyAuthorized.setSelection(true);
+                _advancedPrivacyPublic.setSelection(true);
             }
-            _filterUnreadOnly.setSelection(uri.getBoolean("unreadonly", false));
             _advancedScopeAll.setSelection(false);
             _advancedScopeBookmarked.setSelection(false);
             _advancedScopeOther.setSelection(false);
@@ -721,10 +731,6 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             else
                 _advancedScopeAll.setSelection(true);
             
-            _ui.debugMessage("filterBar.setFilter has private? (" + uri.getString(PRIVATE) + "): "+ uri + ")");
-            _advancedPrivacyPBE.setSelection(uri.getBoolean("pbe", true));
-            _advancedPrivacyAuthorized.setSelection(uri.getBoolean("authorized", true));
-            _advancedPrivacyPublic.setSelection(uri.getBoolean("public", true));
             _advancedPrivacyPrivate.setSelection(true); //uri.getBoolean("private", true));
         }
         
@@ -2025,7 +2031,12 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         }
     }
     
+    /**
+     *  @return database access time
+     */
     protected long renderNode(ThreadReferenceNode node, TreeItem item) {
+        if (node == null)
+            return 0;
         SyndieURI uri = node.getURI();
         String subj = "";
         String auth = "";

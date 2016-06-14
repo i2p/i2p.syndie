@@ -119,7 +119,8 @@ public class TextEngine {
         } else {
             _ui.statusMessage("Custom text engine is not yet logged in");
         }
-        _client.runScript(_ui, "startup");
+        if (_client != null)
+            _client.runScript(_ui, "startup");
     }
     
     public interface ScriptListener {

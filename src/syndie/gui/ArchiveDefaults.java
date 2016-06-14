@@ -367,7 +367,7 @@ class ArchiveDefaults extends Composite implements Themeable, Translatable {
         String proxy = item.getText(2);
         String proxyHost = null;
         int proxyPort = -1;
-        if ( (proxy != null) || (proxy.indexOf(':') > 0) ) {
+        if ( (proxy != null) && (proxy.indexOf(':') > 0) ) {
             String str[] = StringUtil.split(':', proxy);
             if ( (str != null) && (str.length == 2) ) {
                 try {

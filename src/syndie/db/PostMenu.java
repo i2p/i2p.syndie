@@ -259,6 +259,7 @@ class PostMenu implements TextEngine.Menu {
     }
     
     private static final SimpleDateFormat _dayFmt = new SimpleDateFormat("yyyy/MM/dd");
+
     /** channels */
     private void processChannels(DBClient client, UI ui, Opts opts) {
         _itemIteratorIndex = 0;
@@ -759,6 +760,10 @@ class PostMenu implements TextEngine.Menu {
                 ui.commandComplete(-1, null);
                 return;
             }
+        } else {
+            ui.errorMessage("No --in parameter");
+            ui.commandComplete(-1, null);
+            return;
         }
         String type = opts.getOptValue("type");
         if (type == null)
@@ -1634,8 +1639,13 @@ class PostMenu implements TextEngine.Menu {
             genOpts.setOptValue("references", buf.toString());
         }
 
-        if (_currentMessage.getExpiration() > 0)
-            genOpts.setOptValue("expiration", _dayFmt.format(new Date(_currentMessage.getExpiration())));
+        if (_currentMessage.getExpiration() > 0) {
+            String s;
+            synchronized(_dayFmt) {
+                s = _dayFmt.format(new Date(_currentMessage.getExpiration()));
+            }
+            genOpts.setOptValue("expiration", s);
+        }
         
         genOpts.setOptValue("forceNewThread", ""+_currentMessage.getForceNewThread());
         genOpts.setOptValue("refuseReplies", ""+_currentMessage.getRefuseReplies());
@@ -1804,7 +1814,10 @@ class PostMenu implements TextEngine.Menu {
                     ui.statusMessage("Post configured to have no expiration");
                 } else {
                     try {
-                        Date when = _dayFmt.parse(val);
+                        Date when;
+                        synchronized(_dayFmt) {
+                            when = _dayFmt.parse(val);
+                        }
                         _currentMessage.setExpiration(when.getTime());
                         ui.statusMessage("Post configured with a suggested expiration of " + val);
                     } catch (ParseException pe) {

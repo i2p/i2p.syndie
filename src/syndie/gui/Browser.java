@@ -264,6 +264,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             _themes = new ThemeRegistry(client, this, this);
         }
         initComponentBuilder();
+        // FIXME don't start threads in constructors
         Thread t = new Thread(_uiListenerPusher, "UI msg pusher");
         t.setDaemon(true);
         t.start();
@@ -520,7 +521,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         if (_client.isLoggedIn() && !_initialized) {
             _initialized = true;
             Display.getDefault().syncExec(new Runnable() { public void run() { initComponents(timer); doStartup(timer); } });
-            long afterInit = System.currentTimeMillis();
+            //long afterInit = System.currentTimeMillis();
             //System.out.println("browser startup: " + (afterInit-beforeInit) + " for init and start");
             return;
         }
@@ -1562,9 +1563,9 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         debugMessage("Viewing [" + uri + "]");
         if (uri == null) return;
         BrowserTab tab = null;
+        /*
         Hash scope = uri.getHash("scope");
         Long msgId = uri.getMessageId();
-        /*
         SyndieURI browseURI = null;
         if (uri.isSearch()) {
             if ( (scope != null) && (msgId != null) )
@@ -2232,6 +2233,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
     
     private void prevTab() { switchTab(-1); }
     private void nextTab() { switchTab(1); }
+
     private void switchTab(int delta) {
         int tot = _tabs.getItemCount();
         if (tot <= 0) return;
@@ -2242,8 +2244,8 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             nxt -= tot;
         debugMessage("switch tab to " + nxt);
         _tabs.setSelection(nxt);
-        int sel = _tabs.getSelectionIndex();
     }
+
     private void closeTab() {
         CTabItem cur = _tabs.getSelection();
         SyndieURI uri = null;
@@ -2722,20 +2724,20 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
                         if (_typeOrder.size() <= 0) {
                             UIListenerPusher.this.wait();
                         } else {
-                            Object type = _typeOrder.remove(0);
-                            if (type == TYPE_ORDER_ERROR) {
+                            Integer type = _typeOrder.remove(0);
+                            if (type.equals(TYPE_ORDER_ERROR)) {
                                 errMsg = (String)_errMsgs.remove(0);
                                 errCause = (Exception)_errCauses.remove(0);
                                 if (errCause == NO_CAUSE)
                                     errCause = null;
-                            } else if (type == TYPE_ORDER_STATUS) {
+                            } else if (type.equals(TYPE_ORDER_STATUS)) {
                                 statusMsg = (String)_statusMsgs.remove(0);
-                            } else if (type == TYPE_ORDER_DEBUG) {
+                            } else if (type.equals(TYPE_ORDER_DEBUG)) {
                                 debugMsg = (String)_debugMsgs.remove(0);
                                 debugCause = (Exception)_debugCauses.remove(0);
                                 if (debugCause == NO_CAUSE)
                                     debugCause = null;
-                            } else if (type == TYPE_ORDER_COMMAND_COMPLETE) {
+                            } else if (type.equals(TYPE_ORDER_COMMAND_COMPLETE)) {
                                 completeStatus = (Integer)_completeStatus.remove(0);
                                 completeLocation = (List)_completeLocations.remove(0);
                                 if (completeLocation == NO_LOCATIONS)

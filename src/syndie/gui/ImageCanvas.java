@@ -160,7 +160,7 @@ public class ImageCanvas extends Canvas {
         if (excessWidth > 0) {
             hb.setMaximum(excessWidth);
             hb.setMinimum(0);
-            hb.setIncrement((int)Math.ceil(excessWidth/100));
+            hb.setIncrement((int)Math.ceil(excessWidth/100d));
             hb.setEnabled(true);
             hb.setSelection(x);
             hb.setVisible(true);
@@ -171,7 +171,7 @@ public class ImageCanvas extends Canvas {
         if (excessHeight > 0) {
             vb.setMaximum(excessHeight);
             vb.setMinimum(0);
-            vb.setIncrement((int)Math.ceil(excessHeight/100));
+            vb.setIncrement((int)Math.ceil(excessHeight/100d));
             vb.setEnabled(true);
             vb.setSelection(y);
             vb.setVisible(true);

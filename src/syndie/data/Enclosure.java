@@ -340,6 +340,7 @@ public class Enclosure {
     static void dumpProps(StringBuilder buf, Properties props) {
         if (props == null || props.isEmpty()) {
             buf.append("  (none)\n");
+            return;
         }
         List keys = new ArrayList(props.keySet());
         Collections.sort(keys);

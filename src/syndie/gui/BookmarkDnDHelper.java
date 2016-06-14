@@ -66,7 +66,7 @@ public class BookmarkDnDHelper {
                     } else { // wasn't in bookmark syntax, try as a uri
                         String str = evt.data.toString();
                         try {
-                            SyndieURI uri = new SyndieURI(str);
+                            new SyndieURI(str);
                             ui.debugMessage("dnd target drop: ok!");
                             onDrop.dropped(bookmark.uri, null, null);
                         } catch (URISyntaxException use) {

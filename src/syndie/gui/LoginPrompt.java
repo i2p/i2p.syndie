@@ -4,10 +4,12 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Display;
-import syndie.db.DBClient;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Button;
+
+import syndie.db.DBClient;
+import syndie.util.Timer;
 
 /**
  *
@@ -43,7 +45,7 @@ public final class LoginPrompt {
                     Shell s = _shell;
                     if ( (s != null) && (!s.isDisposed()) )
                         s.dispose();
-                    _browser.startup(null);
+                    _browser.startup(new Timer("LoginComplete", _browser.getUI()));
                 }
             });
         }

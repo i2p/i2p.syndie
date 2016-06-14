@@ -875,7 +875,7 @@ class ManageMenu implements TextEngine.Menu {
                 chanGenOpts.addOptValue("privTag", iter.next().toString());
         }
         
-        SigningPublicKey us = getNymPublicKey(client);
+        //SigningPublicKey us = getNymPublicKey(client);
         
         Set keys = _currentChannel.getAuthorizedPosters();
         if (keys != null) {

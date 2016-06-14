@@ -1078,7 +1078,7 @@ public class ImportPost {
             
             stmt.close();
             
-            boolean blob = data != null && data.length >= DBClient.MIN_ATT_BLOB_SIZE;
+            boolean blob = data.length >= DBClient.MIN_ATT_BLOB_SIZE;
             if (blob)
                 stmt = _client.con().prepareStatement(SQL_INSERT_MESSAGE_ATTACHMENT_DATA_BLOB);
             else

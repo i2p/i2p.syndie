@@ -537,7 +537,7 @@ class HTMLStyleBuilder {
     
     private void includeImage(final StyleRange style, final HTMLTag imgTag) {
         final SyndieURI srcURI = getURI(imgTag.getAttribValueLC("src"));
-        if ( (imgTag == null) || (srcURI == null) || (!srcURI.isChannel()) || (srcURI.getAttachment() == null)) {
+        if ((srcURI == null) || (!srcURI.isChannel()) || (srcURI.getAttachment() == null)) {
             _images.add(ImageUtil.ICON_IMAGE_UNKNOWN);
             return;
         }

@@ -380,7 +380,7 @@ class TaskTree extends BaseComponent implements Themeable, Translatable {
     
     private void switchToSelected() {
         TreeItem items[] = _tree.getSelection();
-        if ( (items == null) || (items.length == 1) ) {
+        if ( (items != null) && (items.length == 1) ) {
             DesktopPanel panel = (DesktopPanel)_itemToPanel.get(items[0]);
             for (int i = 0; i < _listeners.size(); i++)
                 ((TaskTreeListener)_listeners.get(i)).viewSelected(panel);
@@ -388,7 +388,7 @@ class TaskTree extends BaseComponent implements Themeable, Translatable {
     }
     private void closeSelected() {
         TreeItem items[] = _tree.getSelection();
-        if ( (items == null) || (items.length == 1) ) {
+        if ( (items != null) && (items.length == 1) ) {
             List toClose = new ArrayList();
             DesktopPanel panel = (DesktopPanel)_itemToPanel.get(items[0]);
             toClose.add(panel);

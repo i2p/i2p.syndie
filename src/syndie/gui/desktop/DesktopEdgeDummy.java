@@ -5,10 +5,13 @@ import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import syndie.db.UI;
 
+/**
+ *  Unused, apparently for testing or a work in progress?
+ */
 class DesktopEdgeDummy extends DesktopEdge {
     public DesktopEdgeDummy(int sysColor, Composite parent, UI ui) {
         super(parent, ui);
-        Canvas c = new Canvas(getEdgeRoot(), SWT.NONE);
+        //Canvas c = new Canvas(getEdgeRoot(), SWT.NONE);
         //c.setBackground(getEdgeRoot().getDisplay().getSystemColor(sysColor));
     }
 }

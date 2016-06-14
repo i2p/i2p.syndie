@@ -17,12 +17,10 @@ import syndie.gui.*;
 public class DesktopMain {
     public static void main(final String args[]) {
         long start = System.currentTimeMillis();
-        if (args != null) {
-            for (int i = 0; i < args.length; i++) {
-                if ("--cli".equals(args[i])) {
-                    TextUI.main(args);
-                    return;
-                }
+        for (int i = 0; i < args.length; i++) {
+            if ("--cli".equals(args[i])) {
+                TextUI.main(args);
+                return;
             }
         }
         System.setProperty("jbigi.dontLog", "true");
@@ -34,7 +32,8 @@ public class DesktopMain {
         boolean trackResources = trackResources(args);
 
         long beforeDisplay = System.currentTimeMillis();
-        Class cls = Display.class;
+        // does nothing as of Java 5 (findbugs)
+        //Class cls = Display.class;
         long afterLoad = System.currentTimeMillis();
         Display d = null;
         if (trackResources) {

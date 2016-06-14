@@ -653,7 +653,8 @@ public class ImageUtil {
                 fos.write(data);
                 fos.close();
             } catch (IOException ioe) { 
-                tmp.delete();
+                if (tmp != null)
+                    tmp.delete();
                 return createMemoryImage(data);
             }
             
@@ -705,7 +706,8 @@ public class ImageUtil {
                             img = new Image(Display.getDefault(), tmp.getAbsolutePath());
                             tmp.delete();
                         } catch (IOException ioe) { 
-                            tmp.delete();
+                            if (tmp != null)
+                                tmp.delete();
                             in = ImageUtil.class.getResourceAsStream(resource);
                             img = new Image(Display.getDefault(), in);
                         }

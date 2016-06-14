@@ -46,12 +46,10 @@ public class SWTUI {
     
     public static void main(final String args[]) {
         long start = System.currentTimeMillis();
-        if (args != null) {
-            for (int i = 0; i < args.length; i++) {
-                if ("--cli".equals(args[i])) {
-                    TextUI.main(args);
-                    return;
-                }
+        for (int i = 0; i < args.length; i++) {
+            if ("--cli".equals(args[i])) {
+                TextUI.main(args);
+                return;
             }
         }
         System.setProperty("jbigi.dontLog", "true");

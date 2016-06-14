@@ -612,7 +612,7 @@ class ReadMenu implements TextEngine.Menu {
     private void processThreads(DBClient client, UI ui, Opts opts) {
         String chan = opts.getOptValue("channel");
         List tags = opts.getOptValues("tags");
-        boolean includeUnauthorized = opts.getOptBoolean("includeUnauthorized", false);
+        //boolean includeUnauthorized = opts.getOptBoolean("includeUnauthorized", false);
         boolean compact = opts.getOptBoolean("compact", true);
         if ( (opts.getOptNames().size() <= 0) && (_threadText.size() > 0) ) {
             // just display the last result set

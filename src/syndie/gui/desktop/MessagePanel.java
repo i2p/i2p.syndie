@@ -341,7 +341,7 @@ class MessagePanel extends DesktopPanel implements Translatable, Themeable, DBCl
         }
         public void updateActions(SyndieURI uri, final long msgId, MessageInfo msg) {
             final long forumId = msg.getTargetChannelId();
-            final long authorId = msg.getAuthorChannelId();
+            //final long authorId = msg.getAuthorChannelId();
             final boolean isPM = msg.getWasPrivate();
             _replyToForum.setEnabled(false);
             _replyToAdmins.setEnabled(true); //authorId != forumId);
@@ -816,7 +816,7 @@ class MessagePanel extends DesktopPanel implements Translatable, Themeable, DBCl
      */
     private MessageIterator getIterator(SyndieURI uri, long msgId, MessageInfo msg) {
         if (_messageIterator != null) return _messageIterator;
-        Hash forum = msg.getTargetChannel();
+        //Hash forum = msg.getTargetChannel();
         List panels = _desktop.getPanels();
         for (int i = 0; i < panels.size(); i++) {
             DesktopPanel panel = (DesktopPanel)panels.get(i);

@@ -2,6 +2,7 @@ package syndie.gui;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.KeyEvent;
@@ -15,6 +16,7 @@ import org.eclipse.swt.events.VerifyListener;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
+
 import syndie.db.NullUI;
 import syndie.db.UI;
 
@@ -22,15 +24,17 @@ import syndie.db.UI;
  * maintain the text / caret position / scroll index for the styled text, undoing
  * them on ^Z and redoing them on ^Y (clearing any redoables on a non-redo text change)
  *
+ * TODO This is apparently a work in progress.
+ * Unused. See mtn log.
  * Can this just extend TextChangeManager?
  */
 class StyledTextChangeManager {
-    private UI _ui;
-    private StyledText _text;
+    private final UI _ui;
+    private final StyledText _text;
     /** list of mementos */
-    private List _undoable;
+    private final List _undoable;
     /** list of mementos */
-    private List _redoable;
+    private final List _redoable;
     /** we are currently executing an undo/redo, so don't count this change as an undoable action */
     private boolean _changeUpdateInProgress;
     private String _beforeText;
@@ -93,6 +97,7 @@ class StyledTextChangeManager {
         });
     }
     
+/****
     public long getBufferSize() {
         long rv = 0;
         for (int i = 0; i < _undoable.size(); i++)
@@ -101,6 +106,7 @@ class StyledTextChangeManager {
             rv += ((Memento)_redoable.get(i)).size();
         return rv;
     }
+****/
     
     public interface Memento {
         public void redo();
@@ -160,6 +166,7 @@ class StyledTextChangeManager {
         public long size() { return _before.length() + _after.length(); }
     }
     
+/****
     public static void main(String args[]) {
         UI ui = new NullUI() { 
             public void debugMessage(String msg) { debugMessage(msg, null); }
@@ -194,4 +201,5 @@ class StyledTextChangeManager {
         }
     
     }
+****/
 }

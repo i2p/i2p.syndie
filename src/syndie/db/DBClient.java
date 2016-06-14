@@ -5322,7 +5322,6 @@ public class DBClient {
     public boolean isWatched(long channelId) { return isWatched(_nymId, channelId); }
     public boolean isWatched(long nymId, long channelId) { 
         ensureLoggedIn();
-        List rv = new ArrayList();
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {

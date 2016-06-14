@@ -225,7 +225,7 @@ class StartupPanel extends DesktopPanel implements Themeable {
  
         final DBClient client = _desktop.getDBClient();
         _ui.debugMessage("startup: loggedIn? " + client.isLoggedIn());
-        long beforeInit = System.currentTimeMillis();
+        //long beforeInit = System.currentTimeMillis();
         if (client.isLoggedIn()) {
             
             _startupTimer.addEvent("begin initComponents");
@@ -268,9 +268,9 @@ class StartupPanel extends DesktopPanel implements Themeable {
     private boolean startClient() {
         I2PAppContext ctx = I2PAppContext.getGlobalContext();
         _startupTimer.addEvent("i2pappcontext fetched");
-        Object o = ctx.logManager();
+        ctx.logManager();
         _startupTimer.addEvent("logManager warmed up");
-        o = ctx.keyGenerator();
+        ctx.keyGenerator();
         _startupTimer.addEvent("keyGenerator warmed up");
         DBClient client = new DBClient(ctx, _desktop.getRootFile());
         client.setDefaultUI(_ui);
