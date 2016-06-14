@@ -464,6 +464,8 @@ public class ThreadBuilder {
 
         @Override
         public boolean equals(Object o) {
+            if (!(o instanceof Message))
+                return false;
             if (id != null)
                 return id.equals(((Message)o).id);
             else

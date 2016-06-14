@@ -10,17 +10,31 @@ public final class JobRunner {
     private final BlockingQueue<Runnable> _pending;
     private volatile boolean _alive;
     private volatile UI _ui;
+    private static final Runnable POISON = new Poison();
+
+    private static class Poison implements Runnable {
+        public void run() {}
+    }
 
     /** need this many during startup */
     private static final int THREADS = 4;
 
-    private static final JobRunner _instance = new JobRunner();
+    private static final JobRunner _instance;
+    static {
+        _instance = new JobRunner();
+        _instance.start();
+    }
 
     public static JobRunner instance() { return _instance; }
     
+    /** caller MUST call start() */
     private JobRunner() {
-        _alive = true;
         _pending = new LinkedBlockingQueue();
+    }
+
+    private synchronized void start() {
+        _alive = true;
+        _pending.clear();
         for (int i = 0; i < THREADS; i++) {
             Thread t = new Thread(new Runner(), "Job runner " + (i+1) + '/' + THREADS);
             t.setDaemon(true);
@@ -33,7 +47,14 @@ public final class JobRunner {
         _pending.offer(r);
     }
 
-    public void stop() { _alive = false; synchronized (_pending) { _pending.notifyAll(); } }
+    /** cannot be restarted */
+    public synchronized void stop() {
+        _alive = false;
+        _pending.clear();
+        for (int i = 0; i < THREADS; i++) {
+            enqueue(POISON);
+        }
+    }
 
     public void setUI(UI ui) { _ui = ui; }
     
@@ -43,6 +64,8 @@ public final class JobRunner {
             while (_alive) {
                 try {
                     cur = _pending.take();
+                    if (cur == POISON)
+                        break;
                 } catch (InterruptedException ie) {}
                 if (cur != null) {
                     long start = System.currentTimeMillis();

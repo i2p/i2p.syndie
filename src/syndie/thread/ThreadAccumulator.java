@@ -341,6 +341,9 @@ AND
             }
         } catch (SQLException se) {
             _ui.errorMessage("Internal error accumulating threads", se);
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
         
         _ui.debugMessage("gather threads trace: " + _client.completeTrace());

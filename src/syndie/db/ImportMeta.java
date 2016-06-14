@@ -336,10 +336,11 @@ class ImportMeta {
     private static long getChannelId(DBClient client, UI ui, Hash identHash) throws SQLException {
         Connection con = client.con();
         PreparedStatement stmt = null;
+        ResultSet rs = null;
         try {
             stmt = con.prepareStatement(SQL_GET_CHANNEL_ID);
             stmt.setBytes(1, identHash.getData());
-            ResultSet rs = stmt.executeQuery();
+            rs = stmt.executeQuery();
             if (rs.next()) {
                 long val = rs.getLong(1);
                 if (!rs.wasNull())
@@ -347,7 +348,8 @@ class ImportMeta {
             }
             return -1;
         } finally {
-            if (stmt != null) stmt.close();
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
     }
     private static final String SQL_UPDATE_CHANNEL = "UPDATE channel SET encryptKey = ?, edition = ?, name = ?, description = ?, allowPubPost = ?, allowPubReply = ?, readKeyMissing = ?, pbePrompt = ?, importDate = NOW() WHERE channelId = ?";

@@ -60,6 +60,9 @@ import syndie.util.StringUtil;
  *
  * Note that reply ordering may be off (we insert replies in a depth-first thread
  * traversal, but individual messages have random timestamps)
+ *
+ * This is a command line tool only, not referenced anywhere.
+ * Don't worry about all the System.exit() calls.
  */
 public class Export {
     private TextUI _ui;
@@ -350,6 +353,8 @@ public class Export {
         } catch (SQLException se) {
             _ui.errorMessage("Error inserting the ticket for " + threadRoot, se);
             System.exit(-1);
+        } finally { 
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
         
         int ticketId = getLastTicketId();

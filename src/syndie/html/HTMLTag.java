@@ -125,12 +125,14 @@ public class HTMLTag {
     public boolean wasConsumed() { return consumed; }
     public void consume() { consumed = true; }
     
+    @Override
     public String toString() {
         StringBuilder rv = new StringBuilder();
         rv.append(toHTML());
         rv.append("[" + this.startIndex + (endIndex >= 0 ? ":" + endIndex : ":?") + ":" + this.srcLine + "]");
         return rv.toString();
     }
+
     public String toHTML() {
         StringBuilder rv = new StringBuilder();
         rv.append('<');
@@ -145,6 +147,7 @@ public class HTMLTag {
         return rv.toString();
     }
     
+    @Override
     public int hashCode() {
         int rv = 0;
         if (name != null) rv += name.hashCode();
@@ -153,8 +156,12 @@ public class HTMLTag {
         rv += srcLine;
         return rv;
     }
+
+    @Override
     public boolean equals(Object o) {
         if (o == null)
+            return false;
+        if (!(o instanceof HTMLTag))
             return false;
         HTMLTag tag = (HTMLTag)o;
         return ( (tag.name.equals(name)) &&

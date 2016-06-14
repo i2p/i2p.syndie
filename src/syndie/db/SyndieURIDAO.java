@@ -28,12 +28,13 @@ class SyndieURIDAO {
     public SyndieURI fetch(long uriId) {
         if (uriId < 0) return null;
         PreparedStatement stmt = null;
+        ResultSet rs = null;
         Map attribs = new TreeMap();
         String type = null;
         try {
             stmt = _client.con().prepareStatement(SQL_FETCH);
             stmt.setLong(1, uriId);
-            ResultSet rs = stmt.executeQuery();
+            rs = stmt.executeQuery();
             while (rs.next()) {
                 String key = rs.getString(1);
                 String valStr = rs.getString(2);
@@ -69,6 +70,7 @@ class SyndieURIDAO {
             _log.error("internal error fetching the uri [" + uriId + "]", re);
             return null;
         } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
         //if (_log.shouldLog(Log.DEBUG))
@@ -81,9 +83,10 @@ class SyndieURIDAO {
 
     private long nextId() {
         PreparedStatement stmt = null;
+        ResultSet rs = null;
         try {
             stmt = _client.con().prepareStatement(SQL_NEXTID);
-            ResultSet rs = stmt.executeQuery();
+            rs = stmt.executeQuery();
             if (rs.next()) {
                 long rv = rs.getLong(1);
                 if (rs.wasNull())
@@ -98,6 +101,7 @@ class SyndieURIDAO {
                 _log.error("Error retrieving the next uri ID", se);
             return -1;
         } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
     }

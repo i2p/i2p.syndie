@@ -402,6 +402,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         } catch (SQLException se) {
             ui.errorMessage("Internal error resuming", se);
         } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
         return state;

@@ -57,12 +57,17 @@ public class ReferenceNode {
     public void setTreeIndexNum(int num) { _treeIndexNum = num; }
     public void setUniqueId(long id) { _uniqueId = id; }
     
+    @Override
     public int hashCode() {
         return (int)(_uniqueId + (_uri != null ? _uri.hashCode() : 0) +
                      (_name != null ? _name.hashCode() : 0));
     }
+
+    @Override
     public boolean equals(Object obj) {
         if (obj == null) return false;
+        if (!(obj instanceof ReferenceNode))
+            return false;
         ReferenceNode node = (ReferenceNode)obj;
         if (node.getUniqueId() != getUniqueId())
             return false;
@@ -216,6 +221,7 @@ public class ReferenceNode {
         return rv;
     }
     
+    @Override
     public String toString() {
         StringBuilder buf = new StringBuilder(); 
         append(buf, this, 0); 
