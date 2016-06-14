@@ -713,7 +713,7 @@ public class MessageGen extends CommandImpl {
         //if ( (authenticationKey != null) && (authorizationKey == null) )
         //    authorizationKey = authenticationKey; // self-authorized, may not be sufficient
         
-        if ( (readKey == null) && (channel != null) ) {
+        if (readKey == null) {
             List read = client.getReadKeys(channel, nymId, client.getPass(), true);
             if ( (read != null) && (read.size() > 0) ) {
                 int index = client.ctx().random().nextInt(read.size());

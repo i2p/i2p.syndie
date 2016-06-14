@@ -497,11 +497,8 @@ class ManageForumReferences extends BaseComponent implements Themeable, Translat
     private ReferenceNode getToAdd(String data) {
         ReferenceNode rv = _refTree.getDragged();
         if (rv != null) return rv;
-        
-        BookmarkDnD bookmark = null;
         SyndieURI uri = null;
-
-        bookmark = new BookmarkDnD();
+        BookmarkDnD bookmark = new BookmarkDnD();
         bookmark.fromString(data);
         if (bookmark.uri == null) { // parse fail
             String str = data;
@@ -516,9 +513,9 @@ class ManageForumReferences extends BaseComponent implements Themeable, Translat
             }
         }
 
-        if ( (uri == null) && (bookmark == null) ) {
+        if ( (uri == null) && (bookmark.uri == null) ) {
             return null;
-        } else if (bookmark != null) {
+        } else if (bookmark.uri != null) {
             return new ReferenceNode(bookmark.name, bookmark.uri, bookmark.desc, null);
         } else {
             return new ReferenceNode(System.currentTimeMillis()+"", uri, "", null);

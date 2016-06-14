@@ -730,8 +730,6 @@ public class DBClient {
     
     public void saveProxyConfig() {
         Properties props = getNymPrefs(_nymId);
-        if (props == null)
-            props = new Properties();
         if ( (getDefaultFreenetHost() == null) || (getDefaultFreenetPort() <= 0) ) {
             props.remove("fcpHost");
             props.remove("fcpPort");
@@ -4458,8 +4456,6 @@ public class DBClient {
             public boolean getCreateReplyKey() { return false; }
             public List<SyndieURI> getCancelledURIs() {
                 List<SyndieURI> cancelled = getChannelCancelURIs(channelId);
-                if (cancelled == null)
-                    cancelled = new ArrayList();
                 cancelled.add(cancelledURI);
                 while (cancelled.size() > Constants.MAX_CANCELLED_PER_META)
                     cancelled.remove(0);
@@ -4634,6 +4630,7 @@ public class DBClient {
 
     /**
      *  Current nymId. Cached.
+     *  @return non-null
      */
     public Properties getNymPrefs() { 
         return getNymPrefs(_nymId);
@@ -4641,6 +4638,7 @@ public class DBClient {
 
     /**
      *  Cached if nymId == getNymId()
+     *  @return non-null
      */
     public Properties getNymPrefs(long nymId) {
         if (_nymId == nymId && _nymPrefsCached != null) 
@@ -6589,6 +6587,7 @@ public class DBClient {
     
     private static final String SQL_GET_CANCEL_URIS = "SELECT cancelledURI FROM channelCancel WHERE channelId = ? ORDER BY cancelOrder ASC";
 
+    /** @return non-null */
     public List<SyndieURI> getChannelCancelURIs(long channelId) {
         ArrayList<SyndieURI> rv = new ArrayList();
         PreparedStatement stmt = null;
@@ -6847,7 +6846,7 @@ public class DBClient {
         Date periodEnd;
         String function;
         Hash channel;
-        long nymId;
+        //long nymId;
     }
     
     private static final String SQL_DELETE_NYMKEYS = "DELETE FROM nymKey WHERE nymId = ?";
@@ -6878,7 +6877,7 @@ public class DBClient {
                 data.periodEnd = rs.getDate(6);
                 data.function = rs.getString(7);
                 data.channel = new Hash(rs.getBytes(8));
-                data.nymId = _nymId;
+                //data.nymId = _nymId;
                 
                 if (data.keySalt != null) {
                     byte key[] = pbeDecrypt(data.keyData, oldPass, data.keySalt);

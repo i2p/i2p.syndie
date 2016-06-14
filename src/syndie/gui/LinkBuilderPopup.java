@@ -1248,8 +1248,6 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
 
                 if (uri.getReadKey() != null) {
                     _syndieReadKey.setSelection(true);
-                    if (_readKeys == null)
-                        _readKeys = new ArrayList();
                     int foundIndex = -1;
                     for (int i = 0; i < _readKeys.size(); i++) {
                         NymKey key = (NymKey)_readKeys.get(i);
@@ -1271,8 +1269,6 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
                 
                 if (uri.getPostKey() != null) {
                     _syndiePostKey.setSelection(true);
-                    if (_postKeys == null)
-                        _postKeys = new ArrayList();
                     int foundIndex = -1;
                     for (int i = 0; i < _postKeys.size(); i++) {
                         NymKey key = (NymKey)_postKeys.get(i);
@@ -1294,8 +1290,6 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
                 
                 if (uri.getReplyKey() != null) {
                     _syndieReplyKey.setSelection(true);
-                    if (_replyKeys == null)
-                        _replyKeys = new ArrayList();
                     int foundIndex = -1;
                     for (int i = 0; i < _replyKeys.size(); i++) {
                         NymKey key = (NymKey)_replyKeys.get(i);
@@ -1317,8 +1311,6 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
                 
                 if (uri.getManageKey() != null) {
                     _syndieManageKey.setSelection(true);
-                    if (_manageKeys == null)
-                        _manageKeys = new ArrayList();
                     int foundIndex = -1;
                     for (int i = 0; i < _manageKeys.size(); i++) {
                         NymKey key = (NymKey)_manageKeys.get(i);

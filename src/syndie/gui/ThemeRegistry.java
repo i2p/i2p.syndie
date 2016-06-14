@@ -76,8 +76,8 @@ public class ThemeRegistry {
         for (int i = 0; i < lsnrs.length; i++) {
             Themeable cur = lsnrs[i];
             if (cur == _toThemeLast) continue;
-            String err = null; //theme.validate();
-            if (err == null) {
+            //String err = null; //theme.validate();
+            //if (err == null) {
                 try {
                     long before = System.currentTimeMillis();
                     cur.applyTheme(theme);
@@ -89,10 +89,10 @@ public class ThemeRegistry {
                     if (_ui != null)
                         _ui.debugMessage("Theme switch failed for " + cur.getClass().getName(), se);
                 }
-            } else {
-                if (_ui != null)
-                    _ui.errorMessage("cannot apply theme: " + err);
-            }
+            //} else {
+            //    if (_ui != null)
+            //        _ui.errorMessage("cannot apply theme: " + err);
+            //}
         }
         
         long before = System.currentTimeMillis();

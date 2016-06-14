@@ -188,7 +188,7 @@ public class MessageCreator {
         List types = _source.getAttachmentTypes();
         for (int i = 0; i < names.size(); i++) {
             String fname = (String)names.get(i);
-            String desc = null; // the ui doesn't have a way to specify the attachment description
+            //String desc = null; // the ui doesn't have a way to specify the attachment description
             String type = (String)types.get(i);
             byte data[] = _source.getAttachmentData(i+1);
             
@@ -208,8 +208,8 @@ public class MessageCreator {
                 fos = new SecureFileOutputStream(cfgFile);
                 if (fname != null)
                     fos.write(DataHelper.getUTF8(Constants.MSG_ATTACH_NAME + '=' + CommandImpl.strip(fname.trim()) + '\n'));
-                if (desc != null)
-                    fos.write(DataHelper.getUTF8(Constants.MSG_ATTACH_DESCRIPTION + '=' + CommandImpl.strip(desc.trim()) + '\n'));
+                //if (desc != null)
+                //    fos.write(DataHelper.getUTF8(Constants.MSG_ATTACH_DESCRIPTION + '=' + CommandImpl.strip(desc.trim()) + '\n'));
                 if (type != null)
                     fos.write(DataHelper.getUTF8(Constants.MSG_ATTACH_CONTENT_TYPE + '=' + CommandImpl.strip(type.trim()) + '\n'));
                 else
@@ -255,18 +255,18 @@ public class MessageCreator {
             List authorKeys = client.getNymKeys(author, Constants.KEY_FUNCTION_MANAGE);
             for (int i = 0; i < authorKeys.size(); i++) {
                 NymKey key = (NymKey)authorKeys.get(i);
-                if (author != null) {
+                //if (author != null) {
                     SigningPrivateKey priv = new SigningPrivateKey(key.getData());
                     SigningPublicKey pub = priv.toPublic();
                     if (author.equals(pub.calculateHash())) {
                         authenticationKey = priv.calculateHash();
                     }
-                } else {
-                    if (key.isIdentity()) {
-                        authenticationKey = client.sha256(key.getData());
-                        break;
-                    }
-                }
+                //} else {
+                //    if (key.isIdentity()) {
+                //        authenticationKey = client.sha256(key.getData());
+                //        break;
+                //    }
+                //}
             }
         } // author may be null if signAs is set
         

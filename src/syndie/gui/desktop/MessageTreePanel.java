@@ -287,7 +287,7 @@ class MessageTreePanel extends DesktopPanel implements Themeable, Translatable {
             getEdgeRoot().setRedraw(false);
             ImageUtil.dispose(_avatar.getImage());
             _avatar.setImage(ImageUtil.ICON_EDITOR_NOT_BOOKMARKED);
-            if ( (_name != null) && (_description != null) ) {
+            if ( (_name != null) || (_description != null) ) {
                 StringBuilder buf = new StringBuilder();
                 if (_name != null)
                     buf.append(_name);

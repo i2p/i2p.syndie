@@ -60,9 +60,9 @@ public class ChannelInfo {
         _publicTags = Collections.EMPTY_SET;
         _privateTags = Collections.EMPTY_SET;
         _authorizedPosters = Collections.EMPTY_SET;
-        _authorizedPosters = Collections.EMPTY_SET;
+        _authorizedPosterHashes = Collections.EMPTY_SET;
         _authorizedManagers = Collections.EMPTY_SET;
-        _authorizedManagers = Collections.EMPTY_SET;
+        _authorizedManagerHashes = Collections.EMPTY_SET;
         _publicArchives = Collections.EMPTY_SET;
         _privateArchives = Collections.EMPTY_SET;
         _readKeys = Collections.EMPTY_SET;

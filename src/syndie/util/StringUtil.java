@@ -11,12 +11,21 @@ import java.util.Locale;
  */
 public class StringUtil {
 
-    /** split on the given character, with the resulting tokens not including that character */
+    /**
+     * split on the given character, with the resulting tokens not including that character
+     * @return non-null
+     */
     public static final String[] split(char elem, String orig) { return split(""+elem, orig); }
 
-    /** split on all of the characters in splitElements, with the resulting tokens not including that character */
+    /**
+     * split on all of the characters in splitElements, with the resulting tokens not including that character
+     * @return non-null
+     */
     public static final String[] split(String splitElements, String orig) { return split(splitElements, orig, true); }
 
+    /**
+     * @return non-null
+     */
     public static final String[] split(String splitElements, String orig, boolean includeZeroSizedElem) {
         List vals = new ArrayList();
         int off = 0;
@@ -36,7 +45,7 @@ public class StringUtil {
             }
             off++;
         }
-        String val = null;
+        String val;
         if (off-start > 0)
             val = new String(str, start, off-start);
         else 

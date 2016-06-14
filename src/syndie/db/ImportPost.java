@@ -915,7 +915,7 @@ public class ImportPost {
                     if ((parents == null) || (parents.length == 0)) {
                         parents = pubParents;
                         _ui.debugMessage("replacing private parent set with public one");
-                    } else if ( (parents != null) && (pubParents != null) && (parents.length > 0) && (pubParents.length > 0) ) {
+                    } else if ((pubParents != null) && (parents.length > 0) && (pubParents.length > 0) ) {
                         SyndieURI merged[] = new SyndieURI[parents.length + pubParents.length];
                         for (int i = 0; i < parents.length; i++)
                             merged[i] = parents[i];
@@ -1292,10 +1292,7 @@ public class ImportPost {
                     stmt.setString(5, CommandImpl.strip(name));
                     stmt.setString(6, CommandImpl.strip(desc));
                     stmt.setLong(7, uriId);
-                    if (type != null)
-                        stmt.setString(8, type);
-                    else
-                        stmt.setNull(8, Types.VARCHAR);
+                    stmt.setString(8, type);
                     stmt.executeUpdate();
                 } catch (SQLException se) {
                     _exception = se;

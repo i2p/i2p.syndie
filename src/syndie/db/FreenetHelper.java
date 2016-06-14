@@ -232,7 +232,7 @@ public class FreenetHelper {
         Map<String, String> rv = new HashMap<String, String>();
         // Save message types now for polling
         rv.put("cmd",line);
-        while (line != null) {
+        while (true) {
             sb = new StringBuilder();
             for (c = isr.read(); c != '\n' && c != -1 ; c = isr.read()) {
                 sb.append((char)c);
@@ -251,7 +251,6 @@ public class FreenetHelper {
                 rv.put(name, val);
             }
         }
-        return rv;
     }
     
 }

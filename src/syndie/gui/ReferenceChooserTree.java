@@ -940,10 +940,10 @@ class ReferenceChooserTree extends BaseComponent implements Translatable, Themea
             if (_choiceListener != null)
                 _choiceListener.bookmarkSelected(childItem, child);
         }
-        String desc = null; //child.getDescription();
-        if ( (desc != null) && (desc.trim().length() > 0) )
-            childItem.setText(child.getName() + "-" + child.getDescription());
-        else
+        //String desc = null; //child.getDescription();
+        //if ( (desc != null) && (desc.trim().length() > 0) )
+        //    childItem.setText(child.getName() + "-" + child.getDescription());
+        //else
             childItem.setText(child.getName());
         SyndieURI uri = child.getURI();
         if (uri != null)

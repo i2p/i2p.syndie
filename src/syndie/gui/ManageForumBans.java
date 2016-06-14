@@ -212,10 +212,8 @@ class ManageForumBans extends BaseComponent implements Themeable, Translatable {
         }
         ReferenceNode rv = _refTree.getDragged();
         if (rv == null) {
-            BookmarkDnD bookmark = null;
             SyndieURI uri = null;
-
-            bookmark = new BookmarkDnD();
+            BookmarkDnD bookmark = new BookmarkDnD();
             bookmark.fromString(data);
             if (bookmark.uri == null) { // parse fail
                 String str = data;
@@ -229,9 +227,9 @@ class ManageForumBans extends BaseComponent implements Themeable, Translatable {
                     }
                 }
             }
-            if ( (uri == null) && (bookmark == null) ) {
+            if ( (uri == null) && (bookmark.uri == null) ) {
                 rv = null;
-            } else if (bookmark != null) {
+            } else if (bookmark.uri != null) {
                 rv = new ReferenceNode(bookmark.name, bookmark.uri, bookmark.desc, null);
             } else {
                 rv = new ReferenceNode(System.currentTimeMillis()+"", uri, "", null);

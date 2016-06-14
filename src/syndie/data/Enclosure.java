@@ -108,7 +108,7 @@ public class Enclosure {
             return null;
         } else {
             String str[] = StringUtil.split('\t', val); // val.split("\t");
-            if (str != null) {
+
                 SyndieURI uris[] = new SyndieURI[str.length];
                 int invalid = 0;
                 for (int i = 0; i < str.length; i++) {
@@ -132,9 +132,7 @@ public class Enclosure {
                 } else {
                     return uris;
                 }
-            } else {
-                return null;
-            }
+
         }
     }
     
@@ -233,7 +231,7 @@ public class Enclosure {
             return null;
         } else {
             String str[] = StringUtil.split('\t', val); //val.split("\t");
-            if (str != null) {
+
                 SessionKey keys[] = new SessionKey[str.length];
                 int invalid = 0;
                 for (int i = 0; i < keys.length; i++) {
@@ -256,9 +254,7 @@ public class Enclosure {
                 } else {
                     return keys;
                 }
-            } else {
-                return null;
-            }
+
         }
     }
     public SigningPublicKey getHeaderSigningKey(String key) {

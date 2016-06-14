@@ -493,10 +493,8 @@ class MessageReferencesEditor extends BaseComponent implements Themeable, Transl
     }
     
     private ReferenceNode getToAdd(String data) {
-        BookmarkDnD bookmark = null;
         SyndieURI uri = null;
-
-        bookmark = new BookmarkDnD();
+        BookmarkDnD bookmark = new BookmarkDnD();
         bookmark.fromString(data);
         if (bookmark.uri == null) { // parse fail
             String str = data;
@@ -511,9 +509,9 @@ class MessageReferencesEditor extends BaseComponent implements Themeable, Transl
             }
         }
 
-        if ( (uri == null) && (bookmark == null) ) {
+        if ( (uri == null) && (bookmark.uri == null) ) {
             return null;
-        } else if (bookmark != null) {
+        } else if (bookmark.uri != null) {
             return new ReferenceNode(bookmark.name, bookmark.uri, bookmark.desc, null);
         } else {
             return new ReferenceNode(System.currentTimeMillis()+"", uri, "", null);

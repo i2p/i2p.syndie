@@ -143,7 +143,7 @@ class UrlLauncher implements Runnable {
                     // No worries.
                 }
                 foo.delete();
-            } catch (Exception e) {
+            } catch (RuntimeException e) {
                 // Defaults to IE.
             } finally {
                 if (bufferedReader != null)
