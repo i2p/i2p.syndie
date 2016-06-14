@@ -469,7 +469,7 @@ public class ExpirationManager extends BaseComponent implements Themeable, Trans
                 gl.verticalSpacing = 0;
                 gl.horizontalSpacing = 0;
                 attributeRoot.setLayout(gl);
-                final Composite subRoot = attributeRoot;
+                //final Composite subRoot = attributeRoot;
                 _mimicDefault.addSelectionListener(new FireSelectionListener() {
                     public void fire() {
                         setMimic(_mimicDefault.getSelection());

@@ -1425,11 +1425,11 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     
     private void initPrivacyCombo() {
         _privacy.setRedraw(false);
-        int idx = -1;
-        if (_privacy.getItemCount() > 0)
-            idx = _privacy.getSelectionIndex();
-        else
-            idx = 1;
+        //int idx = -1;
+        //if (_privacy.getItemCount() > 0)
+        //    idx = _privacy.getSelectionIndex();
+        //else
+        //    idx = 1;
         _privacy.removeAll();
         _privacy.add(getText("Anyone can read the post"));
         _privacy.add(getText("Authorized readers of the forum can read the post"));
@@ -2785,7 +2785,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     public boolean isModifiedSinceOpen() { return _modifiedSinceOpen; }
 
     public SyndieURI getURI() {
-        long prevVersion = _postponeVersion;
+        //long prevVersion = _postponeVersion;
         saveState();
         SyndieURI rv = null;
         if (_postponeId >= 0) {

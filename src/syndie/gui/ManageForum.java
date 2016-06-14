@@ -160,7 +160,7 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
         if (scope == null)
             scope = uri.getHash("scope");
         if (scope != null) {
-            List keys = _client.getNymKeys(scope, Constants.KEY_FUNCTION_MANAGE);
+            //List keys = _client.getNymKeys(scope, Constants.KEY_FUNCTION_MANAGE);
             _scope = scope;
             _scopeId = _client.getChannelId(scope);
         } else {
@@ -364,7 +364,7 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
             });
         }
         
-        ChannelInfo info = _client.getChannel(_scopeId);
+        //ChannelInfo info = _client.getChannel(_scopeId);
         loadData();
         
         _translationRegistry.register(this);

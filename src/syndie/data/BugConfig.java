@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * contains the general configuration attributes necessary for filing bugs
@@ -64,8 +65,8 @@ public class BugConfig {
     }
     private static final String SQL_GET_COMPONENTS = "SELECT componentId, defaultDisplayName, isDefault, parentId FROM bugTrackComponent ORDER BY sortOrder ASC";
     private void loadComponents(Connection con) throws SQLException {
-        LinkedHashMap refNodes = new LinkedHashMap();
-        HashMap parents = new HashMap();
+        LinkedHashMap<String, ReferenceNode> refNodes = new LinkedHashMap<String, ReferenceNode>();
+        HashMap<String, String> parents = new HashMap();
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
@@ -91,10 +92,10 @@ public class BugConfig {
         
         // now turn the parents & refNodes into a tree
         List roots = new ArrayList();
-        for (Iterator iter = refNodes.keySet().iterator(); iter.hasNext(); ) {
-            String id = (String)iter.next();
-            ReferenceNode node = (ReferenceNode)refNodes.get(id);
-            String parentId = (String)parents.get(id);
+        for (Map.Entry<String, ReferenceNode> e : refNodes.entrySet()) {
+            String id = e.getKey();
+            ReferenceNode node = e.getValue();
+            String parentId = parents.get(id);
             if (parentId == null) {
                 roots.add(node);
             } else {

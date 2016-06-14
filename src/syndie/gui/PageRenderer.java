@@ -280,7 +280,7 @@ class PageRenderer extends BaseComponent implements Themeable {
                 try {
                     off = _text.getOffsetAtLocation(p);
                     HTMLTag linkTag = null;
-                    StyleRange linkRange = null;
+                    //StyleRange linkRange = null;
                     HTMLTag imgTag = null;
                     StyleRange imgRange = null;
                     for (int i = 0; i < _linkTags.size(); i++) {
@@ -288,7 +288,7 @@ class PageRenderer extends BaseComponent implements Themeable {
                         if ( (off >= tag.startIndex) && (off <= tag.endIndex) ) {
                             StyleRange range = _text.getStyleRangeAtOffset(off);
                             linkTag = tag;
-                            linkRange = range;
+                            //linkRange = range;
                             break;
                         }
                     }
@@ -659,10 +659,10 @@ class PageRenderer extends BaseComponent implements Themeable {
                 _text.setStyleRanges(ranges);
                 long afterSet = System.currentTimeMillis();
                 _ui.debugMessage("syncExec to write on the styledText: ranges set w/ " + ranges.length + " in " + (afterSet-beforeSet));
-                before = System.currentTimeMillis();
+                //before = System.currentTimeMillis();
                 setLineProperties(builder, sbuilder);
-                after = System.currentTimeMillis();
-                _ui.debugMessage("syncExec to write on the styledText: line props set after " + (after-before));
+                //after = System.currentTimeMillis();
+                //_ui.debugMessage("syncExec to write on the styledText: line props set after " + (after-before));
 
                 _bgImage = sbuilder.getBackgroundImage();
                 if (_styled && _bgImage != null) {
@@ -695,7 +695,7 @@ class PageRenderer extends BaseComponent implements Themeable {
      * level, with indents, coloring, bullets, etc
      */
     private void setLineProperties(HTMLStateBuilder stateBuilder, HTMLStyleBuilder styleBuilder) {
-        long prep = System.currentTimeMillis();
+        //long prep = System.currentTimeMillis();
         int lines = _text.getLineCount();
         /*
         _text.setLineAlignment(0, lines, SWT.LEFT);
@@ -741,7 +741,7 @@ class PageRenderer extends BaseComponent implements Themeable {
         long timesFindAlign[] = new long[lines];
         long timesFindList[] = new long[lines];
         long timesPrepare[] = new long[lines];
-        long endPrep = System.currentTimeMillis();
+        //long endPrep = System.currentTimeMillis();
         for (int line = 0; line < lines; line++) {
             times[line] = System.currentTimeMillis();
             int lineStart = _text.getOffsetAtLine(line);

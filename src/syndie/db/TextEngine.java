@@ -802,10 +802,10 @@ public class TextEngine {
     
     private void displayAliases() {
         _ui.statusMessage("<<< aliases >>>");
-        Map aliases = _client.getAliases(_client.getLoggedInNymId());
-        for (Iterator iter = aliases.keySet().iterator(); iter.hasNext(); ) {
-            String name = (String)iter.next();
-            String value = (String)aliases.get(name);
+        Map<String, String> aliases = _client.getAliases(_client.getLoggedInNymId());
+        for (Map.Entry<String, String> e : aliases.entrySet()) {
+            String name = e.getKey();
+            String value = e.getValue();
             _ui.statusMessage(' ' + name + padBlank(name, 19) + ": " + value);
         }
     }

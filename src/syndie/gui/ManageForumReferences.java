@@ -475,7 +475,7 @@ class ManageForumReferences extends BaseComponent implements Themeable, Translat
                 Tree tree = _targetTree;
                 Point pt = tree.toControl(evt.x, evt.y);
                 TreeItem item = tree.getItem(pt);
-                boolean before = isPointFirstHalf(tree, pt, item);
+                //boolean before = isPointFirstHalf(tree, pt, item);
                 
                 ReferenceNode toAdd = getToAdd(evt.data.toString());
                 ReferenceNode node = (ReferenceNode)_targetItemToNode.get(item);

@@ -38,10 +38,10 @@ public class ChanList extends CommandImpl {
                     client.close();
                 client.connect(args.getOptValue("db"));
             }
-            Map ids = client.getChannelIds();
-            for (Iterator iter = ids.keySet().iterator(); iter.hasNext(); ) {
-                Long id = (Long)iter.next();
-                Hash chan = (Hash)ids.get(id);
+            Map<Long, Hash> ids = client.getChannelIds();
+            for (Map.Entry<Long, Hash> e : ids.entrySet()) {
+                Long id = e.getKey();
+                Hash chan = e.getValue();
                 ui.statusMessage("Channel " + id + ": " + chan.toBase64());
             }
             ui.commandComplete(0, null);

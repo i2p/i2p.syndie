@@ -237,7 +237,7 @@ class LogTab extends BrowserTab implements UI, Themeable, Translatable {
             _outBuf.delete(MAX_CHARS, chars);
 
         final String str = _outBuf.toString();
-        final int strlen = str.length();
+        //final int strlen = str.length();
         Display.getDefault().asyncExec(new Runnable() {
             public void run() {
                 if ( (_out == null) || (_out.isDisposed()) ) return;

@@ -453,17 +453,26 @@ public class ThreadBuilder {
             return buf.toString();
         }
     }
+
     private static class Message {
         ThreadMsgId id;
         /** list of ThreadMsgId, most recent first */
         List references;
         
+        @Override
         public String toString() { return (id != null ? id.toString() : "nomsg"); }
+
+        @Override
         public boolean equals(Object o) {
             if (id != null)
                 return id.equals(((Message)o).id);
             else
                 return super.equals(o);
+        }
+
+        @Override
+        public int hashCode() {
+            return id != null ? id.hashCode() : 0;
         }
     }
 }

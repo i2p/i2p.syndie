@@ -367,7 +367,7 @@ class ReferenceChooserTree extends BaseComponent implements Translatable, Themea
     
     protected void initComponents(boolean register, boolean multipleSelections, Timer timer) {
         if (timer != null) timer.addEvent("refChooserTree init");
-        long t1 = System.currentTimeMillis();
+        //long t1 = System.currentTimeMillis();
         _root = new Composite(_parent, SWT.NONE);
         _root.setLayout(new GridLayout(1, true));
         _tree = new Tree(_root, SWT.BORDER | (multipleSelections ? SWT.MULTI : SWT.SINGLE));
@@ -462,15 +462,15 @@ class ReferenceChooserTree extends BaseComponent implements Translatable, Themea
             _searchList.setVisible(false);
         }
         
-        long t2 = System.currentTimeMillis();
+        //long t2 = System.currentTimeMillis();
         configTreeListeners(_tree);
-        long t3 = System.currentTimeMillis();
+        //long t3 = System.currentTimeMillis();
         
         if (timer != null) timer.addEvent("refChooserTree init: gui built");
         //_browser.getUI().debugMessage("init refChooserTree", new Exception("source"));
         rebuildBookmarks();
         if (timer != null) timer.addEvent("refChooserTree init: bookmarks rebuilt");
-        long t4 = System.currentTimeMillis();
+        //long t4 = System.currentTimeMillis();
         _root.getDisplay().timerExec(500, new Runnable() {
             public void run() {
                 JobRunner.instance().enqueue(new Runnable() {
@@ -491,7 +491,7 @@ class ReferenceChooserTree extends BaseComponent implements Translatable, Themea
             }
         });
         if (timer != null) timer.addEvent("refChooserTree init: after enqueue");
-        long t8 = System.currentTimeMillis();
+        //long t8 = System.currentTimeMillis();
         
         _chooseAllStartupItems = false;
         if (register) {
@@ -501,7 +501,7 @@ class ReferenceChooserTree extends BaseComponent implements Translatable, Themea
         if (timer != null) timer.addEvent("refChooserTree init: after register");
         
         _client.addWatchEventListener(this);
-        long t9 = System.currentTimeMillis();
+        //long t9 = System.currentTimeMillis();
         if (timer != null) timer.addEvent("refChooserTree init: complete");
         //System.out.println("tree init: " + (t2-t1)+"/"+(t3-t2)+"/"+(t4-t3)+"/"+(t8-t4)+"/"+(t9-t8));
     }
@@ -562,26 +562,26 @@ class ReferenceChooserTree extends BaseComponent implements Translatable, Themea
 
     private class Rebuilder implements Runnable {
         public void run() {
-            final long t1 = System.currentTimeMillis();
+            //final long t1 = System.currentTimeMillis();
             synchronized (_nymRefs) {
                 if (_rebuilding) return;
                 _rebuilding = true;
             }
             _ui.debugMessage("rebuilder started");
             final ArrayList<NymReferenceNode> refs = new ArrayList(_client.getNymReferences(_client.getLoggedInNymId()));
-            final long t2 = System.currentTimeMillis();
+            //final long t2 = System.currentTimeMillis();
             synchronized (_nymRefs) {
                 _nymRefs.clear();
                 _nymRefs.addAll(refs);
             }
-            final long t3 = System.currentTimeMillis();
+            //final long t3 = System.currentTimeMillis();
             Display.getDefault().asyncExec(new Runnable() {
                 public void run() { 
-                    long t4 = System.currentTimeMillis();
+                    //long t4 = System.currentTimeMillis();
                     bookmarksRebuilt(refs);
                     _tree.setRedraw(false);
                     redrawBookmarks();
-                    long t5 = System.currentTimeMillis();
+                    //long t5 = System.currentTimeMillis();
                     boolean view = false;
                     synchronized (_nymRefs) {
                         _rebuilding = false;
@@ -596,8 +596,8 @@ class ReferenceChooserTree extends BaseComponent implements Translatable, Themea
                     }
                     //getBookmarkRoot().setExpanded(true);
                     _tree.setRedraw(true);
-                    long t6 = System.currentTimeMillis();
-                    _ui.debugMessage("redraw after rebuild: " + (t6-t1) + " view? " + view + " " + (t2-t1)+"/"+(t3-t2)+"/"+(t4-t3)+"/"+(t5-t4)+"/"+(t6-t5));
+                    //long t6 = System.currentTimeMillis();
+                    //_ui.debugMessage("redraw after rebuild: " + (t6-t1) + " view? " + view + " " + (t2-t1)+"/"+(t3-t2)+"/"+(t4-t3)+"/"+(t5-t4)+"/"+(t6-t5));
                     if (shouldScheduleNow()) // only returns true once
                         askScheduleArchives();
                 }

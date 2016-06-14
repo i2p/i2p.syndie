@@ -79,7 +79,7 @@ public class CancelManager extends BaseComponent implements Themeable, Translata
                     name = chan.toBase64().substring(0,6);
                 else
                     name = chanId + "";
-                chanName = name;
+                //chanName = name;
             }
             
             _channelPolicies.add(policy);

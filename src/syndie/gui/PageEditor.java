@@ -431,7 +431,7 @@ public class PageEditor extends BaseComponent implements Themeable {
             //_text.insert(buf.toString());
             ////_text.setCaretOffset(_text.getCaretOffset()+text.length());
         }
-        boolean focused = _text.forceFocus();
+        _text.forceFocus();
     }
     
     private boolean isAtBeginningOfLine(int offset) {

@@ -250,7 +250,7 @@ class HTMLStyleBuilder {
             // now trim the set of applicable tags
             List<HTMLTag> tags = (List)breakPointTags.get(curBreakPoint);
             for (int i = 0; i < tags.size(); i++) {
-                HTMLTag tag = (HTMLTag)tags.get(i);
+                HTMLTag tag = tags.get(i);
                 if ( (tag.startIndex <= start) && (tag.endIndex >= start+length) ) {
                     // ok, applicable
                 } else {
@@ -401,7 +401,7 @@ class HTMLStyleBuilder {
     }
     
     private StyleRange getStyle(int start, int length, List<HTMLTag> tags) {
-        long begin = System.currentTimeMillis();
+        //long begin = System.currentTimeMillis();
         // turn the given tags into a style
         StyleRange style = new StyleRange();
         style.start = start;
@@ -522,9 +522,9 @@ class HTMLStyleBuilder {
         if ( (customStyle != 0) || (sizeModifier != 0) || (fontName != null) || (_viewSizeModifier != 0) ) {
             // ok, we can't use a default font, so lets construct a new one (or use a cached one)
             //style.font = 
-            long before = System.currentTimeMillis();
+            //long before = System.currentTimeMillis();
             buildFont(style.font, customStyle, sizeModifier, fontName, style);
-            long after = System.currentTimeMillis();
+            //long after = System.currentTimeMillis();
             //if (after-before > 10)
             //    ts("custom font took " + (after-before) + ": " + fontName + "/" + customStyle+"/"+sizeModifier+"/"+_viewSizeModifier);
         }

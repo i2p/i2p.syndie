@@ -372,7 +372,7 @@ public class Export {
         return ticketId;
     }
     
-    private static final Map TYPE_MAP = new HashMap();
+    private static final Map<String, String> TYPE_MAP = new HashMap<String, String>();
     private static final String TYPE_DEFAULT = "defect";
     static {
         TYPE_MAP.put("type.bug", "defect");
@@ -380,7 +380,7 @@ public class Export {
         TYPE_MAP.put("type.usability", "usability issue");
     }
     
-    private static final Map COMPONENT_MAP = new HashMap();
+    private static final Map<String, String> COMPONENT_MAP = new HashMap<String, String>();
     private static final String COMPONENT_DEFAULT = "other";
     /* 
      * trac's components:
@@ -431,7 +431,7 @@ public class Export {
         COMPONENT_MAP.put("component.web", "website");
     }
     
-    private static final Map SEVERITY_MAP = new HashMap();
+    private static final Map<String, String> SEVERITY_MAP = new HashMap<String, String>();
     private static final String SEVERITY_DEFAULT = "normal";
     static {
         SEVERITY_MAP.put("severity.trivial", "very minor");
@@ -443,7 +443,7 @@ public class Export {
         SEVERITY_MAP.put("severity.blocker", "prevents anything from working");
     }
 
-    private static final Map PRIORITY_MAP = new HashMap();
+    private static final Map<String, String> PRIORITY_MAP = new HashMap<String, String>();
     private static final String PRIORITY_DEFAULT = "minor";
     static {
         // use the severity from syndie to populate the priority as well
@@ -461,11 +461,11 @@ public class Export {
     private String getTicketSeverity(Set tags) { return translateTagVal(tags, SEVERITY_MAP, SEVERITY_DEFAULT); }
     private String getTicketPriority(Set tags) { return translateTagVal(tags, PRIORITY_MAP, PRIORITY_DEFAULT); }
     
-    private String translateTagVal(Set tags, Map map, String defValue) {
-        for (Iterator iter = map.keySet().iterator(); iter.hasNext(); ) {
-            String src = (String)iter.next();
+    private String translateTagVal(Set tags, Map<String, String> map, String defValue) {
+        for (Map.Entry<String, String> e : map.entrySet()) {
+            String src = e.getKey();
             if (tags.contains(src)) {
-                String val = (String)map.get(src);
+                String val = e.getValue();
                 //_ui.debugMessage("translating [" + src + "] into [" + val + "] (default=" + defValue + ")");
                 if (val != null)
                     return val;

@@ -670,9 +670,9 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
                     long diff = System.currentTimeMillis() - customDate;
                     _age = (int)((diff+24*60*60*1000l-1) / (24*60*60*1000l));
                     
-                    String reparsed = DateTime.getDate(customDate);
+                    /* String reparsed = */ DateTime.getDate(customDate);
                     _msgTree.applyFilter();
-                    String afterApply = DateTime.getDate(customDate);
+                    /* String afterApply = */ DateTime.getDate(customDate);
                 }
             } catch (ParseException pe) {
                 MessageBox box = new MessageBox(_filterRow.getShell(), SWT.ICON_ERROR | SWT.OK);
@@ -1830,7 +1830,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         _itemToNode.clear();
         _threadReferenceNodes = referenceNodes;
         long totalDBTime = 0;
-        long before = System.currentTimeMillis();
+        //long before = System.currentTimeMillis();
         
         //_tree.setItemCount(referenceNodes != null ? referenceNodes.size() : 0);
         // done on-demand via the virtual tree
@@ -1844,13 +1844,13 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             totalDBTime += add(node, null);
         }
         
-        long after = System.currentTimeMillis();
+        //long after = System.currentTimeMillis();
         //_ui.debugMessage("setting messages: db time: " + totalDBTime + " for " + referenceNodes.size() + ", total add time: " + (after-before));
         
-        long beforeGetTags = System.currentTimeMillis();
+        //long beforeGetTags = System.currentTimeMillis();
         if (recalcTags)
             _tags.addAll(getTags(allNodes));
-        long afterGetTags = System.currentTimeMillis();
+        //long afterGetTags = System.currentTimeMillis();
         //_ui.debugMessage("get all tags took " + (afterGetTags-beforeGetTags) + " for " + _tags.size() + " tags");
         
         if (recalcTags) {

@@ -324,8 +324,8 @@ public class Theme {
         if (props == null) return old;
         try {
 
-            String defaultFace = getFace(old);
-            int baselineSize = getSize(old);
+            //String defaultFace = getFace(old);
+            //int baselineSize = getSize(old);
             
             String face = props.getProperty(prefPrefix + ".face");
             if (face == null) {

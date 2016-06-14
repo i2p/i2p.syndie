@@ -76,7 +76,7 @@ class ForumReferenceChooserPopup extends BaseComponent implements ReferenceChoos
         gl.marginWidth = 0;
         _shell.setLayout(gl);
         
-        Color color = ColorUtil.getColor("yellow");
+        //Color color = ColorUtil.getColor("yellow");
         
         _channels = new NymChannelTree(_client, _ui, _themeRegistry, _translationRegistry, _navControl, _banControl, _bookmarkControl, _shell, new NymChannelTree.NymChannelTreeListener() {
             public void channelSelected(SyndieURI uri) { 

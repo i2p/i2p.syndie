@@ -182,7 +182,7 @@ public class MessageViewBody extends BaseComponent implements Themeable, Transla
     public void viewMessage(final MessageInfo msg, int startPage, Timer timer) { viewMessage(msg, startPage, timer, null); }
 
     public void viewMessage(final MessageInfo msg, int startPage, Timer timer, ThreadReferenceNode messageThread) {
-        Theme theme = _themeRegistry.getTheme();
+        //Theme theme = _themeRegistry.getTheme();
         _messageThread = messageThread;
         _root.setVisible(false);
         disposeDetails();

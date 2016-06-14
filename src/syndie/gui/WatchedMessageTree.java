@@ -63,7 +63,7 @@ public class WatchedMessageTree extends MessageTree {
     void setMessages(List referenceNodes) {
         if (!_multiforum) { super.setMessages(referenceNodes); return; }
         Map forumToNodeList = new HashMap();
-        Map forumNameToForum = new TreeMap();
+        Map<String, Hash> forumNameToForum = new TreeMap<String, Hash>();
         for (int i = 0; i < referenceNodes.size(); i++) {
             ThreadReferenceNode node = (ThreadReferenceNode)referenceNodes.get(i);
             Hash forum = getForum(node);
@@ -83,9 +83,9 @@ public class WatchedMessageTree extends MessageTree {
         }
         List forumNodes = new ArrayList();
         // sorted by forum name
-        for (Iterator iter = forumNameToForum.keySet().iterator(); iter.hasNext(); ) {
-            String name = (String)iter.next();
-            Hash forum = (Hash)forumNameToForum.get(name);
+        for (Map.Entry<String, Hash> e : forumNameToForum.entrySet()) {
+            String name = e.getKey();
+            Hash forum = e.getValue();
             List nodes = (List)forumToNodeList.get(forum);
             //String name = _browser.getClient().getChannelName(forum);
             String type = nodes.size() + "";
