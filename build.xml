@@ -602,7 +602,7 @@
         <mkdir dir="plugin/lib" />
         <buildnumber file="scripts/build.number" />
 
-        <!-- make the update linux/mac xpi2p, this is for both 32 and 64 bit -->
+        <!-- make the update xpi2p and su3 files, both 32 and 64 bit -->
 
         <delete file="plugin/lib/hsqldb.jar.pack" />
         <delete file="plugin/lib/swt.jar.pack" />
@@ -635,25 +635,62 @@
                 <equals arg1="${release.password.su3}" arg2=""/>
             </condition>
         </fail>
+        <!-- make the linux update xpi2p and su3 files, 32 bit, no SWT -->
         <!-- this will fail if no su3 keys exist, as it needs the password twice -->
         <exec executable="scripts/makeplugin.sh" inputstring="${release.password.su3}" failonerror="true" >
             <arg value="plugin" />
         </exec>
         <move file="syndie.xpi2p" tofile="syndie-linux-i386-update.xpi2p" />
+        <move file="syndie.su3" tofile="syndie-linux-i386-update.su3" />
+
+        <!-- make the linux update xpi2p and su3 files, 64 bit, with SWT -->
         <!--
           -  These will not be used until the next update.
-          -  At that time, we could put an updated swt.jar in the 64-bit updates,
+          -  We put an updated swt.jar in the 64-bit updates,
           -  but NOT the 32-bit one, since old 64-bit linux and mac installs
           -  will point to the 32-bit linux update.
-          -  If we ever want to include swt.jar in the udpate, they cannot remain identical.
           -->
-        <copy file="syndie-linux-i386-update.xpi2p" tofile="syndie-linux-x86-64-update.xpi2p" />
-        <copy file="syndie-linux-i386-update.xpi2p" tofile="syndie-mac64-update.xpi2p" />
-        <move file="syndie.su3" tofile="syndie-linux-i386-update.su3" />
-        <copy file="syndie-linux-i386-update.su3" tofile="syndie-linux-x86-64-update.su3" />
-        <copy file="syndie-linux-i386-update.su3" tofile="syndie-linux-mac64-update.su3" />
+        <copy file="scripts/plugin-linux64.config" tofile="plugin/plugin.config" overwrite="true" />
+        <exec executable="echo" osfamily="unix" failonerror="true" output="plugin/plugin.config" append="true">
+            <arg value="version=${full.version}-b${build.number}" />
+        </exec>
+        <exec executable="echo" osfamily="unix" failonerror="true" output="plugin/plugin.config" append="true">
+            <arg value="update-only=true" />
+        </exec>
+        <ant dir="swt" target="ensure-lin64-swt" />
+        <exec executable="${java.home}/bin/pack200" failonerror="true">
+            <arg value="-g" />
+            <arg value="plugin/lib/swt.jar.pack" />
+            <arg value="${swt.lin64}" />
+        </exec>
+        <exec executable="scripts/makeplugin.sh" inputstring="${release.password.su3}" failonerror="true" >
+            <arg value="plugin" />
+        </exec>
+        <move file="syndie.xpi2p" tofile="syndie-linux-x86-64-update.xpi2p" />
+        <move file="syndie.su3" tofile="syndie-linux-x86-64-update.su3" />
 
-        <!-- make the windows update xpi2p (32/64) -->
+        <!-- make the mac update xpi2p and su3 files, 64 bit, with SWT -->
+        <copy file="scripts/plugin-mac64.config" tofile="plugin/plugin.config" overwrite="true" />
+        <exec executable="echo" osfamily="unix" failonerror="true" output="plugin/plugin.config" append="true">
+            <arg value="version=${full.version}-b${build.number}" />
+        </exec>
+        <exec executable="echo" osfamily="unix" failonerror="true" output="plugin/plugin.config" append="true">
+            <arg value="update-only=true" />
+        </exec>
+        <ant dir="swt" target="ensure-mac64-swt" />
+        <exec executable="${java.home}/bin/pack200" failonerror="true">
+            <arg value="-g" />
+            <arg value="plugin/lib/swt.jar.pack" />
+            <arg value="${swt.mac64}" />
+        </exec>
+        <exec executable="scripts/makeplugin.sh" inputstring="${release.password.su3}" failonerror="true" >
+            <arg value="plugin" />
+        </exec>
+        <move file="syndie.xpi2p" tofile="syndie-mac64-update.xpi2p" />
+        <move file="syndie.su3" tofile="syndie-mac64-update.su3" />
+
+        <!-- make the windows update xpi2p, 32 bit, no SWT -->
+        <delete file="plugin/lib/swt.jar.pack" />
         <copy file="scripts/plugin-windows32.config" tofile="plugin/plugin.config" overwrite="true" />
         <exec executable="echo" osfamily="unix" failonerror="true" output="plugin/plugin.config" append="true">
             <arg value="version=${full.version}-b${build.number}" />
@@ -666,18 +703,37 @@
             <arg value="plugin" />
         </exec>
         <move file="syndie.xpi2p" tofile="syndie-win32-update.xpi2p" />
+        <move file="syndie.su3" tofile="syndie-win32-update.su3" />
+
+        <!-- make the windows update xpi2p, 64 bit, with SWT -->
         <!--
           -  These will not be used until the next update.
-          -  At that time, we could put an updated swt.jar in the 64-bit updates,
+          -  We put an updated swt.jar in the 64-bit updates,
           -  but NOT the 32-bit one, since old 64-bit windows installs
           -  will point to the 32-bit update.
-          -  If we ever want to include swt.jar in the udpate, they cannot remain identical.
           -->
-        <copy file="syndie-win32-update.xpi2p" tofile="syndie-win64-update.xpi2p" />
-        <move file="syndie.su3" tofile="syndie-win32-update.su3" />
-        <copy file="syndie-win32-update.su3" tofile="syndie-win64-update.su3" />
+        <copy file="scripts/plugin-windows64.config" tofile="plugin/plugin.config" overwrite="true" />
+        <exec executable="echo" osfamily="unix" failonerror="true" output="plugin/plugin.config" append="true">
+            <arg value="version=${full.version}-b${build.number}" />
+        </exec>
+        <exec executable="echo" osfamily="unix" failonerror="true" output="plugin/plugin.config" append="true">
+            <arg value="update-only=true" />
+        </exec>
+        <ant dir="swt" target="ensure-mac64-swt" />
+        <exec executable="${java.home}/bin/pack200" failonerror="true">
+            <arg value="-g" />
+            <arg value="plugin/lib/swt.jar.pack" />
+            <arg value="${swt.mac64}" />
+        </exec>
+        <exec executable="scripts/makeplugin.sh" inputstring="${release.password.su3}" failonerror="true" >
+            <arg value="plugin" />
+        </exec>
+        <move file="syndie.xpi2p" tofile="syndie-win64-update.xpi2p" />
+        <move file="syndie.su3" tofile="syndie-win64-update.su3" />
 
-        <!-- make the 32 bit linux install xpi2p -->
+        <!-- Make install xpi2p/su3 -->
+
+        <!-- make the 32 bit linux install xpi2p/su3 -->
         <ant dir="swt" target="ensure-lin32-swt" />
         <copy file="scripts/LICENSE-swt.txt" todir="plugin" />
         <copy file="scripts/plugin-linux32.config" tofile="plugin/plugin.config" overwrite="true" />
@@ -696,7 +752,7 @@
         <move file="syndie.xpi2p" tofile="syndie-linux-i386.xpi2p" />
         <move file="syndie.su3" tofile="syndie-linux-i386.su3" />
 
-        <!-- make the 64 bit linux install xpi2p -->
+        <!-- make the 64 bit linux install xpi2p/su3 -->
         <ant dir="swt" target="ensure-lin64-swt" />
         <copy file="scripts/plugin-linux64.config" tofile="plugin/plugin.config" overwrite="true" />
         <exec executable="echo" osfamily="unix" failonerror="true" output="plugin/plugin.config" append="true">
@@ -714,7 +770,7 @@
         <move file="syndie.su3" tofile="syndie-linux-x86-64.su3" />
 
         <!-- macs use the linux clients config file -->
-        <!-- make the 64 bit mac install xpi2p -->
+        <!-- make the 64 bit mac install xpi2p/su3 -->
         <ant dir="swt" target="ensure-mac64-swt" />
         <copy file="scripts/plugin-mac64.config" tofile="plugin/plugin.config" overwrite="true" />
         <exec executable="echo" osfamily="unix" failonerror="true" output="plugin/plugin.config" append="true">
@@ -731,7 +787,7 @@
         <move file="syndie.xpi2p" tofile="syndie-mac64.xpi2p" />
         <move file="syndie.su3" tofile="syndie-mac64.su3" />
 
-        <!-- make the 32 bit windows install xpi2p -->
+        <!-- make the 32 bit windows install xpi2p/su3 -->
         <ant dir="swt" target="ensure-win32-swt" />
         <copy file="scripts/plugin-windows32.config" tofile="plugin/plugin.config" overwrite="true" />
         <copy file="scripts/clients-windows.config" tofile="plugin/clients.config" overwrite="true" />
@@ -749,7 +805,7 @@
         <move file="syndie.xpi2p" tofile="syndie-win32.xpi2p" />
         <move file="syndie.su3" tofile="syndie-win32.su3" />
 
-        <!-- make the 64 bit windows install xpi2p -->
+        <!-- make the 64 bit windows install xpi2p/su3 -->
         <ant dir="swt" target="ensure-win64-swt" />
         <copy file="scripts/plugin-windows64.config" tofile="plugin/plugin.config" overwrite="true" />
         <exec executable="echo" osfamily="unix" failonerror="true" output="plugin/plugin.config" append="true">
