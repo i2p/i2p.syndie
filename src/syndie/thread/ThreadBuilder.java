@@ -342,7 +342,7 @@ public class ThreadBuilder {
             iter.remove();
             rv.add(cur);
             Container c = (Container)_idTable.get(cur);
-            if ( (c != null) && (c.msg != null) ) {
+            if (c != null && c.msg != null && c.msg.references != null) {
                 for (int i = 0; i < c.msg.references.size(); i++) {
                     ThreadMsgId ancestor = (ThreadMsgId)c.msg.references.get(i);
                     if (!rv.contains(ancestor))
