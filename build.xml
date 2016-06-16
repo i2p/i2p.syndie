@@ -18,6 +18,7 @@
     <property name="pkgtemp.dir" value="pkg-temp" />
     <property name="pkgtemp.lib" value="${pkgtemp.dir}/lib" />
     <property name="i2p.src.dir" value="../i2p.i2p" />
+    <property name="i2psnark.jar" value="${i2p.src.dir}/build/i2psnark.jar" />
     <property name="launch4j.dir" value="${i2p.src.dir}/installer/lib/launch4j" />
     <property name="izpack.dir" value="${i2p.src.dir}/installer/lib/izpack" />
     <property name="desktop.class" value="syndie.gui.desktop.DesktopMain" />
@@ -117,6 +118,7 @@
                 <manifest>
                     <attribute name="Main-Class" value="@{type-class}" />
                     <attribute name="Class-Path" value="../lib/i2p.jar ../lib/hsqldb.jar ../lib/syndie.jar @{additional}" />
+                    <attribute name="Built-By" value="${build.built-by}" />
                     <attribute name="Build-Date" value="${build.timestamp}" />
                     <attribute name="Base-Revision" value="${workspace.version}" />
                 </manifest>
@@ -214,7 +216,7 @@
             <exec executable="gpg" failonerror="true">
                 <arg value="-b" />
                 <arg value="-u" />
-                <arg value="${gpg.key}" />
+                <arg value="${release.gpg.keyid}" />
                 <arg value="@{file}" />
             </exec>
             <checksum format="MD5SUM" file="@{file}" algorithm="sha-256" fileext=".sha256"/>
@@ -229,8 +231,9 @@
                     <pathelement location="${i2p.jar}" />
                     <pathelement location="${i2psnark.jar}" />
                 </classpath>
-                <arg value="@{file}" />
+                <arg value="-a" />
                 <arg value="http://tracker2.postman.i2p/announce.php" />
+                <arg value="@{file}" />
             </java>
         </sequential>
     </macrodef>
@@ -246,6 +249,7 @@
              <jar destfile="build/izpackpatch.jar"
                  basedir="resources/izpack/patches" />
         <delete file="${pkgtemp.dir}/lib/swt.jar" />
+        <copy file="${i2p.src.dir}/installer/resources/i2plogo.png" tofile="resources/i2plogo.png" />
         <copy file="resources/uninstall.ico" todir="${pkgtemp.dir}/doc/Uninstaller" />
         <copy tofile="${pkgtemp.dir}/lib/swt.jar" file="@{swt}" />
         <ant target="repack-swt" />
@@ -272,7 +276,9 @@
         <variable name="desktopshortcutcheckboxenabled" value="true" />
     </variables>
     <guiprefs width="590" height="356" resizable="yes">
+      <!--
         <modifier key="labelFontSize" value="1.2" />
+       -->
         <laf name="liquid">
             <os family="unix"/>
         </laf>
@@ -313,6 +319,7 @@
     <native type="izpack" name="ShellLink.dll" />
     <native type="izpack" name="ShellLink_x64.dll" />
     <resources>
+        <res id="Installer.image" src="resources/i2plogo.png" />
         <res id="shortcutSpec.xml" src="resources/Win_shortcutSpec.xml" />
         <res id="Unix_shortcutSpec.xml" src="resources/Unix_shortcutSpec.xml" />
     </resources>
@@ -322,7 +329,7 @@
         <panel classname="TargetPanel"/>
         <panel classname="SummaryPanel"/>
         <panel classname="InstallPanel"/>
-        <panel classname="ShortcutPanel"/>
+        <panel classname="ShortcutPanel"><os family="windows" /></panel>
         <panel classname="SimpleFinishPanel"/>
     </panels>
     <packs>
@@ -1121,6 +1128,7 @@
         <delete file="plugin.zip" />
         <delete file="${ant.project.name}.fba" />
         <delete dir="pkg-osx" />
+        <delete file="resources/i2plogo.png" />
     </target>
 
     <target name="distclean" depends="clean" description="More throrough clean-up">
@@ -1293,7 +1301,7 @@ java -d64 -XstartOnFirstThread -cp $CP syndie.db.TextUI "$@"
         <build-installer os="osx" arch="64" swt="${swt.mac64}" />
     </target>
 
-    <target name="installer-all" depends="installer-linux, installer-windows, installer-osx" description="Create Windows, Linux and OSX installers" />
+    <target name="installer-all" depends="installer-linux, installer-windows, installer-osx64" description="Create Windows, Linux and OSX installers" />
 
     <target name="prep-osx" depends="jar, prep-docs, prep-mac-licenses">
         <mkdir dir="pkg-osx/Syndie.app/Contents/MacOS" />
@@ -1408,13 +1416,15 @@ exec java -d64 -XstartOnFirstThread -cp $CP syndie.gui.SWTUI
         </tar>
     </target>
 
-    <target name="pkg-all" depends="distclean, installer-all, pkg-osx, source-tarball, pkg-cli" description="Create packages/installers for all supported systems." />
+    <target name="pkg-all" depends="distclean, installer-all, pkg-osx64, source-tarball, pkg-cli" description="Create packages/installers for all supported systems." />
 
     <target name="-check-gpgkey">
-        <fail message="ERROR: Please specify your signing key with -Dgpg.key=YOURKEY!">
+        <echo message="Sign the files:" />
+        <input message="Enter GPG key ID (e.g. 0x12345678) for signing:" addproperty="release.gpg.keyid" />
+        <fail message="You must enter a key ID." >
             <condition>
                 <not>
-                    <isset property="gpg.key" />
+                    <isset property="release.gpg.keyid" />
                 </not>
             </condition>
         </fail>
@@ -1427,11 +1437,9 @@ exec java -d64 -XstartOnFirstThread -cp $CP syndie.gui.SWTUI
         <sign-and-sum file="syndie-installer-${syndie.release.version}.bin.linux64.jar" />
         <sign-and-sum file="syndie-installer-${syndie.release.version}.bin.win32.exe" />
         <sign-and-sum file="syndie-installer-${syndie.release.version}.bin.win64.exe" />
-        <sign-and-sum file="syndie-installer-${syndie.release.version}.bin.osx32.jar" />
         <sign-and-sum file="syndie-installer-${syndie.release.version}.bin.osx64.jar" />
         <sign-and-sum file="syndie-cli-${syndie.release.version}.bin.tar.bz2" />
         <sign-and-sum file="syndie-${syndie.release.version}.src.tar.bz2" />
-        <sign-and-sum file="syndie-${syndie.release.version}.bin.osx32.tar.bz2" />
         <sign-and-sum file="syndie-${syndie.release.version}.bin.osx64.tar.bz2" />
         <ant target="-torrent" />
 
@@ -1449,10 +1457,8 @@ exec java -d64 -XstartOnFirstThread -cp $CP syndie.gui.SWTUI
         <make-torrent file="syndie-installer-${syndie.release.version}.bin.linux64.jar" />
         <make-torrent file="syndie-installer-${syndie.release.version}.bin.win32.exe" />
         <make-torrent file="syndie-installer-${syndie.release.version}.bin.win64.exe" />
-        <make-torrent file="syndie-installer-${syndie.release.version}.bin.osx32.jar" />
         <make-torrent file="syndie-installer-${syndie.release.version}.bin.osx64.jar" />
         <make-torrent file="syndie-${syndie.release.version}.src.tar.bz2" />
-        <make-torrent file="syndie-${syndie.release.version}.bin.osx32.tar.bz2" />
         <make-torrent file="syndie-${syndie.release.version}.bin.osx64.tar.bz2" />
     </target>
 
