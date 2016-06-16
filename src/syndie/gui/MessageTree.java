@@ -1821,6 +1821,10 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         List referenceNodes = getCurrentPageNodes(allNodes);
         _tree.setRedraw(false);
         _tree.removeAll();
+        // pack so the width will be set right in setMinWidth(),
+        // otherwize 'apparent' width of subject column is the whole thing,
+        // and it won't be set correctly.
+        _tree.pack();
         _itemToURI.clear();
         _itemToMsgId.clear();
         _msgIdToItem.clear();
@@ -2205,9 +2209,10 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         int width = getWidth(txt) + _tree.getGridLineWidth()*2 + extra;
         if (width < min)
             width = min;
-        if (width > 400)
+        else if (width > 400)
             width = 400;
         int existing = col.getWidth();
+        //System.out.println("setMinWidth() " + txt + " extra " + extra + " min " + min + " width " + width + " existing " + existing);
         if (width > existing)
             col.setWidth(width);
     }
