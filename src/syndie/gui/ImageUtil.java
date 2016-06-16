@@ -233,6 +233,7 @@ public class ImageUtil {
     
     public static Image ICON_CLOSE;
     public static Image ICON_HELP;
+    public static Image ICON_START, ICON_PREV, ICON_NEXT, ICON_END;
     
     public static final Cursor CURSOR_WAIT = Display.getDefault().getSystemCursor(SWT.CURSOR_WAIT);
     
@@ -423,6 +424,10 @@ public class ImageUtil {
         
         _indisposableImages.add(ICON_CLOSE);
         _indisposableImages.add(ICON_HELP);
+        _indisposableImages.add(ICON_START);
+        _indisposableImages.add(ICON_PREV);
+        _indisposableImages.add(ICON_NEXT);
+        _indisposableImages.add(ICON_END);
         
         _timer.addEvent("image init add complete");
         //_timer.complete();
@@ -553,6 +558,10 @@ public class ImageUtil {
         
         ICON_CLOSE = createImageFromResource("iconClose.png");
         ICON_HELP = createImageFromResource("iconHelp.png");
+        ICON_START = createImageFromResource("start.png");
+        ICON_PREV = createImageFromResource("prev.png");
+        ICON_NEXT = createImageFromResource("next.png");
+        ICON_END = createImageFromResource("end.png");
 
         _timer.addEvent("image init: bulk icons created");
         

@@ -1018,7 +1018,8 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         _top.setLayout(new GridLayout(7, false));
         
         _navStart = new Button(_top, SWT.PUSH);
-        _navStart.setText("<<");
+        //_navStart.setText("<<");
+        _navStart.setImage(ImageUtil.ICON_START);
         _navStart.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _navStart.addSelectionListener(new FireSelectionListener() {
             public void fire() {
@@ -1027,7 +1028,8 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             }
         });
         _navPrev = new Button(_top, SWT.PUSH);
-        _navPrev.setText("<");
+        //_navPrev.setText("<");
+        _navPrev.setImage(ImageUtil.ICON_PREV);
         _navPrev.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _navPrev.addSelectionListener(new FireSelectionListener() {
             public void fire() {
@@ -1065,7 +1067,8 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         });
         
         _navNext = new Button(_top, SWT.PUSH);
-        _navNext.setText(">");
+        //_navNext.setText(">");
+        _navNext.setImage(ImageUtil.ICON_NEXT);
         _navNext.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _navNext.addSelectionListener(new FireSelectionListener() {
             public void fire() {
@@ -1074,7 +1077,8 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             }
         });
         _navEnd = new Button(_top, SWT.PUSH);
-        _navEnd.setText(">>");
+        //_navEnd.setText(">>");
+        _navEnd.setImage(ImageUtil.ICON_END);
         _navEnd.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _navEnd.addSelectionListener(new FireSelectionListener() {
             public void fire() {

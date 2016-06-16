@@ -746,7 +746,9 @@ class MessageView extends BaseComponent implements DataCallback, Translatable, T
         buttons.setLayout(new FillLayout(SWT.HORIZONTAL));
         
         _headerGoToPrevInThread = new Button(buttons, SWT.PUSH);
+        _headerGoToPrevInThread.setImage(ImageUtil.ICON_PREV);
         _headerGoToNextInThread = new Button(buttons, SWT.PUSH);
+        _headerGoToNextInThread.setImage(ImageUtil.ICON_NEXT);
         
         _headerReply = new Button(buttons, SWT.PUSH);
         _headerReply.setImage(ImageUtil.ICON_REPLYMESSAGE);
