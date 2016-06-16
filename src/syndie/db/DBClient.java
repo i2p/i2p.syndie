@@ -5544,7 +5544,6 @@ public class DBClient {
      *  Offline backup, must NOT be connected
      *  @param dbFileRoot /path/to/.syndie/db/syndie (i.e. without the .data suffix)
      *  @param out /path/to/zipfile
-     *  @return success
      *  @since 1.104b-2
      */
     static void offlineBackup(String dbFileRoot, String out) throws IOException {
