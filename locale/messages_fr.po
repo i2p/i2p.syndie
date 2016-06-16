@@ -5,14 +5,15 @@
 # 
 # Translators:
 # Boxoa590, 2013
+# syl_, 2016
 # Towinet, 2013-2015
 msgid ""
 msgstr ""
 "Project-Id-Version: I2P\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-01-20 22:47+0000\n"
-"PO-Revision-Date: 2016-01-11 17:19+0000\n"
-"Last-Translator: Towinet\n"
+"PO-Revision-Date: 2016-06-13 13:52+0000\n"
+"Last-Translator: syl_\n"
 "Language-Team: French (http://www.transifex.com/otf/I2P/language/fr/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -22,7 +23,7 @@ msgstr ""
 
 #: src/syndie/db/ImportResult.java:18
 msgid "Import successful"
-msgstr "Importation réussie"
+msgstr "Import réussi"
 
 #: src/syndie/db/ImportResult.java:22
 msgid "Already imported"
@@ -34,15 +35,15 @@ msgstr "Déjà supprimé"
 
 #: src/syndie/db/ImportResult.java:30
 msgid "Import forum info successful"
-msgstr "Importation  d'info de forum réussie"
+msgstr "Import d'info de forum réussi"
 
 #: src/syndie/db/ImportResult.java:34
 msgid "Import post successful"
-msgstr "Importation de post réussie"
+msgstr "Import de post réussi"
 
 #: src/syndie/db/ImportResult.java:38
 msgid "Import keys successful"
-msgstr "Importation de clés réussie"
+msgstr "Import de clés réussi"
 
 #: src/syndie/db/ImportResult.java:43
 msgid "Cancel requests processed"
@@ -65,7 +66,7 @@ msgstr "Clé de réponse inconnue"
 #: src/syndie/gui/Syndicator.java:913 src/syndie/gui/Syndicator.java:915
 #: src/syndie/gui/desktop/MessageEditorPanel.java:432
 msgid "Passphrase required"
-msgstr "Phrase mot de passe nécessaire"
+msgstr "Phrase de passe nécessaire"
 
 #: src/syndie/db/ImportResult.java:66
 msgid "No enclosure type"
@@ -105,7 +106,7 @@ msgstr "Chaîne inconnue"
 
 #: src/syndie/db/ImportResult.java:102
 msgid "Unknown author"
-msgstr "Auteur inconnue"
+msgstr "Auteur inconnu"
 
 #: src/syndie/db/ImportResult.java:106 src/syndie/gui/MessageEditor.java:2469
 #: src/syndie/gui/desktop/MessagePanel.java:189
@@ -177,7 +178,7 @@ msgstr "pas de proxy"
 
 #: src/syndie/gui/ArchiveDefaults.java:255
 msgid "Edit name"
-msgstr "Edite nom"
+msgstr "Éditer nom"
 
 #: src/syndie/gui/ArchiveDefaults.java:267
 #: src/syndie/gui/ManageForumArchives.java:498
@@ -257,7 +258,7 @@ msgstr "Emplacement archive"
 
 #: src/syndie/gui/ArchiveDefaults.java:390
 msgid "Edit proxy"
-msgstr "Editer proxy"
+msgstr "Éditer proxy"
 
 #: src/syndie/gui/ArchiveDefaults.java:401
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1060
