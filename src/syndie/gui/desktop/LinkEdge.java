@@ -31,7 +31,6 @@ import syndie.db.JobRunner;
 import syndie.db.UI;
 import syndie.gui.ColorUtil;
 import syndie.gui.FireSelectionListener;
-import syndie.gui.ImageGrid;
 import syndie.gui.ImageUtil;
 import syndie.gui.BookmarkDnDHelper;
 import syndie.gui.Theme;

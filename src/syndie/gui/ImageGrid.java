@@ -3,6 +3,7 @@ package syndie.gui;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.FocusListener;
@@ -24,6 +25,7 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Layout;
 import org.eclipse.swt.widgets.Shell;
+
 import syndie.util.Timer;
 import syndie.db.NullUI;
 
@@ -31,6 +33,7 @@ import syndie.db.NullUI;
  * create a grid of square images of the specified size and fill the grid from
  * either the top down or the bottom up.
  *
+ * Unused, seems to be a destop experiment for use in LinkEdge?
  */
 public class ImageGrid extends Composite {
     private int _imgPx;
@@ -149,6 +152,7 @@ public class ImageGrid extends Composite {
         return img;
     }
     
+/****
     public static void main(String args[]) {
         Display d = Display.getDefault();
         ImageUtil.init(new File("."), new Timer("image init", new NullUI()));
@@ -186,4 +190,5 @@ public class ImageGrid extends Composite {
         while (!d.isDisposed())
             try { if (!d.readAndDispatch()) d.sleep(); } catch (RuntimeException e) { e.printStackTrace(); }
     }
+****/
 }
