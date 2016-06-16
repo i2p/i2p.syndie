@@ -1120,6 +1120,10 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
          */
         
         _colSubject = new TreeColumn(_tree, SWT.LEFT);
+        // Force so the width will be set right in setMinWidth(),
+        // otherwize 'apparent' width of subject column is the whole thing,
+        // and it won't be set correctly.
+        _colSubject.setWidth(100);
         _colAuthor = new TreeColumn(_tree, SWT.LEFT);
         _colChannel = new TreeColumn(_tree, SWT.LEFT);
         _colDate = new TreeColumn(_tree, SWT.LEFT);
@@ -1821,10 +1825,6 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         List referenceNodes = getCurrentPageNodes(allNodes);
         _tree.setRedraw(false);
         _tree.removeAll();
-        // pack so the width will be set right in setMinWidth(),
-        // otherwize 'apparent' width of subject column is the whole thing,
-        // and it won't be set correctly.
-        _tree.pack();
         _itemToURI.clear();
         _itemToMsgId.clear();
         _msgIdToItem.clear();
@@ -2182,8 +2182,8 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             rethemeAncestorsOfUnread(item);
         }
         
-        setMinWidth(_colSubject, subj, 0, 200);
-        setMinWidth(_colAuthor, auth, 0, 150);
+        setMinWidth(_colSubject, subj, 20, 300);
+        setMinWidth(_colAuthor, auth, 0, 200);
         setMinWidth(_colChannel, chan, 0, 150);
         setMinWidth(_colDate, date, 20, 150);
         setMinWidth(_colTags, tags, 0, 50);
@@ -2209,8 +2209,8 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         int width = getWidth(txt) + _tree.getGridLineWidth()*2 + extra;
         if (width < min)
             width = min;
-        else if (width > 400)
-            width = 400;
+        else if (width > 500)
+            width = 500;
         int existing = col.getWidth();
         //System.out.println("setMinWidth() " + txt + " extra " + extra + " min " + min + " width " + width + " existing " + existing);
         if (width > existing)
