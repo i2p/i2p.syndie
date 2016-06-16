@@ -308,6 +308,7 @@ public class HTMLStateBuilder {
             // make sure the <p>foo</p> starts off with a blank line before it
             if (!isStartOfLine(body, bodyIndex, 1)) {
                 appendBody(body, '\n');
+                appendBody(body, '\n');
                 tag.startIndex++;
                 _prevWasWhitespace = true;
             }
