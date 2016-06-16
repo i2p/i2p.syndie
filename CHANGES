@@ -12,7 +12,9 @@
   - Sync buttons sync all or selected (ticket #1233) (thx hikiko)
   - Refactor and fix freenet support (ticket #1424) (thx hikiko)
   - Fix NPE in sortFiles() urn:syndie:channel:d7:channel44:MrsSwvkmnhkgujdeWHdRVX~1VAnMM9slpHRRjDg6Szs=9:messageIdi1421552448706ee
-  - Enable clearnet https archives (requires I2P 0.9.9 or higher)
+  - Fix NPE at shutdown
+  - Enable clearnet https archives
+  - Remove mac32 build target
   - Translation updates
   - New translations: Greek, Italian, Dutch, Brazilian Portuguese, Ukrainian, Chinese, Turkish
 

@@ -1,15 +1,18 @@
 package syndie.gui;
 
-import com.swabunga.spell.engine.SpellDictionary;
-import com.swabunga.spell.engine.SpellDictionaryHashMap;
-
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+
+import com.swabunga.spell.engine.SpellDictionary;
+import com.swabunga.spell.engine.SpellDictionaryHashMap;
+
 import net.i2p.util.SimpleTimer2;
+import net.i2p.util.SystemVersion;
+
 import syndie.db.JobRunner;
 
 /**
@@ -19,7 +22,7 @@ public class SpellUtil {
     private static SpellDictionaryHashMap _dictionary;
     private static volatile boolean _isEnabled;
 
-    private static final boolean _isWin = System.getProperty("os.name").startsWith("Win");
+    private static final boolean _isWin = SystemVersion.isWindows();
 
     private static final String PROP_STANDARD_WORDS = "syndie.dict";
     private static final String STANDARD_WORDS = "/usr/share/dict/words";

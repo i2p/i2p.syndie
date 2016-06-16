@@ -53,8 +53,4 @@ Sync:
   - Allow much more frequent syncing
 
 Translation:
-  - Compare TranslationRegistry.java to I2P's Translate.java, decide whether to switch to I2P's
-    Translate class (yes), and set up translation .po files
-  - edit/create translations
-  - Sync to I2P transifex
   - internationalize the text UI
