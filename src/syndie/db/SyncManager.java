@@ -13,7 +13,8 @@ import syndie.Constants;
 import syndie.data.SyndieURI;
 
 /**
- *
+ *  TODO lots of synchronization needed here
+ *  on the archive and listener lists.
  */
 public class SyncManager {
     private static DBClient _client;
@@ -45,10 +46,10 @@ public class SyncManager {
     private final Object _sslStateLock = new Object();
 
     private SyncManager() {
-        _archives = new ArrayList();
+        _archives = new ArrayList<SyncArchive>();
         _archivesLoaded = false;
         _online = false;
-        _listeners = new ArrayList();
+        _listeners = new ArrayList<SyncListener>();
     }
     
     public static void unloadAll() {
@@ -133,7 +134,7 @@ public class SyncManager {
         _online = online; 
         storeOnlineStatus(); 
         for (int i = 0; i < _listeners.size(); i++)
-            ((SyncListener)_listeners.get(i)).onlineStatusUpdated(_online);
+            _listeners.get(i).onlineStatusUpdated(_online);
         for (int i = 0; i < _archives.size(); i++)
             getArchive(i).fireUpdated();
         
@@ -147,7 +148,7 @@ public class SyncManager {
     private void loadOnlineStatus() {
         Properties prefs = _client.getNymPrefs();
         String val = prefs.getProperty("syndication.online", "true");
-        _online = Boolean.valueOf(val).booleanValue();
+        _online = Boolean.parseBoolean(val);
     }
     
     /** @since 1.105b */
@@ -168,13 +169,15 @@ public class SyncManager {
     public void removeListener(SyncListener lsnr, SyncArchive.SyncArchiveListener alsnr) { 
         _listeners.remove(lsnr);
         for (int i = 0; i < _archives.size(); i++) {
-            SyncArchive archive = (SyncArchive)_archives.get(i);
+            SyncArchive archive = _archives.get(i);
             archive.removeListener(alsnr);
         }
     }
     
     public int getArchiveCount() { return _archives.size(); }
-    public SyncArchive getArchive(int idx) { return (SyncArchive)_archives.get(idx); }
+
+    /** TODO avoid race, return a copy of the whole list instead */
+    public SyncArchive getArchive(int idx) { return _archives.get(idx); }
     
     public PullStrategy getDefaultPullStrategy() { return _defaultPullStrategy; }
     public PushStrategy getDefaultPushStrategy() { return _defaultPushStrategy; }
@@ -216,17 +219,17 @@ public class SyncManager {
         loadOnlineStatus();
         loadDefaultStrategies();
         // .. load 'em up
-        List names = _client.getNymArchiveNames();
+        List<String> names = _client.getNymArchiveNames();
         if (names.size() == 0) {
             names = _client.getNymArchiveNames();
         }
         for (int i = 0; i < names.size(); i++) {
-            String name = (String)names.get(i);
+            String name = names.get(i);
             try {
                 SyncArchive archive = new SyncArchive(this, _client, name);
                 _archives.add(archive);
                 for (int j = 0; j < _listeners.size(); j++)
-                    ((SyncListener)_listeners.get(j)).archiveLoaded(archive);
+                    _listeners.get(j).archiveLoaded(archive);
             } catch (IllegalStateException ise) {
                 _ui.errorMessage("Internal error loading the archive [" + name + "]", ise);
             }

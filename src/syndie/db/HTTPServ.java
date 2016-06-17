@@ -110,7 +110,7 @@ public class HTTPServ implements CLI.Command {
         boolean writable = false;
         String writableStr = prefs.getProperty("httpserv.writable");
         if (writableStr != null)
-            writable = Boolean.valueOf(writableStr).booleanValue();
+            writable = Boolean.parseBoolean(writableStr);
         return writable;
     }
     public static int getMinListeners(DBClient client) {

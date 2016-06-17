@@ -25,7 +25,7 @@ import static syndie.db.ImportResult.Detail.*;
  */
 class SyncInboundFetcher {
     private final SyncManager _manager;
-    private static final Map<Runner, SyncArchive> _runnerToArchive = new HashMap();
+    private static final Map<Runner, SyncArchive> _runnerToArchive = new HashMap<Runner, SyncArchive>();
     private volatile boolean _die;
 
     private static final int THREADS = 3;
@@ -82,7 +82,7 @@ class SyncInboundFetcher {
     private SyncArchive getNextToFetch(Runner runner) {
         int count = _manager.getArchiveCount();
         // shuffle the archives so we aren't always syncing with the first on the list
-        List<SyncArchive> archives = new ArrayList(count);
+        List<SyncArchive> archives = new ArrayList<SyncArchive>(count);
         for (int i = 0; i < count; i++) {
             archives.add(_manager.getArchive(i));
         }

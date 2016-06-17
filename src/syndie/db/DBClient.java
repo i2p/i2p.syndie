@@ -1049,7 +1049,7 @@ public class DBClient {
 
     /** retrieve a mapping of channelId (Long) to channel hash (Hash) */
     public Map<Long, Hash> getChannelIds() {
-        Map<Long, Hash> rv = new HashMap();
+        Map<Long, Hash> rv = new HashMap<Long, Hash>();
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
@@ -1064,7 +1064,7 @@ public class DBClient {
                     continue;
                 if (hash.length != Hash.HASH_LENGTH)
                     continue;
-                rv.put(Long.valueOf(id), new Hash(hash));
+                rv.put(Long.valueOf(id), Hash.create(hash));
             }
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
@@ -1089,7 +1089,7 @@ public class DBClient {
             if (rs.next()) {
                 byte chanHash[] = rs.getBytes(1);
                 if ( (chanHash != null) && (chanHash.length == Hash.HASH_LENGTH) )
-                    return new Hash(chanHash);
+                    return Hash.create(chanHash);
                 return null;
             } else {
                 return null;
@@ -1444,7 +1444,7 @@ public class DBClient {
                      */
                 }
                 
-                rv.add(new NymKey(type, data, _context.sha().calculateHash(data).toBase64(), auth, function, nymId, (chan != null ? new Hash(chan) : null)));
+                rv.add(new NymKey(type, data, _context.sha().calculateHash(data).toBase64(), auth, function, nymId, (chan != null ? Hash.create(chan) : null)));
             }
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
@@ -1569,7 +1569,7 @@ public class DBClient {
                 if (rs.wasNull()) chanId = -1;
                 boolean isExpired = (rs.getDate(4) == null);
                 if ( (chan != null) && (chan.length == Hash.HASH_LENGTH) && (key != null) && (key.length == SessionKey.KEYSIZE_BYTES) )
-                    rv.add(new NymKey(Constants.KEY_TYPE_AES256, key, true, Constants.KEY_FUNCTION_READ, _nymId, new Hash(chan), isExpired));
+                    rv.add(new NymKey(Constants.KEY_TYPE_AES256, key, true, Constants.KEY_FUNCTION_READ, _nymId, Hash.create(chan), isExpired));
             }
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
@@ -1719,7 +1719,7 @@ public class DBClient {
                 _identityChannels = new ChannelInfo[_identityChannelIds.size()];
             
             if (_identityChannels[idx] == null) {
-                ChannelInfo info = getChannel(((Long)_identityChannelIds.get(idx)).longValue());
+                ChannelInfo info = getChannel(_identityChannelIds.get(idx).longValue());
                 _identityChannels[idx] = info;
             }
             return _identityChannels[idx];
@@ -1730,7 +1730,7 @@ public class DBClient {
                 _managedChannels = new ChannelInfo[_managedChannelIds.size()];
             
             if (_managedChannels[idx] == null) {
-                ChannelInfo info = getChannel(((Long)_managedChannelIds.get(idx)).longValue());
+                ChannelInfo info = getChannel(_managedChannelIds.get(idx).longValue());
                 _managedChannels[idx] = info;
             }
             return _managedChannels[idx];
@@ -1741,7 +1741,7 @@ public class DBClient {
                 _postChannels = new ChannelInfo[_postChannelIds.size()];
             
             if (_postChannels[idx] == null) {
-                ChannelInfo info = getChannel(((Long)_postChannelIds.get(idx)).longValue());
+                ChannelInfo info = getChannel(_postChannelIds.get(idx).longValue());
                 _postChannels[idx] = info;
             }
             return _postChannels[idx];
@@ -1752,7 +1752,7 @@ public class DBClient {
                 _publicPostChannels = new ChannelInfo[_publicPostChannelIds.size()];
             
             if (_publicPostChannels[idx] == null) {
-                ChannelInfo info = getChannel(((Long)_publicPostChannelIds.get(idx)).longValue());
+                ChannelInfo info = getChannel(_publicPostChannelIds.get(idx).longValue());
                 _publicPostChannels[idx] = info;
             }
             return _publicPostChannels[idx];
@@ -1768,19 +1768,61 @@ public class DBClient {
     }
     
     private ChannelCollector _channelCache;
+    private boolean _channelDedupComplete = false;
+    private final Object _channelCacheLock = new Object();
 
     /**
      * the channel cache should be cleared when:
      * - new channels are imported
      * - new keys are imported
      */
-    void clearNymChannelCache() { _channelCache = null; }
+    void clearNymChannelCache() {
+        synchronized(_channelCacheLock) {
+             _channelCache = null;
+        }
+    }
 
     public ChannelCollector getNymChannels() {
-        if (_channelCache == null) {
-            _channelCache = getChannels(true, true, true, true, false);
+        synchronized(_channelCacheLock) {
+            if (_channelCache == null) {
+                if (!_channelDedupComplete) {
+                    dedupChannels();
+                    _channelDedupComplete = true;
+                }
+                _channelCache = getChannels(true, true, true, true, false);
+            }
+            return _channelCache;
         }
-        return _channelCache;
+    }
+
+    /**
+     *  For some reason we have duplicate channel hashes
+     *  when we shouldn't. Not clear if a bug in previous or current
+     *  version of hsqldb, or something wrong in our schema,
+     *  but the hashes should be unique.
+     *  @since 1.106b-1
+     */
+    private void dedupChannels() {
+        long start = System.currentTimeMillis();
+        Map<Long, Hash> channels = getChannelIds();
+        Set<Hash> hashes = new HashSet<Hash>(channels.size());
+        Set<Long> dups = new HashSet<Long>(16);
+        for (Map.Entry<Long, Hash> e : channels.entrySet()) {
+            if (!hashes.add(e.getValue())) {
+                if (_log.shouldLog(Log.WARN))
+                    _log.warn("Duplicate Hash in channel ID " + e.getKey() + ": " + e.getValue());
+                dups.add(e.getKey());
+            }
+        }
+        if (!dups.isEmpty()) {
+            for (Long id : dups) {
+                deleteFromDB(id.longValue(), _ui);
+            }
+            if (_log.shouldLog(Log.WARN)) {
+                long t = System.currentTimeMillis() - start;
+                _log.warn("Deleted " + dups.size() + " dups in " + t + " ms");
+            }
+        }
     }
     
     private static final String SQL_LIST_MANAGED_CHANNELS = "SELECT channelId FROM channelManageKey WHERE authPubKey = ?";
@@ -1795,22 +1837,23 @@ public class DBClient {
 
     /**
      *  Returns authenticated channels only
+     *  @param fetchinfo unused
      */
     public ChannelCollector getChannels(boolean includeManage, boolean includeIdent, boolean includePost, boolean includePublicPost, boolean fetchInfo) {
         ChannelCollector rv = new ChannelCollector();
         
-        List<Long> identIds = new ArrayList();
-        List<Long> manageIds = new ArrayList();
-        List<Long> postIds = new ArrayList();
-        List<Long> pubPostIds = new ArrayList();
+        List<Long> identIds = new ArrayList<Long>();
+        List<Long> manageIds = new ArrayList<Long>();
+        List<Long> postIds = new ArrayList<Long>();
+        List<Long> pubPostIds = new ArrayList<Long>();
         
-        List<SigningPublicKey> pubKeys = new ArrayList();
+        List<SigningPublicKey> pubKeys = new ArrayList<SigningPublicKey>();
         List<NymKey> manageKeys = getNymKeys(getLoggedInNymId(), getPass(), null, Constants.KEY_FUNCTION_MANAGE);
 
         // first, go through and find all the 'identity' channels - those that we have
         // the actual channel signing key for
         for (int i = 0; i < manageKeys.size(); i++) {
-            NymKey key = (NymKey)manageKeys.get(i);
+            NymKey key = manageKeys.get(i);
             if (key.getAuthenticated()) {
                 SigningPrivateKey priv;
                 try {
@@ -1845,7 +1888,7 @@ public class DBClient {
             try {
                 stmt = con.prepareStatement(SQL_LIST_MANAGED_CHANNELS);
                 for (int i = 0; i < pubKeys.size(); i++) {
-                    SigningPublicKey key = (SigningPublicKey)pubKeys.get(i);
+                    SigningPublicKey key = pubKeys.get(i);
                     stmt.setBytes(1, key.getData());
                     rs = stmt.executeQuery();
                     while (rs.next()) {
@@ -1878,7 +1921,7 @@ public class DBClient {
             try {
                 stmt = con.prepareStatement(SQL_LIST_POST_CHANNELS);
                 for (int i = 0; i < pubKeys.size(); i++) {
-                    SigningPublicKey key = (SigningPublicKey)pubKeys.get(i);
+                    SigningPublicKey key = pubKeys.get(i);
                     stmt.setBytes(1, key.getData());
                     rs = stmt.executeQuery();
                     while (rs.next()) {
@@ -1920,32 +1963,32 @@ public class DBClient {
         sortChannels(pubPostIds);
         
         // unused
-        int totalGetEvents = 0;
-        long totalGetTime = 0;
-        ArrayList getTimes = new ArrayList();
+        //int totalGetEvents = 0;
+        //long totalGetTime = 0;
+        //ArrayList getTimes = new ArrayList();
         
         for (int i = 0; i < identIds.size(); i++) {
-            Long chanId = (Long)identIds.get(i);
+            Long chanId = identIds.get(i);
             rv._internalIds.add(chanId);
             rv._identityChannelIds.add(chanId);
         }
         for (int i = 0; i < manageIds.size(); i++) {
-            Long chanId = (Long)manageIds.get(i);
+            Long chanId = manageIds.get(i);
             rv._internalIds.add(chanId);
             rv._managedChannelIds.add(chanId);
         }
         for (int i = 0; i < postIds.size(); i++) {
-            Long chanId = (Long)postIds.get(i);
+            Long chanId = postIds.get(i);
             rv._internalIds.add(chanId);
             rv._postChannelIds.add(chanId);
         }
         for (int i = 0; i < pubPostIds.size(); i++) {
-            Long chanId = (Long)pubPostIds.get(i);
+            Long chanId = pubPostIds.get(i);
             rv._internalIds.add(chanId);
             rv._publicPostChannelIds.add(chanId);
         }
         
-        _ui.debugMessage("getChannels: total time: " + totalGetTime + "ms\n" + getTimes);
+        //_ui.debugMessage("getChannels: total time: " + totalGetTime + "ms\n" + getTimes);
         return rv;
     }
 
@@ -2196,7 +2239,7 @@ public class DBClient {
                 String petdesc = rs.getString(15);
                 
                 info.setChannelId(channelId);
-                info.setChannelHash(new Hash(chanHash));
+                info.setChannelHash(Hash.create(chanHash));
                 info.setIdentKey(new SigningPublicKey(identKey));
                 info.setEncryptKey(new PublicKey(encryptKey));
                 info.setEdition(edition);
@@ -2879,7 +2922,7 @@ public class DBClient {
             while (rs.next()) {
                 byte hash[] = rs.getBytes(1);
                 if ( (hash != null) && (hash.length == Hash.HASH_LENGTH) )
-                    rv.add(SyndieURI.createScope(new Hash(hash)));
+                    rv.add(SyndieURI.createScope(Hash.create(hash)));
             }
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
@@ -2907,7 +2950,7 @@ public class DBClient {
                 if (rs.wasNull())
                     continue;
                 if ( (hash != null) && (hash.length == Hash.HASH_LENGTH) )
-                    rv.add(SyndieURI.createMessage(new Hash(hash), messageId));
+                    rv.add(SyndieURI.createMessage(Hash.create(hash), messageId));
             }
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
@@ -3143,7 +3186,7 @@ public class DBClient {
             if (rs.next()) {
                 byte hash[] = rs.getBytes(1);
                 if ( (hash != null) && (hash.length == Hash.HASH_LENGTH) )
-                    return new Hash(hash);
+                    return Hash.create(hash);
                 else
                     return null;
             } else {
@@ -3407,7 +3450,7 @@ public class DBClient {
                     info.setTargetChannel(chan);//chan.getChannelHash());
                 info.setSubject(subject);
                 if ( (overwriteChannel != null) && (overwriteMessage >= 0) ) {
-                    info.setOverwriteChannel(new Hash(overwriteChannel));
+                    info.setOverwriteChannel(Hash.create(overwriteChannel));
                     info.setOverwriteMessage(overwriteMessage);
                 }
                 info.setForceNewThread(forceNewThread);
@@ -3449,7 +3492,7 @@ public class DBClient {
                 byte chan[] = rs.getBytes(1);
                 long refId = rs.getLong(2);
                 if (!rs.wasNull() && (chan != null) )
-                    uris.add(SyndieURI.createMessage(new Hash(chan), refId));
+                    uris.add(SyndieURI.createMessage(Hash.create(chan), refId));
             }
             info.setHierarchy(uris);
         } catch (SQLException se) {
@@ -4195,7 +4238,7 @@ public class DBClient {
                 if ( (chan != null) && (chan.length == Hash.HASH_LENGTH) ) {
                     if (newOnly && (when != null) && (when.getTime() <= (System.currentTimeMillis()-SharedArchiveBuilder.PERIOD_NEW)) )
                         continue;
-                    rv.add(new Hash(chan));
+                    rv.add(Hash.create(chan));
                 }
             }
             return rv;
@@ -6875,7 +6918,7 @@ public class DBClient {
                 data.periodBegin = rs.getDate(5);
                 data.periodEnd = rs.getDate(6);
                 data.function = rs.getString(7);
-                data.channel = new Hash(rs.getBytes(8));
+                data.channel = Hash.create(rs.getBytes(8));
                 //data.nymId = _nymId;
                 
                 if (data.keySalt != null) {

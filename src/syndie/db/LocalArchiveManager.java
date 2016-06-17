@@ -87,7 +87,7 @@ public class LocalArchiveManager {
     private static boolean getBoolean(Properties prefs, String key, boolean def) {
         String val = prefs.getProperty(key);
         if (val == null) return def;
-        return Boolean.valueOf(val).booleanValue();
+        return Boolean.parseBoolean(val);
     }
     
     public static final String SHARED_INDEX_FILE = "shared-index.dat";

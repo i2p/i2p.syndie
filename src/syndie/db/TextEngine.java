@@ -1047,7 +1047,7 @@ public class TextEngine {
     private void doSetPrefs(Properties prefs) {
         String dbgVal = prefs.getProperty("debug");
         if (dbgVal != null) {
-            boolean debug = Boolean.valueOf(dbgVal).booleanValue();
+            boolean debug = Boolean.parseBoolean(dbgVal);
             boolean isNowDebug = _ui.toggleDebug();
             if (isNowDebug) {
                 if (debug) {
@@ -1066,7 +1066,7 @@ public class TextEngine {
         }
         String paginateVal = prefs.getProperty("paginate");
         if (paginateVal != null) {
-            boolean paginate = Boolean.valueOf(paginateVal).booleanValue();
+            boolean paginate = Boolean.parseBoolean(paginateVal);
             boolean isNowPaginate = _ui.togglePaginate();
             if (isNowPaginate) {
                 if (paginate) {

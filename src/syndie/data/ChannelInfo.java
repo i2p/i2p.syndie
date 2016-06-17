@@ -149,9 +149,8 @@ public class ChannelInfo {
     private Set<Hash> hash(Set<SigningPublicKey> keys) {
         if (keys.size() == 0)
             return Collections.EMPTY_SET;
-        Set<Hash> rv = new HashSet();
-        for (Iterator iter = keys.iterator(); iter.hasNext(); ) {
-            SigningPublicKey pub = (SigningPublicKey)iter.next();
+        Set<Hash> rv = new HashSet<Hash>(keys.size());
+        for (SigningPublicKey pub : keys) {
             rv.add(pub.calculateHash());
         }
         return rv;
@@ -166,7 +165,7 @@ public class ChannelInfo {
         if (_channelHash == null)
             buf.append("Channel not yet defined (edition " + _edition + ")\n");
         else
-            buf.append("Channel " + _channelHash.toBase64() + " (" + _channelId + " edition " + _edition + ")\n");
+            buf.append("Channel " + _channelHash.toBase64() + " (ID " + _channelId + " edition " + _edition + ")\n");
         if (_encryptKey == null)
             buf.append("Replies should be encrypted to a key not yet determined\n");
         else
@@ -189,13 +188,11 @@ public class ChannelInfo {
         buf.append("Hidden tags: " + _privateTags + "\n");
         
         buf.append("Allow posts by: ");
-        for (Iterator iter = _authorizedPosters.iterator(); iter.hasNext(); ) {
-            SigningPublicKey key = (SigningPublicKey)iter.next();
+        for (SigningPublicKey key : _authorizedPosters) {
             buf.append(key.calculateHash().toBase64()).append(", ");
         }
         // managers can post too
-        for (Iterator iter = _authorizedManagers.iterator(); iter.hasNext(); ) {
-            SigningPublicKey key = (SigningPublicKey)iter.next();
+        for (SigningPublicKey key : _authorizedManagers) {
             buf.append(key.calculateHash().toBase64()).append(", ");
         }
         if (_channelHash != null)
@@ -205,8 +202,7 @@ public class ChannelInfo {
         buf.append("\n");
         
         buf.append("Allow management by: ");
-        for (Iterator iter = _authorizedManagers.iterator(); iter.hasNext(); ) {
-            SigningPublicKey key = (SigningPublicKey)iter.next();
+        for (SigningPublicKey key : _authorizedManagers) {
             buf.append(key.calculateHash().toBase64()).append(", ");
         }
         if (_channelHash != null)
@@ -216,30 +212,27 @@ public class ChannelInfo {
         buf.append("\n");
         if ( (_publicArchives != null) && (_publicArchives.size() > 0) ) {
             buf.append("Publicly known channel archives: \n");
-            for (Iterator iter = _publicArchives.iterator(); iter.hasNext(); ) {
-                ArchiveInfo archive = (ArchiveInfo)iter.next();
+            for (ArchiveInfo archive : _publicArchives) {
                 buf.append('\t').append(archive).append('\n');
             }
         }
         if ( (_privateArchives != null) && (_privateArchives.size() > 0) ) {
             buf.append("Hidden channel archives: \n");
-            for (Iterator iter = _privateArchives.iterator(); iter.hasNext(); ) {
-                ArchiveInfo archive = (ArchiveInfo)iter.next();
+            for (ArchiveInfo archive : _privateArchives) {
                 buf.append('\t').append(archive).append('\n');
             }
         }
         if (_readKeys != null)
             buf.append("Known channel read keys: " + _readKeys.size() + "\n");
         
-        Set headers = new TreeSet();
+        Set<String> headers = new TreeSet<String>();
         if (_publicHeaders != null)
-            headers.addAll(_publicHeaders.keySet());
+            headers.addAll(_publicHeaders.stringPropertyNames());
         if (_privateHeaders != null)
-            headers.addAll(_privateHeaders.keySet());
+            headers.addAll(_privateHeaders.stringPropertyNames());
         if (headers.size() > 0) {
             buf.append("Metadata headers:\n");
-            for (Iterator iter = headers.iterator(); iter.hasNext(); ) {
-                String name = (String)iter.next();
+            for (String name : headers) {
                 boolean isPublic = false;
                 String val = null;
                 if (_privateHeaders != null)

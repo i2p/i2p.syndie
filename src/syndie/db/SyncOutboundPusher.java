@@ -29,7 +29,7 @@ import syndie.data.SyndieURI;
  */
 public class SyncOutboundPusher {
     private final SyncManager _manager;
-    private static final Map _runnerToArchive = new HashMap();
+    private static final Map<Runner, SyncArchive> _runnerToArchive = new HashMap<Runner, SyncArchive>();
     private volatile boolean _die;
     
     /** pushes are bundled so we don't need as many threads as for pulls */
@@ -86,7 +86,7 @@ public class SyncOutboundPusher {
     private SyncArchive getNextToPush(Runner runner) {
         int count = _manager.getArchiveCount();
         // shuffle the archives so we aren't always syncing with the first on the list
-        List<SyncArchive> archives = new ArrayList(count);
+        List<SyncArchive> archives = new ArrayList<SyncArchive>(count);
         for (int i = 0; i < count; i++) {
             archives.add(_manager.getArchive(i));
         }
@@ -158,12 +158,12 @@ public class SyncOutboundPusher {
             err = pushFreenet(archive, uris, actionsPushed);
         if (err == null) {
             for (int i = 0; i < actionsPushed.size(); i++) {
-                SyncArchive.OutgoingAction action = (SyncArchive.OutgoingAction)actionsPushed.get(i);
+                SyncArchive.OutgoingAction action = actionsPushed.get(i);
                 action.pushOK();
             }
         } else {
             for (int i = 0; i < actionsPushed.size(); i++) {
-                SyncArchive.OutgoingAction action = (SyncArchive.OutgoingAction)actionsPushed.get(i);
+                SyncArchive.OutgoingAction action = actionsPushed.get(i);
                 action.pushFailed(err, null);
             }
         }

@@ -125,7 +125,7 @@ public class Opts {
         if (val == null)
             return defaultValue;
         else
-            return Boolean.valueOf(val).booleanValue();
+            return Boolean.parseBoolean(val);
     }
 
     public long getOptLong(String name, long defaultValue) {
