@@ -1044,6 +1044,8 @@ class StatusBar extends BaseComponent implements Translatable, Themeable, DBClie
         _nextSyncLabel.setText(registry.getText("Next sync") + ':');
         _bookmark.setText(registry.getText("Bookmark"));
         _root.layout(true);
+        // to update the buttons at the bottom
+        refreshDisplay();
     }
     
     public void applyTheme(Theme theme) {

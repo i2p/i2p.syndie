@@ -33,7 +33,7 @@ public class TranslationRegistry {
     private Map<String, Image> _baseImages;
     
     /**
-     * Two-letter lower-case language codes (NOT country codes).
+     * Two- or three-letter lower-case language codes, with optional _XX upper-case country codes,
      * order not important, UI will sort
      */
     private static final String[] SUPPORTED_TRANSLATIONS = {
@@ -68,7 +68,7 @@ public class TranslationRegistry {
     public void unregister(Translatable entry) { _translatable.remove(entry); }
     
     /**
-     * @return 2-letter lower-case ISO-639 code
+     * @return 2- or 3-letter lower-case ISO-639 codes, with optional _XX upper case country code
      */
     public String getTranslation() { return Translate.getLanguage(_context); }
 
@@ -132,7 +132,7 @@ public class TranslationRegistry {
     }
     
     /**
-     * @param newLang 2-letter lower-case ISO-639 code
+     * @param newLang 2-or 3-letter lower-case ISO-639 code, and optional _XX upper case country code
      * @param newText ignored, to be removed
      */
     private void switchTranslation(String newLang, Properties newText, Map newImages) {
@@ -144,7 +144,14 @@ public class TranslationRegistry {
         _images = newImages;
         _ui.debugMessage("switching translation to " + newLang);
         // context falls back to system properties
-        System.setProperty(Translate.PROP_LANG, newLang);
+        int under = newLang.indexOf("_");
+        if (under <= 0) {
+            System.setProperty(Translate.PROP_LANG, newLang);
+            System.clearProperty(Translate.PROP_COUNTRY);
+        } else {
+            System.setProperty(Translate.PROP_LANG, newLang.substring(0, under));
+            System.setProperty(Translate.PROP_COUNTRY, newLang.substring(under + 1));
+        }
         for (Translatable cur : _translatable) {
             try {
                 _ui.debugMessage("switching translation to " + newLang + " for " + cur.getClass().getName() + "/" + System.identityHashCode(cur));
@@ -157,7 +164,7 @@ public class TranslationRegistry {
     }
     
     /**
-     * @param newLang 2-letter lower-case ISO-639 code
+     * @param newLang 2- or 3-letter lower-case ISO-639 code, with optional _XX upper case country code
      */
     public void switchTranslation(String newLang) {
         String lang = getTranslation();
@@ -169,7 +176,7 @@ public class TranslationRegistry {
     }
     
     /**
-     * @return 2-letter lower-case ISO-639 codes, unsorted
+     * @return 2- or 3-letter lower-case ISO-639 codes, with optional _XX upper case country code, unsorted
      */
     public List<String> getTranslations() {
         return AVAILABLE_TRANSLATIONS;
