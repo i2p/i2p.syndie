@@ -181,7 +181,7 @@ public class MessageInfo {
         if ( (_hierarchy != null) && (_hierarchy.size() > 0) ) {
             buf.append("This message replies to: ");
             for (int i = 0; i < _hierarchy.size(); i++) {
-                SyndieURI uri = (SyndieURI)_hierarchy.get(i);
+                SyndieURI uri = _hierarchy.get(i);
                 buf.append(uri.toString());
                 if (i + 1 < _hierarchy.size())
                     buf.append(", ");

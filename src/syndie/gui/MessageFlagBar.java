@@ -47,7 +47,7 @@ public class MessageFlagBar extends BaseComponent implements Translatable {
     }
 
     public Image[] getFlags() {
-        return (Image[])_images.toArray(new Image[0]);
+        return _images.toArray(new Image[0]);
         /*
         Control ctl[] = _root.getChildren();
         Image rv[] = new Image[ctl.length];

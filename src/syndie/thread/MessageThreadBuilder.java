@@ -57,7 +57,7 @@ public class MessageThreadBuilder {
     }
 
     private void processNextMessage() {
-        SyndieURI uri = (SyndieURI)_pendingURI.remove(0);
+        SyndieURI uri = _pendingURI.remove(0);
         if ( (uri.getScope() == null) || (uri.getMessageId() == null) )
             return;
         Hash chan = uri.getScope();
@@ -106,7 +106,7 @@ public class MessageThreadBuilder {
             } else if (!_uriToReferenceNode.containsKey(uri)) {
                 _pendingURI.add(uri);
             } else {
-                ReferenceNode ref = (ReferenceNode)_uriToReferenceNode.get(uri);
+                ReferenceNode ref = _uriToReferenceNode.get(uri);
                 if (ref.getURI() == null) // only known by reference, not yet pending
                     _pendingURI.add(uri);
             }

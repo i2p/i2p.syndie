@@ -477,8 +477,8 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             public void dragSetData(DragSourceEvent evt) {
                 CTabItem item = _tabs.getSelection();
                 if (item != null) {
-                    SyndieURI uri = (SyndieURI)_openTabURIs.get(item);
-                    BrowserTab tab = (BrowserTab)_openTabs.get(uri);
+                    SyndieURI uri = _openTabURIs.get(item);
+                    BrowserTab tab = _openTabs.get(uri);
                     SyndieURI curURI = tab.getURI(); // may have changed since creation
 
                     BookmarkDnD bookmark = new BookmarkDnD();
@@ -491,8 +491,8 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             public void dragStart(DragSourceEvent evt) {
                 CTabItem item = _tabs.getSelection();
                 if (item != null) {
-                    SyndieURI uri = (SyndieURI)_openTabURIs.get(item);
-                    BrowserTab tab = (BrowserTab)_openTabs.get(uri);
+                    SyndieURI uri = _openTabURIs.get(item);
+                    BrowserTab tab = _openTabs.get(uri);
                     if (tab == null) {
                        evt.doit = false;
                     } else {
@@ -560,7 +560,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             JobRunner.instance().enqueue(new Runnable() { 
                 public void run() {
                     while (_runAfterStartup.size() > 0) {
-                        Runnable task = (Runnable)_runAfterStartup.remove(0);
+                        Runnable task = _runAfterStartup.remove(0);
                         _shell.getDisplay().asyncExec(task);
                         //timer.addEvent("doStartup: run deferred");
                     }
@@ -606,8 +606,8 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
     private void refreshTab() {
         CTabItem item = _tabs.getSelection();
         if (item != null) {
-            SyndieURI uri = (SyndieURI)_openTabURIs.get(item);
-            BrowserTab tab = (BrowserTab)_openTabs.get(uri);
+            SyndieURI uri = _openTabURIs.get(item);
+            BrowserTab tab = _openTabs.get(uri);
             if (tab != null)
                 tab.refresh();
         }
@@ -1231,8 +1231,8 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             CTabItem tabs[] = _tabs.getItems();
             ArrayList uris = new ArrayList(tabs.length);
             for (int i = 0; i < tabs.length; i++) {
-                SyndieURI baseURI = (SyndieURI)_openTabURIs.get(tabs[i]);
-                BrowserTab tab = (BrowserTab)_openTabs.get(baseURI);
+                SyndieURI baseURI = _openTabURIs.get(tabs[i]);
+                BrowserTab tab = _openTabs.get(baseURI);
                 SyndieURI curURI = tab.getURI();
                 if (!uris.contains(curURI))
                     uris.add(curURI);
@@ -1583,7 +1583,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
                 }
             }
             if (tab == null)
-                tab = (BrowserTab)_openTabs.get(uri);
+                tab = _openTabs.get(uri);
             //if ( (tab == null) && (browseURI != null) )
             //    tab = (BrowserTab)_openTabs.get(browseURI);
             if (tab == null) {
@@ -1734,8 +1734,8 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
     public void bookmarkCurrentTab() {
         CTabItem item = _tabs.getSelection();
         if (item != null) {
-            SyndieURI uri = (SyndieURI)_openTabURIs.get(item);
-            BrowserTab tab = (BrowserTab)_openTabs.get(uri);
+            SyndieURI uri = _openTabURIs.get(item);
+            BrowserTab tab = _openTabs.get(uri);
             SyndieURI curURI = tab.getURI(); // may have changed since creation
             
             BookmarkDnD bookmark = new BookmarkDnD();
@@ -2082,7 +2082,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             }
             if (_lastDumpedObj != null) {
                 for (int i = 0; i < _lastDumpedObj.size(); i++) {
-                    Object cur = (Object)_lastDumpedObj.get(i);
+                    Object cur = _lastDumpedObj.get(i);
                     if (!dumpedObj.contains(cur))
                         lost.add(cur);
                 }
@@ -2251,8 +2251,8 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         SyndieURI uri = null;
         BrowserTab tab = null;
         synchronized (_openTabs) {
-            uri = (SyndieURI)_openTabURIs.get(cur);
-            tab = (BrowserTab)_openTabs.get(uri);
+            uri = _openTabURIs.get(cur);
+            tab = _openTabs.get(uri);
         }
         if (tab != null) {
             if (tab.close()) {
@@ -2271,8 +2271,8 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         SyndieURI uri = null;
         BrowserTab tab = null;
         synchronized (_openTabs) {
-            uri = (SyndieURI)_openTabURIs.get(cur);
-            tab = (BrowserTab)_openTabs.get(uri);
+            uri = _openTabURIs.get(cur);
+            tab = _openTabs.get(uri);
         }
         if (tab != null)
             tab.toggleMaxView();
@@ -2282,8 +2282,8 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         SyndieURI uri = null;
         BrowserTab tab = null;
         synchronized (_openTabs) {
-            uri = (SyndieURI)_openTabURIs.get(cur);
-            tab = (BrowserTab)_openTabs.get(uri);
+            uri = _openTabURIs.get(cur);
+            tab = _openTabs.get(uri);
         }
         if (tab != null)
             tab.toggleMaxEditor();
@@ -2344,7 +2344,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
                     _statusBar.setEnableRefresh(false);
                     final int total = files.size();
                     for (int i = 0; i < total; i++) {
-                        boolean ok = importFile((File)files.get(i));
+                        boolean ok = importFile(files.get(i));
                         if (ok)
                             imported++;
                     }
@@ -2535,9 +2535,9 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
     private void bookmarkTab() {
         CTabItem item = _tabs.getSelection();
         if (item != null) {
-            for (Iterator iter = _openTabs.keySet().iterator(); iter.hasNext(); ) {
-                SyndieURI uri = (SyndieURI)iter.next();
-                BrowserTab tab = (BrowserTab)_openTabs.get(uri);
+            for (Map.Entry<SyndieURI, BrowserTab> e : _openTabs.entrySet()) {
+                SyndieURI uri = e.getKey();
+                BrowserTab tab = e.getValue();
                 if (tab.getTabItem() == item) {
                     SyndieURI curURI = tab.getURI(); // may have changed since insert
                     bookmark(curURI, tab.getName(), tab.getDescription(), -1, true, 0);
@@ -2549,9 +2549,9 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
     private void copyTabLocation() {
         CTabItem item = _tabs.getSelection();
         if (item != null) {
-            for (Iterator iter = _openTabs.keySet().iterator(); iter.hasNext(); ) {
-                SyndieURI uri = (SyndieURI)iter.next();
-                BrowserTab tab = (BrowserTab)_openTabs.get(uri);
+            for (Map.Entry<SyndieURI, BrowserTab> e : _openTabs.entrySet()) {
+                SyndieURI uri = e.getKey();
+                BrowserTab tab = e.getValue();
                 if (tab.getTabItem() == item) {
                     SyndieURI curURI = tab.getURI(); // may have changed since insert
                     
@@ -2567,9 +2567,8 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         }
     }
     private void closeAllTabs() {
-        for (Iterator iter = _openTabs.keySet().iterator(); iter.hasNext(); ) {
-            SyndieURI uri = (SyndieURI)iter.next();
-            BrowserTab tab = (BrowserTab)_openTabs.get(uri);
+        for (Iterator<BrowserTab> iter = _openTabs.values().iterator(); iter.hasNext(); ) {
+            BrowserTab tab = iter.next();
             if (tab.allowClose()) {
                 iter.remove();
                 _openTabURIs.remove(tab.getTabItem());
@@ -2579,9 +2578,8 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
     }
     private void closeOtherTabs() {
         CTabItem item = _tabs.getSelection();
-        for (Iterator iter = _openTabs.keySet().iterator(); iter.hasNext(); ) {
-            SyndieURI uri = (SyndieURI)iter.next();
-            BrowserTab tab = (BrowserTab)_openTabs.get(uri);
+        for (Iterator<BrowserTab> iter = _openTabs.values().iterator(); iter.hasNext(); ) {
+            BrowserTab tab = iter.next();
             if (item != tab.getTabItem()) {
                 if (tab.allowClose()) {
                     iter.remove();
@@ -2672,7 +2670,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
                         _commands.wait();
                 } catch (InterruptedException ie) {}
                 if (_commands.size() > 0)
-                    return new Opts((String)_commands.remove(0));
+                    return new Opts(_commands.remove(0));
             }
         }
     }
@@ -2726,20 +2724,20 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
                         } else {
                             Integer type = _typeOrder.remove(0);
                             if (type.equals(TYPE_ORDER_ERROR)) {
-                                errMsg = (String)_errMsgs.remove(0);
-                                errCause = (Exception)_errCauses.remove(0);
+                                errMsg = _errMsgs.remove(0);
+                                errCause = _errCauses.remove(0);
                                 if (errCause == NO_CAUSE)
                                     errCause = null;
                             } else if (type.equals(TYPE_ORDER_STATUS)) {
-                                statusMsg = (String)_statusMsgs.remove(0);
+                                statusMsg = _statusMsgs.remove(0);
                             } else if (type.equals(TYPE_ORDER_DEBUG)) {
-                                debugMsg = (String)_debugMsgs.remove(0);
-                                debugCause = (Exception)_debugCauses.remove(0);
+                                debugMsg = _debugMsgs.remove(0);
+                                debugCause = _debugCauses.remove(0);
                                 if (debugCause == NO_CAUSE)
                                     debugCause = null;
                             } else if (type.equals(TYPE_ORDER_COMMAND_COMPLETE)) {
-                                completeStatus = (Integer)_completeStatus.remove(0);
-                                completeLocation = (List)_completeLocations.remove(0);
+                                completeStatus = _completeStatus.remove(0);
+                                completeLocation = _completeLocations.remove(0);
                                 if (completeLocation == NO_LOCATIONS)
                                     completeLocation = null;
                             }
@@ -2747,16 +2745,16 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
                     }
                     if (errMsg != null) {
                         for (int i = 0; i < _uiListeners.size(); i++)
-                            ((UI)_uiListeners.get(i)).errorMessage(errMsg, errCause);
+                            _uiListeners.get(i).errorMessage(errMsg, errCause);
                     } else if (statusMsg != null) {
                         for (int i = 0; i < _uiListeners.size(); i++)
-                            ((UI)_uiListeners.get(i)).statusMessage(statusMsg);
+                            _uiListeners.get(i).statusMessage(statusMsg);
                     } else if (debugMsg != null) {
                         for (int i = 0; i < _uiListeners.size(); i++)
-                            ((UI)_uiListeners.get(i)).debugMessage(debugMsg, debugCause);
+                            _uiListeners.get(i).debugMessage(debugMsg, debugCause);
                     } else if (completeStatus != null) {
                         for (int i = 0; i < _uiListeners.size(); i++)
-                            ((UI)_uiListeners.get(i)).commandComplete(completeStatus.intValue(), completeLocation);
+                            _uiListeners.get(i).commandComplete(completeStatus.intValue(), completeLocation);
                     }
                 } catch (InterruptedException ie) {}
             }

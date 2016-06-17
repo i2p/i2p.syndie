@@ -170,7 +170,7 @@ public class ArchiveManager extends BaseComponent implements Translatable, Theme
     public void saveConfig() {
         SyncManager mgr = SyncManager.getInstance(_client, _ui);
         SharedArchive.About cfg = LocalArchiveManager.getLocalAbout(_client, mgr.getDefaultPullStrategy());
-        cfg.setAlternativeArchives((SyndieURI[])_uris.toArray(new SyndieURI[0]));
+        cfg.setAlternativeArchives(_uris.toArray(new SyndieURI[0]));
         LocalArchiveManager.setLocalAbout(_client, _ui, cfg);
         
         List chans = _client.getBannedChannels();

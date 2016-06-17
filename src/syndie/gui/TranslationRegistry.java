@@ -125,9 +125,9 @@ public class TranslationRegistry {
 
     /** @deprecated unused */
     public Image getImage(String key) {
-        Image img = (Image)_images.get(key);
+        Image img = _images.get(key);
         if (img == null)
-            img = (Image)_baseImages.get(key);
+            img = _baseImages.get(key);
         return img;
     }
     

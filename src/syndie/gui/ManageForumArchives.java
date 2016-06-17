@@ -216,7 +216,7 @@ class ManageForumArchives extends BaseComponent implements Themeable, Translatab
         _isPublic.setEnabled(true);
         
         TableItem item = _table.getSelection()[0]; // we are only called if selectionCount == 1
-        SyndieURI uri = (SyndieURI)_itemToURI.get(item);
+        SyndieURI uri = _itemToURI.get(item);
         String name = item.getText(0);
         String url = uri.getURL();
         boolean pub = "X".equals(item.getText(3));

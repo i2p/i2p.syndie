@@ -115,7 +115,7 @@ class HTMLStyleBuilder {
         // get a list of points where any tag starts or ends
         TreeMap<Integer, List<HTMLTag>> breakPointTags = new TreeMap();
         for (int i = 0; i < _htmlTags.size(); i++) {
-            HTMLTag tag = (HTMLTag)_htmlTags.get(i);
+            HTMLTag tag = _htmlTags.get(i);
             if (("a".equals(tag.name)) && (tag.getAttribValueLC("href") != null)) {
                 _linkTags.add(tag);
             } else if ("img".equals(tag.name)) {
@@ -196,7 +196,7 @@ class HTMLStyleBuilder {
         }
         */
         for (int i = 0; i < _htmlTags.size(); i++) {
-            HTMLTag tag = (HTMLTag)_htmlTags.get(i);
+            HTMLTag tag = _htmlTags.get(i);
             // find all breakpoints that this tag applies to
             for (int j = 0; j < bpIndexes.length; j++) {
                 //if (tag.startIndex < bpIndexes[j]) break; // bpIndexes is ordered
@@ -278,7 +278,7 @@ class HTMLStyleBuilder {
         if (_enableImages) {
             // put images in for all the <img> tags
             for (int i = 0; i < _imageTags.size(); i++) {
-                HTMLTag imgTag = (HTMLTag)_imageTags.get(i);
+                HTMLTag imgTag = _imageTags.get(i);
                 for (int j = 0; j < _styleRanges.length; j++) {
                     if (_styleRanges[j].start == imgTag.startIndex) {
                         //System.out.println("img in range @ " + _styleRanges[j].start + ": " + imgTag);
@@ -293,7 +293,7 @@ class HTMLStyleBuilder {
         
         // now put images in the range after <a> tags
         for (int i = 0; i < _linkTags.size(); i++) {
-            HTMLTag linkTag = (HTMLTag)_linkTags.get(i);
+            HTMLTag linkTag = _linkTags.get(i);
             for (int j = 0; j < _styleRanges.length; j++) {
                 if (_styleRanges[j].start == linkTag.endIndex) {
                     //System.out.println("link in range @ " + _styleRanges[j].start + ": " + linkTag);
@@ -389,13 +389,13 @@ class HTMLStyleBuilder {
     
     static boolean containsTag(List<HTMLTag> tags, String tagName) {
         for (int i = 0; i < tags.size(); i++)
-            if (((HTMLTag)tags.get(i)).name.equalsIgnoreCase(tagName))
+            if (tags.get(i).name.equalsIgnoreCase(tagName))
                 return true;
         return false;
     }
     static boolean containsTagLC(List<HTMLTag> tags, String tagName) {
         for (int i = 0; i < tags.size(); i++)
-            if (((HTMLTag)tags.get(i)).name.equals(tagName))
+            if (tags.get(i).name.equals(tagName))
                 return true;
         return false;
     }
@@ -447,7 +447,7 @@ class HTMLStyleBuilder {
         int sizeModifier = 0;
         // innermost font size is used
         for (int i = 0; i < tags.size(); i++) {
-            HTMLTag tag = (HTMLTag)tags.get(i);
+            HTMLTag tag = tags.get(i);
             if (tag.name.equals("font")) {
                 String sz = tag.getAttribValueLC("size");
                 if (sz != null) {
@@ -470,7 +470,7 @@ class HTMLStyleBuilder {
         String fontName = null;
         // innermost font name is used
         for (int i = 0; i < tags.size(); i++) {
-            HTMLTag tag = (HTMLTag)tags.get(i);
+            HTMLTag tag = tags.get(i);
             String name = null;
             if (tag.name.equals("font"))
                 name = tag.getAttribValueLC("name");
@@ -487,7 +487,7 @@ class HTMLStyleBuilder {
         // innermost bgcolor is used
         //System.out.println("Looking for a bgcolor in " + tags);
         for (int i = 0; (bgColor == null) && (i < tags.size()); i++) {
-            HTMLTag tag = (HTMLTag)tags.get(i);
+            HTMLTag tag = tags.get(i);
             String str = tag.getAttribValueLC("bgcolor");
             if (str == null) continue;
             bgColor = ColorUtil.getColor(str, _customColors);
@@ -503,7 +503,7 @@ class HTMLStyleBuilder {
         // innermost fgcolor/color is used
         //System.out.println("Looking for a fgcolor in " + tags);
         for (int i = 0; i < tags.size(); i++) {
-            HTMLTag tag = (HTMLTag)tags.get(i);
+            HTMLTag tag = tags.get(i);
             String color = tag.getAttribValueLC("fgcolor");
             if (color == null)
                 color = tag.getAttribValueLC("color");

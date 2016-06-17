@@ -33,7 +33,7 @@ public class ReferenceNode {
         _uri = uri;
         _description = description;
         _refType = type;
-        _children = new ArrayList();
+        _children = new ArrayList<ReferenceNode>();
         _treeIndex = "1";
         _treeIndexNum = -1;
         _uniqueId = -1;
@@ -44,7 +44,7 @@ public class ReferenceNode {
     public String getDescription() { return _description; }
     public String getReferenceType() { return _refType; }
     public int getChildCount() { return _children.size(); }
-    public ReferenceNode getChild(int index) { return (ReferenceNode)_children.get(index); }
+    public ReferenceNode getChild(int index) { return _children.get(index); }
     public ReferenceNode getParent() { return _parent; }
     public String getTreeIndex() { return _treeIndex; }
     public int getTreeIndexNum() { return _treeIndexNum; }
@@ -229,26 +229,26 @@ public class ReferenceNode {
     }
     
     /** stringify a forest of nodes into a format that can be parsed with buildTree() */
-    public static String walk(List roots) {
+    public static String walk(List<ReferenceNode> roots) {
         StringBuilder walked = new StringBuilder();
         for (int i = 0; i < roots.size(); i++) {
-            ReferenceNode node = (ReferenceNode)roots.get(i);
+            ReferenceNode node = roots.get(i);
             append(walked, node, 0);
         }
         return walked.toString();
     }
     
     /** depth first traversal */
-    public static void walk(List roots, Visitor visitor) {
+    public static void walk(List<ReferenceNode> roots, Visitor visitor) {
         for (int i = 0; i < roots.size(); i++) {
-            ReferenceNode node = (ReferenceNode)roots.get(i);
+            ReferenceNode node = roots.get(i);
             node.walk(visitor, 0, i);
         }
     }
     private void walk(Visitor visitor, int depth, int siblingOrder) {
         visitor.visit(this, depth, siblingOrder);
         for (int i = 0; i < _children.size(); i++) {
-            ReferenceNode child = (ReferenceNode)_children.get(i);
+            ReferenceNode child = _children.get(i);
             child.walk(visitor, depth+1, i);
         }
     }
@@ -257,7 +257,7 @@ public class ReferenceNode {
         if (orig == null) return new ArrayList();;
         ArrayList rv = new ArrayList(orig.size());
         for (int i = 0; i < orig.size(); i++) {
-            ReferenceNode node = (ReferenceNode)orig.get(i);
+            ReferenceNode node = orig.get(i);
             rv.add(deepCopy(node));
         }
         return rv;

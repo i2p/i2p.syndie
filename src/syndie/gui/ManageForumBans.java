@@ -146,7 +146,7 @@ class ManageForumBans extends BaseComponent implements Themeable, Translatable {
         ArrayList<Hash> banned = _client.getBannedChannels();
         for (int i = 0; i < banned.size(); i++) {
             _localBanHashes.add(banned.get(i));
-            _localBans.add(((Hash)banned.get(i)).toBase64());
+            _localBans.add(banned.get(i).toBase64());
         }
         _localBans.setRedraw(true);
     }
@@ -160,7 +160,7 @@ class ManageForumBans extends BaseComponent implements Themeable, Translatable {
         _targetBans.setRedraw(false);
         _targetBans.removeAll();
         for (int i = 0; i < _targetBanHashes.size(); i++)
-            _targetBans.add(((Hash)_targetBanHashes.get(i)).toBase64());
+            _targetBans.add(_targetBanHashes.get(i).toBase64());
         _targetBans.setRedraw(true);
     }
     
@@ -188,9 +188,9 @@ class ManageForumBans extends BaseComponent implements Themeable, Translatable {
                 
                 _ui.debugMessage("drop: " + evt);
                 
-                ArrayList scopes = getToAdd(evt.data.toString());
+                ArrayList<Hash> scopes = getToAdd(evt.data.toString());
                 for (int i = 0; i < scopes.size(); i++) {
-                    Hash scope = (Hash)scopes.get(i);
+                    Hash scope = scopes.get(i);
                     if (!_targetBanHashes.contains(scope))
                         _targetBanHashes.add(scope);
                 }
@@ -200,13 +200,13 @@ class ManageForumBans extends BaseComponent implements Themeable, Translatable {
         });
     }
     
-    private ArrayList getToAdd(String data) {
+    private ArrayList<Hash> getToAdd(String data) {
         if (_isDragging) {
             // from the ban list
-            ArrayList rv = new ArrayList();
+            ArrayList<Hash> rv = new ArrayList<Hash>();
             int indexes[] = _localBans.getSelectionIndices();
             for (int i = 0; i < indexes.length; i++) {
-                rv.add((Hash)_localBanHashes.get(indexes[i]));
+                rv.add(_localBanHashes.get(indexes[i]));
             }
             return rv;
         }
@@ -287,7 +287,7 @@ class ManageForumBans extends BaseComponent implements Themeable, Translatable {
                 int indexes[] = _localBans.getSelectionIndices();
                 StringBuilder buf = new StringBuilder();
                 for (int i = 0; i < indexes.length; i++) {
-                    Hash scope = (Hash)_localBanHashes.get(indexes[i]);
+                    Hash scope = _localBanHashes.get(indexes[i]);
                     buf.append(scope.toBase64()).append("\n");
                 }
                 evt.data = buf.toString();

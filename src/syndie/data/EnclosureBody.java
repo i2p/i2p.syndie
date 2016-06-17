@@ -256,21 +256,21 @@ public class EnclosureBody {
     public int getAttachments() { return _attachments; }
     public InputStream getAvatar() {
         if (_entries.containsKey(ENTRY_AVATAR))
-            return new ByteArrayInputStream((byte[])_entries.get(ENTRY_AVATAR));
+            return new ByteArrayInputStream(_entries.get(ENTRY_AVATAR));
         else
             return null;
     }
     public byte[] getAvatarData() {
         if (_entries.containsKey(ENTRY_AVATAR))
-            return (byte[])_entries.get(ENTRY_AVATAR);
+            return _entries.get(ENTRY_AVATAR);
         else
             return null;
     }
-    public Set getPageConfigKeys(int pageNum) { return ((Properties)_pageConfig.get(pageNum)).keySet(); }
-    public Set getAttachmentConfigKeys(int attachNum) { return ((Properties)_attachConfig.get(attachNum)).keySet(); }
+    public Set getPageConfigKeys(int pageNum) { return _pageConfig.get(pageNum).keySet(); }
+    public Set getAttachmentConfigKeys(int attachNum) { return _attachConfig.get(attachNum).keySet(); }
     public Set getHeaderKeys() { return _headers.keySet(); }
     public int getReferenceRootCount() { return _references.size(); }
-    public ReferenceNode getReferenceRoot(int index) { return (ReferenceNode)_references.get(index); }
+    public ReferenceNode getReferenceRoot(int index) { return _references.get(index); }
     public Properties getHeaders() { return _headers; }
     
     public String getHeaderString(String key) { return _headers.getProperty(key); }
@@ -321,8 +321,8 @@ public class EnclosureBody {
     public PublicKey getAttachmentConfigEncryptKey(int attach, String key) { return Enclosure.toEncryptKey(getAttachmentConfig(attach).getProperty(key)); }
     public Date getAttachmentConfigDate(int attach, String key) { return Enclosure.toDate(getAttachmentConfig(attach).getProperty(key)); }
     
-    public byte[] getPage(int page) { return (byte[])_entries.get(ENTRY_PAGE_PREFIX + page + ENTRY_PAGE_DATA_SUFFIX); }
-    public byte[] getAttachment(int attachment) { return (byte[])_entries.get(ENTRY_ATTACHMENT_PREFIX + attachment + ENTRY_ATTACHMENT_DATA_SUFFIX); }
+    public byte[] getPage(int page) { return _entries.get(ENTRY_PAGE_PREFIX + page + ENTRY_PAGE_DATA_SUFFIX); }
+    public byte[] getAttachment(int attachment) { return _entries.get(ENTRY_ATTACHMENT_PREFIX + attachment + ENTRY_ATTACHMENT_DATA_SUFFIX); }
 
     public String toString() {
         StringBuilder buf = new StringBuilder();
@@ -345,8 +345,8 @@ public class EnclosureBody {
     }
     
     
-    public Properties getPageConfig(int pageNum) { return (Properties)_pageConfig.get(pageNum); }
-    public Properties getAttachmentConfig(int attachNum) { return (Properties)_attachConfig.get(attachNum); }
+    public Properties getPageConfig(int pageNum) { return _pageConfig.get(pageNum); }
+    public Properties getAttachmentConfig(int attachNum) { return _attachConfig.get(attachNum); }
     
     private void parse(InputStream zipData) throws IOException {
         unzip(zipData);
@@ -356,7 +356,7 @@ public class EnclosureBody {
         for (int i = 0; i < _attachments; i++)
             _attachConfig.add(parseProps(ENTRY_ATTACHMENT_PREFIX + i + ENTRY_ATTACHMENT_CONFIG_SUFFIX));
         // parse the references
-        byte refs[] = (byte[])_entries.get(ENTRY_REFERENCES);
+        byte refs[] = _entries.get(ENTRY_REFERENCES);
         if (refs != null) {
             //System.out.println("References entry found, size: " + refs.length);
             _references.addAll(ReferenceNode.buildTree(new ByteArrayInputStream(refs)));
@@ -393,7 +393,7 @@ public class EnclosureBody {
     }
     private Properties parseProps(String entry) {
         Properties rv = new Properties();
-        byte data[] = (byte[])_entries.get(entry);
+        byte data[] = _entries.get(entry);
         if (data == null) {
             //System.out.println("Entry " + entry + " does not exist");
             return new Properties();

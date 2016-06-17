@@ -154,14 +154,14 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     private MessageTree _threadTree;
     
     // state info
-    private final List _pageEditors;
-    private final List _pageTypes;
+    private final List<PageEditor> _pageEditors;
+    private final List<String> _pageTypes;
     
-    private final List _attachmentRoots;
-    private final List _attachmentPreviews;
-    private final List _attachmentConfig;
-    private final List _attachmentData;
-    private final List _attachmentSummary;
+    private final List<Composite> _attachmentRoots;
+    private final List<AttachmentPreview> _attachmentPreviews;
+    private final List<Properties> _attachmentConfig;
+    private final List<byte[]> _attachmentData;
+    private final List<String> _attachmentSummary;
     private String _selectedPageBGColor;
     private String _selectedPageBGImage;
     /** has it been modified since it was last persisted */
@@ -174,7 +174,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     /** cache some details for who we have keys to write to / manage / etc */
     private DBClient.ChannelCollector _nymChannels;
     /** set of MessageEditorListener */
-    private final List _listeners;
+    private final List<LocalMessageCallback> _listeners;
     
     /** forum the post is targetting */
     private Hash _forum;
@@ -195,7 +195,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     /** version is incremented each time the state is saved */
     private int _postponeVersion;
     
-    private final List _editorStatusListeners;
+    private final List<EditorStatusListener> _editorStatusListeners;
     
     private boolean _buildToolbar;
     private boolean _allowPreview;
@@ -204,7 +204,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     private MessageEditorToolbar _bar;
 
     private Menu _titleMenu;
-    private List _pageTitles;
+    private List<String> _pageTitles;
     
     private MessageEditorFind _finder;
     private MessageEditorSpell _spellchecker;
@@ -294,11 +294,11 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         if (_spellchecker != null) _spellchecker.dispose();
         if (_finder != null) _finder.dispose();
         while (_pageEditors.size() > 0)
-            ((PageEditor)_pageEditors.remove(0)).dispose();
+            _pageEditors.remove(0).dispose();
         while (_attachmentPreviews.size() > 0)
-            ((AttachmentPreview)_attachmentPreviews.remove(0)).dispose();
+            _attachmentPreviews.remove(0).dispose();
         while (_attachmentRoots.size() > 0)
-            ((Composite)_attachmentRoots.remove(0)).dispose();
+            _attachmentRoots.remove(0).dispose();
         _attachmentConfig.clear();
         _attachmentData.clear();
         _attachmentSummary.clear();
@@ -635,11 +635,11 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         }
         public Hash getTarget() { return _forum; }
         public int getPageCount() { return _pageEditors.size(); }
-        public String getPageContent(int page) { return ((PageEditor)_pageEditors.get(page)).getContent(); }
+        public String getPageContent(int page) { return _pageEditors.get(page).getContent(); }
         /** 0-indexed page type */
-        public String getPageType(int page) { return ((PageEditor)_pageEditors.get(page)).getContentType(); }
+        public String getPageType(int page) { return _pageEditors.get(page).getContentType(); }
         public String getPageTitle(int page) { 
-            String title = (String)_pageTitles.get(page); 
+            String title = _pageTitles.get(page); 
             if ( (title != null) && (title.trim().length() > 0) )
                 return title;
             else
@@ -648,7 +648,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         public List getAttachmentNames() {             
             ArrayList rv = new ArrayList();
             for (int i = 0; i < _attachmentConfig.size(); i++) {
-                Properties cfg = (Properties)_attachmentConfig.get(i);
+                Properties cfg = _attachmentConfig.get(i);
                 rv.add(cfg.getProperty(Constants.MSG_ATTACH_NAME));
             }
             return rv;
@@ -656,7 +656,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         public List getAttachmentTypes() { 
             List rv = new ArrayList(_attachmentConfig.size());
             for (int i = 0; i < _attachmentConfig.size(); i++) {
-                Properties cfg = (Properties)_attachmentConfig.get(i);
+                Properties cfg = _attachmentConfig.get(i);
                 rv.add(cfg.getProperty(Constants.MSG_ATTACH_CONTENT_TYPE));
             }
             return rv;
@@ -678,7 +678,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         }
         public List getReferenceNodes() { return _refEditor.getReferenceNodes(); }
         public int getParentCount() { return _parents.size(); }
-        public SyndieURI getParent(int depth) { return (SyndieURI)_parents.get(depth); }
+        public SyndieURI getParent(int depth) { return _parents.get(depth); }
         public String getExpiration() { return null; }
         public boolean getForceNewThread() { return false; }
         public boolean getRefuseReplies() { return false; }
@@ -743,7 +743,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     private long countPageUndoBuffers() {
         long rv = 0;
         for (int i = 0; i < _pageEditors.size(); i++) {
-            PageEditor ed = (PageEditor)_pageEditors.get(i);
+            PageEditor ed = _pageEditors.get(i);
             rv += ed.getUndoBufferSize();
         }
         return rv;
@@ -817,7 +817,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         }
         
         for (int i = 0; i < _pageEditors.size(); i++) {
-            PageEditor editor = (PageEditor)_pageEditors.get(i);
+            PageEditor editor = _pageEditors.get(i);
             String type = editor.getContentType();
             String data = editor.getContent();
             String title = getTitle(i);
@@ -836,8 +836,8 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         }
         
         for (int i = 0; i < _attachmentData.size(); i++) {
-            byte data[] = (byte[])_attachmentData.get(i);
-            Properties attCfg = (Properties)_attachmentConfig.get(i);
+            byte data[] = _attachmentData.get(i);
+            Properties attCfg = _attachmentConfig.get(i);
             zos.putNextEntry(new ZipEntry(SER_ENTRY_ATTACH_PREFIX + i));
             zos.write(data);
             zos.closeEntry();
@@ -871,11 +871,11 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     
     private void deserializeState(ZipInputStream zin) throws IOException {
         ZipEntry entry = null;
-        Map pages = new TreeMap();
-        Map pageCfgs = new TreeMap();
-        Map pageTitles = new TreeMap();
-        Map attachments = new TreeMap();
-        Map attachmentCfgs = new TreeMap();
+        Map<String, String> pages = new TreeMap();
+        Map<String, String> pageCfgs = new TreeMap();
+        Map<String, String> pageTitles = new TreeMap();
+        Map<String, byte[]> attachments = new TreeMap();
+        Map<String, Properties> attachmentCfgs = new TreeMap();
         byte avatar[] = null;
         while ( (entry = zin.getNextEntry()) != null) {
             String name = entry.getName();
@@ -901,21 +901,21 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         }
 
         while (_pageEditors.size() > 0) {
-            PageEditor editor = (PageEditor)_pageEditors.remove(0);
+            PageEditor editor = _pageEditors.remove(0);
             editor.dispose();
         }
         int pageCount = pages.size();
         
         _pageTypes.clear();
         while (_pageEditors.size() > 0)
-            ((PageEditor)_pageEditors.remove(0)).dispose();
+            _pageEditors.remove(0).dispose();
         
         _pageTitles.clear();
         
         for (int i = 0; i < pageCount; i++) {
-            String body = (String)pages.get(SER_ENTRY_PAGE_PREFIX + i);
-            String type = (String)pageCfgs.get(SER_ENTRY_PAGE_CFG_PREFIX + i);
-            String title = (String)pageTitles.get(SER_ENTRY_PAGE_TITLE_PREFIX + i);
+            String body = pages.get(SER_ENTRY_PAGE_PREFIX + i);
+            String type = pageCfgs.get(SER_ENTRY_PAGE_CFG_PREFIX + i);
+            String title = pageTitles.get(SER_ENTRY_PAGE_TITLE_PREFIX + i);
             
             _ui.debugMessage("Deserializing state: adding page: " + i + " [" + type + "]");
             boolean isHTML = TYPE_HTML.equals(type);
@@ -939,8 +939,8 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _attachmentConfig.clear();
         int attachmentCount = attachments.size();
         for (int i = 0; i < attachmentCount; i++) {
-            byte data[] = (byte[])attachments.get(SER_ENTRY_ATTACH_PREFIX + i);
-            Properties cfg = (Properties)attachmentCfgs.get(SER_ENTRY_ATTACH_CFG_PREFIX + i);
+            byte data[] = attachments.get(SER_ENTRY_ATTACH_PREFIX + i);
+            Properties cfg = attachmentCfgs.get(SER_ENTRY_ATTACH_CFG_PREFIX + i);
             if ( (cfg == null) || (data == null) ) 
                 break;
             _ui.debugMessage("Deserializing state: adding attachment: " + i);
@@ -1005,7 +1005,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         } else {
             rv.setProperty(SER_PARENTS, _parents.size() + "");
             for (int i = 0; i < _parents.size(); i++)
-                rv.setProperty(SER_PARENTS_PREFIX + i, ((SyndieURI)_parents.get(i)).toString());
+                rv.setProperty(SER_PARENTS_PREFIX + i, _parents.get(i).toString());
         }
         
         if (_passphrase != null)
@@ -1066,7 +1066,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             ThreadBuilder builder = new ThreadBuilder(_client, _ui);
             HashSet msgIds = new HashSet();
             for (int i = 0; i < _parents.size(); i++) {
-                SyndieURI uri = (SyndieURI)_parents.get(i);
+                SyndieURI uri = _parents.get(i);
                 if ( (uri.getScope() != null) && (uri.getMessageId() != null) ) {
                     long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
                     ThreadMsgId id = new ThreadMsgId(msgId); // may be -1
@@ -1078,7 +1078,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             List roots = builder.buildThread(msgIds);
             _ui.debugMessage("setting message ancestry tree to: \n" + roots);
             _threadTree.setMessages(roots);
-            _threadTree.select((SyndieURI)_parents.get(0));
+            _threadTree.select(_parents.get(0));
         } else {
             _threadTree.dispose();
             _threadTab.dispose();
@@ -1090,7 +1090,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             _subject.setText(cfg.getProperty(SER_SUBJECT));
             _abbrSubject.setText(_subject.getText());
         } else if ( (_parents != null) && (_parents.size() > 0) ) {
-            SyndieURI parent = (SyndieURI)_parents.get(0);
+            SyndieURI parent = _parents.get(0);
             String parentSubject = MessageView.calculateSubject(_client, _ui, _translationRegistry, parent).trim();
             if ( (parentSubject.length() > 0) && (!StringUtil.lowercase(parentSubject).startsWith("re:")) ) {
                 _subject.setText("re: " + parentSubject);
@@ -1180,7 +1180,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     
     public void quote() {
         if (_parents.size() > 0) {
-            SyndieURI parent = (SyndieURI)_parents.get(0);
+            SyndieURI parent = _parents.get(0);
             PageEditor editor = getPageEditor();
             if (editor != null)
                 editor.quote(parent);
@@ -1358,7 +1358,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     private void setTitle() {
         final int page = _pageTabs.getSelectionIndex();
         if ( (page >= 0) && (page < _pageTitles.size()) ) {
-            String title = (String)_pageTitles.get(page);
+            String title = _pageTitles.get(page);
             
             final Shell shell = new Shell(_root.getShell(), SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
             GridLayout gl = new GridLayout(3, false);
@@ -1419,7 +1419,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     }
     private String getTitle(int page) {
         if ( (page >= 0) && (page < _pageTitles.size()) )
-            return (String)_pageTitles.get(page);
+            return _pageTitles.get(page);
         else
             return null;
     }
@@ -1452,12 +1452,12 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             case 0: // public 
                 _privacy.select(privacyIndex);
                 for (int i = 0; i < _editorStatusListeners.size(); i++)
-                    ((EditorStatusListener)_editorStatusListeners.get(i)).pickPrivacyPublic();
+                    _editorStatusListeners.get(i).pickPrivacyPublic();
                 break;
             case 2: //pbe
                 _privacy.select(privacyIndex);
                 for (int i = 0; i < _editorStatusListeners.size(); i++)
-                    ((EditorStatusListener)_editorStatusListeners.get(i)).pickPrivacyPBE();
+                    _editorStatusListeners.get(i).pickPrivacyPBE();
                 if (promptForPassphrase) { // false when deserializing state
                     final PassphrasePrompt dialog = new PassphrasePrompt(_client, _ui, _themeRegistry, _translationRegistry, _root.getShell(), true);
                     dialog.setPassphrase(_passphrase);
@@ -1476,13 +1476,13 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             case 3: // private reply
                 _privacy.select(privacyIndex);
                 for (int i = 0; i < _editorStatusListeners.size(); i++)
-                    ((EditorStatusListener)_editorStatusListeners.get(i)).pickPrivacyPrivate();
+                    _editorStatusListeners.get(i).pickPrivacyPrivate();
                 break;
             case 1: // authorized only
             default:
                 _privacy.select(privacyIndex);
                 for (int i = 0; i < _editorStatusListeners.size(); i++)
-                    ((EditorStatusListener)_editorStatusListeners.get(i)).pickPrivacyAuthorized();
+                    _editorStatusListeners.get(i).pickPrivacyAuthorized();
                 break;
         }
     }
@@ -1557,7 +1557,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         
         viewPage(_pageEditors.size()-1);
         for (int i = 0; i < _editorStatusListeners.size(); i++)
-            ((EditorStatusListener)_editorStatusListeners.get(i)).pickPageTypeHTML(type.equals(TYPE_HTML));
+            _editorStatusListeners.get(i).pickPageTypeHTML(type.equals(TYPE_HTML));
         saveState();
         return ed;
     }
@@ -1575,13 +1575,13 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             saveState();
             modified();
             _ui.debugMessage("remove page " + pageNum + "/" + _pageEditors.size());
-            PageEditor editor = (PageEditor)_pageEditors.remove(pageNum);
+            PageEditor editor = _pageEditors.remove(pageNum);
             _pageTypes.remove(pageNum);
             _pageTitles.remove(pageNum);
             editor.dispose();
             
             for (int i = 0; i < _pageEditors.size(); i++) {
-                PageEditor cur = (PageEditor)_pageEditors.get(i);
+                PageEditor cur = _pageEditors.get(i);
                 cur.getItem().setText(getText("Page ") + (i+1));
             }
             viewPage(_pageEditors.size()-1);
@@ -1603,7 +1603,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             ed.setContentType(type);
             _pageTypes.set(page, type);
             for (int i = 0; i < _editorStatusListeners.size(); i++)
-                ((EditorStatusListener)_editorStatusListeners.get(i)).pickPageTypeHTML(type.equals(TYPE_HTML));
+                _editorStatusListeners.get(i).pickPageTypeHTML(type.equals(TYPE_HTML));
             setDefaultPageType(type);
             updateToolbar();
             modified();
@@ -1704,7 +1704,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     /** grab the given (0-indexed) page */
     private PageEditor getPageEditor(int pageNum) {
         if ( (pageNum >= 0) && (pageNum < _pageEditors.size()) )
-            return (PageEditor)_pageEditors.get(pageNum);
+            return _pageEditors.get(pageNum);
         else
             return null;
     }
@@ -1715,7 +1715,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     /** grab the content type of the given (0-indexed) page */
     private String getPageType(int pageNum) {
         if (_pageTypes.size() > pageNum)
-            return (String)_pageTypes.get(pageNum);
+            return _pageTypes.get(pageNum);
         else
             return "";
     }
@@ -1743,7 +1743,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _ui.debugMessage("updateToolbar: pages=" + pages + " (" + page + "/" + (pages-1) + ") attachments=" + attachments + " isHTML? " + isHTML + "/" + type + " pageLoaded? " + pageLoaded + " types: " + _pageTypes);
        
         for (int i = 0; i < _editorStatusListeners.size(); i++)
-            ((EditorStatusListener)_editorStatusListeners.get(i)).statusUpdated(page, pages, attachment, attachments, type, pageLoaded, isHTML, hasAncestors);
+            _editorStatusListeners.get(i).statusUpdated(page, pages, attachment, attachments, type, pageLoaded, isHTML, hasAncestors);
         
         // NPE via Desktop, initComponents() -> addPage() when _showActions is false
         if (_preview == null)
@@ -1798,7 +1798,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     public Hash getForum() { return _forum; }
     public Hash getAuthor() { return _author; }
     public int getParentCount() { return _parents.size(); }
-    public SyndieURI getParent(int depth) { return (SyndieURI)_parents.get(depth); }
+    public SyndieURI getParent(int depth) { return _parents.get(depth); }
     public boolean getPrivacyReply() { return _privacy.getSelectionIndex() == PRIVACY_REPLY; }
     public void setParentMessage(SyndieURI uri) {
         _parents.clear();
@@ -2173,7 +2173,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         if (_forum != null)
             forumId = _client.getChannelId(_forum);
         else
-            forumId = ((Long)chans.getIdentityChannelIds().get(0)).longValue();
+            forumId = chans.getIdentityChannelIds().get(0).longValue();
         
         redrawForumAvatar(_forum, forumId, getSummary(forumId), isManaged(forumId));
     }
@@ -2221,16 +2221,16 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             _toCurrentLabel.setText("");
         _headers.layout(true, true);
         for (int i = 0; i < _editorStatusListeners.size(); i++)
-            ((EditorStatusListener)_editorStatusListeners.get(i)).forumSelected(forum, channelId, summary, isManaged);
+            _editorStatusListeners.get(i).forumSelected(forum, channelId, summary, isManaged);
     }
     
     private void refreshAuthors() {
-        List signAsKeys = null;
+        List<NymKey> signAsKeys = null;
         boolean explicitKey = false;
         if (_forum != null) {
-            List nymKeys = _client.getNymKeys(_forum, null);
+            List<NymKey> nymKeys = _client.getNymKeys(_forum, null);
             for (int i = 0; i < nymKeys.size(); i++) {
-                NymKey key = (NymKey)nymKeys.get(i);
+                NymKey key = nymKeys.get(i);
                 if (!key.getAuthenticated()) {
                     _ui.debugMessage("key is not authenticated: " + key);
                     continue;
@@ -2266,7 +2266,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             
             boolean selected = false;
             for (int i = 0; i < signAsKeys.size(); i++) {
-                NymKey key = (NymKey)signAsKeys.get(i);
+                NymKey key = signAsKeys.get(i);
                 SigningPrivateKey priv = new SigningPrivateKey(key.getData());
                 Hash pubHash = priv.toPublic().calculateHash();
                 String name = _client.getChannelName(pubHash);
@@ -2302,7 +2302,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         
         long authorId = -1;
         if (_author == null) {
-            authorId = ((Long)_client.getNymChannels().getIdentityChannelIds().get(0)).longValue();
+            authorId = _client.getNymChannels().getIdentityChannelIds().get(0).longValue();
             _author = _client.getChannelHash(authorId);
         } else {
             authorId = _client.getChannelId(_author);
@@ -2366,7 +2366,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _headers.layout(true, true);
         
         for (int i = 0; i < _editorStatusListeners.size(); i++)
-            ((EditorStatusListener)_editorStatusListeners.get(i)).authorSelected(author, channelId, summary);
+            _editorStatusListeners.get(i).authorSelected(author, channelId, summary);
     }    
     
     
@@ -2405,7 +2405,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
                 _ui.debugMessage("forum allows public replies, and our parents: " + _parents);
                 boolean allowed = false;
                 for (int i = _parents.size()-1; !allowed && i >= 0; i--) {
-                    SyndieURI uri = (SyndieURI)_parents.get(i);
+                    SyndieURI uri = _parents.get(i);
                     Hash scope = uri.getScope();
                     if (forum.getChannelHash().equals(scope) ||
                         forum.getAuthorizedManagerHashes().contains(scope) ||
@@ -2642,16 +2642,16 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
             _attachmentConfig.remove(idx);
             _attachmentData.remove(idx);
             _attachmentSummary.remove(idx);
-            AttachmentPreview preview = (AttachmentPreview)_attachmentPreviews.remove(idx);
+            AttachmentPreview preview = _attachmentPreviews.remove(idx);
             preview.dispose();
-            Composite root = (Composite)_attachmentRoots.remove(idx);
+            Composite root = _attachmentRoots.remove(idx);
             root.dispose();
-            CTabItem item = (CTabItem)_pageTabs.getItem(idx + _pageEditors.size());
+            CTabItem item = _pageTabs.getItem(idx + _pageEditors.size());
             item.dispose();
         }
         rebuildAttachmentSummaries();
         for (int i = 0; i < _pageEditors.size(); i++) {
-            PageEditor ed = (PageEditor)_pageEditors.get(i);
+            PageEditor ed = _pageEditors.get(i);
             ed.updated();
         }
         updateToolbar();
@@ -2668,12 +2668,12 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         ArrayList rv = new ArrayList();
         for (int i = 0; i < _attachmentConfig.size(); i++) {
             if (imagesOnly) {
-                Properties cfg = (Properties)_attachmentConfig.get(i);
+                Properties cfg = _attachmentConfig.get(i);
                 String type = cfg.getProperty(Constants.MSG_ATTACH_CONTENT_TYPE);
                 if ( (type == null) || (!type.startsWith("image")) )
                     continue;
             }
-            String item = (String)_attachmentSummary.get(i);
+            String item = _attachmentSummary.get(i);
             rv.add(item);
         }
         return rv;
@@ -2681,24 +2681,24 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     public List getAttachmentNames() {
         ArrayList rv = new ArrayList();
         for (int i = 0; i < _attachmentConfig.size(); i++) {
-            Properties cfg = (Properties)_attachmentConfig.get(i);
+            Properties cfg = _attachmentConfig.get(i);
             rv.add(cfg.getProperty(Constants.MSG_ATTACH_NAME));
         }
         return rv;
     }
     public byte[] getAttachmentData(int attachment) {
         if ( (attachment <= 0) || (attachment > _attachmentData.size()) ) return null;
-        return (byte[])_attachmentData.get(attachment-1);
+        return _attachmentData.get(attachment-1);
     }
     public byte[] getImageAttachment(int idx) {
         int cur = 0;
         for (int i = 0; i < _attachmentConfig.size(); i++) {
-            Properties cfg = (Properties)_attachmentConfig.get(i);
+            Properties cfg = _attachmentConfig.get(i);
             String type = cfg.getProperty(Constants.MSG_ATTACH_CONTENT_TYPE);
             if ( (type == null) || (!type.startsWith("image")) )
                 continue;
             if (cur + 1 == idx)
-                return (byte[])_attachmentData.get(i);
+                return _attachmentData.get(i);
             cur++;
         }
         return null;
@@ -2706,7 +2706,7 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
     public int getImageAttachmentNum(int imageNum) { 
         int cur = 0;
         for (int i = 0; i < _attachmentConfig.size(); i++) {
-            Properties cfg = (Properties)_attachmentConfig.get(i);
+            Properties cfg = _attachmentConfig.get(i);
             String type = cfg.getProperty(Constants.MSG_ATTACH_CONTENT_TYPE);
             if ( (type == null) || (!type.startsWith("image")) )
                 continue;
@@ -2721,14 +2721,14 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         modified();
         int cur = 0;
         for (int i = 0; i < _attachmentConfig.size(); i++) {
-            final Properties cfg = (Properties)_attachmentConfig.get(i);
+            final Properties cfg = _attachmentConfig.get(i);
             String type = cfg.getProperty(Constants.MSG_ATTACH_CONTENT_TYPE);
             if ( (type == null) || (!type.startsWith("image")) )
                 continue;
             if (cur == imageNum) {
                 cfg.setProperty(Constants.MSG_ATTACH_CONTENT_TYPE, contentType);
-                _attachmentConfig.set(cur, data);
-                AttachmentPreview preview = (AttachmentPreview)_attachmentPreviews.get(i);
+                _attachmentData.set(cur, data);
+                AttachmentPreview preview = _attachmentPreviews.get(i);
                 final int num = i;
                 preview.showURI(new AttachmentPreview.AttachmentSource() {
                     public Properties getAttachmentConfig(int attachmentNum) { return cfg; }
@@ -2747,8 +2747,8 @@ public class MessageEditor extends BaseComponent implements Themeable, Translata
         _attachmentSummary.clear();
         if (_attachmentData.size() > 0) {
             for (int i = 0; i < _attachmentData.size(); i++) {
-                byte data[] = (byte[])_attachmentData.get(i);
-                Properties cfg = (Properties)_attachmentConfig.get(i);
+                byte data[] = _attachmentData.get(i);
+                Properties cfg = _attachmentConfig.get(i);
                 StringBuilder buf = new StringBuilder();
                 buf.append((i+1) + ": ");
                 String name = cfg.getProperty(Constants.MSG_ATTACH_NAME);

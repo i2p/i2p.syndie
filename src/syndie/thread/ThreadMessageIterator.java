@@ -27,16 +27,16 @@ public class ThreadMessageIterator implements MessageIterator {
     }
 
     public void recenter(final SyndieURI uri) {
-        final List traversal = new ArrayList();
+        final List<ThreadReferenceNode> traversal = new ArrayList<ThreadReferenceNode>();
         final ReferenceNode cur[] = new ReferenceNode[1];
         
-        List roots = new ArrayList(1);
+        List<ReferenceNode> roots = new ArrayList<ReferenceNode>(1);
         roots.add(_root);
         ReferenceNode.walk(roots, new ReferenceNode.Visitor() {
             public void visit(ReferenceNode node, int depth, int siblingOrder) {
                 SyndieURI curi = node.getURI();
                 if (curi != null) {
-                    traversal.add(node);
+                    traversal.add((ThreadReferenceNode)node);
                     if ( (cur[0] == null) && (curi.equals(uri)) )
                         cur[0] = node;
                 }
@@ -45,12 +45,14 @@ public class ThreadMessageIterator implements MessageIterator {
         
         recenter(traversal, cur[0]);
     }
+
     public void recenter(long msgId) {
         List traversal = traverse();
         ReferenceNode cur = _root.getByUniqueId(msgId);
         recenter(traversal, cur);
     }
-    private void recenter(List traversal, ReferenceNode cur) {
+
+    private void recenter(List<ThreadReferenceNode> traversal, ReferenceNode cur) {
         _nextNew = null;
         _prevNew = null;
         _nextInThread = null;
@@ -60,7 +62,7 @@ public class ThreadMessageIterator implements MessageIterator {
         if (cur != null) {
             int idx = traversal.indexOf(cur);
             for (int i = idx-1; i >= 0; i--) {
-                ThreadReferenceNode prev = (ThreadReferenceNode)traversal.get(i);
+                ThreadReferenceNode prev = traversal.get(i);
                 if (_prevInThread == null)
                     _prevInThread = prev.getURI();
                 if (_prevNew == null) {
@@ -72,7 +74,7 @@ public class ThreadMessageIterator implements MessageIterator {
             }
             
             for (int i = idx+1; i < traversal.size(); i++) {
-                ThreadReferenceNode nxt = (ThreadReferenceNode)traversal.get(i);
+                ThreadReferenceNode nxt = traversal.get(i);
                 if (_nextInThread == null)
                     _nextInThread = nxt.getURI();
                 if (_nextNew == null) {
@@ -85,7 +87,7 @@ public class ThreadMessageIterator implements MessageIterator {
         }
     }
     
-    public ThreadReferenceNode getThreadRoot() { return (ThreadReferenceNode)_root; }
+    public ThreadReferenceNode getThreadRoot() { return _root; }
     
     private List traverse() {
         List roots = new ArrayList(1);

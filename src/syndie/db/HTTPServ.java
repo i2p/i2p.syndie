@@ -356,7 +356,7 @@ public class HTTPServ implements CLI.Command {
                             }
                             _pendingSockets.wait();
                         } else {
-                            socket = (Socket)_pendingSockets.remove(0);
+                            socket = _pendingSockets.remove(0);
                         }
                     }
                     if (socket != null)
@@ -481,7 +481,7 @@ public class HTTPServ implements CLI.Command {
             return;
         }
         
-        File file = (File) _sharedFiles.get(path);
+        File file = _sharedFiles.get(path);
         if (file != null) {
             if (file.exists()) {
                 String lm = headers.get("IF-MODIFIED-SINCE");
@@ -523,7 +523,7 @@ public class HTTPServ implements CLI.Command {
             return;
         }
         
-        File file = (File) _sharedFiles.get(path);
+        File file = _sharedFiles.get(path);
         if (file != null) {
             if (file.exists()) {
                 sendHeaders(socket, in, out, file, timeout);

@@ -234,7 +234,7 @@ class PageRenderer extends BaseComponent implements Themeable {
                     HTMLTag imgTag = null;
                     StyleRange imgRange = null;
                     for (int i = 0; i < _linkTags.size(); i++) {
-                        HTMLTag tag = (HTMLTag)_linkTags.get(i);
+                        HTMLTag tag = _linkTags.get(i);
                         if ( (off >= tag.startIndex) && (off <= tag.endIndex) ) {
                             StyleRange range = _text.getStyleRangeAtOffset(off);
                             linkTag = tag;
@@ -243,7 +243,7 @@ class PageRenderer extends BaseComponent implements Themeable {
                         }
                     }
                     for (int i = 0; i < _imageTags.size(); i++) {
-                        HTMLTag tag = (HTMLTag)_imageTags.get(i);
+                        HTMLTag tag = _imageTags.get(i);
                         if ( (off >= tag.startIndex) && (off <= tag.endIndex) ) {
                             StyleRange range = _text.getStyleRangeAtOffset(off);
                             imgRange = range;
@@ -284,7 +284,7 @@ class PageRenderer extends BaseComponent implements Themeable {
                     HTMLTag imgTag = null;
                     StyleRange imgRange = null;
                     for (int i = 0; i < _linkTags.size(); i++) {
-                        HTMLTag tag = (HTMLTag)_linkTags.get(i);
+                        HTMLTag tag = _linkTags.get(i);
                         if ( (off >= tag.startIndex) && (off <= tag.endIndex) ) {
                             StyleRange range = _text.getStyleRangeAtOffset(off);
                             linkTag = tag;
@@ -319,10 +319,10 @@ class PageRenderer extends BaseComponent implements Themeable {
                 int start = range.start;
                 if (_imageIndexes != null) {
                     for (int i = 0; i < _imageIndexes.size(); i++) {
-                        int offset = ((Integer)_imageIndexes.get(i)).intValue();
+                        int offset = _imageIndexes.get(i).intValue();
                         if (start == offset) {
                             if (i >= _images.size()) return;
-                            Image img = (Image)_images.get(i);
+                            Image img = _images.get(i);
                             // Adjust origin by half the added margin
                             int xMargin = (range.metrics.width - img.getBounds().width) / 2;
                             int yMargin = (range.metrics.ascent - img.getBounds().height) / 2;
@@ -720,7 +720,7 @@ class PageRenderer extends BaseComponent implements Themeable {
         int prevAlignment = -1;
         int sequentialAligned = 0;
 
-        ArrayList lineTags = new ArrayList(16);
+        ArrayList<HTMLTag> lineTags = new ArrayList<HTMLTag>(16);
         HTMLTag stateTags[] = (HTMLTag[])stateBuilder.getTags().toArray(new HTMLTag[0]);
         int stateTagCount = stateTags.length;
         
@@ -779,7 +779,7 @@ class PageRenderer extends BaseComponent implements Themeable {
             } else {
                 // look for alignment attributes
                 for (int i = 0; i < lineTags.size(); i++) {
-                    HTMLTag tag = (HTMLTag)lineTags.get(i);
+                    HTMLTag tag = lineTags.get(i);
                     String align = tag.getAttribValue("align");
                     if (align != null) {
                         if ("left".equalsIgnoreCase(align))
@@ -809,7 +809,7 @@ class PageRenderer extends BaseComponent implements Themeable {
             int indentLevel = 0;
             // look for li tags, and indent $x times the nesting layer
             for (int i = 0; i < lineTags.size(); i++) {
-                HTMLTag tag = (HTMLTag)lineTags.get(i);
+                HTMLTag tag = lineTags.get(i);
                 if ("li".equals(tag.name)) {
                     indentLevel++;
                     // we only want to put a bullet point on the first line of
@@ -854,7 +854,7 @@ class PageRenderer extends BaseComponent implements Themeable {
             boolean quoteFound = false;
             // look for <quote> tags, and indent $x times the nesting layer
             for (int i = 0; i < lineTags.size(); i++) {
-                HTMLTag tag = (HTMLTag)lineTags.get(i);
+                HTMLTag tag = lineTags.get(i);
                 if ("quote".equals(tag.name)) {
                     indentLevel++;
                     quoteFound = true;
@@ -870,7 +870,7 @@ class PageRenderer extends BaseComponent implements Themeable {
              */
             //boolean defFound = false;
             for (int i = 0; i < lineTags.size(); i++) {
-                HTMLTag tag = (HTMLTag)lineTags.get(i);
+                HTMLTag tag = lineTags.get(i);
                 if ("dd".equals(tag.name)) {
                     indentLevel += 2;
                     //defFound = true;
@@ -949,7 +949,7 @@ class PageRenderer extends BaseComponent implements Themeable {
     private void disposeFonts() {
         if (_fonts != null) {
             for (int i = 0; i < _fonts.size(); i++) {
-                Font f = (Font)_fonts.get(i);
+                Font f = _fonts.get(i);
                 if (!f.isDisposed())
                     f.dispose();
             }
@@ -959,7 +959,7 @@ class PageRenderer extends BaseComponent implements Themeable {
     private void disposeColors() {
         if (_colors != null) {
             for (int i = 0; i < _colors.size(); i++) {
-                Color c = (Color)_colors.get(i);
+                Color c = _colors.get(i);
                 if ( (!c.isDisposed()) && (!ColorUtil.isSystemColor(c)) )
                     c.dispose();
             }
@@ -975,7 +975,7 @@ class PageRenderer extends BaseComponent implements Themeable {
         _bgImage = null;
         if (_images != null) {
             for (int i = 0; i < _images.size(); i++) {
-                Image img = (Image)_images.get(i);
+                Image img = _images.get(i);
                 ImageUtil.dispose(img);
                 //if (img == ImageUtil.ICON_IMAGE_UNKNOWN) continue;
                 //if (img == ImageUtil.ICON_LINK_END) continue;
@@ -1000,14 +1000,14 @@ class PageRenderer extends BaseComponent implements Themeable {
             HTMLTag linkTag = null;
             HTMLTag imgTag = null;
             for (int i = 0; i < _linkTags.size(); i++) {
-                HTMLTag tag = (HTMLTag)_linkTags.get(i);
+                HTMLTag tag = _linkTags.get(i);
                 if ( (off >= tag.startIndex) && (off <= tag.endIndex) ) {
                     linkTag = tag;
                     break;
                 }
             }
             for (int i = 0; i < _imageTags.size(); i++) {
-                HTMLTag tag = (HTMLTag)_imageTags.get(i);
+                HTMLTag tag = _imageTags.get(i);
                 if ( (off >= tag.startIndex) && (off <= tag.endIndex) ) {
                     imgTag = tag;
                     break;
@@ -1082,10 +1082,10 @@ class PageRenderer extends BaseComponent implements Themeable {
             _currentEventImage = null;
             if (imgTag != null) {
                 for (int i = 0; i < _imageIndexes.size(); i++) {
-                    Integer idx = (Integer)_imageIndexes.get(i);
+                    Integer idx = _imageIndexes.get(i);
                     if (idx.intValue() == imgTag.startIndex) {
                         if (_images.size() <= 0) return; // disposing
-                        _currentEventImage = (Image)_images.get(i);
+                        _currentEventImage = _images.get(i);
                         _currentEventImageTag = imgTag;
                         break;
                     }
@@ -1237,10 +1237,10 @@ class PageRenderer extends BaseComponent implements Themeable {
         _currentEventImage = null;
         if (imgTag != null) {
             for (int i = 0; i < _imageIndexes.size(); i++) {
-                Integer idx = (Integer)_imageIndexes.get(i);
+                Integer idx = _imageIndexes.get(i);
                 if (idx.intValue() == imgTag.startIndex) {
                     if (_images.size() <= i) return; // disposing
-                    _currentEventImage = (Image)_images.get(i);
+                    _currentEventImage = _images.get(i);
                     _currentEventImageTag = imgTag;
                     break;
                 }
@@ -1696,7 +1696,7 @@ class PageRenderer extends BaseComponent implements Themeable {
         // prompt the user for where the images should be saved
         Map images = new HashMap();
         for (int i = 0; i < _imageTags.size(); i++) {
-            HTMLTag tag = (HTMLTag)_imageTags.get(i);
+            HTMLTag tag = _imageTags.get(i);
             String suggestedName = getSuggestedName(tag);
             if (images.containsKey(suggestedName)) {
                 int j = 1;
@@ -1705,7 +1705,7 @@ class PageRenderer extends BaseComponent implements Themeable {
                 suggestedName = suggestedName + "." + j;
             }
             for (int j = 0; j < _imageIndexes.size(); j++) {
-                Integer idx = (Integer)_imageIndexes.get(j);
+                Integer idx = _imageIndexes.get(j);
                 if (idx.intValue() == tag.startIndex) {
                     images.put(suggestedName, _images.get(j));
                     break;

@@ -37,15 +37,16 @@ public class ThreadBuilder {
         _idTable = new HashMap();
     }
     
-    public List buildThread(Set threadMsgIds) { 
+    public List buildThread(Set<ThreadMsgId> threadMsgIds) { 
         Timer timer = new Timer("JWZ threader", _ui);
         List rv = buildThread(threadMsgIds, timer);
         timer.complete();
         return rv;
     }
-    public List buildThread(Set threadMsgIds, Timer timer) {
-        Map tmiToAncestors = new HashMap();
-        Set newMsgIds = new HashSet();
+
+    public List buildThread(Set<ThreadMsgId> threadMsgIds, Timer timer) {
+        Map<ThreadMsgId, List<ThreadMsgId>> tmiToAncestors = new HashMap<ThreadMsgId, List<ThreadMsgId>>();
+        Set<ThreadMsgId> newMsgIds = new HashSet<ThreadMsgId>();
         
         // find all children of the messages, in case they weren't included in the threadMsgIds
         ThreadAccumulatorJWZ.buildChildren(_client, _ui, newMsgIds, threadMsgIds, timer);
@@ -56,10 +57,9 @@ public class ThreadBuilder {
         }
         
         // step 1: foreach msg
-        for (Iterator iter = threadMsgIds.iterator(); iter.hasNext(); ) {
-            ThreadMsgId tmi = (ThreadMsgId)iter.next();
+        for (ThreadMsgId tmi : threadMsgIds) {
             // step 1.A: build a container for each msg
-            Container c = (Container)_idTable.get(tmi);
+            Container c = _idTable.get(tmi);
             if (c == null) {
                 c = new Container();
                 _idTable.put(tmi, c);
@@ -76,9 +76,8 @@ public class ThreadBuilder {
         }
         
         // build all ancestors first, otherwise the loop check will be incomplete
-        for (Iterator iter = threadMsgIds.iterator(); iter.hasNext(); ) {
-            ThreadMsgId tmi = (ThreadMsgId)iter.next();
-            Container c = (Container)_idTable.get(tmi);
+        for (ThreadMsgId tmi : threadMsgIds) {
+            Container c = _idTable.get(tmi);
             // step 1.B: fetch & link the ancestors of the containers
             if ( (c != null) && (c.msg != null) && (c.msg.references != null) ) {
                 Container childContainer = c;
@@ -90,8 +89,8 @@ public class ThreadBuilder {
                 if (DEBUG) _ui.debugMessage("existing thread container for " + tmi + ", building through refs: " + c.msg.references);
 
                 for (int j = 0; j < c.msg.references.size(); j++) {
-                    ThreadMsgId ref = (ThreadMsgId)c.msg.references.get(j);
-                    Container refContainer = (Container)_idTable.get(ref);
+                    ThreadMsgId ref = c.msg.references.get(j);
+                    Container refContainer = _idTable.get(ref);
                     if (refContainer == null) {
                         refContainer = new Container();
                         // lets prefill...
@@ -139,12 +138,9 @@ public class ThreadBuilder {
         }
         
         timer.addEvent("all ancestors built");
-        List roots = new ArrayList();
+        List<Container> roots = new ArrayList<Container>();
         // step 2: find the root set
-        for (Iterator iter = _idTable.entrySet().iterator(); iter.hasNext(); ) {
-            Map.Entry entry = (Map.Entry)iter.next();
-            ThreadMsgId id = (ThreadMsgId)entry.getKey();
-            Container c = (Container)entry.getValue();
+        for (Container c : _idTable.values()) {
             if (c.parent == null)
                 roots.add(c);
         }
@@ -157,7 +153,7 @@ public class ThreadBuilder {
         //prune(roots);
         // skip step 5, because syndie uses real references, not "Re: " stuff
         // step 6: persist the tree to our own structure
-        List rv = containerToRefNode(roots);
+        List<ThreadReferenceNode> rv = containerToRefNode(roots);
         timer.addEvent("refnodes built");
         // skip step 7, because we sort elsewhere
         return rv;
@@ -167,10 +163,7 @@ public class ThreadBuilder {
         if (true) return;
         StringBuilder buf = new StringBuilder();
         buf.append("================ Begin thread build dump\n");
-        for (Iterator iter = _idTable.entrySet().iterator(); iter.hasNext(); ) {
-            Map.Entry entry = (Map.Entry)iter.next();
-            ThreadMsgId id = (ThreadMsgId)entry.getKey();
-            Container c = (Container)entry.getValue();
+        for (Container c : _idTable.values()) {
             if (c.parent == null)
                 buf.append("ROOT: ").append(c.toString());
             else {
@@ -182,10 +175,10 @@ public class ThreadBuilder {
         _ui.debugMessage(buf.toString());
     }
     
-    private List containerToRefNode(List containers) {
-        List rv = new ArrayList();
+    private List<ThreadReferenceNode> containerToRefNode(List<Container> containers) {
+        List<ThreadReferenceNode> rv = new ArrayList<ThreadReferenceNode>();
         for (int i = 0; i < containers.size(); i++) {
-            ThreadReferenceNode node = containerToRefNode((Container)containers.get(i), null);
+            ThreadReferenceNode node = containerToRefNode(containers.get(i), null);
             if (node != null)
                 rv.add(node);
         }
@@ -332,19 +325,19 @@ public class ThreadBuilder {
         return false;
     }
     
-    private Set walk(ThreadMsgId id) {
-        Set rv = new HashSet();
-        Set remaining = new HashSet();
+    private Set<ThreadMsgId> walk(ThreadMsgId id) {
+        Set<ThreadMsgId> rv = new HashSet<ThreadMsgId>();
+        Set<ThreadMsgId> remaining = new HashSet<ThreadMsgId>();
         remaining.add(id);
         while (remaining.size() > 0) {
-            Iterator iter = remaining.iterator();
-            ThreadMsgId cur = (ThreadMsgId)iter.next();
+            Iterator<ThreadMsgId> iter = remaining.iterator();
+            ThreadMsgId cur = iter.next();
             iter.remove();
             rv.add(cur);
-            Container c = (Container)_idTable.get(cur);
+            Container c = _idTable.get(cur);
             if (c != null && c.msg != null && c.msg.references != null) {
                 for (int i = 0; i < c.msg.references.size(); i++) {
-                    ThreadMsgId ancestor = (ThreadMsgId)c.msg.references.get(i);
+                    ThreadMsgId ancestor = c.msg.references.get(i);
                     if (!rv.contains(ancestor))
                         remaining.add(ancestor);
                 }
@@ -360,19 +353,18 @@ public class ThreadBuilder {
         timer.complete();
         return rv;
     }
+
     public ThreadReferenceNode buildThread(ThreadMsgId id, Timer timer) {
-        Set msgIds = new HashSet();
+        Set<ThreadMsgId> msgIds = new HashSet<ThreadMsgId>();
         msgIds.add(id);
         // we can't just feed this to buildThread(msgIds), because that assumes
         // the leaves are all included
-        Map ancestors = new HashMap();
+        Map<ThreadMsgId, List<ThreadMsgId>> ancestors = new HashMap<ThreadMsgId, List<ThreadMsgId>>();
         ThreadAccumulatorJWZ.buildAncestors(_client, _ui, id, ancestors);
         timer.addEvent("ancestors built");
-        for (Iterator iter = ancestors.entrySet().iterator(); iter.hasNext(); ) {
-            Map.Entry entry = (Map.Entry)iter.next();
+        for (Map.Entry<ThreadMsgId, List<ThreadMsgId>> entry : ancestors.entrySet()) {
             msgIds.add(entry.getKey());
-            List parents = (List)entry.getValue();
-            msgIds.addAll(parents);
+            msgIds.addAll(entry.getValue());
         }
         addChildren(msgIds);
         timer.addEvent("children added");
@@ -383,15 +375,17 @@ public class ThreadBuilder {
         else
             return null;
     }
+
     private static final String SQL_GET_CHILDREN = "SELECT cm.msgId, messageId, channelHash, cm.wasAuthorized, cm.authorChannelId FROM channelMessage cm JOIN channel ON scopeChannelId = channelId JOIN messageHierarchy mh ON cm.msgId = mh.msgId WHERE referencedMessageId = ? AND referencedChannelHash = ?";
-    private void addChildren(Set msgIds) {
-        List toQuery = new ArrayList(msgIds);
+
+    private void addChildren(Set<ThreadMsgId> msgIds) {
+        List<ThreadMsgId> toQuery = new ArrayList<ThreadMsgId>(msgIds);
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
             stmt = _client.con().prepareStatement(SQL_GET_CHILDREN);
             while (toQuery.size() > 0) {
-                ThreadMsgId id = (ThreadMsgId)toQuery.remove(0);
+                ThreadMsgId id = toQuery.remove(0);
                 stmt.setLong(1, id.messageId);
                 stmt.setBytes(2, id.scope.getData());
                 rs = stmt.executeQuery();
@@ -457,7 +451,7 @@ public class ThreadBuilder {
     private static class Message {
         ThreadMsgId id;
         /** list of ThreadMsgId, most recent first */
-        List references;
+        List<ThreadMsgId> references;
         
         @Override
         public String toString() { return (id != null ? id.toString() : "nomsg"); }

@@ -137,7 +137,7 @@ class StandaloneMessageViewer implements Translatable, Themeable {
                  (_stubMsg.getScopeChannel().equals(uri.getScope())) && 
                  (_stubMsg.getMessageId() == uri.getMessageId().longValue()) ) {
                 int page = 1;
-                if (uri.getPage() != null) page = (int)uri.getPage().intValue();
+                if (uri.getPage() != null) page = uri.getPage().intValue();
                 _view.viewMessage(_msg, page, new Timer("review page", _ui));
             } else {
                 _stubNav.view(uri, suggestedName, suggestedDescription);

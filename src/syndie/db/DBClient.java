@@ -1238,20 +1238,18 @@ public class DBClient {
             rv.add(getChannelHash(scopeId));
         
         if (includeManagers) {
-            Set keys = getChannelManageKeys(scopeId);
+            Set<SigningPublicKey> keys = getChannelManageKeys(scopeId);
             if (keys != null) {
-                for (Iterator iter = keys.iterator(); iter.hasNext(); ) {
-                    SigningPublicKey pub = (SigningPublicKey)iter.next();
+                for (SigningPublicKey pub : keys) {
                     rv.add(pub.calculateHash());
                 }
             }
         }
         
         if (includePosters) {
-            Set keys = getChannelPostKeys(scopeId);
+            Set<SigningPublicKey> keys = getChannelPostKeys(scopeId);
             if (keys != null) {
-                for (Iterator iter = keys.iterator(); iter.hasNext(); ) {
-                    SigningPublicKey pub = (SigningPublicKey)iter.next();
+                for (SigningPublicKey pub : keys) {
                     rv.add(pub.calculateHash());
                 }
             }
@@ -1949,7 +1947,7 @@ public class DBClient {
         if (includePublicPost) {
             List<Long> channelIds = getPublicPostingChannelIds();
             for (int i = 0; i < channelIds.size(); i++) {
-                Long id = (Long)channelIds.get(i);
+                Long id = channelIds.get(i);
                 if (!identIds.contains(id) && !manageIds.contains(id) && !postIds.contains(id) && !pubPostIds.contains(id)) {
                     pubPostIds.add(id);
                 }
@@ -2054,9 +2052,9 @@ public class DBClient {
     public List<ChannelInfo> getChannels(ChannelSearchCriteria criteria) { //String name, Set tagsInclude, Set tagsRequire, Set tagsExclude, String hashPrefix) {
         String name = criteria.getName();
         String hashPrefix = criteria.getHashPrefix();
-        Set tagsInclude = criteria.getInclude();
-        Set tagsExclude = criteria.getExclude();
-        Set tagsRequire = criteria.getRequire();
+        Set<String> tagsInclude = criteria.getInclude();
+        Set<String> tagsExclude = criteria.getExclude();
+        Set<String> tagsRequire = criteria.getRequire();
 
         if ( (name != null) && (name.trim().length() <= 0) ) name = null;
         if ( (hashPrefix != null) && (hashPrefix.trim().length() <= 0) ) hashPrefix = null;
@@ -2068,10 +2066,9 @@ public class DBClient {
         // instead of all these getChannel calls.  but this'll do the trick for now
         List<ChannelInfo> rv = new ArrayList();
         Map<Long, Hash> allIds = getChannelIds();
-        for (Iterator iter = allIds.entrySet().iterator(); iter.hasNext(); ) {
-            Map.Entry entry = (Map.Entry)iter.next();
-            Long chanId = (Long)entry.getKey();
-            Hash chan = (Hash)entry.getValue();
+        for (Map.Entry<Long, Hash> entry : allIds.entrySet()) {
+            Long chanId = entry.getKey();
+            Hash chan = entry.getValue();
             if ( (hashPrefix != null) && (!chan.toBase64().startsWith(hashPrefix)) )
                 continue;
             ChannelInfo info = getChannel(chanId.longValue());
@@ -2082,8 +2079,7 @@ public class DBClient {
             Set<String> priv= info.getPrivateTags();
             if (tagsExclude != null) {
                 boolean found = false;
-                for (Iterator titer = tagsExclude.iterator(); titer.hasNext(); ) {
-                    String tag = (String)titer.next();
+                for (String tag : tagsExclude) {
                     if (pub.contains(tag) || priv.contains(tag)) { 
                         //System.out.println("Not including " + info.getChannelHash().toBase64() + " found tag [" + tag + "]");
                         found = true;
@@ -2096,8 +2092,7 @@ public class DBClient {
             }
             if (tagsRequire != null) {
                 boolean foundAll = true;
-                for (Iterator titer = tagsRequire.iterator(); titer.hasNext(); ) {
-                    String tag = (String)titer.next();
+                for (String tag : tagsRequire) {
                     if ( (!pub.contains(tag)) && (!priv.contains(tag)) ) {
                         foundAll = false;
                         //System.out.println("Not including " + info.getChannelHash().toBase64() + " missing tag [" + tag + "]");
@@ -2110,8 +2105,7 @@ public class DBClient {
             }
             if (tagsInclude != null) {
                 boolean found = false;
-                for (Iterator titer = tagsInclude.iterator(); titer.hasNext(); ) {
-                    String tag = (String)titer.next();
+                for (String tag : tagsInclude) {
                     if ( (pub.contains(tag)) || (priv.contains(tag)) ) {
                         found = true;
                         break;
@@ -2308,8 +2302,8 @@ public class DBClient {
             stmt = _con.prepareStatement(SQL_GET_CHANNEL_ARCHIVES);
             stmt.setLong(1, channelId);
             rs = stmt.executeQuery();
-            Set pubIds = new HashSet();
-            Set privIds = new HashSet();
+            Set<Long> pubIds = new HashSet<Long>();
+            Set<Long> privIds = new HashSet<Long>();
             while (rs.next()) {
                 // archiveId, wasEncrypted
                 long archiveId = rs.getLong(1);
@@ -2328,16 +2322,14 @@ public class DBClient {
             stmt.close();
             stmt = null;
             
-            Set pub = new HashSet();
-            Set priv = new HashSet();
-            for (Iterator iter = pubIds.iterator(); iter.hasNext(); ) {
-                Long id = (Long)iter.next();
+            Set<ArchiveInfo> pub = new HashSet<ArchiveInfo>();
+            Set<ArchiveInfo> priv = new HashSet<ArchiveInfo>();
+            for (Long id : pubIds) {
                 ArchiveInfo archive = getArchive(id.longValue());
                 if (archive != null)
                     pub.add(archive);
             }
-            for (Iterator iter = privIds.iterator(); iter.hasNext(); ) {
-                Long id = (Long)iter.next();
+            for (Long id : privIds) {
                 ArchiveInfo archive = getArchive(id.longValue());
                 if (archive != null)
                     priv.add(archive);
@@ -2455,11 +2447,10 @@ public class DBClient {
             
             // now build the tree out of the nodes
             List<ReferenceNode> roots = new ArrayList();
-            for (Iterator iter = groupIdToNode.values().iterator(); iter.hasNext(); ) {
-                DBReferenceNode cur = (DBReferenceNode)iter.next();
+            for (DBReferenceNode cur : groupIdToNode.values()) {
                 long parentId = cur.getParentGroupId();
                 if (parentId >= 0) {
-                    DBReferenceNode parent = (DBReferenceNode)groupIdToNode.get(Long.valueOf(parentId));
+                    DBReferenceNode parent = groupIdToNode.get(Long.valueOf(parentId));
                     if (parent != null)
                         parent.addChild(cur);
                     else
@@ -2469,8 +2460,7 @@ public class DBClient {
                 }
             }
             // another pass to sort the children
-            for (Iterator iter = groupIdToNode.values().iterator(); iter.hasNext(); ) {
-                DBReferenceNode cur = (DBReferenceNode)iter.next();
+            for (DBReferenceNode cur : groupIdToNode.values()) {
                 cur.sortChildren();
             }
             // sort the roots
@@ -2527,8 +2517,7 @@ public class DBClient {
                 sorted.put(Long.valueOf(child.getSiblingOrder()+off), child);
             }
             _children.clear();
-            for (Iterator iter = sorted.values().iterator(); iter.hasNext(); ) {
-                DBReferenceNode child = (DBReferenceNode)iter.next();
+            for (DBReferenceNode child : sorted.values()) {
                 _children.add(child);
             }
         }
@@ -2878,7 +2867,7 @@ public class DBClient {
         }
         // now filter
         for (int i = 0; i < rv.size(); i++) {
-            Long msgId = (Long)rv.get(i);
+            Long msgId = rv.get(i);
             int status = getMessageStatus(msgId.longValue());
             if (status == MSG_STATUS_UNREAD) {
                 if (alreadyRead) {
@@ -3650,8 +3639,8 @@ public class DBClient {
             // putting this all in as a single sql statement has substantial performance benefits,
             // so...
             StringBuilder query = new StringBuilder("SELECT DISTINCT tag, isPublic FROM messageTag WHERE msgId IN (");
-            for (Iterator iter = msgIds.iterator(); iter.hasNext(); ) {
-                Long id = (Long)iter.next();
+            for (Iterator<Long> iter = msgIds.iterator(); iter.hasNext(); ) {
+                Long id = iter.next();
                 query.append(id.longValue());
                 if (iter.hasNext())
                     query.append(", ");
@@ -4318,7 +4307,7 @@ public class DBClient {
         List<SyndieURI> urisToDelete = getURIsToDelete(bannedChannel, deleteMessages, deleteMeta);
         ui.debugMessage("Delete the following URIs: " + urisToDelete);
         for (int i = 0; i < urisToDelete.size(); i++) {
-            SyndieURI uri = (SyndieURI)urisToDelete.get(i);
+            SyndieURI uri = urisToDelete.get(i);
             deleteFromArchive(uri, ui);
             deleteFromDB(uri, ui, cause);
         }
@@ -4816,11 +4805,10 @@ public class DBClient {
         
         // now build the tree out of the nodes
         List<ReferenceNode> roots = new ArrayList();
-        for (Iterator iter = groupIdToNode.values().iterator(); iter.hasNext(); ) {
-            NymReferenceNode cur = (NymReferenceNode)iter.next();
+        for (NymReferenceNode cur : groupIdToNode.values()) {
             long parentId = cur.getParentGroupId();
             if (parentId >= 0) {
-                NymReferenceNode parent = (NymReferenceNode)groupIdToNode.get(Long.valueOf(parentId));
+                NymReferenceNode parent = groupIdToNode.get(Long.valueOf(parentId));
                 if (parent != null)
                     parent.addChild(cur);
                 else
@@ -4830,8 +4818,7 @@ public class DBClient {
             }
         }
         // another pass to sort the children
-        for (Iterator iter = groupIdToNode.values().iterator(); iter.hasNext(); ) {
-            NymReferenceNode cur = (NymReferenceNode)iter.next();
+        for (NymReferenceNode cur : groupIdToNode.values()) {
             cur.sortChildren();
         }
         // sort the roots
@@ -5162,7 +5149,7 @@ public class DBClient {
         ArrayList<Long> groupIdsToDelete = new ArrayList();
         groupIdsToDelete.add(Long.valueOf(groupId));
         while (groupIdsToDelete.size() > 0) {
-            Long id = (Long)groupIdsToDelete.remove(0);
+            Long id = groupIdsToDelete.remove(0);
             try {
                 exec(SQL_DELETE_NYM_REFERENCE_URI, id.longValue());
             } catch (SQLException se) {
@@ -5778,7 +5765,7 @@ public class DBClient {
             stmt.setLong(1, nymId);
             rs = stmt.executeQuery();
             while (rs.next()) {
-                String name = (String)rs.getString(1);
+                String name = rs.getString(1);
                 String value = rs.getString(2);
                 if ( (name != null) && (value != null) && (name.length() > 0) )
                     rv.put(name, value);
@@ -6949,7 +6936,7 @@ public class DBClient {
             
             stmt = _con.prepareStatement(SQL_INSERT_NYMKEY);
             for (int i = 0; i < rv.size(); i++) {
-                NymKeyData data = (NymKeyData)rv.get(i);
+                NymKeyData data = rv.get(i);
                 
                 byte salt[] = new byte[16]; // overwritten by pbeEncrypt
                 byte encr[] = pbeEncrypt(data.keyData, newPass, salt);
@@ -7025,7 +7012,7 @@ public class DBClient {
             stmt = _con.prepareStatement(SQL_INSERT_POSTPONED);
             int count = 0;
             for (int i = 0; i < rv.size(); i++) {
-                PostponedData data = (PostponedData)rv.get(i);
+                PostponedData data = rv.get(i);
                 
                 String salt = data.rawB64.substring(0, 24);
                 String body = data.rawB64.substring(24);

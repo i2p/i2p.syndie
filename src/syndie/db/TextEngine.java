@@ -186,8 +186,8 @@ public class TextEngine {
             CLI.Command cmd = CLI.getCommand(opts.getCommand());
             if (cmd == null) {
                 if ( (_client != null) && (_client.getLoggedInNymId() >= 0) ) {
-                    Map aliases = _client.getAliases(_client.getLoggedInNymId());
-                    String value = (String)aliases.get(opts.getCommand());
+                    Map<String, String> aliases = _client.getAliases(_client.getLoggedInNymId());
+                    String value = aliases.get(opts.getCommand());
                     if (value != null) {
                         executeAlias(value);
                         return true;
@@ -440,17 +440,17 @@ public class TextEngine {
                 _ui.statusMessage("Login failed");
                 if (nymId == DBClient.NYM_ID_LOGIN_UNKNOWN) {
                     for (int i = 0; i < _scriptListeners.size(); i++) {
-                        ScriptListener lsnr = (ScriptListener)_scriptListeners.get(i);
+                        ScriptListener lsnr = _scriptListeners.get(i);
                         lsnr.loginFailedBadLogin();
                     }
                 } else if (nymId == DBClient.NYM_ID_PASSPHRASE_INVALID) {
                     for (int i = 0; i < _scriptListeners.size(); i++) {
-                        ScriptListener lsnr = (ScriptListener)_scriptListeners.get(i);
+                        ScriptListener lsnr = _scriptListeners.get(i);
                         lsnr.loginFailedBadPassphrase();
                     }
                 } else {
                     for (int i = 0; i < _scriptListeners.size(); i++) {
-                        ScriptListener lsnr = (ScriptListener)_scriptListeners.get(i);
+                        ScriptListener lsnr = _scriptListeners.get(i);
                         lsnr.loginFailed(new Exception("Unknown error - connect rv = " + nymId));
                     }
                 }
@@ -472,13 +472,13 @@ public class TextEngine {
                 _ui.errorMessage("Unable to log in, as there is already another");
                 _ui.errorMessage("syndie instance accessing that database.");
                 for (int i = 0; i < _scriptListeners.size(); i++) {
-                    ScriptListener lsnr = (ScriptListener)_scriptListeners.get(i);
+                    ScriptListener lsnr = _scriptListeners.get(i);
                     lsnr.alreadyRunning();
                 }
             } else {
                 _ui.errorMessage("Error trying to login", se);
                 for (int i = 0; i < _scriptListeners.size(); i++) {
-                    ScriptListener lsnr = (ScriptListener)_scriptListeners.get(i);
+                    ScriptListener lsnr = _scriptListeners.get(i);
                     lsnr.loginFailed(se);
                 }
             }
@@ -499,7 +499,7 @@ public class TextEngine {
         }
         if (targetMenu != null) {
             for (int i = 0; i < _menus.size(); i++) {
-                Menu cur = (Menu)_menus.get(i);
+                Menu cur = _menus.get(i);
                 if (cur.getName().equals(targetMenu)) {
                     _currentMenu = targetMenu;
                     return;
@@ -547,7 +547,7 @@ public class TextEngine {
 
     private Menu getCurrentMenu() {
         for (int i = 0; i < _menus.size(); i++) {
-            Menu menu = (Menu)_menus.get(i);
+            Menu menu = _menus.get(i);
             if (menu.getName().equals(_currentMenu))
                 return menu;
         }
@@ -668,13 +668,13 @@ public class TextEngine {
             _ui.commandComplete(0, null);
             return true;
         } else if ("notifyscriptend".equals(cmd)) {
-            List args = opts.getArgs();
+            List<String> args = opts.getArgs();
             _ui.debugMessage("notifyscriptend found: " + args);
             if (args.size() > 0) {
-                String script = (String)args.get(0);
+                String script = args.get(0);
                 _ui.debugMessage("notifying for " + script);
                 for (int i = 0; i < _scriptListeners.size(); i++)
-                    ((ScriptListener)_scriptListeners.get(i)).scriptComplete(script);
+                    _scriptListeners.get(i).scriptComplete(script);
             }
             clearCommandHistory();
             return true;
@@ -695,7 +695,7 @@ public class TextEngine {
 
     private void processHistory(Opts opts) {
         for (int i = 0; i < _commandHistory.size(); i++)
-            _ui.statusMessage((i+1) + ": " + (String)_commandHistory.get(i));
+            _ui.statusMessage((i+1) + ": " + _commandHistory.get(i));
         _ui.commandComplete(0, null);
     }
 
@@ -704,7 +704,7 @@ public class TextEngine {
         String cmd = opts.getCommand();
         if (cmd.startsWith("!!")) {
             if (_commandHistory.size() > 0) {
-                String prevCmd = (String)_commandHistory.get(_commandHistory.size()-1);
+                String prevCmd = _commandHistory.get(_commandHistory.size()-1);
                 _ui.insertCommand(prevCmd);
             } else {
                 _ui.errorMessage("No commands in the history buffer");
@@ -718,7 +718,7 @@ public class TextEngine {
                         num = _commandHistory.size() + num;
                     num--;
                     if (_commandHistory.size() > num) {
-                        _ui.insertCommand((String)_commandHistory.get(num));
+                        _ui.insertCommand(_commandHistory.get(num));
                     } else {
                         _ui.errorMessage("Command history element out of range");
                         _ui.commandComplete(-1, null);
@@ -736,7 +736,7 @@ public class TextEngine {
     /** deal with ^a[^b] */
     private void processHistoryReplace(Opts opts) {
         if (_commandHistory.size() > 0) {
-            String prev = (String)_commandHistory.get(_commandHistory.size()-1);
+            String prev = _commandHistory.get(_commandHistory.size()-1);
             String cmd = opts.getCommand();
             String orig = null;
             String replacement = null;

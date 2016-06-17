@@ -186,10 +186,10 @@ public class SyncArchive {
         ui.debugMessage("actions created, notify " + _listeners);
         
         for (int i = 0; i < _listeners.size(); i++) {
-            SyncArchiveListener lsnr = (SyncArchiveListener)_listeners.get(i);
+            SyncArchiveListener lsnr = _listeners.get(i);
             lsnr.incomingUpdated(_incomingActions);
             for (int j = 0; j < _outgoingActions.size(); j++) {
-                OutgoingAction action = (OutgoingAction)_outgoingActions.get(j);
+                OutgoingAction action = _outgoingActions.get(j);
                 lsnr.outgoingUpdated(action);
             }
         }
@@ -212,16 +212,16 @@ public class SyncArchive {
 
     void fireUpdated(boolean notifyActions) {
         for (int i = 0; i < _listeners.size(); i++) {
-            SyncArchiveListener lsnr = (SyncArchiveListener)_listeners.get(i);
+            SyncArchiveListener lsnr = _listeners.get(i);
             lsnr.archiveUpdated(this);
         }
         if (notifyActions) {
             for (int i = 0; i < _incomingActions.size(); i++) {
-                IncomingAction action = (IncomingAction)_incomingActions.get(i);
+                IncomingAction action = _incomingActions.get(i);
                 notifyUpdate(action);
             }
             for (int i = 0; i < _outgoingActions.size(); i++) {
-                OutgoingAction action = (OutgoingAction)_outgoingActions.get(i);
+                OutgoingAction action = _outgoingActions.get(i);
                 notifyUpdate(action);
             }
         }
@@ -494,14 +494,14 @@ public class SyncArchive {
 
     private void notifyUpdate(IncomingAction action) {
         for (int i = 0; i < _listeners.size(); i++) {
-            SyncArchiveListener lsnr = (SyncArchiveListener)_listeners.get(i);
+            SyncArchiveListener lsnr = _listeners.get(i);
             lsnr.incomingUpdated(action);
         }
     }
     
     private void notifyUpdate(OutgoingAction action) {
         for (int i = 0; i < _listeners.size(); i++) {
-            SyncArchiveListener lsnr = (SyncArchiveListener)_listeners.get(i);
+            SyncArchiveListener lsnr = _listeners.get(i);
             lsnr.outgoingUpdated(action);
         }
     }
@@ -893,12 +893,12 @@ public class SyncArchive {
     /** @since 1.102b-9 */
     public int getIncomingActionsInProgress() { return _incomingActionsInProgress; }
 
-    public IncomingAction getIncomingAction(int num) { return (IncomingAction)_incomingActions.get(num); }
+    public IncomingAction getIncomingAction(int num) { return _incomingActions.get(num); }
     
     IncomingAction createIncomingAction(SyndieURI uri) { 
         // FIXME O(n**2)
         for (int i = 0; i < _incomingActions.size(); i++) {
-            IncomingAction cur = (IncomingAction)_incomingActions.get(i);
+            IncomingAction cur = _incomingActions.get(i);
             // hmm, what if it was already complete?  etc
             if (cur.getURI().equals(uri)) {
                 if (cur.getFetchErrorMsg() != null)
@@ -917,7 +917,7 @@ public class SyncArchive {
     /** @since 1.102b-9 */
     public int getOutgoingActionsInProgress() { return _outgoingActionsInProgress; }
 
-    public OutgoingAction getOutgoingAction(int num) { return (OutgoingAction)_outgoingActions.get(num); }
+    public OutgoingAction getOutgoingAction(int num) { return _outgoingActions.get(num); }
 
     public int getIncompleteOutgoingActionCount() {
         int rv = 0;

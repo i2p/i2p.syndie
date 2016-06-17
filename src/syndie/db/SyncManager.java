@@ -93,7 +93,7 @@ public class SyncManager {
     
     void deleted(SyncArchive archive) {
         for (int i = 0; i < _listeners.size(); i++) {
-            SyncListener lsnr = (SyncListener)_listeners.get(i);
+            SyncListener lsnr = _listeners.get(i);
             lsnr.archiveRemoved(archive);
         }
         _archives.remove(archive);
@@ -104,7 +104,7 @@ public class SyncManager {
             _ui.debugMessage("Adding new archive " + archive  /*, new Exception() */ );
             _archives.add(archive);
             for (int i = 0; i < _listeners.size(); i++) {
-                SyncListener lsnr = (SyncListener)_listeners.get(i);
+                SyncListener lsnr = _listeners.get(i);
                 lsnr.archiveAdded(archive);
             }
         }
@@ -235,7 +235,7 @@ public class SyncManager {
             }
         }
         for (int i = 0; i < _listeners.size(); i++)
-            ((SyncListener)_listeners.get(i)).onlineStatusUpdated(_online);
+            _listeners.get(i).onlineStatusUpdated(_online);
         
         _indexFetcher = new IndexFetcher(this);
         _indexFetcher.start();

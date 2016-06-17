@@ -99,7 +99,7 @@ public class BugConfig {
             if (parentId == null) {
                 roots.add(node);
             } else {
-                ReferenceNode parent = (ReferenceNode)refNodes.get(parentId);
+                ReferenceNode parent = refNodes.get(parentId);
                 parent.addChild(node);
             }
         }

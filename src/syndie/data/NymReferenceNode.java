@@ -51,7 +51,7 @@ public class NymReferenceNode extends ReferenceNode {
     public long getUniqueId() { return _groupId; }
     
     public void sortChildren() {
-        TreeMap sorted = new TreeMap();
+        TreeMap<Long, NymReferenceNode> sorted = new TreeMap<Long, NymReferenceNode>();
         for (int i = 0; i < _children.size(); i++) {
             NymReferenceNode child = (NymReferenceNode)_children.get(i);
             int off = 0;
@@ -60,8 +60,7 @@ public class NymReferenceNode extends ReferenceNode {
             sorted.put(Long.valueOf(child.getSiblingOrder()+off), child);
         }
         _children.clear();
-        for (Iterator iter = sorted.values().iterator(); iter.hasNext(); ) {
-            NymReferenceNode child = (NymReferenceNode)iter.next();
+        for (NymReferenceNode child : sorted.values()) {
             _children.add(child);
         }
     }
@@ -69,7 +68,7 @@ public class NymReferenceNode extends ReferenceNode {
     public void addChild(ReferenceNode ref) {
         // remove it and readd it in the new position
         for (int i = 0; i < _children.size(); i++) {
-            ReferenceNode child = (ReferenceNode)_children.get(i);
+            ReferenceNode child = _children.get(i);
             if ( (child.getURI() != null) && (child.getURI().equals(ref.getURI())) ) {
                 // its a link to the same URL in the same category
                 _children.remove(i);

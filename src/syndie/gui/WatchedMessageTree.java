@@ -60,15 +60,16 @@ public class WatchedMessageTree extends MessageTree {
     public void forceFocus() { _tree.forceFocus(); }
     
     /** given the list of thread roots, munge them into forums w/ threads underneath */
-    void setMessages(List referenceNodes) {
+    @Override
+    void setMessages(List<ReferenceNode> referenceNodes) {
         if (!_multiforum) { super.setMessages(referenceNodes); return; }
-        Map forumToNodeList = new HashMap();
+        Map<Hash, List<ThreadReferenceNode>> forumToNodeList = new HashMap();
         Map<String, Hash> forumNameToForum = new TreeMap<String, Hash>();
         for (int i = 0; i < referenceNodes.size(); i++) {
             ThreadReferenceNode node = (ThreadReferenceNode)referenceNodes.get(i);
             Hash forum = getForum(node);
             if (forum == null) continue; // all dummies?
-            List nodes = (List)forumToNodeList.get(forum);
+            List<ThreadReferenceNode> nodes = forumToNodeList.get(forum);
             if (nodes == null) {
                 nodes = new ArrayList();
                 forumToNodeList.put(forum, nodes);
@@ -81,12 +82,12 @@ public class WatchedMessageTree extends MessageTree {
             forumNameToForum.put(name, forum);
             nodes.add(node);
         }
-        List forumNodes = new ArrayList();
+        List<ReferenceNode> forumNodes = new ArrayList<ReferenceNode>();
         // sorted by forum name
         for (Map.Entry<String, Hash> e : forumNameToForum.entrySet()) {
             String name = e.getKey();
             Hash forum = e.getValue();
-            List nodes = (List)forumToNodeList.get(forum);
+            List<ThreadReferenceNode> nodes = forumToNodeList.get(forum);
             //String name = _browser.getClient().getChannelName(forum);
             String type = nodes.size() + "";
             if (name == null)
@@ -134,7 +135,7 @@ public class WatchedMessageTree extends MessageTree {
     protected long markAllRead(TreeItem item) {
         if (!_multiforum) { return super.markAllRead(item); }
         if (getParentItem(item) == null) {
-            ReferenceNode node = (ReferenceNode)_itemToNode.get(item);
+            ReferenceNode node = _itemToNode.get(item);
             if ( (node != null) && (node.getURI() != null) ) {
                 Hash scope = node.getURI().getScope();
                 if (scope != null) {

@@ -206,7 +206,7 @@ public class SyndieURI {
         if (channels != null) {
             scopes = new String[channels.size()];
             for (int i = 0; i < scopes.length; i++) {
-                scopes[i] = ((Hash)channels.get(i)).toBase64();
+                scopes[i] = channels.get(i).toBase64();
             }
         }
         Long postDays = null;

@@ -58,8 +58,7 @@ public class ColorUtil {
     private static Map<Color, Image> _systemColorSwatches = new HashMap();
 
     private static void buildSystemColorSwatches() {
-        for (Iterator iter = _colorNameToSystem.values().iterator(); iter.hasNext(); ) {
-            Color color = (Color)iter.next();
+        for (Color color : _colorNameToSystem.values()) {
             _systemColorSwatches.put(color, ImageUtil.createImage(16, 16, color, true));
         }
     }
@@ -81,11 +80,11 @@ public class ColorUtil {
     private static class ColorQuery {
         Color rv;
         String color;
-        Map cache;
-        public ColorQuery(String col, Map cacheVal) { color = col; cache = cacheVal; }
+        final Map<String, Color> cache;
+        public ColorQuery(String col, Map<String, Color> cacheVal) { color = col; cache = cacheVal; }
     }
     
-    public static Color getSystemColor(String rgb) { return (Color)_colorRGBToSystem.get(rgb); }
+    public static Color getSystemColor(String rgb) { return _colorRGBToSystem.get(rgb); }
     
     public static Color getColor(String color) { return getColor(color, null); }
 
@@ -98,7 +97,7 @@ public class ColorUtil {
         color = color.trim();
         if (color.length() <= 0) return null;
         final ColorQuery q = new ColorQuery(color, cache);
-        String rgb = (String)_colorNameToRGB.get(q.color);
+        String rgb = _colorNameToRGB.get(q.color);
         if (rgb != null)
             q.color = rgb;
         
@@ -108,9 +107,9 @@ public class ColorUtil {
 
         //System.out.println("color: " + color);
         if (q.color.startsWith("#") && (q.color.length() == 7)) {
-            Color cached = (Color)_colorRGBToSystem.get(q.color);
+            Color cached = _colorRGBToSystem.get(q.color);
             if ( (q.cache != null) && (cached == null) )
-                cached = (Color)q.cache.get(q.color);
+                cached = q.cache.get(q.color);
             if (cached == null) {
                 try {
                     r = Integer.parseInt(q.color.substring(1, 3), 16);
@@ -155,16 +154,15 @@ public class ColorUtil {
         synchronized (_systemColorSwatches) {
             if (_systemColorSwatches.size() == 0)
                 buildSystemColorSwatches();
-            return (Image)_systemColorSwatches.get(color);
+            return _systemColorSwatches.get(color);
         }
     }
 
     static String getSystemColorName(Color color) {
-        for (Iterator iter = _colorNameToSystem.keySet().iterator(); iter.hasNext(); ) {
-            String name = (String)iter.next();
-            Color cur = (Color)_colorNameToSystem.get(name);
+        for (Map.Entry<String, Color> e : _colorNameToSystem.entrySet()) {
+            Color cur = e.getValue();
             if ( (cur == color) || (cur.equals(color)) )
-                return name;
+                return e.getKey();
         }
         return null;
     }

@@ -224,7 +224,7 @@ public class SyncOutboundPusher {
                     return error;
                 }
                 for (int i = 0; i < actions; i++) {
-                    SyncArchive.OutgoingAction action = (SyncArchive.OutgoingAction)actionsPushed.get(i);
+                    SyncArchive.OutgoingAction action = actionsPushed.get(i);
                     action.setPushingBody();
                 }
                 while (!(cmd.startsWith("PutFailed")) && !(cmd.startsWith("PutSuccessful"))) {
@@ -296,12 +296,12 @@ public class SyncOutboundPusher {
 
             if (err == null) {
                 for (int i = 0; i < actionsPushed.size(); i++) {
-                    SyncArchive.OutgoingAction action = (SyncArchive.OutgoingAction)actionsPushed.get(i);
+                    SyncArchive.OutgoingAction action = actionsPushed.get(i);
                     action.pushOK();
                 }
             } else {
                 for (int i = 0; i < actionsPushed.size(); i++) {
-                    SyncArchive.OutgoingAction action = (SyncArchive.OutgoingAction)actionsPushed.get(i);
+                    SyncArchive.OutgoingAction action = actionsPushed.get(i);
                     action.pushFailed(err, null);
                 }
             }

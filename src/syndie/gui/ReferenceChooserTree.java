@@ -223,7 +223,7 @@ class ReferenceChooserTree extends BaseComponent implements Translatable, Themea
                         pending.add(cur.getItem(i));
                 }
                 if (pending.size() > 0)
-                    cur = (TreeItem)pending.remove(0);
+                    cur = pending.remove(0);
                 else
                     cur = null;
             }
@@ -511,7 +511,7 @@ class ReferenceChooserTree extends BaseComponent implements Translatable, Themea
     private void searchSelected(boolean accept) {
         int idx = _searchList.getSelectionIndex();
         if (idx >= 0) {
-            ReferenceNode node = (ReferenceNode)_searchResults.get(idx);
+            ReferenceNode node = _searchResults.get(idx);
             _choiceListener.searchResultSelected(_searchList.getItem(idx), node);
             if (accept && (_acceptanceListener != null))
                 _acceptanceListener.referenceAccepted(node.getURI());
@@ -540,7 +540,7 @@ class ReferenceChooserTree extends BaseComponent implements Translatable, Themea
     protected ReferenceNode getSearchResult(String name) { 
         int idx = _searchList.indexOf(name);
         if (idx >= 0)
-            return (ReferenceNode)_searchResults.get(idx);
+            return _searchResults.get(idx);
         else
             return null;
     }
@@ -968,7 +968,7 @@ class ReferenceChooserTree extends BaseComponent implements Translatable, Themea
         _searchList.setRedraw(false);
         _searchList.removeAll();
         for (int i = 0; i < _searchResults.size(); i++) {
-            ReferenceNode node = (ReferenceNode)_searchResults.get(i);
+            ReferenceNode node = _searchResults.get(i);
             String str = null;
             if ( (node.getName() != null) && (node.getName().trim().length() > 0) )
                 str = node.getName();

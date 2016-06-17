@@ -182,7 +182,7 @@ public class ImportPost {
                 }
                 if (!privKeys.isEmpty()) {
                     for (int i = 0; i < privKeys.size(); i++) {
-                        PrivateKey priv = (PrivateKey)privKeys.get(i);
+                        PrivateKey priv = privKeys.get(i);
                         _ui.debugMessage("Attempting decrypt with key " + KeyGenerator.getPublicKey(priv).calculateHash().toBase64());
                         try {
                             _body = new EnclosureBody(_client.ctx(), _enc.getData(), _enc.getDataSize(), priv);
@@ -644,7 +644,7 @@ public class ImportPost {
         
         List<SyndieURI> uris = new ArrayList(cancelled.size());
         for (int i = 0; i < cancelled.size(); i++) {
-            String str = (String)cancelled.get(i);
+            String str = cancelled.get(i);
             try {
                 SyndieURI uri = new SyndieURI(str);
                 uris.add(uri);

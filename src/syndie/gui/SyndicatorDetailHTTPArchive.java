@@ -440,7 +440,7 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
     
     
     private void previewWhitelist() {
-        Set scopes = _client.getReferencedScopes(((Long)_whitelistIds.get(_whitelist.getSelectionIndex())).longValue());
+        Set scopes = _client.getReferencedScopes(_whitelistIds.get(_whitelist.getSelectionIndex()).longValue());
         
         final Shell shell = new Shell(_root.getShell(), SWT.DIALOG_TRIM | SWT.PRIMARY_MODAL);
         GridLayout gl = new GridLayout(1, true);
@@ -664,8 +664,8 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
                 //   RequestURI=freenet:SSK@BnHXXv3Fa43w~~iz1tNUd~cj4OpUuDjVouOWZ5XlpX0,AwUSJG5ZS-FDZTqnt6skTzhxQe08T-fbKXj8aEHZsXM,AQABAAE/
                 
                 rv = FreenetHelper.readResults(s.getInputStream(), _ui);
-                targetPub.setText(getRequestURI((String)rv.get("RequestURI")));
-                targetPriv.setText(getInsertURI((String)rv.get("InsertURI")));
+                targetPub.setText(getRequestURI(rv.get("RequestURI")));
+                targetPriv.setText(getInsertURI(rv.get("InsertURI")));
             }
             s.close();
         } catch (Exception e) {
@@ -732,7 +732,7 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         _archive.setURL(_location.getText().trim());
         
         if (_whitelistEnable.getSelection()) {
-            Long id = (Long)_whitelistIds.get(_whitelist.getSelectionIndex());
+            Long id = _whitelistIds.get(_whitelist.getSelectionIndex());
             _archive.setWhitelistGroupId(id.longValue());
         } else {
             _archive.setWhitelistGroupId(-1);

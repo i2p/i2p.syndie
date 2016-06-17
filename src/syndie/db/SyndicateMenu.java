@@ -232,7 +232,7 @@ class SyndicateMenu implements TextEngine.Menu {
                         mgr.setSSLState(sget.getSSLState());
                     get = sget;
                 } else {
-                    get = new EepGet(client.ctx(), _shouldProxy, _proxyHost, (int)_proxyPort, 0, out.getPath(), url, false, null);
+                    get = new EepGet(client.ctx(), _shouldProxy, _proxyHost, _proxyPort, 0, out.getPath(), url, false, null);
                 }
                 get.addStatusListener(new UIStatusListener(ui));
                 boolean fetched = get.fetch();

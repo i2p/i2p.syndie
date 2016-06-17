@@ -333,7 +333,7 @@ public class KeyImport extends CommandImpl {
      */
     public static void resolveWithNewKeys(UI ui, DBClient client, List<NymKey> nymKeys) {
         for (int i = 0; i < nymKeys.size(); i++) {
-            NymKey key = (NymKey)nymKeys.get(i);
+            NymKey key = nymKeys.get(i);
             if (Constants.KEY_FUNCTION_MANAGE.equals(key.getFunction())) {
                 // noop.  manage keys don't decrypt anything
             } else if (Constants.KEY_FUNCTION_POST.equals(key.getFunction())) {

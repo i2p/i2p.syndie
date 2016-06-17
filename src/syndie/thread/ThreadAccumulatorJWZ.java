@@ -643,11 +643,12 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             "LEFT OUTER JOIN channelMessage cm ON messageId = referencedMessageId AND cm.scopeChannelId = c.channelId " +
             "WHERE mh.msgId = ? AND cm.deletionCause IS NULL " +
             "ORDER BY referencedCloseness ASC";
-    public static int buildAncestors(DBClient client, UI ui, ThreadMsgId tmi, Map existingAncestors) {
+
+    public static int buildAncestors(DBClient client, UI ui, ThreadMsgId tmi, Map<ThreadMsgId, List<ThreadMsgId>> existingAncestors) {
         PreparedStatement stmt = null;
         ResultSet rs = null;
         
-        List pendingThreadMsgIds = new ArrayList();
+        List<ThreadMsgId> pendingThreadMsgIds = new ArrayList();
         pendingThreadMsgIds.add(tmi);
         
         int queryRuns = 0;
@@ -656,10 +657,10 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         try {
             stmt = client.con().prepareStatement(SQL_BUILD_ANCESTORS);
             while (pendingThreadMsgIds.size() > 0) {
-                tmi = (ThreadMsgId)pendingThreadMsgIds.remove(0);
-                List rv = (List)existingAncestors.get(tmi);
+                tmi = pendingThreadMsgIds.remove(0);
+                List<ThreadMsgId> rv = existingAncestors.get(tmi);
                 if (rv == null) {
-                    rv = new ArrayList();
+                    rv = new ArrayList<ThreadMsgId>();
                     existingAncestors.put(tmi, rv);
                 }
                 stmt.setLong(1, tmi.msgId);

@@ -258,7 +258,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         TreeItem items[] = _tree.getSelection();
         if (items != null) {
             for (int i = 0; i < items.length; i++) {
-                SyndieURI uri = (SyndieURI)_itemToURI.get(items[i]);
+                SyndieURI uri = _itemToURI.get(items[i]);
                 if (uri != null)
                     return uri;
             }
@@ -272,7 +272,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         TreeItem item = _tree.getItem(local);
         _ui.debugMessage("getMouseoverURI: cur= " + cur + " local=" + local + " item=" + item);
         if (item != null)
-            return (SyndieURI)_itemToURI.get(item);
+            return _itemToURI.get(item);
         else
             return null;
     }
@@ -280,7 +280,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         TreeItem items[] = _tree.getSelection();
         if (items != null) {
             for (int i = 0; i < items.length; i++) {
-                SyndieURI uri = (SyndieURI)_itemToURI.get(items[i]);
+                SyndieURI uri = _itemToURI.get(items[i]);
                 if (uri != null) {
                     Rectangle rect = items[i].getBounds();
                     Point rv = new Point(rect.x, rect.y + rect.height); // underneath it 
@@ -307,9 +307,9 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
     }
     private void renderHighlight() {
         if (_highlight == null) return;
-        for (Iterator iter = _itemToURI.keySet().iterator(); iter.hasNext(); ) {
-            TreeItem item = (TreeItem)iter.next();
-            SyndieURI cur = (SyndieURI)_itemToURI.get(item);
+        for (Map.Entry<TreeItem, SyndieURI> e : _itemToURI.entrySet()) {
+            TreeItem item = e.getKey();
+            SyndieURI cur = e.getValue();
             if ( (cur != null) && (cur.equals(_highlight)) ) {
                 renderHighlight(item);
                 return;
@@ -332,9 +332,9 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
     
     private void show(SyndieURI uri) {
         if (uri == null) return;
-        for (Iterator iter = _itemToURI.keySet().iterator(); iter.hasNext(); ) {
-            TreeItem item = (TreeItem)iter.next();
-            SyndieURI cur = (SyndieURI)_itemToURI.get(item);
+        for (Map.Entry<TreeItem, SyndieURI> e : _itemToURI.entrySet()) {
+            TreeItem item = e.getKey();
+            SyndieURI cur = e.getValue();
             if ( (cur != null) && (cur.equals(uri)) ) {
                 _tree.setSelection(item);
                 _tree.showItem(item);
@@ -1386,7 +1386,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         ThreadReferenceNode node = null;
         TreeItem item = null;
         synchronized (_msgIdToItem) {
-            item = (TreeItem)_msgIdToItem.get(Long.valueOf(msgId));
+            item = _msgIdToItem.get(Long.valueOf(msgId));
         }
         _ui.debugMessage("tree: messageStatusUpdated(" + msgId + "): item=" + item);
         if (item != null) {
@@ -1419,7 +1419,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
     protected boolean getCancellable() {
         TreeItem selected[] = _tree.getSelection();
         for (int i = 0; i < selected.length; i++) {
-            SyndieURI uri = (SyndieURI)_itemToURI.get(selected[i]);
+            SyndieURI uri = _itemToURI.get(selected[i]);
             if ( (uri != null) && (uri.getMessageId() != null) ) {
                 long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
                 if (msgId < 0)
@@ -1450,7 +1450,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
                 SyndieURI uri = getSelected();
                 if (uri != null) {
                     TreeItem sel[] = _tree.getSelection();
-                    BookmarkDnD bookmark = getBookmark(sel[0], (ReferenceNode)_itemToNode.get(sel[0]));
+                    BookmarkDnD bookmark = getBookmark(sel[0], _itemToNode.get(sel[0]));
                     if (bookmark != null)
                         evt.data = bookmark.toString();
                 }
@@ -1465,7 +1465,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
     }
     
     protected BookmarkDnD getBookmark(TreeItem item, ReferenceNode node) {
-        SyndieURI uri = (SyndieURI)_itemToURI.get(item);
+        SyndieURI uri = _itemToURI.get(item);
         BookmarkDnD bookmark = new BookmarkDnD();
         bookmark.uri = uri;
         bookmark.name = item.getText(0);
@@ -1506,7 +1506,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         _translationRegistry.unregister(this);
         _themeRegistry.unregister(this);
         for (int i = 0; i < _bars.size(); i++)
-            ((FilterBar)_bars.get(i)).dispose();
+            _bars.get(i).dispose();
     }
     
     public void setFilterable(boolean filterable) { _filterable = filterable; }
@@ -1535,14 +1535,14 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         }
     
         for (int i = 0; i < _bars.size(); i++)
-            ((FilterBar)_bars.get(i)).setFilter(uri);
+            _bars.get(i).setFilter(uri);
         //_filterBar.setFilter(uri);
     }
     
     public void applyFilter() {
         String filter = null;
         for (int i = 0; i < _bars.size() && filter == null; i++) {
-            String newfilter = ((FilterBar)_bars.get(i)).buildFilter();
+            String newfilter = _bars.get(i).buildFilter();
             if (newfilter != null)
                 _ui.debugMessage("overwriting filter [" + filter + "] with [" + newfilter + "]");
             filter = newfilter;
@@ -1710,7 +1710,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
     /**
      *  Enables/disables all the buttons
      */
-    private List getCurrentPageNodes(List referenceNodes) {
+    private List<ReferenceNode> getCurrentPageNodes(List<ReferenceNode> referenceNodes) {
         if (_root.isDisposed()) return referenceNodes;
         int sz = _navPageSize.getSelection();
         _fullNodes = referenceNodes;
@@ -1818,15 +1818,15 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
      *  on page traversals, we don't call this again though, but instead call w/ recalcTags param,
      *  so it won't inject the (already injected) parents
      */
-    void setMessages(List allNodes) { 
+    void setMessages(List<ReferenceNode> allNodes) { 
         setMessages(allNodes, true); 
     }
 
-    void setMessages(List allNodes, boolean recalcTags) {
+    void setMessages(List<ReferenceNode> allNodes, boolean recalcTags) {
         if (allNodes == null) return;
         if (_root.isDisposed()) return;
         _uriToNode = null;
-        List referenceNodes = getCurrentPageNodes(allNodes);
+        List<ReferenceNode> referenceNodes = getCurrentPageNodes(allNodes);
         _tree.setRedraw(false);
         _tree.removeAll();
         _itemToURI.clear();
@@ -1863,7 +1863,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         
         if (recalcTags) {
             for (int i = 0; i < _bars.size(); i++)
-                ((FilterBar)_bars.get(i)).populateTagCombo();
+                _bars.get(i).populateTagCombo();
         }
         
         _tree.setSortColumn(_currentSortColumn);
@@ -2235,7 +2235,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         TreeItem selected[] = _tree.getSelection();
         if (selected != null) {
             for (int i = 0; i < selected.length; i++) {
-                SyndieURI uri = (SyndieURI)_itemToURI.get(selected[i]);
+                SyndieURI uri = _itemToURI.get(selected[i]);
                 if (_listener != null)
                     _listener.messageSelected(this, uri, toView, nodelay);
             }
@@ -2247,7 +2247,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         TreeItem selected[] = _tree.getSelection();
         if (selected != null) {
             for (int i = 0; i < selected.length; i++) {
-                SyndieURI uri = (SyndieURI)_itemToURI.get(selected[i]);
+                SyndieURI uri = _itemToURI.get(selected[i]);
                 _navControl.view(uri);
             }
         }
@@ -2256,7 +2256,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         TreeItem selected[] = _tree.getSelection();
         if (selected != null) {
             for (int i = 0; i < selected.length; i++) {
-                SyndieURI uri = (SyndieURI)_itemToURI.get(selected[i]);
+                SyndieURI uri = _itemToURI.get(selected[i]);
                 if (uri.getMessageId() == null) continue;
                 long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
                 long targetId = _client.getMessageTarget(msgId);
@@ -2269,7 +2269,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         TreeItem selected[] = _tree.getSelection();
         if (selected != null) {
             for (int i = 0; i < selected.length; i++) {
-                SyndieURI uri = (SyndieURI)_itemToURI.get(selected[i]);
+                SyndieURI uri = _itemToURI.get(selected[i]);
                 if (uri.getMessageId() == null) {
                     _navControl.view(uri);
                 } else {
@@ -2285,7 +2285,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         TreeItem selected[] = _tree.getSelection();
         if (selected != null) {
             for (int i = 0; i < selected.length; i++) {
-                SyndieURI uri = (SyndieURI)_itemToURI.get(selected[i]);
+                SyndieURI uri = _itemToURI.get(selected[i]);
                 if (uri.getMessageId() == null) {
                     _navControl.view(URIHelper.instance().createMetaURI(uri.getScope()));
                 } else {
@@ -2301,7 +2301,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         TreeItem selected[] = _tree.getSelection();
         if (selected != null) {
             for (int i = 0; i < selected.length; i++) {
-                SyndieURI uri = (SyndieURI)_itemToURI.get(selected[i]);
+                SyndieURI uri = _itemToURI.get(selected[i]);
                 if (uri.getMessageId() == null) {
                     _bookmarkControl.bookmark(uri);
                 } else {
@@ -2317,7 +2317,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         TreeItem selected[] = _tree.getSelection();
         if (selected != null) {
             for (int i = 0; i < selected.length; i++) {
-                SyndieURI uri = (SyndieURI)_itemToURI.get(selected[i]);
+                SyndieURI uri = _itemToURI.get(selected[i]);
                 if (uri.getMessageId() == null) {
                     _navControl.view(uri);
                 } else {
@@ -2333,7 +2333,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         TreeItem selected[] = _tree.getSelection();
         if (selected != null) {
             for (int i = 0; i < selected.length; i++) {
-                SyndieURI uri = (SyndieURI)_itemToURI.get(selected[i]);
+                SyndieURI uri = _itemToURI.get(selected[i]);
                 if (uri.getMessageId() == null) {
                     _navControl.view(URIHelper.instance().createMetaURI(uri.getScope()));
                 } else {
@@ -2349,7 +2349,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         TreeItem selected[] = _tree.getSelection();
         if (selected != null) {
             for (int i = 0; i < selected.length; i++) {
-                SyndieURI uri = (SyndieURI)_itemToURI.get(selected[i]);
+                SyndieURI uri = _itemToURI.get(selected[i]);
                 if (uri.getMessageId() == null) {
                     _bookmarkControl.bookmark(SyndieURI.createScope(uri.getScope()));
                 } else {
@@ -2404,7 +2404,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         TreeItem selected[] = _tree.getSelection();
         if (selected != null) {
             for (int i = 0; i < selected.length; i++) {
-                Long msgId = (Long)_itemToMsgId.get(selected[i]);
+                Long msgId = _itemToMsgId.get(selected[i]);
                 if (msgId != null) {
                     if (_itemsNewUnread.contains(selected[i])) {
                         //_ui.debugMessage("mark an unread message as read (" + msgId + ")");
@@ -2421,7 +2421,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         TreeItem selected[] = _tree.getSelection();
         if (selected != null) {
             for (int i = 0; i < selected.length; i++) {
-                Long msgId = (Long)_itemToMsgId.get(selected[i]);
+                Long msgId = _itemToMsgId.get(selected[i]);
                 if (msgId != null) {
                     //_ui.debugMessage("mark as unread (" + msgId + ")");
                     _client.markMessageUnread(msgId.longValue());
@@ -2453,7 +2453,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
     }
 
     private void markThreadRead(TreeItem item) {
-        Long msgId = (Long)_itemToMsgId.get(item);
+        Long msgId = _itemToMsgId.get(item);
         if (msgId != null) {
             if (_itemsNewUnread.contains(item)) {
                 _ui.debugMessage("marking message read: " + msgId);
@@ -2470,7 +2470,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
     }
 
     private void markThreadUnread(TreeItem item) {
-        Long msgId = (Long)_itemToMsgId.get(item);
+        Long msgId = _itemToMsgId.get(item);
         if (msgId != null) {
             if (!_itemsNewUnread.contains(item)) {
                 _ui.debugMessage("marking message unread: " + msgId);
@@ -2498,10 +2498,9 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
             if (channelIds.size() > 0)
                 _dataCallback.readStatusUpdated();
             
-            for (Iterator iter = _itemToURI.entrySet().iterator(); iter.hasNext(); ) {
-                Map.Entry cur = (Map.Entry)iter.next();
-                TreeItem item = (TreeItem)cur.getKey();
-                SyndieURI uri = (SyndieURI)cur.getValue();
+            for (Map.Entry<TreeItem, SyndieURI> e : _itemToURI.entrySet()) {
+                TreeItem item = e.getKey();
+                SyndieURI uri = e.getValue();
                 
                 if (uri != null) {
                     long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());
@@ -2528,7 +2527,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
     }
 
     protected long markAllRead(TreeItem item) {
-        Long msgId = (Long)_itemToMsgId.get(item);
+        Long msgId = _itemToMsgId.get(item);
         if (msgId != null) {
             long target = _client.getMessageTarget(msgId.longValue());
             _client.markChannelRead(target);
@@ -2543,7 +2542,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         int deleted = 0;
         if (selected != null) {
             for (int i = 0; i < selected.length; i++) {
-                SyndieURI uri = (SyndieURI)_itemToURI.get(selected[i]);
+                SyndieURI uri = _itemToURI.get(selected[i]);
                 if ( (uri != null) && (uri.getMessageId() != null) ) {
                     if (_banControl.deleteMessage(uri)) // _client.deleteMessage(uri, _ui, true);
                         deleted++;
@@ -2560,7 +2559,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         int cancelled = 0;
         if (selected != null) {
             for (int i = 0; i < selected.length; i++) {
-                SyndieURI uri = (SyndieURI)_itemToURI.get(selected[i]);
+                SyndieURI uri = _itemToURI.get(selected[i]);
                 if ( (uri != null) && (uri.getMessageId() != null) ) {
                     if (_banControl.cancelMessage(uri)) // _client.cancelMessage(uri, _ui);
                         cancelled++;
@@ -2725,7 +2724,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         boolean statusWasRead = false;
         if (selected != null) {
             for (int i = 0; i < selected.length; i++) {
-                Long msgId = (Long)_itemToMsgId.get(selected[i]);
+                Long msgId = _itemToMsgId.get(selected[i]);
                 if (msgId != null) {
                     if (_itemsNewUnread.contains(selected[i])) {
                         statusWasRead = false;

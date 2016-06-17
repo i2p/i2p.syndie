@@ -1542,7 +1542,7 @@ class ReadMenu implements TextEngine.Menu {
         ui.insertCommand("create --channel " + target.toBase64());
         ui.insertCommand("addparent --uri " + _currentMessage.getURI().toString());
         for (int i = 0; i < _currentMessage.getHierarchy().size() && i < 5; i++) {
-            SyndieURI uri = (SyndieURI)_currentMessage.getHierarchy().get(i);
+            SyndieURI uri = _currentMessage.getHierarchy().get(i);
             ui.insertCommand("addParent --uri " + uri.toString());
         }
     }
