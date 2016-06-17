@@ -29,7 +29,7 @@ class PageRendererTab extends BrowserTab implements Translatable, Themeable, Pag
         super(browser, uri);
     }
     
-    static final SyndieURI DUMMY_URI = SyndieURI.createMessage(new Hash(new byte[Hash.HASH_LENGTH]), Long.MAX_VALUE, 0);
+    static final SyndieURI DUMMY_URI = SyndieURI.createMessage(Hash.FAKE_HASH, Long.MAX_VALUE, 0);
 
     protected void show(String htmlText, String title, String desc) {
         _name = title;

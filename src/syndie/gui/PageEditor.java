@@ -155,7 +155,8 @@ public class PageEditor extends BaseComponent implements Themeable {
     
     public void updated() { preview(); }
     
-    private static final SyndieURI _dummyURI = SyndieURI.createMessage(new Hash(new byte[Hash.HASH_LENGTH]), Long.MAX_VALUE, 0);
+    private static final SyndieURI _dummyURI = PageRendererTab.DUMMY_URI;
+
     private void preview() {
         if (_root.isDisposed()) return; // called after a delay, so may have been disposed in the meantime
         if (_editor != null) _editor.saveState();

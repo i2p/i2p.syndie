@@ -278,7 +278,17 @@ class WelcomeScreen extends Wizard {
         // sort by display name
         Map<String, String> tmap = new TreeMap(Collator.getInstance());
         for (String translation : translations) {
-            String langName = (new Locale(translation)).getDisplayLanguage(curLocale);
+            int under = translation.indexOf("_");
+            String langName;
+            if (under <= 0) {
+                langName = (new Locale(translation)).getDisplayLanguage(curLocale);
+            } else {
+                String langCode = translation.substring(0, under);
+                String countryCode = translation.substring(under + 1);
+                Locale loc = (new Locale(langCode, countryCode));
+                langName = loc.getDisplayLanguage(curLocale) +
+                           " (" + loc.getDisplayCountry(curLocale) + ')';
+            }
             if (langName.length() <= 0)
                 langName = translation;
             tmap.put(langName, translation);
