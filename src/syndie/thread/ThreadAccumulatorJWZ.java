@@ -701,8 +701,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                     if (!rv.contains(ancestor)) {
                         rv.add(ancestor);
                         if (ancestorMsgId >= 0) {
-                            Long aMsgId = Long.valueOf(ancestorMsgId);
-                            if (!existingAncestors.containsKey(aMsgId) && !pendingThreadMsgIds.contains(ancestor))
+                            if (!existingAncestors.containsKey(ancestor) && !pendingThreadMsgIds.contains(ancestor))
                                 pendingThreadMsgIds.add(ancestor);
                         }
                     }

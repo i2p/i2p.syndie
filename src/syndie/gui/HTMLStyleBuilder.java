@@ -124,7 +124,7 @@ class HTMLStyleBuilder {
                 bodyBgImage = tag.getAttribValueLC("bgimage");
                 bodyBgColor = tag.getAttribValueLC("bgcolor");
             }
-            List<HTMLTag> tags = (List)breakPointTags.get(Integer.valueOf(tag.startIndex));
+            List<HTMLTag> tags = breakPointTags.get(Integer.valueOf(tag.startIndex));
             if (tags == null) {
                 tags = new ArrayList();
                 breakPointTags.put(Integer.valueOf(tag.startIndex), tags);
@@ -132,7 +132,7 @@ class HTMLStyleBuilder {
             tags.add(tag);
             
             // now for ends
-            tags = (List)breakPointTags.get(Integer.valueOf(tag.endIndex));
+            tags = breakPointTags.get(Integer.valueOf(tag.endIndex));
             if (tags == null) {
                 tags = new ArrayList();
                 breakPointTags.put(Integer.valueOf(tag.endIndex), tags);
@@ -151,7 +151,7 @@ class HTMLStyleBuilder {
         ts("character breakpoints inserted: " + breakPointTags.size());
         
         // make sure it covers the whole schebang
-        List<HTMLTag> startTags = (List)breakPointTags.get(Integer.valueOf(0));
+        List<HTMLTag> startTags = breakPointTags.get(Integer.valueOf(0));
         if (startTags == null)
             breakPointTags.put(Integer.valueOf(0), new ArrayList());
         
@@ -164,10 +164,9 @@ class HTMLStyleBuilder {
         int bpIndexes[] = new int[breakPointTags.size()];
         List<HTMLTag> bpTags[] = new List[bpIndexes.length];
         int bpOff = 0;
-        for (Iterator iter = breakPointTags.entrySet().iterator(); iter.hasNext(); ) {
-            Map.Entry entry = (Map.Entry)iter.next();
-            Integer bp = (Integer)entry.getKey();
-            List<HTMLTag> tags = (List)entry.getValue();
+        for (Map.Entry<Integer, List<HTMLTag>> entry : breakPointTags.entrySet()) {
+            Integer bp = entry.getKey();
+            List<HTMLTag> tags = entry.getValue();
             bpIndexes[bpOff] = bp.intValue();
             bpTags[bpOff] = tags;
             bpOff++;
@@ -248,7 +247,7 @@ class HTMLStyleBuilder {
             
             long t2 = System.currentTimeMillis();
             // now trim the set of applicable tags
-            List<HTMLTag> tags = (List)breakPointTags.get(curBreakPoint);
+            List<HTMLTag> tags = breakPointTags.get(curBreakPoint);
             for (int i = 0; i < tags.size(); i++) {
                 HTMLTag tag = tags.get(i);
                 if ( (tag.startIndex <= start) && (tag.endIndex >= start+length) ) {
@@ -260,7 +259,7 @@ class HTMLStyleBuilder {
             }
             
             long t3 = System.currentTimeMillis();
-            List<HTMLTag> bpt = (List)breakPointTags.get(curBreakPoint);
+            List<HTMLTag> bpt = breakPointTags.get(curBreakPoint);
             _styleRanges[rangeIndex] = buildStyle(bpt, start, length);
             rangeIndex++;
             long t4 = System.currentTimeMillis();
@@ -348,7 +347,7 @@ class HTMLStyleBuilder {
     }
     public ArrayList<Color> getCustomColors() { return new ArrayList(_customColors.values()); }
     
-    private void insertCharBreakpoints(char placeholder, Map breakpoints, List<Integer> indexes) {
+    private void insertCharBreakpoints(char placeholder, Map<Integer, List<HTMLTag>> breakpoints, List<Integer> indexes) {
         int start = 0;
         for (;;) {
             int index = _msgText.indexOf(placeholder, start);
@@ -357,7 +356,7 @@ class HTMLStyleBuilder {
             } else {
                 Integer idx = Integer.valueOf(index);
                 indexes.add(idx);
-                List<HTMLTag> indexTags = (List)breakpoints.get(idx);
+                List<HTMLTag> indexTags = breakpoints.get(idx);
                 if (indexTags == null) {
                     breakpoints.put(idx, new ArrayList());
                     //System.out.println("char breakpoint " + (int)placeholder + ": " + index + ", no tags @ breakpoint");
