@@ -1,5 +1,10 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
+* 2016-06-xx 1.106b-2 (zzz)
+  - Increase parallel fetches to 5
+  - Locking on SyncManager archives and listeners
+  - Use queue for DataImporter
+
 * 2016-06-18 1.106b-1 (zzz)
   - Eliminate dependency on deprecated Sha256Standalone and HMAC256Generator
   - Allow pushing without "http://" (ticket #1137)
@@ -15,6 +20,8 @@
   - Fix NPE in sortFiles() urn:syndie:channel:d7:channel44:MrsSwvkmnhkgujdeWHdRVX~1VAnMM9slpHRRjDg6Szs=9:messageIdi1421552448706ee
   - Fix NPE at shutdown
   - Enable clearnet https archives
+  - Remove duplicate channels in database
+  - Increase default pull strategy to 3 months
   - Remove mac32 build target
   - Lots of code cleanup
   - Add support for translation country variants

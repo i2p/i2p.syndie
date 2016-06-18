@@ -13,8 +13,7 @@ import syndie.Constants;
 import syndie.data.SyndieURI;
 
 /**
- *  TODO lots of synchronization needed here
- *  on the archive and listener lists.
+ *  Control the archives, the pull and push strategies, the fetcher and pusher.
  */
 public class SyncManager {
     private static DBClient _client;
@@ -32,9 +31,9 @@ public class SyncManager {
         return _instance; 
     }
     private final List<SyncArchive> _archives;
-    private boolean _archivesLoaded;
+    private volatile boolean _archivesLoaded;
     private final List<SyncListener> _listeners;
-    private boolean _online;
+    private volatile boolean _online;
     private PullStrategy _defaultPullStrategy;
     private PushStrategy _defaultPushStrategy;
     
@@ -47,8 +46,6 @@ public class SyncManager {
 
     private SyncManager() {
         _archives = new ArrayList<SyncArchive>();
-        _archivesLoaded = false;
-        _online = false;
         _listeners = new ArrayList<SyncListener>();
     }
     
@@ -60,8 +57,12 @@ public class SyncManager {
         }
         if (instance != null) {
             instance._online = false;
-            instance._archives.clear();
-            instance._listeners.clear();
+            synchronized(instance._archives) {
+                instance._archives.clear();
+            }
+            synchronized(instance._listeners) {
+                instance._listeners.clear();
+            }
             instance._archivesLoaded = false;
             instance._defaultPullStrategy = null;
             instance._defaultPushStrategy = null;
@@ -92,20 +93,32 @@ public class SyncManager {
     DBClient getClient() { return _client; }
     
     void deleted(SyncArchive archive) {
-        for (int i = 0; i < _listeners.size(); i++) {
-            SyncListener lsnr = _listeners.get(i);
-            lsnr.archiveRemoved(archive);
+        synchronized(_listeners) {
+            for (int i = 0; i < _listeners.size(); i++) {
+                SyncListener lsnr = _listeners.get(i);
+                lsnr.archiveRemoved(archive);
+            }
         }
-        _archives.remove(archive);
+        synchronized(_archives) {
+            _archives.remove(archive);
+        }
     }
 
     void added(SyncArchive archive) {
-        if (!_archives.contains(archive)) {
-            _ui.debugMessage("Adding new archive " + archive  /*, new Exception() */ );
-            _archives.add(archive);
-            for (int i = 0; i < _listeners.size(); i++) {
-                SyncListener lsnr = _listeners.get(i);
-                lsnr.archiveAdded(archive);
+        synchronized(_archives) {
+            if (!_archives.contains(archive)) {
+                _ui.debugMessage("Adding new archive " + archive  /*, new Exception() */ );
+                _archives.add(archive);
+            } else {
+                archive = null;
+            }
+        }
+        if (archive != null) {
+            synchronized(_listeners) {
+                for (int i = 0; i < _listeners.size(); i++) {
+                    SyncListener lsnr = _listeners.get(i);
+                    lsnr.archiveAdded(archive);
+                }
             }
         }
     }
@@ -119,25 +132,29 @@ public class SyncManager {
     
     public long getNextSyncDate() {
         long earliest = -1;
-        for (int i = 0; i < getArchiveCount(); i++) {
-            SyncArchive archive = getArchive(i);
-            long when = archive.getNextSyncTime();
-            
-            if (earliest <= 0) earliest = when;
-            else if (when > 0) earliest = Math.min(earliest, when);
+        synchronized(_archives) {
+            for (SyncArchive archive : _archives) {
+                long when = archive.getNextSyncTime();
+                if (earliest <= 0) earliest = when;
+                else if (when > 0) earliest = Math.min(earliest, when);
+            }
         }
         return earliest;
     }
     
     public boolean isOnline() { return _online; }
+
     public void setIsOnline(boolean online) { 
         _online = online; 
         storeOnlineStatus(); 
-        for (int i = 0; i < _listeners.size(); i++)
-            _listeners.get(i).onlineStatusUpdated(_online);
-        for (int i = 0; i < _archives.size(); i++)
-            getArchive(i).fireUpdated();
-        
+        synchronized(_listeners) {
+            for (int i = 0; i < _listeners.size(); i++)
+                _listeners.get(i).onlineStatusUpdated(_online);
+        }        
+        synchronized(_archives) {
+            for (int i = 0; i < _archives.size(); i++)
+                getArchive(i).fireUpdated();
+        }        
         wakeUpEngine();
     }
     private void storeOnlineStatus() {
@@ -165,19 +182,46 @@ public class SyncManager {
         }
     }
 
-    public void addListener(SyncListener lsnr) { if (!_listeners.contains(lsnr)) _listeners.add(lsnr); }
+    public void addListener(SyncListener lsnr) {
+        synchronized(_listeners) {
+            if (!_listeners.contains(lsnr)) _listeners.add(lsnr);
+        }
+    }
+
     public void removeListener(SyncListener lsnr, SyncArchive.SyncArchiveListener alsnr) { 
-        _listeners.remove(lsnr);
-        for (int i = 0; i < _archives.size(); i++) {
-            SyncArchive archive = _archives.get(i);
-            archive.removeListener(alsnr);
+        synchronized(_listeners) {
+            _listeners.remove(lsnr);
+        }
+        synchronized(_archives) {
+            for (int i = 0; i < _archives.size(); i++) {
+                SyncArchive archive = _archives.get(i);
+                archive.removeListener(alsnr);
+            }
         }
     }
     
+    /**
+     *  @deprecated racy use getArchives()
+     */
+    @Deprecated
     public int getArchiveCount() { return _archives.size(); }
 
-    /** TODO avoid race, return a copy of the whole list instead */
+    /**
+     *  @deprecated racy use getArchives()
+     */
+    @Deprecated
     public SyncArchive getArchive(int idx) { return _archives.get(idx); }
+    
+    /**
+     *  Thread-safe replacement for getArchiveCount() / getArchive()
+     *  @return a copy
+     *  @since 1.106-2
+     */
+    public List<SyncArchive> getArchives() {
+        synchronized(_archives) {
+            return new ArrayList<SyncArchive>(_archives);
+        }
+    }
     
     public PullStrategy getDefaultPullStrategy() { return _defaultPullStrategy; }
     public PushStrategy getDefaultPushStrategy() { return _defaultPushStrategy; }
@@ -227,15 +271,21 @@ public class SyncManager {
             String name = names.get(i);
             try {
                 SyncArchive archive = new SyncArchive(this, _client, name);
-                _archives.add(archive);
-                for (int j = 0; j < _listeners.size(); j++)
-                    _listeners.get(j).archiveLoaded(archive);
+                synchronized(_archives) {
+                    _archives.add(archive);
+                }
+                synchronized(_listeners) {
+                    for (int j = 0; j < _listeners.size(); j++)
+                        _listeners.get(j).archiveLoaded(archive);
+                }
             } catch (IllegalStateException ise) {
                 _ui.errorMessage("Internal error loading the archive [" + name + "]", ise);
             }
         }
-        for (int i = 0; i < _listeners.size(); i++)
-            _listeners.get(i).onlineStatusUpdated(_online);
+        synchronized(_listeners) {
+            for (int i = 0; i < _listeners.size(); i++)
+                _listeners.get(i).onlineStatusUpdated(_online);
+        }
         
         _indexFetcher = new IndexFetcher(this);
         _indexFetcher.start();

@@ -203,8 +203,7 @@ public class ArchiveManager extends BaseComponent implements Translatable, Theme
         archives.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, true));
         final List uris = new ArrayList();
         SyncManager mgr = SyncManager.getInstance(_client, _ui);
-        for (int i = 0; i < mgr.getArchiveCount(); i++) {
-            SyncArchive archive = mgr.getArchive(i);
+        for (SyncArchive archive : mgr.getArchives()) {
             String name = archive.getName();
             SyndieURI uri = archive.getArchiveURI();
             uris.add(uri);

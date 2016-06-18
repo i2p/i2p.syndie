@@ -84,12 +84,8 @@ public class SyncOutboundPusher {
     }
     
     private SyncArchive getNextToPush(Runner runner) {
-        int count = _manager.getArchiveCount();
         // shuffle the archives so we aren't always syncing with the first on the list
-        List<SyncArchive> archives = new ArrayList<SyncArchive>(count);
-        for (int i = 0; i < count; i++) {
-            archives.add(_manager.getArchive(i));
-        }
+        List<SyncArchive> archives = _manager.getArchives();
         Collections.shuffle(archives);
         for (SyncArchive archive : archives) {
             synchronized (_runnerToArchive) {

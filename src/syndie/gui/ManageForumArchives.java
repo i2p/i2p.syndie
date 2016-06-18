@@ -264,9 +264,7 @@ class ManageForumArchives extends BaseComponent implements Themeable, Translatab
         _ui.debugMessage("loadData: pub=" + pubURLs + " priv=" + privURLs);
         
         SyncManager mgr = SyncManager.getInstance(_client, _ui);
-        int cnt = mgr.getArchiveCount();
-        for (int i = 0; i < cnt; i++) {
-            SyncArchive archive = mgr.getArchive(i);
+        for (SyncArchive archive : mgr.getArchives()) {
             String url = archive.getURL();
             if (url == null) url = "";
             boolean selected = false;

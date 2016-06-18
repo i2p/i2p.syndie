@@ -10,8 +10,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import net.i2p.I2PAppContext;
+import net.i2p.data.Hash;
 import net.i2p.util.EepGet;
 import net.i2p.util.SecureFile;
 import net.i2p.util.SSLEepGet;
@@ -28,13 +30,16 @@ class SyncInboundFetcher {
     private static final Map<Runner, SyncArchive> _runnerToArchive = new HashMap<Runner, SyncArchive>();
     private volatile boolean _die;
 
-    private static final int THREADS = 3;
+    private static final int THREADS = 5;
     private static final int I2P_RETRIES = 1;
     
     public SyncInboundFetcher(SyncManager mgr) {
         _manager = mgr;
     }
     
+    /**
+     *  TODO only start one thread at first, start more as neede
+     */
     public void start() {
         for (int i = 0; i < THREADS; i++) {
             Thread t = new Thread(new Runner(), "InboundFetcher" + (i+1) + '/' + THREADS);
@@ -80,12 +85,8 @@ class SyncInboundFetcher {
     }
     
     private SyncArchive getNextToFetch(Runner runner) {
-        int count = _manager.getArchiveCount();
         // shuffle the archives so we aren't always syncing with the first on the list
-        List<SyncArchive> archives = new ArrayList<SyncArchive>(count);
-        for (int i = 0; i < count; i++) {
-            archives.add(_manager.getArchive(i));
-        }
+        List<SyncArchive> archives = _manager.getArchives();
         Collections.shuffle(archives);
         long now = System.currentTimeMillis();
         for (SyncArchive archive : archives) {
@@ -259,7 +260,7 @@ class SyncInboundFetcher {
             archiveURL = archiveURL.substring(0, dir) + '/';
 
         long whitelistGroupId = archive.getWhitelistGroupId();
-        Set whitelistScopes = _manager.getClient().getReferencedScopes(whitelistGroupId);
+        Set<Hash> whitelistScopes = _manager.getClient().getReferencedScopes(whitelistGroupId);
         
         // successful fetches are enqueued in the importer thread so we can import serially without
         // blocking the fetches
@@ -318,15 +319,15 @@ class SyncInboundFetcher {
     }
     
     private class Fetch implements Runnable {
-        private SyncArchive _archive;
-        private List<SyncArchive.IncomingAction> _actions;
-        private String _archiveURL;
-        private String _query;
-        private DataImporter _importer;
-        private Set _whitelistScopes;
+        private final SyncArchive _archive;
+        private final List<SyncArchive.IncomingAction> _actions;
+        private final String _archiveURL;
+        private final String _query;
+        private final DataImporter _importer;
+        private final Set<Hash> _whitelistScopes;
         
         public Fetch(SyncArchive archive, List<SyncArchive.IncomingAction> actions,
-                     String archiveURL, String query, DataImporter importer, Set whitelistScopes) {
+                     String archiveURL, String query, DataImporter importer, Set<Hash> whitelistScopes) {
             _archive = archive;
             _actions = actions;
             _archiveURL = archiveURL;
@@ -412,9 +413,9 @@ class SyncInboundFetcher {
         private final DataImporter _importer;
         private final File _dataFile;
         private Exception _err;
-        private final Set _whitelistScopes;
+        private final Set<Hash> _whitelistScopes;
 
-        public GetListener(SyncArchive.IncomingAction action, File dataFile, DataImporter importer, Set whitelistScopes) {
+        public GetListener(SyncArchive.IncomingAction action, File dataFile, DataImporter importer, Set<Hash> whitelistScopes) {
             _importer = importer;
             _incomingAction = action;
             _dataFile = dataFile;
@@ -451,53 +452,49 @@ class SyncInboundFetcher {
         }
     }
     
+    private static class ImportItem {
+        public final SyncArchive.IncomingAction action;
+        public final File file;
+        public final boolean delete;
+        public ImportItem(SyncArchive.IncomingAction action, File file, boolean delete) {
+            this.action = action; this.file = file; this.delete = delete;
+        }
+    }
+
+    private static final ImportItem POISON = new ImportItem(null, null, false);
+
     private class DataImporter implements Runnable {
-        private List _actions;
-        private List _files;
-        private List _toDelete;
-        private boolean _complete;
-        private Set _whitelistScopes;
+        private final LinkedBlockingQueue<ImportItem> _items;
+        private volatile boolean _complete;
+        private Set<Hash> _whitelistScopes;
         
-        public DataImporter(Set whitelistScopes) { 
-            _actions = new ArrayList();
-            _files = new ArrayList();
-            _toDelete = new ArrayList();
-            _complete = false;
+
+        public DataImporter(Set<Hash> whitelistScopes) { 
+            _items = new LinkedBlockingQueue<ImportItem>();
             _whitelistScopes = whitelistScopes;
         }
 
-        public Set getWhitelistScopes() { return _whitelistScopes; }
+        public Set<Hash> getWhitelistScopes() { return _whitelistScopes; }
         
         public void enqueueData(SyncArchive.IncomingAction action, File datafile, boolean delete) {
             _manager.getUI().debugMessage(Thread.currentThread().getName() + ": enqueueing import from " + datafile.toString());
-            synchronized (DataImporter.this) {
-                if (!_actions.contains(action)) {
-                    _actions.add(action);
-                    _files.add(datafile);
-                    _toDelete.add(delete ? Boolean.TRUE : Boolean.FALSE);
-                }
-                DataImporter.this.notifyAll();
-            }
+            _items.offer(new ImportItem(action, datafile, delete));
         }
         
         public void complete() {
             _manager.getUI().debugMessage(Thread.currentThread().getName() + ": No more imports");
-            synchronized (DataImporter.this) {
-                _complete = true;
-                DataImporter.this.notifyAll();
-            }
+            _complete = true;
+            _items.offer(POISON);
         }
         
         public void finishQueue() { 
             while (true) {
-                int remaining = 0;
+                int remaining = _items.size();
+                if (remaining <= 0)
+                    return;
                 try {
                     synchronized (DataImporter.this) {
-                        remaining = _actions.size();
-                        if (remaining <= 0)
-                            return;
-                        else
-                            DataImporter.this.wait(1000);
+                        DataImporter.this.wait(1000);
                     }
                 } catch (InterruptedException ie) {}
                 _manager.getUI().debugMessage(Thread.currentThread().getName() + ": Waiting for the pending " + remaining + " import action queue to clear...");
@@ -506,28 +503,27 @@ class SyncInboundFetcher {
         
         public void run() {
             while (!_complete) {
-                SyncArchive.IncomingAction action = null;
-                File datafile = null;
-                boolean delete = false;
-                synchronized (DataImporter.this) {
-                    if (_actions.size() <= 0)
-                        try { DataImporter.this.wait(); } catch (InterruptedException ie) {}
-                    if (_actions.size() > 0) {
-                        action = (SyncArchive.IncomingAction)_actions.remove(0);
-                        datafile = (File)_files.remove(0);
-                        delete = ((Boolean)_toDelete.remove(0)).booleanValue();
-                    }
+                ImportItem item;
+                try {
+                    item = _items.take();
+                } catch (InterruptedException ie) {
+                    break;
                 }
+                if (item == POISON)
+                    break;
+                SyncArchive.IncomingAction action = item.action;
+                File datafile = item.file;
+                boolean delete = item.delete;
                 
-                if (action != null) {
-                    _manager.getUI().debugMessage(Thread.currentThread().getName() + ": executing import from " + datafile.toString());
-                    importData(action, datafile, delete, _whitelistScopes);
-                }
+                _manager.getUI().debugMessage(Thread.currentThread().getName() + ": executing import from " + datafile.toString());
+                importData(action, datafile, delete, _whitelistScopes);
             }
+            _items.clear();
+            _complete = true;
         }
     }
     
-    private void importData(SyncArchive.IncomingAction action, File datafile, boolean delete, Set whitelistScopes) {
+    private void importData(SyncArchive.IncomingAction action, File datafile, boolean delete, Set<Hash> whitelistScopes) {
         Importer imp = new Importer(_manager.getClient());
         InputStream src = null;
         try {

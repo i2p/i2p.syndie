@@ -23,8 +23,8 @@ import syndie.util.RFC822Date;
  *  Fetch the shared-index.dat file and process it
  */
 class IndexFetcher {
-    private SyncManager _manager;
-    private boolean _die;
+    private final SyncManager _manager;
+    private volatile boolean _die;
     
     private static final int FREENET_RETRIES = 0;
     private static final int CLEARNET_RETRIES = 0;
@@ -80,12 +80,8 @@ class IndexFetcher {
     }
     
     private SyncArchive getNextToFetch() {
-        int count = _manager.getArchiveCount();
         // shuffle the archives so we aren't always syncing with the first on the list
-        List<SyncArchive> archives = new ArrayList(count);
-        for (int i = 0; i < count; i++) {
-            archives.add(_manager.getArchive(i));
-        }
+        List<SyncArchive> archives = _manager.getArchives();
         Collections.shuffle(archives);
         long now = System.currentTimeMillis();
         for (SyncArchive archive : archives) {

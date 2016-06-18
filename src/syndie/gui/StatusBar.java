@@ -251,8 +251,8 @@ class StatusBar extends BaseComponent implements Translatable, Themeable, DBClie
             }
         });
         timer.addEvent("status bar: sync manager registered");
-        for (int i = 0; i < mgr.getArchiveCount(); i++)
-            registerListen(mgr.getArchive(i));
+        for (SyncArchive archive : mgr.getArchives())
+            registerListen(archive);
     
         timer.addEvent("status bar: sync archive registered");
         initDisplay(); // refreshes the display assuming no interesting attributes

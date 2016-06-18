@@ -234,9 +234,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
     public void show(SyndieURI uri) {
         if (uri.isArchive()) {
             SyncManager mgr = SyncManager.getInstance(_client, _ui);
-            int cnt = mgr.getArchiveCount();
-            for (int i = 0; i < cnt; i++) {
-                SyncArchive archive = mgr.getArchive(i);
+            for (SyncArchive archive : mgr.getArchives()) {
                 if (archive.getURL().equals(uri.getURL())) {
                     _ui.debugMessage("viewing [" + archive.getURL() + "] [" + archive.getName() + "]");
                     TreeItem item = _archiveNameToRootItem.get(archive.getName());
@@ -276,8 +274,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
 
     private void cancel() {
         SyncManager mgr = SyncManager.getInstance(_client, _ui);
-        for (int i = 0; i < mgr.getArchiveCount(); i++) {
-            SyncArchive archive = mgr.getArchive(i);
+        for (SyncArchive archive : mgr.getArchives()) {
             archive.stop(getText("Cancelled"));
         }
     }
@@ -671,16 +668,9 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
         mgr.loadArchives();
         mgr.addListener(this);
         
-        int cnt = mgr.getArchiveCount();
-        _ui.debugMessage("archives loaded: " + cnt);
-        if (cnt == 0) {
-            //showArchiveDefaults();
-        } else {
-            for (int i = 0; i < cnt; i++) {
-                SyncArchive archive = mgr.getArchive(i);
+        for (SyncArchive archive : mgr.getArchives()) {
                 archive.addListener(this);
                 loadData(archive);
-            }
         }
     }
     

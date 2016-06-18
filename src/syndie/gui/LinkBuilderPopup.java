@@ -5,12 +5,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+
 import net.i2p.data.Base64;
 import net.i2p.data.DataHelper;
 import net.i2p.data.Hash;
 import net.i2p.data.PrivateKey;
 import net.i2p.data.SessionKey;
 import net.i2p.data.SigningPrivateKey;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.events.ModifyEvent;
@@ -36,12 +38,14 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+
 import syndie.Constants;
 import syndie.data.ChannelInfo;
 import syndie.data.MessageInfo;
 import syndie.data.NymKey;
 import syndie.data.SyndieURI;
 import syndie.db.DBClient;
+import syndie.db.SyncArchive;
 import syndie.db.SyncManager;
 import syndie.db.UI;
 
@@ -1019,10 +1023,9 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
         _linkTypeArchiveCombo.removeAll();
         _archives.clear();
         SyncManager mgr = SyncManager.getInstance(_client, _ui);
-        int archives = mgr.getArchiveCount();
-        for (int i = 0; i < archives; i++) {
-            SyndieURI uri = mgr.getArchive(i).getArchiveURI();
-            String name = mgr.getArchive(i).getName();
+        for (SyncArchive archive : mgr.getArchives()) {
+            SyndieURI uri = archive.getArchiveURI();
+            String name = archive.getName();
             if (name != null)
                 _linkTypeArchiveCombo.add(name + ": " + getLocation(uri));
             else
