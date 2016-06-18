@@ -34,6 +34,8 @@ class SyncInboundFetcher {
     private static final int THREADS = 3;
     /** this is the number of concurrent HTTP metaindex or post fetches, per archive */
     private static final int CONCURRENT_FETCHES = 5;
+    /** number that the fetchers can get ahead of the importer */
+    private static final int MAX_IMPORT_QUEUE = 20;
     
     private static final int I2P_RETRIES = 1;
     
@@ -152,7 +154,7 @@ class SyncInboundFetcher {
         
             SyncArchive.IncomingAction action = archive.getIncomingAction(i);
             if (action.getCompletionTime() > 0) continue; // already complete
-            if (action.isPaused()) continue; // dont wanna do it
+            //if (action.isPaused()) continue; // dont wanna do it
             if (!action.setIsExecuting(true)) continue; // someone else is doing it
             
             SyndieURI uri = action.getURI();
@@ -206,7 +208,7 @@ class SyncInboundFetcher {
         
             SyncArchive.IncomingAction action = archive.getIncomingAction(i);
             if (action.getCompletionTime() > 0) continue; // already complete
-            if (action.isPaused()) continue; // dont wanna do it
+            //if (action.isPaused()) continue; // dont wanna do it
             SyndieURI uri = action.getURI();
             
             File src = null;
@@ -226,7 +228,7 @@ class SyncInboundFetcher {
         for (int i = 0; i < actions; i++) {
             SyncArchive.IncomingAction action = archive.getIncomingAction(i);
             if (action.getCompletionTime() > 0) continue; // already complete
-            if (action.isPaused()) continue; // dont wanna do it
+            //if (action.isPaused()) continue; // dont wanna do it
             if (!action.setIsExecuting(true)) continue; // someone else is doing it
             
             SyndieURI uri = action.getURI();
@@ -347,7 +349,7 @@ class SyncInboundFetcher {
                 if (action == null) return;
                 
                 if (action.getCompletionTime() > 0) continue; // already complete
-                if (action.isPaused()) continue; // dont wanna do it
+                //if (action.isPaused()) continue; // dont wanna do it
 
                 SyndieURI uri = action.getURI();
 
@@ -424,10 +426,18 @@ class SyncInboundFetcher {
 
         public void transferComplete(long alreadyTransferred, long bytesTransferred, long bytesRemaining, String url, String outputFile, boolean notModified) {
             _manager.getUI().debugMessage("Fetch data complete [" + url + "] after " + bytesTransferred);
-            if (_importer != null)
-                _importer.enqueueData(_incomingAction, _dataFile, true);
-            else // only the http fetch uses the multithreaded importer (files are sequential, and freenet fetches are slow enough)
+            if (_importer != null) {
+                try {
+                    _incomingAction.setIsQueuedForProcessing();
+                    _importer.enqueueData(_incomingAction, _dataFile, true);
+                } catch (InterruptedException ie) {
+                }
+            } else {
+                // only the http fetch uses the multithreaded importer (files are sequential, and freenet fetches are slow enough)
+                _incomingAction.setIsProcessing();
                 importData(_incomingAction, _dataFile, true, _whitelistScopes);
+                _incomingAction.importFailed(IMPORT_INTERRUPTED, _err);
+            }
         }
         
         public void attemptFailed(String url, long bytesTransferred, long bytesRemaining, int currentAttempt, int numRetries, Exception cause) {
@@ -470,15 +480,16 @@ class SyncInboundFetcher {
         
 
         public DataImporter(Set<Hash> whitelistScopes) { 
-            _items = new LinkedBlockingQueue<ImportItem>();
+            _items = new LinkedBlockingQueue<ImportItem>(MAX_IMPORT_QUEUE);
             _whitelistScopes = whitelistScopes;
         }
 
         public Set<Hash> getWhitelistScopes() { return _whitelistScopes; }
         
-        public void enqueueData(SyncArchive.IncomingAction action, File datafile, boolean delete) {
+        /** BLOCKING if the queue is full */
+        public void enqueueData(SyncArchive.IncomingAction action, File datafile, boolean delete) throws InterruptedException {
             _manager.getUI().debugMessage(Thread.currentThread().getName() + ": enqueueing import from " + datafile.toString());
-            _items.offer(new ImportItem(action, datafile, delete));
+            _items.put(new ImportItem(action, datafile, delete));
         }
         
         public void complete() {
@@ -516,6 +527,7 @@ class SyncInboundFetcher {
                 boolean delete = item.delete;
                 
                 _manager.getUI().debugMessage(Thread.currentThread().getName() + ": executing import from " + datafile.toString());
+                action.setIsProcessing();
                 importData(action, datafile, delete, _whitelistScopes);
             }
             _items.clear();

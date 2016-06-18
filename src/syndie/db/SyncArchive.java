@@ -9,6 +9,7 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import net.i2p.data.Base64;
 import net.i2p.data.DataHelper;
@@ -55,8 +56,8 @@ public class SyncArchive {
     private long _indexFetchRcvd;
     private long _indexFetchSize = -1;
     
-    private int _incomingActionsInProgress;
-    private int _outgoingActionsInProgress;
+    private final AtomicInteger _incomingActionsInProgress = new AtomicInteger();
+    private final AtomicInteger _outgoingActionsInProgress = new AtomicInteger();
     
     /**
      *  This is the default master loop time.
@@ -234,15 +235,17 @@ public class SyncArchive {
         public void outgoingUpdated(SyncArchive.OutgoingAction action);
         public void archiveUpdated(SyncArchive archive);
     }
+
+    private enum IncomingState {
+        INIT, QUEUED_FETCH, FETCHING_META, FETCHING_BODY,
+        QUEUED_PROCESSING, PROCESSING, COMPLETE, PAUSED
+    }
     
     /** represents the pull of an archive element - either a message or metadata */
     public class IncomingAction {
         private final SyndieURI _uri;
         private long _completionTime;
         private boolean _paused;
-        private boolean _executing;
-        private boolean _fetchingMeta;
-        private boolean _fetchingBody;
         private boolean _fetchOK;
         private String _pbePrompt;
         private ImportResult.Result _result;
@@ -251,6 +254,7 @@ public class SyncArchive {
         private int _attempts;
         private long _size, _rcvd;
         private boolean _disposed;
+        private IncomingState _state = IncomingState.INIT;
         
         public IncomingAction(SyndieURI uri) {
             _uri = uri;
@@ -258,17 +262,25 @@ public class SyncArchive {
             _size = -1;
         }
         
+
         public SyndieURI getURI() { return _uri; }
         public SyncArchive getArchive() { return SyncArchive.this; }
 
-        // TODO move all the following to a state variable
-        public boolean isScheduled() { return _completionTime == -1 && !_paused && !_executing; }
-        /** this really just means queued */
-        public boolean isExecuting() { return _executing; }
-        public boolean isFetchingMeta() { return _fetchingMeta; }
-        public boolean isFetchingBody() { return _fetchingBody; }
-        public boolean isComplete() { return _completionTime > 0; }
-        public boolean isPaused() { return _paused; }
+        public boolean isScheduled() { return _state == IncomingState.INIT; }
+        /** started and not finished */
+        public boolean isExecuting() {
+            return _state != IncomingState.INIT &&
+                   _state != IncomingState.COMPLETE;
+        }
+        public boolean isFetchingMeta() { return _state == IncomingState.FETCHING_META; }
+        public boolean isFetchingBody() { return _state == IncomingState.FETCHING_BODY; }
+        /** @since 1.106b-2 */
+        public boolean isQueuedForProcessing() { return _state == IncomingState.QUEUED_PROCESSING; }
+        /** @since 1.106b-2 */
+        public boolean isProcessing() { return _state == IncomingState.PROCESSING; }
+        public boolean isComplete() { return _state == IncomingState.COMPLETE; }
+        /** @deprecated unused */
+        public boolean isPaused() { return false; /* _paused; */ }
         public boolean isDisposed() { return _disposed; }
 
         /**
@@ -295,13 +307,12 @@ public class SyncArchive {
         }
         
         void setFetchingMeta() { 
-            _fetchingMeta = true;
+            _state = IncomingState.FETCHING_META;
             notifyUpdate(this);
         }
 
         void setFetchingBody() { 
-            _fetchingMeta = false;
-            _fetchingBody = true;
+            _state = IncomingState.FETCHING_BODY;
             notifyUpdate(this);
         }
 
@@ -335,21 +346,39 @@ public class SyncArchive {
             } else
                 notifyUpdate(this); // we didn't call to setIsExecuting(), so notify manually
         }
+
+        /** @since 1.106b-2 */
+        void setIsQueuedForProcessing() {
+             _state = IncomingState.QUEUED_PROCESSING;
+             notifyUpdate(this);
+        }
+
+        /** @since 1.106b-2 */
+        void setIsProcessing() {
+             _state = IncomingState.PROCESSING;
+             notifyUpdate(this);
+        }
         
+        /** @return true if state has changed */
         boolean setIsExecuting(boolean executing) {
-            if (!executing) {
-                _fetchingMeta = false;
-                _fetchingBody = false;
-            }
             boolean changed;
             synchronized (IncomingAction.this) {
-                changed = _executing != executing;
+                boolean wasExecuting = _state != IncomingState.INIT;
+                changed = wasExecuting != executing;
                 if (changed) {
-                    _executing = executing;
-                    _incomingActionsInProgress += executing ? 1 : -1;
+                    if (executing)
+                        _state = IncomingState.QUEUED_FETCH;
+                    else
+                        _state = IncomingState.COMPLETE;
                 }
             }
-            if (changed) notifyUpdate(this);
+            if (changed) {
+                if (executing)
+                    _incomingActionsInProgress.incrementAndGet();
+                else
+                    _incomingActionsInProgress.decrementAndGet();
+                notifyUpdate(this);
+            }
             return changed;
         }
         
@@ -357,6 +386,7 @@ public class SyncArchive {
         
         public void clearFetchError() {
             if (isComplete() && _fetchErrorMsg != null) {
+                _state = IncomingState.INIT;
                 _completionTime = -1;
                 _fetchError = null;
                 _fetchErrorMsg = null;
@@ -440,7 +470,10 @@ public class SyncArchive {
                 changed = _executing != executing;
                 if (changed) {
                     _executing = executing;
-                    _outgoingActionsInProgress += executing ? 1 : -1;
+                    if (executing)
+                        _outgoingActionsInProgress.incrementAndGet();
+                    else
+                        _outgoingActionsInProgress.decrementAndGet();
                 }
             }
             if (changed) notifyUpdate(this);
@@ -829,7 +862,9 @@ public class SyncArchive {
     public void setNextSyncOneOff(boolean oneOff) { _nextSyncOneOff = oneOff; }
 
     /** TODO proper state tracking */
-    public boolean getSyncInProgress() { return getIndexFetchInProgress() || _incomingActionsInProgress > 0 || _outgoingActionsInProgress > 0; }
+    public boolean getSyncInProgress() { return getIndexFetchInProgress() ||
+                                                _incomingActionsInProgress.get() > 0 ||
+                                                _outgoingActionsInProgress.get() > 0; }
 
     public PullStrategy getPullStrategy() { return _pullStrategy; }
     public void setPullStrategy(PullStrategy strategy) { _pullStrategy = strategy; }
@@ -891,7 +926,7 @@ public class SyncArchive {
     public int getIncomingActionCount() { return _incomingActions.size(); }
 
     /** @since 1.102b-9 */
-    public int getIncomingActionsInProgress() { return _incomingActionsInProgress; }
+    public int getIncomingActionsInProgress() { return _incomingActionsInProgress.get(); }
 
     public IncomingAction getIncomingAction(int num) { return _incomingActions.get(num); }
     
@@ -915,7 +950,7 @@ public class SyncArchive {
     public int getOutgoingActionCount() { return _outgoingActions.size(); }
 
     /** @since 1.102b-9 */
-    public int getOutgoingActionsInProgress() { return _outgoingActionsInProgress; }
+    public int getOutgoingActionsInProgress() { return _outgoingActionsInProgress.get(); }
 
     public OutgoingAction getOutgoingAction(int num) { return _outgoingActions.get(num); }
 

@@ -965,6 +965,12 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
                 if (t > 0)
                     buf.append(" / ").append(formatSize(t));
                 actionItem.setText(3, buf.toString());
+            } else if (action.isQueuedForProcessing()) {
+                actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_SCHEDULED);
+                actionItem.setText(3, getText("Queued for Import"));
+            } else if (action.isProcessing()) {
+                actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_INPROGRESS);
+                actionItem.setText(3, getText("Importing"));
             } else if (action.isExecuting()) {
                 actionItem.setImage(2, ImageUtil.ICON_SYNDICATE_STATUS_SCHEDULED);
                 actionItem.setText(3, getText("Queued"));

@@ -143,6 +143,11 @@ public class ImportResult {
             public boolean ok() { return false; }
             public String msg() { return _x("Internal error"); }
         },
+        /** @since 1.106b-2 */
+        IMPORT_INTERRUPTED {
+            public boolean ok() { return false; }
+            public String msg() { return _x("Interrupted"); }
+        },
     }
 
     /** tag for translation */
