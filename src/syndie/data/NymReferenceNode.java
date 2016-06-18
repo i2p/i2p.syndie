@@ -11,11 +11,12 @@ public class NymReferenceNode extends ReferenceNode {
     private long _groupId;
     private long _parentGroupId;
     private int _siblingOrder;
-    private boolean _isIgnored;
-    private boolean _isBanned;
-    private boolean _loadOnStart;
+    private final boolean _isIgnored;
+    private final boolean _isBanned;
+    private final boolean _loadOnStart;
 
-    public NymReferenceNode(String name, SyndieURI uri, String description, long uriId, long groupId, long parentGroupId, int siblingOrder, boolean isIgnored, boolean isBanned, boolean loadOnStart) {
+    public NymReferenceNode(String name, SyndieURI uri, String description, long uriId, long groupId, long parentGroupId,
+                            int siblingOrder, boolean isIgnored, boolean isBanned, boolean loadOnStart) {
         super(name, uri, description, null);
         _uriId = uriId;
         _groupId = groupId;
@@ -31,13 +32,14 @@ public class NymReferenceNode extends ReferenceNode {
     public long getParentGroupId() { return _parentGroupId; }
     public int getSiblingOrder() { return _siblingOrder; }
     public boolean getIsIgnored() { return _isIgnored; }
-    public void setIsIgnored(boolean ignore) { _isIgnored = ignore; }
+
+    //public void setIsIgnored(boolean ignore) { _isIgnored = ignore; }
     public boolean getIsBanned() { return _isBanned; }
-    public void setIsBanned(boolean banned) { _isBanned = banned; }
+    //public void setIsBanned(boolean banned) { _isBanned = banned; }
     public boolean getLoadOnStart() { return _loadOnStart; }
-    public void setLoadOnStart(boolean load) { _loadOnStart = load; }
+    //public void setLoadOnStart(boolean load) { _loadOnStart = load; }
     
-    public void setURIId(long id) { _uriId = id; }
+    //public void setURIId(long id) { _uriId = id; }
     public void setGroupId(long id) { _groupId = id; }
     public void setParentGroupId(long id) { _parentGroupId = id; }
     public void setSiblingOrder(int order) { _siblingOrder = order; }
