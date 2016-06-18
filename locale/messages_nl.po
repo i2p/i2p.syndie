@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: I2P\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-01-20 22:47+0000\n"
-"PO-Revision-Date: 2016-06-13 20:15+0000\n"
+"PO-Revision-Date: 2016-06-18 10:55+0000\n"
 "Last-Translator: Martijn de Boer\n"
 "Language-Team: Dutch (http://www.transifex.com/otf/I2P/language/nl/)\n"
 "MIME-Version: 1.0\n"
@@ -2337,16 +2337,16 @@ msgstr "Fout bij verwerken datum"
 #, java-format
 msgid "Last day"
 msgid_plural "Last {0} days"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Laatste dag"
+msgstr[1] "Laatste {0} dagen"
 
 #. translators: you may use "Last {0} week" for the singular if that's better
 #: src/syndie/gui/MessageTree.java:752 src/syndie/gui/MessageTree.java:753
 #, java-format
 msgid "Last week"
 msgid_plural "Last {0} weeks"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Laatste week"
+msgstr[1] "Laatste {0} weken"
 
 #. translators: you may use "Last {0} month" for the singular if that's better
 #: src/syndie/gui/MessageTree.java:755 src/syndie/gui/MessageTree.java:756
@@ -2354,8 +2354,8 @@ msgstr[1] ""
 #, java-format
 msgid "Last month"
 msgid_plural "Last {0} months"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Laatste maand"
+msgstr[1] "Laatste {0} maanden"
 
 #. translators: you may use "Last {0} year" for the singular if that's better
 #: src/syndie/gui/MessageTree.java:759 src/syndie/gui/MessageTree.java:760
@@ -2363,175 +2363,175 @@ msgstr[1] ""
 #, java-format
 msgid "Last year"
 msgid_plural "Last {0} years"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Laatste jaar"
+msgstr[1] "Laatste {0} jaren"
 
 #: src/syndie/gui/MessageTree.java:780
 msgid "Any tags"
-msgstr ""
+msgstr "Alle tags"
 
 #: src/syndie/gui/MessageTree.java:956
 msgid "Filter"
-msgstr ""
+msgstr "Filter"
 
 #: src/syndie/gui/MessageTree.java:956
 msgid "Since"
-msgstr ""
+msgstr "Sinds"
 
 #: src/syndie/gui/MessageTree.java:959
 msgid "Text"
-msgstr ""
+msgstr "Tekst"
 
 #: src/syndie/gui/MessageTree.java:960
 msgid "Tag"
-msgstr ""
+msgstr "Tag"
 
 #: src/syndie/gui/MessageTree.java:961
 msgid "Unread only"
-msgstr ""
+msgstr "Alleen ongelezen"
 
 #: src/syndie/gui/MessageTree.java:962
 msgid "Search pages and subjects for the phrase"
-msgstr ""
+msgstr "Doorzoek pagina's en onderwerpen op de zin"
 
 #: src/syndie/gui/MessageTree.java:965
 msgid "Bookmarked forums"
-msgstr ""
+msgstr "Opgeslagen forums"
 
 #: src/syndie/gui/MessageTree.java:966
 msgid "Specific forum"
-msgstr ""
+msgstr "Specifiek forum"
 
 #: src/syndie/gui/MessageTree.java:968
 msgid "Readable by: anyone"
-msgstr ""
+msgstr "Leesbaar door: iedereen"
 
 #: src/syndie/gui/MessageTree.java:969
 msgid "Readable by: authorized readers"
-msgstr ""
+msgstr "Leesbaar door: geauhtoriseerde gebruikers"
 
 #: src/syndie/gui/MessageTree.java:970
 msgid "Readable by: those with a passphrase"
-msgstr ""
+msgstr "Leesbaar door: diegene met het wachtwoord"
 
 #: src/syndie/gui/MessageTree.java:971
 msgid "Readable by: forum administrators"
-msgstr ""
+msgstr "Leesbaar door: forum beheerders"
 
 #: src/syndie/gui/MessageTree.java:972
 msgid "Use local import date instead of (unreliable) message creation date"
-msgstr ""
+msgstr "Gebruik lokale import datum in plaats va de (onbetrouwbare) bericht aanmaakdatum"
 
 #: src/syndie/gui/MessageTree.java:973
 msgid "Organize results in threads"
-msgstr ""
+msgstr "Organiseer resultaten in threads"
 
 #: src/syndie/gui/MessageTree.java:974
 msgid "Show a preview of the selected message"
-msgstr ""
+msgstr "Toon een voorbeeld van het geselecteerde bericht"
 
 #: src/syndie/gui/MessageTree.java:975
 msgid "Mark messages read when opened"
-msgstr ""
+msgstr "Markeer berichten als gelezen wanneer geopend"
 
 #: src/syndie/gui/MessageTree.java:976
 msgid "Mark messages read when previewed"
-msgstr ""
+msgstr "Markeer berichten als gelezen wanneer vooraf bekeken"
 
 #: src/syndie/gui/MessageTree.java:977
 msgid "Messages requiring a new passphrase"
-msgstr ""
+msgstr "Berichten die een nieuw wachtwoord vereisen"
 
 #: src/syndie/gui/MessageTree.java:1598
 msgid "Message filtering in progress"
-msgstr ""
+msgstr "Bezig met filteren van berichten"
 
 #: src/syndie/gui/MessageTree.java:1705
 msgid "No items to display"
-msgstr ""
+msgstr "Geen items om weer te geven"
 
 #: src/syndie/gui/MessageTree.java:2115
 msgid "agelocal"
-msgstr ""
+msgstr "agelocal"
 
 #. message is not locally known
 #: src/syndie/gui/MessageTree.java:2125
 msgid "Message is not known locally"
-msgstr ""
+msgstr "Bericht is lokaal niet bekend"
 
 #: src/syndie/gui/MessageTree.java:2565 src/syndie/gui/MessageView.java:1003
 #: src/syndie/gui/ReferenceChooserInfo.java:536
 #: src/syndie/gui/desktop/ResumeablePanel.java:245
 msgid "Date"
-msgstr ""
+msgstr "Datum"
 
 #: src/syndie/gui/MessageTree.java:2574
 msgid "View the message"
-msgstr ""
+msgstr "Bekijk het bericht"
 
 #: src/syndie/gui/MessageTree.java:2575
 msgid "Reply to the message"
-msgstr ""
+msgstr "Antwoord op het bericht"
 
 #: src/syndie/gui/MessageTree.java:2576
 msgid "View the forum's messages"
-msgstr ""
+msgstr "Bekijk berichten in het forum"
 
 #: src/syndie/gui/MessageTree.java:2577 src/syndie/gui/NymChannelTree.java:529
 msgid "View the forum's profile"
-msgstr ""
+msgstr "Bekijk het forum profiel"
 
 #: src/syndie/gui/MessageTree.java:2578
 msgid "View the author's blog"
-msgstr ""
+msgstr "Bekijk het blog van de auteur"
 
 #: src/syndie/gui/MessageTree.java:2579
 msgid "View the author's profile"
-msgstr ""
+msgstr "Bekijk het profiel van de auteur"
 
 #: src/syndie/gui/MessageTree.java:2580
 msgid "Bookmark the forum"
-msgstr ""
+msgstr "Maak een bladwijzer voor het forum"
 
 #: src/syndie/gui/MessageTree.java:2581
 msgid "Bookmark the author"
-msgstr ""
+msgstr "Maak een bladwijzer van de auteur"
 
 #: src/syndie/gui/MessageTree.java:2582
 msgid "Expand the thread fully"
-msgstr ""
+msgstr "Klap alles in het thread uit"
 
 #: src/syndie/gui/MessageTree.java:2583
 msgid "Collapse the thread fully"
-msgstr ""
+msgstr "Klap alles van het thread in"
 
 #: src/syndie/gui/MessageTree.java:2584
 msgid "Expand all threads fully"
-msgstr ""
+msgstr "Klap alle threads uit"
 
 #: src/syndie/gui/MessageTree.java:2585
 msgid "Collapse all threads fully"
-msgstr ""
+msgstr "Klap alle threads in"
 
 #: src/syndie/gui/MessageTree.java:2586
 msgid "Mark the message as read"
-msgstr ""
+msgstr "Markeer het bericht als gelezen"
 
 #: src/syndie/gui/MessageTree.java:2587
 msgid "Mark the thread as read"
-msgstr ""
+msgstr "Markeer het thread als gelezen"
 
 #: src/syndie/gui/MessageTree.java:2588
 msgid "Mark the message as unread"
-msgstr ""
+msgstr "Markeer het bericht als gelezen"
 
 #: src/syndie/gui/MessageTree.java:2589
 msgid "Mark the forum as read"
-msgstr ""
+msgstr "Markeer het forum als gelezen"
 
 #: src/syndie/gui/MessageTree.java:2590
 msgid "Delete the message locally"
-msgstr ""
+msgstr "Verwijder het bericht lokaal"
 
 #: src/syndie/gui/MessageTree.java:2591 src/syndie/gui/PageRenderer.java:1579
 msgid "Cancel the message (tell others to delete it)"
@@ -2539,374 +2539,374 @@ msgstr "Annuleer het bericht (vertel anderen het te verwijderen)"
 
 #: src/syndie/gui/MessageTree.java:2593
 msgid "Mark Read"
-msgstr ""
+msgstr "Markeer als gelezen"
 
 #: src/syndie/gui/MessageTree.java:2594
 msgid "Mark Thread Read"
-msgstr ""
+msgstr "Markeer thread als gelezen"
 
 #: src/syndie/gui/MessageTree.java:2595
 msgid "Refresh"
-msgstr ""
+msgstr "Ververs"
 
 #: src/syndie/gui/MessageTree.java:2596
 #: src/syndie/gui/desktop/MessageTreePanel.java:643
 msgid "Expand"
-msgstr ""
+msgstr "Uitklappen"
 
 #: src/syndie/gui/MessageTree.java:2597
 #: src/syndie/gui/desktop/MessageTreePanel.java:673
 msgid "Collapse"
-msgstr ""
+msgstr "Inklappen"
 
 #: src/syndie/gui/MessageTree.java:2598
 msgid "Expand All"
-msgstr ""
+msgstr "Alles uitklappen"
 
 #: src/syndie/gui/MessageTree.java:2599
 msgid "Collapse All"
-msgstr ""
+msgstr "Alles inklappen"
 
 #: src/syndie/gui/MessageTree.java:2601
 msgid "Page size"
-msgstr ""
+msgstr "Pagina grootte"
 
 #: src/syndie/gui/MessageView.java:365 src/syndie/gui/MessageView.java:377
 msgid "Unspecified"
-msgstr ""
+msgstr "Ongespecificeerd"
 
 #: src/syndie/gui/MessageView.java:394 src/syndie/gui/Syndicator.java:958
 msgid "Imported"
-msgstr ""
+msgstr "Geïmporteerd"
 
 #: src/syndie/gui/MessageView.java:588
 #: src/syndie/gui/desktop/MessagePanel.java:232
 msgid "Passphrase incorrect"
-msgstr ""
+msgstr "Wachtwoord incorrect"
 
 #: src/syndie/gui/MessageView.java:589
 #: src/syndie/gui/desktop/MessagePanel.java:233
 msgid ""
 "The message could not be reimported - the passphrase was not correct.  Would"
 " you like to try again?"
-msgstr ""
+msgstr "Het bericht kon niet opnieuw worden geïmporteerd - het wachtwoord is incorrect. Wil je het nog een keer proberen?"
 
 #. duplicate the reply menu
 #: src/syndie/gui/MessageView.java:1005 src/syndie/gui/MessageView.java:1010
 #: src/syndie/gui/PageRenderer.java:1517
 msgid "Private reply to author"
-msgstr ""
+msgstr "Prive antwoord naar de auteur"
 
 #: src/syndie/gui/MessageView.java:1006 src/syndie/gui/MessageView.java:1011
 msgid "Private reply to forum administrators"
-msgstr ""
+msgstr "Prive antwoord naar de forum beheerders"
 
 #: src/syndie/gui/MessageView.java:1007 src/syndie/gui/MessageView.java:1012
 #: src/syndie/gui/PageRenderer.java:1509
 msgid "Public reply to forum"
-msgstr ""
+msgstr "Publiek antwoord aan het forum"
 
 #: src/syndie/gui/MessageView.java:1014 src/syndie/gui/PageRenderer.java:1596
 msgid "Ban author"
-msgstr ""
+msgstr "Verban auteur"
 
 #: src/syndie/gui/MessageView.java:1015 src/syndie/gui/PageRenderer.java:1478
 msgid "Bookmark author"
-msgstr ""
+msgstr "Maak een bladwijzer voor auteur"
 
 #: src/syndie/gui/MessageView.java:1016
 msgid "View author's information"
-msgstr ""
+msgstr "Bekijk auteur informatie"
 
 #: src/syndie/gui/MessageView.java:1017
 msgid "View author's forum"
-msgstr ""
+msgstr "Bekijk auteur forum"
 
 #: src/syndie/gui/MessageView.java:1019 src/syndie/gui/PageRenderer.java:1588
 msgid "Ban forum"
-msgstr ""
+msgstr "Verban forum"
 
 #: src/syndie/gui/MessageView.java:1020 src/syndie/gui/PageRenderer.java:1470
 msgid "Bookmark forum"
-msgstr ""
+msgstr "Maak een bladwijzer voor het forum"
 
 #: src/syndie/gui/MessageView.java:1022 src/syndie/gui/PageRenderer.java:1443
 #: src/syndie/gui/ViewForum.java:343
 msgid "View forum profile"
-msgstr ""
+msgstr "Bekijk forum profiel"
 
 #: src/syndie/gui/MessageView.java:1024
 msgid "View forum messages"
-msgstr ""
+msgstr "Bekijk forum berichten"
 
 #: src/syndie/gui/MessageView.java:1026 src/syndie/gui/Wizard.java:173
 msgid "Next"
-msgstr ""
+msgstr "Volgende"
 
 #: src/syndie/gui/MessageView.java:1027
 msgid "Prev"
-msgstr ""
+msgstr "Vorige"
 
 #: src/syndie/gui/MessageViewBody.java:197
 #: src/syndie/gui/MessageViewTab.java:49 src/syndie/gui/MessageViewTab.java:52
 msgid "You do not have the keys to decrypt this message"
-msgstr ""
+msgstr "Je hebt niet de sleutels om het bericht te decrypten"
 
 #: src/syndie/gui/MessageViewTab.java:45
 #: src/syndie/gui/desktop/MessagePanel.java:149
 msgid "Message unknown"
-msgstr ""
+msgstr "Bericht onbekend"
 
 #: src/syndie/gui/MessageViewTab.java:46
 #: src/syndie/gui/desktop/MessagePanel.java:150
 msgid "The selected message is not known locally"
-msgstr ""
+msgstr "Het geselecteerde bericht is niet lokaal bekend"
 
 #: src/syndie/gui/NymChannelSource.java:68
 msgid "Locally owned forums"
-msgstr ""
+msgstr "Lokaal beheerde forums"
 
 #: src/syndie/gui/NymChannelSource.java:69
 msgid "Locally managed forums"
-msgstr ""
+msgstr "Lokaal beheerde forums"
 
 #: src/syndie/gui/NymChannelSource.java:70
 msgid "Explicitly postable forums"
-msgstr ""
+msgstr "Expliciet postbare forums"
 
 #: src/syndie/gui/NymChannelSource.java:71
 msgid "Publicly postable forums"
-msgstr ""
+msgstr "Publiek postbare forums"
 
 #: src/syndie/gui/NymChannelTree.java:368
 #: src/syndie/gui/NymChannelTree.java:1156
 msgid "Search term"
-msgstr ""
+msgstr "Zoek term"
 
 #: src/syndie/gui/NymChannelTree.java:462
 msgid "Combined view of the selected forums"
-msgstr ""
+msgstr "Gecombineerde weergave van geselecteerde forums"
 
 #: src/syndie/gui/NymChannelTree.java:519
 msgid "View the forum"
-msgstr ""
+msgstr "Bekijk het forum"
 
 #: src/syndie/gui/NymChannelTree.java:540
 msgid "Manage the forum"
-msgstr ""
+msgstr "Beheer het forum"
 
 #: src/syndie/gui/NymChannelTree.java:552
 msgid "Post in the forum"
-msgstr ""
+msgstr "Post in het forum"
 
 #: src/syndie/gui/NymChannelTree.java:566
 #: src/syndie/gui/desktop/MessageTreePanel.java:567
 #: src/syndie/gui/desktop/ProfilePanel.java:427
 msgid "Unwatch the forum"
-msgstr ""
+msgstr "Volg het forum niet meer"
 
 #: src/syndie/gui/NymChannelTree.java:575
 msgid "View the resource"
-msgstr ""
+msgstr "Bekijk de bron"
 
 #: src/syndie/gui/NymChannelTree.java:588
 msgid "Drop the reference"
-msgstr ""
+msgstr "Verwijder referentie"
 
 #: src/syndie/gui/NymChannelTree.java:1123
 msgid "with references"
-msgstr ""
+msgstr "met referenties"
 
 #: src/syndie/gui/NymChannelTree.java:1145
 msgid "Avatar"
-msgstr ""
+msgstr "Avatar"
 
 #: src/syndie/gui/NymChannelTree.java:1148
 #: src/syndie/gui/desktop/ProfilePanel.java:327
 msgid "Messages"
-msgstr ""
+msgstr "Berichten"
 
 #: src/syndie/gui/NymChannelTree.java:1149
 msgid "Unread / Private / Total messages"
-msgstr ""
+msgstr "Ongelezen / Prive / Totaal"
 
 #: src/syndie/gui/NymChannelTree.java:1150
 msgid "Last post"
-msgstr ""
+msgstr "Laatste bericht"
 
 #: src/syndie/gui/NymChannelTree.java:1151
 msgid "Profile published references?"
-msgstr ""
+msgstr "Profiel gepubliceerde referenties?"
 
 #: src/syndie/gui/NymChannelTree.java:1153
 msgid "Only include forums with"
-msgstr ""
+msgstr "Alleen forums insluiten met"
 
 #: src/syndie/gui/NymChannelTree.java:1154
 msgid "Unread messages"
-msgstr ""
+msgstr "Ongelezen berichten"
 
 #: src/syndie/gui/NymChannelTree.java:1155
 msgid "Private messages"
-msgstr ""
+msgstr "Prive berichten"
 
 #: src/syndie/gui/NymChannelTree.java:1159
 msgid "View all"
-msgstr ""
+msgstr "Alles bekijken"
 
 #: src/syndie/gui/NymChannelTree.java:1161
 #: src/syndie/gui/desktop/LinkEdge.java:65
 msgid "Special forums"
-msgstr ""
+msgstr "Speciale forums"
 
 #: src/syndie/gui/NymChannelTree.java:1162
 #: src/syndie/gui/desktop/LinkEdge.java:82
 msgid "Bookmarks"
-msgstr ""
+msgstr "Bladwijzers"
 
 #: src/syndie/gui/PageEditor.java:862
 msgid "Restore normal editor size"
-msgstr ""
+msgstr "Normale editor grootte herstellen"
 
 #: src/syndie/gui/PageEditor.java:865
 msgid "Show maximized preview"
-msgstr ""
+msgstr "Toon maximale voorafweergave"
 
 #: src/syndie/gui/PageEditor.java:945
 msgid "Restore normal preview size"
-msgstr ""
+msgstr "Normale voorafweergave grootte herstellen"
 
 #: src/syndie/gui/PageEditor.java:948
 msgid "Show maximized editor"
-msgstr ""
+msgstr "Toon gemaximaliseerde editor"
 
 #. translators: arg 1 is a date/time; arg2 is the author
 #: src/syndie/gui/PageEditor.java:1076
 #, java-format
 msgid "On {0}, {1} wrote"
-msgstr ""
+msgstr "Op {0}, schreef {1}"
 
 #: src/syndie/gui/PageRenderer.java:1435 src/syndie/gui/ViewForum.java:329
 msgid "View forum"
-msgstr ""
+msgstr "Bekijk forum"
 
 #: src/syndie/gui/PageRenderer.java:1452
 msgid "View author"
-msgstr ""
+msgstr "Bekijk auteur"
 
 #: src/syndie/gui/PageRenderer.java:1460
 msgid "View author profile"
-msgstr ""
+msgstr "Bekijk auteur profiel"
 
 #: src/syndie/gui/PageRenderer.java:1489
 #: src/syndie/gui/desktop/MessagePanel.java:329
 #: src/syndie/gui/desktop/MessagePanel.java:365
 msgid "Mark as read"
-msgstr ""
+msgstr "Markeer als gelezen"
 
 #: src/syndie/gui/PageRenderer.java:1498
 #: src/syndie/gui/desktop/MessagePanel.java:333
 #: src/syndie/gui/desktop/MessagePanel.java:361
 msgid "Mark as unread"
-msgstr ""
+msgstr "Markeer als ongelezen"
 
 #: src/syndie/gui/PageRenderer.java:1528 src/syndie/gui/PageRenderer.java:1874
 msgid "Save all images"
-msgstr ""
+msgstr "Sla alle afbeeldingen op"
 
 #: src/syndie/gui/PageRenderer.java:1537 src/syndie/gui/PageRenderer.java:1796
 #: src/syndie/gui/PageRenderer.java:1881
 msgid "Disable images"
-msgstr ""
+msgstr "Afbeeldingen uitschakelen"
 
 #: src/syndie/gui/PageRenderer.java:1544 src/syndie/gui/PageRenderer.java:1803
 #: src/syndie/gui/PageRenderer.java:1888
 msgid "Enable images"
-msgstr ""
+msgstr "Afbeeldingen inschakelen"
 
 #: src/syndie/gui/PageRenderer.java:1551
 msgid "View as plain text"
-msgstr ""
+msgstr "Bekijk als platte tekst"
 
 #: src/syndie/gui/PageRenderer.java:1556
 msgid "View as unstyled HTML"
-msgstr ""
+msgstr "Bekijk als onopgemaakte HTML"
 
 #: src/syndie/gui/PageRenderer.java:1561
 msgid "View as styled HTML"
-msgstr ""
+msgstr "Bekijk als opgemaakte HTML"
 
 #: src/syndie/gui/PageRenderer.java:1571
 msgid "Delete this message locally"
-msgstr ""
+msgstr "Verwijder dit bericht lokaal"
 
 #: src/syndie/gui/PageRenderer.java:1612 src/syndie/gui/PageRenderer.java:1838
 msgid "View link"
-msgstr ""
+msgstr "Bekijk link"
 
 #: src/syndie/gui/PageRenderer.java:1622 src/syndie/gui/PageRenderer.java:1855
 msgid "Bookmark link"
-msgstr ""
+msgstr "Maak een bladwijzer voor link"
 
 #: src/syndie/gui/PageRenderer.java:1633 src/syndie/gui/PageRenderer.java:1918
 msgid "Import read key"
-msgstr ""
+msgstr "Importeer lees sleutel"
 
 #: src/syndie/gui/PageRenderer.java:1642 src/syndie/gui/PageRenderer.java:1927
 msgid "Import post key"
-msgstr ""
+msgstr "Importeer post sleutel"
 
 #: src/syndie/gui/PageRenderer.java:1651 src/syndie/gui/PageRenderer.java:1936
 msgid "Import manage key"
-msgstr ""
+msgstr "Importeer beheer sleutel"
 
 #: src/syndie/gui/PageRenderer.java:1660 src/syndie/gui/PageRenderer.java:1945
 msgid "Import reply key"
-msgstr ""
+msgstr "Importeer antwoord sleutel"
 
 #: src/syndie/gui/PageRenderer.java:1669 src/syndie/gui/PageRenderer.java:1954
 msgid "Import archive key"
-msgstr ""
+msgstr "Importeer archief sleutel"
 
 #: src/syndie/gui/PageRenderer.java:1812 src/syndie/gui/PageRenderer.java:1898
 msgid "Ignore images in this forum"
-msgstr ""
+msgstr "Negeer berichten in dit forum"
 
 #: src/syndie/gui/PageRenderer.java:1821 src/syndie/gui/PageRenderer.java:1907
 msgid "Ignore images from this author"
-msgstr ""
+msgstr "Negeer afbeeldingen van deze auteur"
 
 #: src/syndie/gui/PageRenderer.java:1847
 msgid "View image"
-msgstr ""
+msgstr "Bekijk afbeelding"
 
 #: src/syndie/gui/PageRenderer.java:1866
 msgid "Save image"
-msgstr ""
+msgstr "Sla afbeelding op"
 
 #: src/syndie/gui/PassphrasePrompt.java:141
 msgid "Publicly visible hint"
-msgstr ""
+msgstr "Publiek zichtbare hint"
 
 #: src/syndie/gui/RealBrowserTab.java:304 src/syndie/gui/Wizard.java:172
 msgid "Back"
-msgstr ""
+msgstr "Terug"
 
 #: src/syndie/gui/RealBrowserTab.java:305
 msgid "Forward"
-msgstr ""
+msgstr "Vooruit"
 
 #: src/syndie/gui/RealBrowserTab.java:306
 msgid "Go"
-msgstr ""
+msgstr "Ga"
 
 #: src/syndie/gui/RealBrowserTab.java:307
 msgid "Stop"
-msgstr ""
+msgstr "Stop"
 
 #: src/syndie/gui/RealBrowserTab.java:308
 msgid "Reload"
-msgstr ""
+msgstr "Herladen"
 
 #: src/syndie/gui/RefTree.java:84 src/syndie/gui/RefTree.java:101
 #: src/syndie/gui/RefTree.java:115 src/syndie/gui/RefTree.java:132
@@ -2915,7 +2915,7 @@ msgstr "Groep"
 
 #: src/syndie/gui/ReferenceChooserInfo.java:519
 msgid "Forum summary"
-msgstr ""
+msgstr "Forum omschrijving"
 
 #: src/syndie/gui/ReferenceChooserInfo.java:522
 #: src/syndie/gui/ReferenceChooserInfo.java:533
@@ -2925,7 +2925,7 @@ msgstr "Hash"
 
 #: src/syndie/gui/ReferenceChooserInfo.java:524
 msgid "Anyone can reply to posts"
-msgstr ""
+msgstr "Iedereen kan antwoorden op posts"
 
 #: src/syndie/gui/ReferenceChooserInfo.java:526
 #: src/syndie/gui/ReferenceChooserInfo.java:538
@@ -2936,15 +2936,15 @@ msgstr "Aanvaarden"
 
 #: src/syndie/gui/ReferenceChooserInfo.java:530
 msgid "Message summary"
-msgstr ""
+msgstr "Bericht omschrijving"
 
 #: src/syndie/gui/ReferenceChooserInfo.java:542
 msgid "Archive summary"
-msgstr ""
+msgstr "Archief omschrijvin"
 
 #: src/syndie/gui/ReferenceChooserInfo.java:549
 msgid "URI summary"
-msgstr ""
+msgstr "URI omschrijving"
 
 #: src/syndie/gui/ReferenceChooserInfo.java:550
 msgid "URI"
@@ -2952,15 +2952,15 @@ msgstr "URI"
 
 #: src/syndie/gui/ReferenceChooserPopupImpl.java:49
 msgid "Reference chooser"
-msgstr ""
+msgstr "Referentie keuze"
 
 #: src/syndie/gui/ReferenceChooserSearch.java:169
 msgid "The channel name must start with this string"
-msgstr ""
+msgstr "Het kanaal naam moet beginnen met deze string"
 
 #: src/syndie/gui/ReferenceChooserSearch.java:170
 msgid "Forum search criteria"
-msgstr ""
+msgstr "Forum zoek criteria"
 
 #: src/syndie/gui/ReferenceChooserSearch.java:172
 msgid ""
@@ -2969,7 +2969,7 @@ msgstr ""
 
 #: src/syndie/gui/ReferenceChooserSearch.java:174
 msgid "The channel hash must start with this string"
-msgstr ""
+msgstr "De kanaal hash moet beginnen met deze string"
 
 #: src/syndie/gui/ReferenceChooserSearch.java:176
 msgid "If true, include channels that anyone is allowed to post to"
@@ -2983,32 +2983,32 @@ msgstr ""
 
 #: src/syndie/gui/ReferenceChooserTree.java:616
 msgid "Schedule syndication?"
-msgstr ""
+msgstr "Syndicatie afstemmen?"
 
 #: src/syndie/gui/ReferenceChooserTree.java:850
 msgid "Requires password"
-msgstr ""
+msgstr "Wachtwoord verplicht"
 
 #: src/syndie/gui/ReferenceChooserTree.java:858
 msgid "Forum key unknown"
-msgstr ""
+msgstr "Forum sleutel onbekend"
 
 #: src/syndie/gui/ReferenceChooserTree.java:1040
 msgid "Bookmarked references"
-msgstr ""
+msgstr "Bladwijzers van referenties"
 
 #: src/syndie/gui/ReferenceChooserTree.java:1042
 msgid "Writable forums"
-msgstr ""
+msgstr "Schrijfbare forums"
 
 #: src/syndie/gui/ReferenceChooserTree.java:1048
 msgid "Imported resources"
-msgstr ""
+msgstr "Geïmporteerde bronnen"
 
 #: src/syndie/gui/ReferenceEditor.java:456
 #: src/syndie/gui/desktop/AddReferenceSource.java:119
 msgid "Top level"
-msgstr ""
+msgstr "Bovenste niveau"
 
 #: src/syndie/gui/ReferenceEditor.java:510
 msgid "Invalid image"
@@ -3024,15 +3024,15 @@ msgstr "Selecteer locatie"
 
 #: src/syndie/gui/ReferenceEditor.java:681
 msgid "Include in the watched list"
-msgstr ""
+msgstr "In volglijst opnemen"
 
 #: src/syndie/gui/ReferenceEditor.java:682
 msgid "Add to my references in"
-msgstr ""
+msgstr "Voeg toe aan mijn referenties in"
 
 #: src/syndie/gui/ReferenceEditor.java:683
 msgid "New category name"
-msgstr ""
+msgstr "Nieuwe categorie naam"
 
 #: src/syndie/gui/ReferenceEditor.java:685
 msgid "Custom nickname"
@@ -3048,11 +3048,11 @@ msgstr "Aangepast icoon"
 
 #: src/syndie/gui/ReferenceEditorPopup.java:74
 msgid "Reference editor"
-msgstr ""
+msgstr "Referentie editor"
 
 #: src/syndie/gui/ReferencesPanel.java:172
 msgid "Copy target URI"
-msgstr ""
+msgstr "Kopieer doel URI"
 
 #: src/syndie/gui/SQLTab.java:302 src/syndie/gui/desktop/SQLPanel.java:289
 msgid "SQL"
@@ -3062,15 +3062,15 @@ msgstr "SQL"
 #: src/syndie/gui/desktop/ControlMenuPanel.java:629
 #: src/syndie/gui/desktop/SQLPanel.java:290
 msgid "Advanced SQL interface"
-msgstr ""
+msgstr "Geavanceerde SQL interface"
 
 #: src/syndie/gui/SWTUI.java:144 src/syndie/gui/desktop/Desktop.java:351
 msgid "Already running"
-msgstr ""
+msgstr "Reeds gestart"
 
 #: src/syndie/gui/SWTUI.java:148 src/syndie/gui/desktop/Desktop.java:357
 msgid "Syndie is already running - please use the existing Syndie window"
-msgstr ""
+msgstr "Synde is reeds gestart - gebruik het andere venster"
 
 #: src/syndie/gui/SWTUI.java:151 src/syndie/gui/SWTUI.java:189
 #: src/syndie/gui/desktop/ControlMenuPanel.java:636
@@ -3082,7 +3082,7 @@ msgstr "Afsluiten"
 #: src/syndie/gui/SWTUI.java:185
 msgid ""
 "Syndie ran into an internal error trying to start up - please see the logs"
-msgstr ""
+msgstr "Syndie heeft een intern probleem opgelopen bij het opstarten - bekijk de logbestanden"
 
 #: src/syndie/gui/StatusBar.java:353
 msgid "Private msgs"
@@ -3094,27 +3094,27 @@ msgstr "Concepten"
 
 #: src/syndie/gui/StatusBar.java:471
 msgid "View unread in bookmarked forums"
-msgstr ""
+msgstr "Bekijk ongelezen in forums uit bladwijzers"
 
 #: src/syndie/gui/StatusBar.java:482
 msgid "View unread in all forums"
-msgstr ""
+msgstr "Bekijk ongelezen in alle forums"
 
 #: src/syndie/gui/StatusBar.java:521
 msgid "Unread"
-msgstr ""
+msgstr "Ongelezen"
 
 #: src/syndie/gui/StatusBar.java:600
 msgid "Mark all as read"
-msgstr ""
+msgstr "Markeer alles als ongelezen"
 
 #: src/syndie/gui/StatusBar.java:687
 msgid "Forums requiring password"
-msgstr ""
+msgstr "Forums met een verplicht wachtwoorD"
 
 #: src/syndie/gui/StatusBar.java:690
 msgid "Ban these forums"
-msgstr ""
+msgstr "Verban deze forums"
 
 #: src/syndie/gui/StatusBar.java:695 src/syndie/gui/StatusBar.java:736
 msgid "Are you sure?"
@@ -3127,15 +3127,15 @@ msgstr "Verwijderen?"
 
 #: src/syndie/gui/StatusBar.java:728
 msgid "Messages requiring password"
-msgstr ""
+msgstr "Berichten met een verplicht wachtwoord"
 
 #: src/syndie/gui/StatusBar.java:731
 msgid "Delete these messages"
-msgstr ""
+msgstr "Verwijder al deze berichten"
 
 #: src/syndie/gui/StatusBar.java:764
 msgid "Pass. reqd"
-msgstr ""
+msgstr "Ww. vrpl."
 
 #: src/syndie/gui/StatusBar.java:786
 msgid "Saved"
@@ -3143,23 +3143,23 @@ msgstr "Opgeslagen"
 
 #: src/syndie/gui/StatusBar.java:882
 msgid "New forums"
-msgstr ""
+msgstr "Nieuwe forums"
 
 #: src/syndie/gui/StatusBar.java:934
 msgid "Online: Syndication is enabled"
-msgstr ""
+msgstr "Online: syndicatie ingeschakeld"
 
 #: src/syndie/gui/StatusBar.java:937
 msgid "Offline: Syndication is deferred"
-msgstr ""
+msgstr "Offline: syndicatie uitgeschakeld"
 
 #: src/syndie/gui/StatusBar.java:953
 msgid "Deferred"
-msgstr ""
+msgstr "Vertraagd"
 
 #: src/syndie/gui/StatusBar.java:956
 msgid "None scheduled"
-msgstr ""
+msgstr "Niet geagendeerd"
 
 #: src/syndie/gui/StatusBar.java:959 src/syndie/gui/Syndicator.java:688
 #: src/syndie/gui/Syndicator.java:739
@@ -3181,7 +3181,7 @@ msgstr "Bladwijzer"
 
 #: src/syndie/gui/Syndicator.java:292
 msgid "Are you sure you want to delete this archive? "
-msgstr ""
+msgstr "Weet je zeker dat je dit archief wilt verwijderen"
 
 #: src/syndie/gui/Syndicator.java:392
 msgid "Settings"
@@ -3189,7 +3189,7 @@ msgstr "Instellingen"
 
 #: src/syndie/gui/Syndicator.java:401
 msgid "Sync now (recurring)"
-msgstr ""
+msgstr "Synchroniseer nu (herhaaldelijk)"
 
 #: src/syndie/gui/Syndicator.java:406
 msgid "Sync now (one time)"
@@ -3205,12 +3205,12 @@ msgstr "Volgende synchronisatie annuleren"
 
 #: src/syndie/gui/Syndicator.java:420
 msgid "Schedule sync"
-msgstr ""
+msgstr "Agendeer synchronisatie"
 
 #: src/syndie/gui/Syndicator.java:428 src/syndie/gui/Syndicator.java:441
 #: src/syndie/gui/Syndicator.java:456
 msgid "Clear complete actions"
-msgstr ""
+msgstr "Schoon voltooide acties op"
 
 #: src/syndie/gui/Syndicator.java:470
 msgid "Clear"
