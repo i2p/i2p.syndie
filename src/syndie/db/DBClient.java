@@ -1064,7 +1064,7 @@ public class DBClient {
                     continue;
                 if (hash.length != Hash.HASH_LENGTH)
                     continue;
-                rv.put(Long.valueOf(id), Hash.create(hash));
+                rv.put(Long.valueOf(id), new Hash(hash));
             }
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
@@ -1089,7 +1089,7 @@ public class DBClient {
             if (rs.next()) {
                 byte chanHash[] = rs.getBytes(1);
                 if ( (chanHash != null) && (chanHash.length == Hash.HASH_LENGTH) )
-                    return Hash.create(chanHash);
+                    return new Hash(chanHash);
                 return null;
             } else {
                 return null;
@@ -1442,7 +1442,7 @@ public class DBClient {
                      */
                 }
                 
-                rv.add(new NymKey(type, data, _context.sha().calculateHash(data).toBase64(), auth, function, nymId, (chan != null ? Hash.create(chan) : null)));
+                rv.add(new NymKey(type, data, _context.sha().calculateHash(data).toBase64(), auth, function, nymId, (chan != null ? new Hash(chan) : null)));
             }
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
@@ -1567,7 +1567,7 @@ public class DBClient {
                 if (rs.wasNull()) chanId = -1;
                 boolean isExpired = (rs.getDate(4) == null);
                 if ( (chan != null) && (chan.length == Hash.HASH_LENGTH) && (key != null) && (key.length == SessionKey.KEYSIZE_BYTES) )
-                    rv.add(new NymKey(Constants.KEY_TYPE_AES256, key, true, Constants.KEY_FUNCTION_READ, _nymId, Hash.create(chan), isExpired));
+                    rv.add(new NymKey(Constants.KEY_TYPE_AES256, key, true, Constants.KEY_FUNCTION_READ, _nymId, new Hash(chan), isExpired));
             }
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
@@ -2233,7 +2233,7 @@ public class DBClient {
                 String petdesc = rs.getString(15);
                 
                 info.setChannelId(channelId);
-                info.setChannelHash(Hash.create(chanHash));
+                info.setChannelHash(new Hash(chanHash));
                 info.setIdentKey(new SigningPublicKey(identKey));
                 info.setEncryptKey(new PublicKey(encryptKey));
                 info.setEdition(edition);
@@ -2911,7 +2911,7 @@ public class DBClient {
             while (rs.next()) {
                 byte hash[] = rs.getBytes(1);
                 if ( (hash != null) && (hash.length == Hash.HASH_LENGTH) )
-                    rv.add(SyndieURI.createScope(Hash.create(hash)));
+                    rv.add(SyndieURI.createScope(new Hash(hash)));
             }
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
@@ -2939,7 +2939,7 @@ public class DBClient {
                 if (rs.wasNull())
                     continue;
                 if ( (hash != null) && (hash.length == Hash.HASH_LENGTH) )
-                    rv.add(SyndieURI.createMessage(Hash.create(hash), messageId));
+                    rv.add(SyndieURI.createMessage(new Hash(hash), messageId));
             }
         } catch (SQLException se) {
             if (_log.shouldLog(Log.ERROR))
@@ -3175,7 +3175,7 @@ public class DBClient {
             if (rs.next()) {
                 byte hash[] = rs.getBytes(1);
                 if ( (hash != null) && (hash.length == Hash.HASH_LENGTH) )
-                    return Hash.create(hash);
+                    return new Hash(hash);
                 else
                     return null;
             } else {
@@ -3425,7 +3425,7 @@ public class DBClient {
                 info.setPassphrasePrompt(pbePrompt);
                 
                 if (authorId >= 0) info.setAuthorChannelId(authorId);
-                //if (author != null) info.setAuthorChannel(Hash.create(author));
+                //if (author != null) info.setAuthorChannel(new Hash(author));
                 info.setMessageId(messageId);
                 info.setScopeChannelId(scopeChannelId);
                 Hash scope = getChannelHash(scopeChannelId);
@@ -3439,7 +3439,7 @@ public class DBClient {
                     info.setTargetChannel(chan);//chan.getChannelHash());
                 info.setSubject(subject);
                 if ( (overwriteChannel != null) && (overwriteMessage >= 0) ) {
-                    info.setOverwriteChannel(Hash.create(overwriteChannel));
+                    info.setOverwriteChannel(new Hash(overwriteChannel));
                     info.setOverwriteMessage(overwriteMessage);
                 }
                 info.setForceNewThread(forceNewThread);
@@ -3481,7 +3481,7 @@ public class DBClient {
                 byte chan[] = rs.getBytes(1);
                 long refId = rs.getLong(2);
                 if (!rs.wasNull() && (chan != null) )
-                    uris.add(SyndieURI.createMessage(Hash.create(chan), refId));
+                    uris.add(SyndieURI.createMessage(new Hash(chan), refId));
             }
             info.setHierarchy(uris);
         } catch (SQLException se) {
@@ -4227,7 +4227,7 @@ public class DBClient {
                 if ( (chan != null) && (chan.length == Hash.HASH_LENGTH) ) {
                     if (newOnly && (when != null) && (when.getTime() <= (System.currentTimeMillis()-SharedArchiveBuilder.PERIOD_NEW)) )
                         continue;
-                    rv.add(Hash.create(chan));
+                    rv.add(new Hash(chan));
                 }
             }
             return rv;
@@ -6905,7 +6905,7 @@ public class DBClient {
                 data.periodBegin = rs.getDate(5);
                 data.periodEnd = rs.getDate(6);
                 data.function = rs.getString(7);
-                data.channel = Hash.create(rs.getBytes(8));
+                data.channel = new Hash(rs.getBytes(8));
                 //data.nymId = _nymId;
                 
                 if (data.keySalt != null) {
