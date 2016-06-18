@@ -1,10 +1,11 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
-* 2016-xx-xx 1.106b-1 (zzz)
+* 2016-06-18 1.106b-1 (zzz)
   - Eliminate dependency on deprecated Sha256Standalone and HMAC256Generator
   - Allow pushing without "http://" (ticket #1137)
   - Update to SWT 4.5 (ticket #1297)
   - Update to HSQLDB 2.3.4
+  - Update to i2p.jar 0.9.26
   - Control Server: Flush output stream (thx EinMByte https://github.com/i2p/i2p.syndie/issues/2)
   - Update banlist, default archives, and URLs for the I2P, Tor, and Frost sites
   - Update toolbar icons with higher quality versions courtesy of hummingbird
@@ -15,6 +16,8 @@
   - Fix NPE at shutdown
   - Enable clearnet https archives
   - Remove mac32 build target
+  - Lots of code cleanup
+  - Add support for translation country variants
   - Translation updates
   - New translations: Greek, Italian, Dutch, Brazilian Portuguese, Ukrainian, Chinese, Turkish
 
