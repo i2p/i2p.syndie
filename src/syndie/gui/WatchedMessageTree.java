@@ -1,6 +1,7 @@
 package syndie.gui;
 
 import java.net.URISyntaxException;
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -9,7 +10,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedMap;
 import java.util.TreeMap;
 
 import net.i2p.data.Hash;
@@ -64,7 +64,7 @@ public class WatchedMessageTree extends MessageTree {
     void setMessages(List<ReferenceNode> referenceNodes) {
         if (!_multiforum) { super.setMessages(referenceNodes); return; }
         Map<Hash, List<ThreadReferenceNode>> forumToNodeList = new HashMap();
-        Map<String, Hash> forumNameToForum = new TreeMap<String, Hash>();
+        Map<String, Hash> forumNameToForum = new TreeMap<String, Hash>(Collator.getInstance());
         for (int i = 0; i < referenceNodes.size(); i++) {
             ThreadReferenceNode node = (ThreadReferenceNode)referenceNodes.get(i);
             Hash forum = getForum(node);
