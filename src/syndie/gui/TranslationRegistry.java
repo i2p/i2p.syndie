@@ -18,6 +18,7 @@ import net.i2p.util.Translate;
 import org.eclipse.swt.SWTException;
 import org.eclipse.swt.graphics.Image;
 
+import syndie.db.DBClient;
 import syndie.db.UI;
 
 /**
@@ -26,11 +27,13 @@ import syndie.db.UI;
  */
 public class TranslationRegistry {
     private final I2PAppContext _context;
+    private final DBClient _client;
     private final UI _ui;
     private final File _rootDir;
     private final Set<Translatable> _translatable;
     private Map<String, Image> _images;
     private Map<String, Image> _baseImages;
+    private static final String PROP_LANG = "gui.lang";
     
     /**
      * Two- or three-letter lower-case language codes, with optional _XX upper-case country codes,
@@ -53,8 +56,9 @@ public class TranslationRegistry {
 
     private static final String BUNDLE = "syndie.locale.messages";
 
-    public TranslationRegistry(UI ui, File rootDir) {
+    public TranslationRegistry(DBClient client, UI ui, File rootDir) {
         _context = I2PAppContext.getGlobalContext();
+        _client = client;
         _ui = ui;
         _rootDir = rootDir;
         _translatable = new ConcurrentHashSet();
@@ -132,6 +136,7 @@ public class TranslationRegistry {
     }
     
     /**
+     * Does not save to the database
      * @param newLang 2-or 3-letter lower-case ISO-639 code, and optional _XX upper case country code
      * @param newText ignored, to be removed
      */
@@ -164,6 +169,7 @@ public class TranslationRegistry {
     }
     
     /**
+     * Saves to the database, if logged in
      * @param newLang 2- or 3-letter lower-case ISO-639 code, with optional _XX upper case country code
      */
     public void switchTranslation(String newLang) {
@@ -173,6 +179,7 @@ public class TranslationRegistry {
             return; // noop
         }
         switchTranslation(newLang, null, new HashMap());
+        saveLang(newLang);
     }
     
     /**
@@ -182,5 +189,35 @@ public class TranslationRegistry {
         return AVAILABLE_TRANSLATIONS;
     }
     
+    /** NOOP */
     public void loadTranslations() {}
+    
+    /**
+     * Switch to the preference stored in the database.
+     * DBClient must be logged in
+     *
+     * @since 1.106b-2
+     */
+    public void switchTranslations() {
+        if (_client != null && _client.isLoggedIn()) {
+            Properties prefs = _client.getNymPrefs();
+            String pref = prefs.getProperty(PROP_LANG);
+            if (pref != null && !pref.equals(getTranslation())) {
+                //_translatable is empty here so this won't do any calbacks
+                switchTranslation(pref, null, _images);
+            }
+        }
+    }
+
+    /**
+     * Saves to the database, if logged in
+     * @param newLang 2- or 3-letter lower-case ISO-639 code, with optional _XX upper case country code
+     * @since 1.106b-2
+     */
+    private void saveLang(String newLang) {
+        if (_client == null || !_client.isLoggedIn()) return;
+        Properties prefs = _client.getNymPrefs();
+        prefs.setProperty(PROP_LANG, newLang);
+        _client.setNymPrefs(prefs);
+    }
 }

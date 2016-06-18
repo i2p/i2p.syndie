@@ -253,7 +253,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         if (trans != null) {
             _translation = trans;
         } else {
-            _translation = new TranslationRegistry(this, client.getRootDir());
+            _translation = new TranslationRegistry(_client, this, client.getRootDir());
             _translation.loadTranslations();
         }
         
@@ -301,6 +301,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             // to retheme the components later
             _themes.loadTheme();
             timer.addEvent("doStartup themes loaded");
+            _translation.switchTranslations();
         }
         _initialized = true;
         if (_shell == null) {

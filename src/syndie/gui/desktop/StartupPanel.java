@@ -244,7 +244,7 @@ class StartupPanel extends DesktopPanel implements Themeable {
                 themes.register((SouthEdge)_edgeSouth);
                 ComponentBuilder.instance().setThemeRegistry(themes);
             }});
-            final TranslationRegistry trans = new TranslationRegistry(_ui, client.getRootDir());
+            final TranslationRegistry trans = new TranslationRegistry(client, _ui, client.getRootDir());
             _desktop.setTranslationRegistry(trans);
             if (_edgeSouth != null) {
                 _display.asyncExec(new Runnable() { 
