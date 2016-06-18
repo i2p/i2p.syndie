@@ -1178,6 +1178,15 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         l.setText(SWT.getPlatform() + " " + SWT.getVersion());
         l.setFont(getThemeRegistry().getTheme().DEFAULT_FONT);
         l.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, false, false));
+        
+        l = new Label(s, SWT.NONE);
+        l.setText("HSQLDB:");
+        l.setFont(getThemeRegistry().getTheme().DEFAULT_FONT);
+        l.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
+        l = new Label(s, SWT.NONE);
+        l.setText(_client.getHsqldbVersion());
+        l.setFont(getThemeRegistry().getTheme().DEFAULT_FONT);
+        l.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, false, false));
 
         Button b = new Button(s, SWT.PUSH);
         b.setText(getTranslationRegistry().getText("Close"));
