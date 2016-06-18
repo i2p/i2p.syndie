@@ -30,7 +30,11 @@ class SyncInboundFetcher {
     private static final Map<Runner, SyncArchive> _runnerToArchive = new HashMap<Runner, SyncArchive>();
     private volatile boolean _die;
 
-    private static final int THREADS = 5;
+    /** this is the number of concurrent archives being worked on */
+    private static final int THREADS = 3;
+    /** this is the number of concurrent HTTP metaindex or post fetches, per archive */
+    private static final int CONCURRENT_FETCHES = 5;
+    
     private static final int I2P_RETRIES = 1;
     
     public SyncInboundFetcher(SyncManager mgr) {
@@ -216,8 +220,8 @@ class SyncInboundFetcher {
     }
     
     private void fetchHTTP(SyncArchive archive) {
-        List<SyncArchive.IncomingAction> pendingMeta = new ArrayList();
-        List<SyncArchive.IncomingAction> pendingMsg = new ArrayList();
+        LinkedBlockingQueue<SyncArchive.IncomingAction> pendingMeta = new LinkedBlockingQueue<SyncArchive.IncomingAction>();
+        LinkedBlockingQueue<SyncArchive.IncomingAction> pendingMsg = new LinkedBlockingQueue<SyncArchive.IncomingAction>();
         int actions = archive.getIncomingActionCount();
         for (int i = 0; i < actions; i++) {
             SyncArchive.IncomingAction action = archive.getIncomingAction(i);
@@ -233,12 +237,12 @@ class SyncInboundFetcher {
             }
 
             if (uri.getMessageId() != null)
-                pendingMsg.add(action);
+                pendingMsg.offer(action);
             else
-                pendingMeta.add(action);
+                pendingMeta.offer(action);
         }
         
-        if ( (pendingMeta.size() == 0) &&  (pendingMsg.size() == 0) ) {
+        if (pendingMeta.isEmpty() && pendingMsg.isEmpty()) {
             _manager.getUI().debugMessage("nothing to fetch...");
             return;
         }
@@ -286,14 +290,12 @@ class SyncInboundFetcher {
         importer.complete();
     }
     
-    private static final int CONCURRENT_FETCHES = 3;
-    
-    private void fetchHTTPMeta(SyncArchive archive, List<SyncArchive.IncomingAction> actions,
-                               String archiveURL, String query, DataImporter importer, Set whitelistScopes) {
+    private void fetchHTTPMeta(SyncArchive archive, LinkedBlockingQueue<SyncArchive.IncomingAction> actions,
+                               String archiveURL, String query, DataImporter importer, Set<Hash> whitelistScopes) {
         int cnt = Math.min(actions.size(), CONCURRENT_FETCHES);
         List<Thread> fetchers = new ArrayList(cnt);
         for (int i = 0; i < cnt; i++) {
-            Thread t = new Thread(new Fetch(archive, actions, archiveURL, query, importer, whitelistScopes), "MetaFetcher " + i);
+            Thread t = new Thread(new Fetch(archive, actions, archiveURL, query, importer, whitelistScopes), "MetaFetcher " + i + '/' + cnt);
             t.start();
             fetchers.add(t);
         }
@@ -303,12 +305,12 @@ class SyncInboundFetcher {
         }
     }
     
-    private void fetchHTTPMsgs(SyncArchive archive, List<SyncArchive.IncomingAction> actions,
-                               String archiveURL, String query, DataImporter importer, Set whitelistScopes) {
+    private void fetchHTTPMsgs(SyncArchive archive, LinkedBlockingQueue<SyncArchive.IncomingAction> actions,
+                               String archiveURL, String query, DataImporter importer, Set<Hash> whitelistScopes) {
         int cnt = Math.min(actions.size(), CONCURRENT_FETCHES);
         List<Thread> fetchers = new ArrayList(cnt);
         for (int i = 0; i < cnt; i++) {
-            Thread t = new Thread(new Fetch(archive, actions, archiveURL, query, importer, whitelistScopes), "MsgFetcher " + i);
+            Thread t = new Thread(new Fetch(archive, actions, archiveURL, query, importer, whitelistScopes), "MsgFetcher " + i + '/' + cnt);
             t.start();
             fetchers.add(t);
         }
@@ -320,13 +322,13 @@ class SyncInboundFetcher {
     
     private class Fetch implements Runnable {
         private final SyncArchive _archive;
-        private final List<SyncArchive.IncomingAction> _actions;
+        private final LinkedBlockingQueue<SyncArchive.IncomingAction> _actions;
         private final String _archiveURL;
         private final String _query;
         private final DataImporter _importer;
         private final Set<Hash> _whitelistScopes;
         
-        public Fetch(SyncArchive archive, List<SyncArchive.IncomingAction> actions,
+        public Fetch(SyncArchive archive, LinkedBlockingQueue<SyncArchive.IncomingAction> actions,
                      String archiveURL, String query, DataImporter importer, Set<Hash> whitelistScopes) {
             _archive = archive;
             _actions = actions;
@@ -335,16 +337,14 @@ class SyncInboundFetcher {
             _importer = importer;
             _whitelistScopes = whitelistScopes;
         }
+
         public void run() {
             while (true) {
                 while (!_manager.isOnline())
                     try { Thread.sleep(1000); } catch (InterruptedException ie) {}
                 
-                SyncArchive.IncomingAction action = null;
-                synchronized (_actions) {
-                    if (_actions.size() <= 0) return;
-                    action = _actions.remove(0);
-                }
+                SyncArchive.IncomingAction action = _actions.poll();
+                if (action == null) return;
                 
                 if (action.getCompletionTime() > 0) continue; // already complete
                 if (action.isPaused()) continue; // dont wanna do it
