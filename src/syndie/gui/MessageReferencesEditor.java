@@ -452,12 +452,14 @@ class MessageReferencesEditor extends BaseComponent implements Themeable, Transl
                 if ( (bar != null) && (bar.getSelection() < bar.getMaximum()) )
                     bar.setSelection(bar.getSelection() + bar.getIncrement());
             }
-            private boolean isPointFirstHalf(Tree tree, Point point, TreeItem item) {
-                if (item == null) return true;
-                Rectangle loc = item.getBounds();
-                int margin = loc.height / 2;
-                return (point.y < (loc.y + margin));
-            }
+
+            //private boolean isPointFirstHalf(Tree tree, Point point, TreeItem item) {
+            //    if (item == null) return true;
+            //    Rectangle loc = item.getBounds();
+            //    int margin = loc.height / 2;
+            //    return (point.y < (loc.y + margin));
+            //}
+
             public void drop(DropTargetEvent evt) {
                 //System.out.println("drop: " + evt);
                 if (USE_INSERT_MARKS)
@@ -473,7 +475,7 @@ class MessageReferencesEditor extends BaseComponent implements Themeable, Transl
                 Tree tree = _targetTree;
                 Point pt = tree.toControl(evt.x, evt.y);
                 TreeItem item = tree.getItem(pt);
-                boolean before = isPointFirstHalf(tree, pt, item);
+                //boolean before = isPointFirstHalf(tree, pt, item);
                 
                 ReferenceNode toAdd = getToAdd(evt.data.toString());
                 ReferenceNode node = (ReferenceNode)_targetItemToNode.get(item);

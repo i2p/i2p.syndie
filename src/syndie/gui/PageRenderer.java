@@ -286,7 +286,7 @@ class PageRenderer extends BaseComponent implements Themeable {
                     for (int i = 0; i < _linkTags.size(); i++) {
                         HTMLTag tag = _linkTags.get(i);
                         if ( (off >= tag.startIndex) && (off <= tag.endIndex) ) {
-                            StyleRange range = _text.getStyleRangeAtOffset(off);
+                            //StyleRange range = _text.getStyleRangeAtOffset(off);
                             linkTag = tag;
                             //linkRange = range;
                             break;

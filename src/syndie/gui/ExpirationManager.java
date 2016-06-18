@@ -88,7 +88,7 @@ public class ExpirationManager extends BaseComponent implements Themeable, Trans
                     name = chan.toBase64().substring(0,6);
                 else
                     name = chanId + "";
-                chanName = name;
+                //chanName = name;
             }
             
             _channelDB.add(db);

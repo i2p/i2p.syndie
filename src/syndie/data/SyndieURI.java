@@ -503,10 +503,7 @@ public class SyndieURI {
         if (o instanceof Boolean)
             return ((Boolean)o).booleanValue();
         String str = o.toString();
-        if (str == null)
-            return defaultVal;
-        else
-            return Boolean.parseBoolean(str);
+        return Boolean.parseBoolean(str);
     }
 
     public String getURL() { return getString("url"); }
@@ -622,6 +619,7 @@ public class SyndieURI {
         return rv;
     }
 
+    @Override
     public String toString() {
         if (_stringified == null)
             _stringified = PREFIX + _type + ":" + bencode(_attributes);
@@ -674,12 +672,14 @@ public class SyndieURI {
        return target;
     }
     
+    @Override
     public boolean equals(Object obj) {
         if (obj == this)
             return true;
         return (obj != null) && toString().equals(obj.toString());
     }
 
+    @Override
     public int hashCode() { return toString().hashCode(); }
 
     public static String encodeKey(byte orig[]) {
