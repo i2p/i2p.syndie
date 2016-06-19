@@ -32,10 +32,10 @@ import syndie.Constants;
  * as is done in the syndie.db.ManageMenu)
  */
 public class ManageForumExecutor {
-    private DBClient _client;
-    private UI _ui;
-    private ManageForumState _state;
-    private StringBuilder _errors;
+    private final DBClient _client;
+    private final UI _ui;
+    private final ManageForumState _state;
+    private final StringBuilder _errors;
     private SyndieURI _forum;
     private Hash _createdManageIdent;
     private Hash _createdPostIdent;
