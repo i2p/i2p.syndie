@@ -132,6 +132,7 @@ public class DBClient {
     private final Map<Long, String> _idToNameCache;
     private final Map<Hash, String> _hashToNameCache;
     private final Map<Long, Hash> _idToHashCache;
+    private final Map<Hash, Long> _hashToIdCache;
 
     /**
      *  @param rootDir should be a SecureFile
@@ -152,6 +153,7 @@ public class DBClient {
         _idToNameCache = new LHMCache<Long, String>(CACHE_SIZE);
         _hashToNameCache = new LHMCache<Hash, String>(CACHE_SIZE);
         _idToHashCache = new LHMCache<Long, Hash>(CACHE_SIZE);
+        _hashToIdCache = new LHMCache<Hash, Long>(CACHE_SIZE);
     }
     
     public void restart(String rootDir) {
@@ -1113,6 +1115,9 @@ public class DBClient {
         synchronized(_idToNameCache) {
             _idToNameCache.remove(id);
         }
+        synchronized(_hashToIdCache) {
+            _hashToIdCache.remove(channelHash);
+        }
     }
 
     private static final String SQL_GET_CHANNEL_HASH = "SELECT channelHash FROM channel WHERE channelId = ?";
@@ -1164,8 +1169,30 @@ public class DBClient {
     
     private static final String SQL_GET_CHANNEL_ID = "SELECT channelId FROM channel WHERE channelHash = ?";
 
+    /**
+     *  Since 1.106b-3, uses a local cache
+     *  @return -1 if not found
+     */
     public long getChannelId(Hash channel) {
         if (channel == null) return -1;
+        synchronized(_hashToIdCache) {
+            Long rv = _hashToIdCache.get(channel);
+            if (rv != null)
+                return rv.longValue();
+        }
+        long rv = x_getChannelId(channel);
+        if (rv >= 0) {
+            synchronized(_hashToIdCache) {
+                _hashToIdCache.put(channel, Long.valueOf(rv));
+            }
+        }
+        return rv;
+    }
+
+    /**
+     *  @return -1 if not found
+     */
+    public long x_getChannelId(Hash channel) {
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
@@ -6023,9 +6050,6 @@ public class DBClient {
     /**
      *  @return MSG_STATUS_READ (1) or MSG_STATUS_UNREAD (3)
      */
-    /**
-     *  @return MSG_STATUS_READ (1) or MSG_STATUS_UNREAD (3)
-     */
     public int getMessageStatus(long msgId) { return getMessageStatus(msgId, -1); }
 
     /**
@@ -6056,6 +6080,8 @@ public class DBClient {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
     }
+
+    private static final String SQL_GET_ALL_MSG_UNREAD = "SELECT msgId FROM nymUnreadMessage WHERE nymId = ?";
 
     private static final String SQL_GET_MSG_READ = 
             "SELECT msgId FROM nymUnreadMessage WHERE nymId = ? AND msgId IN (";
@@ -6107,6 +6133,40 @@ public class DBClient {
         log("getUnread in bulk took " + (afterMatch-begin) + "/" +(afterMatch-afterExec)
                          + "/" + (afterExec-afterPrep) + "/" + (afterPrep-beforePrep) 
                          + ": found matches: " + rv.size() + "/" + msgIds.length);
+        return rv;
+    }
+
+    /**
+     *  Get all the msgIds (Long) that are unread
+     *  @since 1.106b-3
+     */
+    public List<Long> getUnread() { return getAllUnread(_nymId); }
+
+    /**
+     *  Get all the msgIds (Long) that are unread
+     *  @since 1.106b-3
+     */
+    private List<Long> getAllUnread(long nymId) {
+        List<Long> rv = new ArrayList();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_ALL_MSG_UNREAD);
+            stmt.setLong(1, nymId);
+            rs = stmt.executeQuery();
+            
+            while (rs.next()) {
+                long msgId = rs.getLong(1);
+                if (!rs.wasNull())
+                    rv.add(Long.valueOf(msgId));
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.WARN))
+                _log.warn("Error getting read messages from the list", se);
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
         return rv;
     }
     
@@ -6195,7 +6255,9 @@ public class DBClient {
     }
 
     private static final String SQL_MARK_MESSAGE_READ = "DELETE FROM nymUnreadMessage WHERE nymId = ? AND msgId = ?";
+
     public void markMessageRead(long msgId) { markMessageRead(_nymId, msgId); }
+
     public void markMessageRead(long nymId, long msgId) {
         PreparedStatement stmt = null;
         try {
@@ -6221,7 +6283,9 @@ public class DBClient {
     }
 
     private static final String SQL_MARK_MESSAGE_UNREAD = "INSERT INTO nymUnreadMessage (nymId, msgId) VALUES (?, ?)";
+
     public void markMessageUnread(long msgId) { markMessageUnread(_nymId, msgId); }
+
     public void markMessageUnread(long nymId, long msgId) {
         markMessageRead(nymId, msgId); // delete then we insert below
         PreparedStatement stmt = null;
@@ -6243,7 +6307,9 @@ public class DBClient {
     }
 
     private static final String SQL_MARK_CHANNELMSG_READ = "DELETE FROM nymUnreadMessage WHERE nymId = ? AND msgId IN (SELECT msgId FROM channelMessage WHERE targetChannelId = ?)";
+
     public void markChannelRead(long chanId) { markChannelRead(_nymId, chanId); }
+
     public void markChannelRead(long nymId, long chanId) {
         PreparedStatement stmt = null;
         try {
@@ -6264,7 +6330,9 @@ public class DBClient {
     }
     
     private static final String SQL_MARK_CHANNEL_READ = "DELETE FROM nymUnreadChannel WHERE nymId = ? AND channelId = ?";
+
     public void markChannelNotNew(long chanId) { markChannelNotNew(_nymId, chanId); }
+
     public void markChannelNotNew(long nymId, long chanId) {
         PreparedStatement stmt = null;
         try {
@@ -6283,7 +6351,9 @@ public class DBClient {
     }
     
     private static final String SQL_COUNT_MESSAGES = "SELECT COUNT(msgId) FROM channelMessage WHERE targetChannelId = ? AND isCancelled = FALSE AND readKeyMissing = FALSE AND replyKeyMissing = FALSE AND pbePrompt IS NULL AND deletionCause IS NULL";
+
     public int countMessages(long chanId) { return countMessages(_nymId, chanId); }
+
     public int countMessages(long nymId, long chanId) { 
         PreparedStatement stmt = null;
         ResultSet rs = null;
@@ -6312,6 +6382,7 @@ public class DBClient {
     }
 
     private static final String SQL_GET_LASTPOST_DATE = "SELECT MAX(importDate) FROM channelMessage WHERE targetChannelId = ? AND isCancelled = FALSE AND readKeyMissing = FALSE AND replyKeyMissing = FALSE AND pbePrompt IS NULL AND deletionCause IS NULL";
+
     public long getChannelLastPost(long chanId) {
         PreparedStatement stmt = null;
         ResultSet rs = null;
@@ -6340,10 +6411,23 @@ public class DBClient {
     }
     
     private static final String SQL_COUNT_UNREAD_MESSAGES = "SELECT COUNT(msgId) FROM nymUnreadMessage num JOIN channelMessage cm ON num.msgId = cm.msgId WHERE nymId = ? AND targetChannelId = ? AND cm.readKeyMissing = FALSE AND cm.replyKeyMissing = FALSE AND cm.pbePrompt IS NULL AND deletionCause IS NULL";
+
+    /**
+     *  This is SLOW, 30ms, which is fine if you're only doing one...
+     *  @deprecated SLOW see getUnread()
+     */
+    @Deprecated
     public int countUnreadMessages(Hash scope) { return countUnreadMessages(_nymId, scope); }
-    public int countUnreadMessages(long nymId, Hash scope) { return countUnreadMessages(nymId, getChannelId(scope)); }
+    private int countUnreadMessages(long nymId, Hash scope) { return countUnreadMessages(nymId, getChannelId(scope)); }
+
+    /**
+     *  This is SLOW, 30ms, which is fine if you're only doing one...
+     *  @deprecated SLOW see getUnread()
+     */
+    @Deprecated
     public int countUnreadMessages(long channelId) { return countUnreadMessages(_nymId, channelId); }
-    public int countUnreadMessages(long nymId, long chan) {
+
+    private int countUnreadMessages(long nymId, long chan) {
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
@@ -6374,7 +6458,9 @@ public class DBClient {
     
     private static final String SQL_COUNT_UNREAD_PRIVATE_MESSAGES = "SELECT COUNT(msgId) FROM nymUnreadMessage num JOIN channelMessage cm ON num.msgId = cm.msgId WHERE nymId = ? AND cm.wasPrivate = true AND targetChannelId = ? AND cm.readKeyMissing = FALSE AND cm.replyKeyMissing = FALSE AND cm.pbePrompt IS NULL AND deletionCause IS NULL";
     private static final String SQL_COUNT_PRIVATE_MESSAGES = "SELECT COUNT(msgId) FROM channelMessage cm WHERE cm.wasPrivate = true AND targetChannelId = ? AND cm.readKeyMissing = FALSE AND cm.replyKeyMissing = FALSE AND cm.pbePrompt IS NULL AND deletionCause IS NULL";
+
     public int countPrivateMessages(long chan, boolean unreadOnly) { return countPrivateMessages(_nymId, chan, unreadOnly); }
+
     public int countPrivateMessages(long nymId, long chan, boolean unreadOnly) {
         PreparedStatement stmt = null;
         ResultSet rs = null;

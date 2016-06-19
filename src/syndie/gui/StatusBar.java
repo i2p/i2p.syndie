@@ -3,6 +3,8 @@ package syndie.gui;
 import java.net.URISyntaxException;
 import java.text.Collator;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -36,9 +38,11 @@ import org.eclipse.swt.widgets.MessageBox;
 
 import net.i2p.data.DataHelper;
 import net.i2p.data.Hash;
+import net.i2p.util.ObjectCounter;
 
 import syndie.Version;
 import syndie.data.ChannelInfo;
+import syndie.data.MessageInfo;
 import syndie.data.NymReferenceNode;
 import syndie.data.ReferenceNode;
 import syndie.data.SyndieURI;
@@ -428,7 +432,7 @@ class StatusBar extends BaseComponent implements Translatable, Themeable, DBClie
                 ThreadAccumulatorJWZ acc = new ThreadAccumulatorJWZ(_client, _ui);
                 acc.setFilter(uri);
                 acc.gatherThreads();
-                final Set forums = new HashSet();
+                final Set<Hash> forums = new HashSet<Hash>();
                 int threads = 0;
                 for (int i = 0; i < acc.getThreadCount(); i++) {
                     ReferenceNode node = acc.getRootThread(i);
@@ -436,7 +440,7 @@ class StatusBar extends BaseComponent implements Translatable, Themeable, DBClie
                         threads++;
                 }
                 final int unreadThreads = threads;
-                final Map sortedForums = sortForums(forums);
+                final Map<String, Hash> sortedForums = sortForums(forums);
                 _ui.debugMessage("statusbar calcUnread end: " + forums.size() + " / " + threads);
                 
                 Display.getDefault().asyncExec(new Runnable() {
@@ -460,7 +464,7 @@ class StatusBar extends BaseComponent implements Translatable, Themeable, DBClie
     /**
      *  UI thread
      */
-    private void renderUnread(Map sortedForums, int threads) {
+    private void renderUnread(Map<String, Hash> sortedForums, int threads) {
         //_ui.debugMessage("RU start");
         MenuItem items[] = _unreadMenu.getItems();
         for (int i = 0; i < items.length; i++)
@@ -493,11 +497,12 @@ class StatusBar extends BaseComponent implements Translatable, Themeable, DBClie
             
             new MenuItem(_unreadMenu, SWT.SEPARATOR);
             
-            for (Iterator iter = sortedForums.entrySet().iterator(); iter.hasNext(); ) {
-                Map.Entry entry = (Map.Entry)iter.next();
-                String name = (String)entry.getKey();
-                final Hash forum = (Hash)entry.getValue();
-                int msgs = _client.countUnreadMessages(forum);
+            Map<Hash, Integer> counts = countUnreadMessages(sortedForums.values());
+            for (Map.Entry<String, Hash> entry : sortedForums.entrySet()) {
+                String name = entry.getKey();
+                final Hash forum = entry.getValue();
+                Integer imsgs = counts.get(forum);
+                int msgs = (imsgs != null) ? imsgs.intValue() : 0;
                 StringBuilder buf = new StringBuilder();
                 buf.append(name)
                    .append(" (").append(msgs).append(')');
@@ -539,10 +544,9 @@ class StatusBar extends BaseComponent implements Translatable, Themeable, DBClie
      *  TODO the keys must include the hash prefix or they aren't unique;
      *  find a better way
      */
-    private Map sortForums(Set forums) {
-        Map rv = new TreeMap(Collator.getInstance());
-        for (Iterator iter = forums.iterator(); iter.hasNext(); ) {
-            Hash forum = (Hash)iter.next();
+    private Map<String, Hash> sortForums(Set<Hash> forums) {
+        Map<String, Hash> rv = new TreeMap(Collator.getInstance());
+        for (Hash forum : forums) {
             String name = _client.getChannelName(forum);
             if (name == null) name = "";
             name = name + " [" + forum.toBase64().substring(0,6) + "]";
@@ -890,8 +894,8 @@ class StatusBar extends BaseComponent implements Translatable, Themeable, DBClie
     }
     
     /**
-     *  Warning, this is extremely slow, 10 seconds or more
-     *  (30 ms per channel * 440 channels on eeepc)
+     *  Warning, this slow.
+     *  Was over 30 seconds, now just under a second.
      *  Call from job queue
      *
      *  @return new forums, sorted Map of formatted channel name, including message count, to channel ID
@@ -899,11 +903,11 @@ class StatusBar extends BaseComponent implements Translatable, Themeable, DBClie
     private Map<String, ChannelData> generateMessageCounts() {
         _ui.debugMessage("statusbar refreshnewforums start");
         Map<String, ChannelData> rv = new TreeMap(Collator.getInstance());
-        List channelIds = _client.getNewChannelIds();
-        // 30 ms per loop
-        for (int i = 0; i < channelIds.size(); i++) {
+        List<Long> channelIds = _client.getNewChannelIds();
+        Map<Long, Integer> counts = countUnreadMessages(_client, channelIds);
+        for (Map.Entry<Long, Integer> e : counts.entrySet()) {
             //_ui.debugMessage(i + " statusbar channelid loop");
-            Long channelId = (Long)channelIds.get(i);
+            Long channelId = e.getKey();
             //ChannelInfo info = _browser.getClient().getChannel(channelId.longValue());
             Hash channelHash = _client.getChannelHash(channelId.longValue());
             if (channelHash == null) {
@@ -912,10 +916,10 @@ class StatusBar extends BaseComponent implements Translatable, Themeable, DBClie
             }
             //_ui.debugMessage(i + " start countunread");
             // This is SLOW, 30 ms
-            int msgs = _client.countUnreadMessages(channelHash);
+            //int msgs = _client.countUnreadMessages(channelHash);
+            Integer msgs = e.getValue();
+
             //_ui.debugMessage(i + " end countunread");
-            if (msgs <= 0)
-                continue; // only list new forums with content
             
             StringBuilder buf = new StringBuilder();
             String name = _client.getChannelName(channelId.longValue()); //info.getName();
@@ -925,6 +929,80 @@ class StatusBar extends BaseComponent implements Translatable, Themeable, DBClie
         }
         
         _ui.debugMessage("statusbar refreshnewforums end");
+        return rv;
+    }
+
+    /**
+     *  Much faster way to generate unread message counts
+     *  Package private and static for ReferenceChooserTree
+     *
+     *  @param channelIds channel IDs to count.
+     *  @return Map of channel IDs to positive counts. Zero counts are not included.
+     *  @since 1.106b-3
+     */
+    static Map<Long, Integer> countUnreadMessages(DBClient client, Collection<Long> channelIds) {
+        if (channelIds.size() > 10 && !(channelIds instanceof Set))
+            channelIds = new HashSet<Long>(channelIds);
+        List<Long> msgIds = client.getUnread();
+        ObjectCounter<Long> counter = new ObjectCounter<Long>();
+        for (Long msg : msgIds) {
+             // this will return null if deletionCause is set
+             MessageInfo info = client.getMessage(msg.longValue());
+             if (info == null)
+                 continue;
+             if (info.getReadKeyUnknown() || info.getReplyKeyUnknown() ||
+                 info.getPassphrasePrompt() != null)
+                 continue;
+             long tgt = info.getTargetChannelId();
+             if (tgt < 0)
+                 continue;
+             Long ltgt = Long.valueOf(tgt);
+             if (!channelIds.contains(ltgt))
+                 continue;
+             counter.increment(ltgt);
+        }
+        Map<Long, Integer> rv = new HashMap<Long, Integer>(channelIds.size());
+        for (Long channelId : channelIds) {
+            int msgs = counter.count(channelId);
+            if (msgs > 0)
+                rv.put(channelId, Integer.valueOf(msgs));
+        }
+        return rv;
+    }
+
+    /**
+     *  Much faster way to generate unread message counts
+     *
+     *  @param channelIds channel IDs to count.
+     *  @return Map of channel IDs to positive counts. Zero counts are not included.
+     *  @since 1.106b-3
+     */
+    private Map<Hash, Integer> countUnreadMessages(Collection<Hash> channelIds) {
+        if (channelIds.size() > 10 && !(channelIds instanceof Set))
+            channelIds = new HashSet<Hash>(channelIds);
+        List<Long> msgIds = _client.getUnread();
+        ObjectCounter<Hash> counter = new ObjectCounter<Hash>();
+        for (Long msg : msgIds) {
+             // this will return null if deletionCause is set
+             MessageInfo info = _client.getMessage(msg.longValue());
+             if (info == null)
+                 continue;
+             if (info.getReadKeyUnknown() || info.getReplyKeyUnknown() ||
+                 info.getPassphrasePrompt() != null)
+                 continue;
+             Hash tgt = info.getTargetChannel();
+             if (tgt == null)
+                 continue;
+             if (!channelIds.contains(tgt))
+                 continue;
+             counter.increment(tgt);
+        }
+        Map<Hash, Integer> rv = new HashMap<Hash, Integer>(channelIds.size());
+        for (Hash channelId : channelIds) {
+            int msgs = counter.count(channelId);
+            if (msgs > 0)
+                rv.put(channelId, Integer.valueOf(msgs));
+        }
         return rv;
     }
     

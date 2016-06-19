@@ -4,8 +4,10 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.Properties;
 
 import net.i2p.data.Hash;
@@ -747,18 +749,23 @@ class ReferenceChooserTree extends BaseComponent implements Translatable, Themea
      */
     private ArrayList<ChannelData> collectManageable() {
         ArrayList<ChannelInfo> ch = new ArrayList(16);
+        Set<Long> chl = new HashSet<Long>(16);
         for (int i = 0; i < _nymChannels.getIdentityChannelCount(); i++) {
             ChannelInfo info = _nymChannels.getIdentityChannel(i);
             ch.add(info);
+            chl.add(Long.valueOf(info.getChannelId()));
         }
         for (int i = 0; i < _nymChannels.getManagedChannelCount(); i++) {
             ChannelInfo info = _nymChannels.getManagedChannel(i);
             ch.add(info);
+            chl.add(Long.valueOf(info.getChannelId()));
         }
         ArrayList<ChannelData> rv = new ArrayList(ch.size());
+        Map<Long, Integer> counts = StatusBar.countUnreadMessages(_client, chl);
         for (ChannelInfo info : ch) {
             long id = info.getChannelId();
-            int un = _client.countUnreadMessages(id);
+            Integer icnt =  counts.get(Long.valueOf(id));
+            int un = (icnt != null) ? icnt.intValue() : 0;
             int msgs = _client.countMessages(id);
             rv.add(new ChannelData(info, un, msgs));
         }
@@ -792,26 +799,33 @@ class ReferenceChooserTree extends BaseComponent implements Translatable, Themea
      */
     private ArrayList<ChannelData> collectPostable() {
         ArrayList<ChannelInfo> ch = new ArrayList(256);
+        Set<Long> chl = new HashSet<Long>(256);
         for (int i = 0; i < _nymChannels.getIdentityChannelCount(); i++) {
             ChannelInfo info = _nymChannels.getIdentityChannel(i);
             ch.add(info);
+            chl.add(Long.valueOf(info.getChannelId()));
         }
         for (int i = 0; i < _nymChannels.getManagedChannelCount(); i++) {
             ChannelInfo info = _nymChannels.getManagedChannel(i);
             ch.add(info);
+            chl.add(Long.valueOf(info.getChannelId()));
         }
         for (int i = 0; i < _nymChannels.getPostChannelCount(); i++) {
             ChannelInfo info = _nymChannels.getPostChannel(i);
             ch.add(info);
+            chl.add(Long.valueOf(info.getChannelId()));
         }
         for (int i = 0; i < _nymChannels.getPublicPostChannelCount(); i++) {
             ChannelInfo info = _nymChannels.getPublicPostChannel(i);
             ch.add(info);
+            chl.add(Long.valueOf(info.getChannelId()));
         }
         ArrayList<ChannelData> rv = new ArrayList(ch.size());
+        Map<Long, Integer> counts = StatusBar.countUnreadMessages(_client, chl);
         for (ChannelInfo info : ch) {
             long id = info.getChannelId();
-            int un = _client.countUnreadMessages(id);
+            Integer icnt =  counts.get(Long.valueOf(id));
+            int un = (icnt != null) ? icnt.intValue() : 0;
             int msgs = _client.countMessages(id);
             rv.add(new ChannelData(info, un, msgs));
         }
