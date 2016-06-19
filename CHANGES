@@ -1,9 +1,11 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
-* 2016-06-xx 1.106b-2 (zzz)
+* 2016-06-19 1.106b-2 (zzz)
+  - Fix database corruption in 1.106b-1
   - Increase parallel fetches to 5
   - Locking on SyncManager archives and listeners
   - Use queue for DataImporter
+  - Store language preference in the database
 
 * 2016-06-18 1.106b-1 (zzz)
   - Eliminate dependency on deprecated Sha256Standalone and HMAC256Generator

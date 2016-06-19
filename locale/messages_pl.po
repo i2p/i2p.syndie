@@ -13,7 +13,7 @@ msgstr ""
 "Project-Id-Version: I2P\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-01-20 22:47+0000\n"
-"PO-Revision-Date: 2016-04-08 21:56+0000\n"
+"PO-Revision-Date: 2016-06-18 16:42+0000\n"
 "Last-Translator: Verdulo :-) <cybertomek@openmailbox.org>\n"
 "Language-Team: Polish (http://www.transifex.com/otf/I2P/language/pl/)\n"
 "MIME-Version: 1.0\n"
@@ -322,7 +322,7 @@ msgstr "Nie masz żadnych skonfigurowanych archiwów, co uniemożliwia Ci czytan
 msgid ""
 "The default archives shipped with your Syndie instance are listed above.  "
 "Please make any necessary changes, unchecking any that you don't want"
-msgstr "Poniżej znajdują się domyślne archiwa dołączone do Syndie. Proszę dokonaj wszelkich niezbędnych zmian przez odznaczenie tych których nie chcesz."
+msgstr "Powyżej znajdują się domyślne archiwa dołączone do Syndie. Proszę dokonaj wszelkich niezbędnych zmian przez odznaczenie tych których nie chcesz."
 
 #: src/syndie/gui/ArchiveDefaultsPopup.java:97
 msgid "Save archives as your own"
@@ -3820,7 +3820,7 @@ msgstr "Aby dołączyć do społeczności Syndie, musisz zsyndykować się z jed
 msgid ""
 "The default archives shipped with your Syndie install are listed above. "
 "Double-click a field to edit it."
-msgstr "Domyślne archiwa dołączane do instalacji Syndie znajdują się poniżej. Podwójne kliknięcie otwiera edycję."
+msgstr "Domyślne archiwa dołączane do instalacji Syndie znajdują się powyżej. Podwójne kliknięcie otwiera edycję."
 
 #: src/syndie/gui/WelcomeScreen.java:426
 msgid ""
