@@ -33,7 +33,7 @@ import syndie.util.Timer;
 public class ThreadAccumulatorJWZ extends ThreadAccumulator {
 
     /** msgId (Long) to Set of tags on that message */
-    private Map _msgTags;
+    private Map<Long, Set<String>> _msgTags;
 
     // parsed search critera
     private String _keyword;
@@ -215,13 +215,13 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
              ( (_wantedTags == null) || (_wantedTags.size() <= 0) ) )
             tagFilter = false;
         
-        _msgTags = new HashMap();
+        _msgTags = new HashMap<Long, Set<String>>();
         
         if (tagFilter) {
             for (Iterator iter = matchingThreadMsgIds.iterator(); iter.hasNext(); ) {
                 ThreadMsgId tmi = (ThreadMsgId)iter.next();
                 //Long msgId = (Long)iter.next();
-                Set tags = _client.getMessageTags(tmi.msgId, true, true);
+                Set<String> tags = _client.getMessageTags(tmi.msgId, true, true);
                 if (_applyTagFilterToMessages) {
                     if (!tagFilterPassed(tags)) {
                         if (VERBOSE_DEBUG) _ui.debugMessage("reject " + tmi + " because msg tag filters failed: " + tags);

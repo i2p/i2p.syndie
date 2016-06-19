@@ -113,8 +113,8 @@ public class SyndieURI {
     /**
      *  @throws IllegalArgumentException
      */
-    public SyndieURI(String type, Map attributes) {
-        this(type, new TreeMap(attributes));
+    public SyndieURI(String type, Map<String, Object> attributes) {
+        this(type, new TreeMap<String, Object>(attributes));
     }
 
     /** 
@@ -123,9 +123,9 @@ public class SyndieURI {
      */
     public SyndieURI(SyndieURI primary, SyndieURI defaultValues) {
         String type = null;
-        TreeMap attributes = null;
+        TreeMap<String, Object> attributes = null;
         if (defaultValues != null) {
-            attributes = new TreeMap(defaultValues.getAttributes());
+            attributes = new TreeMap<String, Object>(defaultValues.getAttributes());
             type = defaultValues.getType();
         }
         if (primary != null) {
@@ -232,7 +232,7 @@ public class SyndieURI {
         boolean pbe = true;
         SyndieURI uri = createSearch(scopes, "authorized", postDays, importDays, null, null, null, false, 
                                      null, null, null, null, null, null, null, null, false, pbe, false, threaded, unreadOnly);
-        Map attr = uri.getAttributes();
+        Map<String, Object> attr = uri.getAttributes();
         attr.put("byforum", "true");
         return uri;
     }
@@ -245,7 +245,7 @@ public class SyndieURI {
                                          Long pageMin, Long pageMax, Long attachMin, Long attachMax,
                                          Long refMin, Long refMax, Long keyMin, Long keyMax,
                                          boolean encrypted, boolean pbe, boolean priv, boolean threaded, boolean unreadOnly) {
-        HashMap attributes = new HashMap();
+        HashMap<String, Object> attributes = new HashMap();
         if ( (scopes != null) && (scopes.length > 0) )
             attributes.put("scope", scopes);
         if (author != null)
@@ -345,7 +345,7 @@ public class SyndieURI {
 
     public static SyndieURI createMessage(Hash scope, long msgId, int pageNum) {
         String type = "channel";
-        TreeMap attributes = new TreeMap();
+        TreeMap<String, Object> attributes = new TreeMap<String, Object>();
         if (scope != null)
             attributes.put("channel", scope.toBase64());
         if (msgId >= 0)
@@ -962,7 +962,7 @@ public class SyndieURI {
         StringBuilder buf = new StringBuilder(bencoded);
         buf.deleteCharAt(0);
         buf.deleteCharAt(buf.length()-1);
-        TreeMap rv = new TreeMap();
+        TreeMap<String, Object> rv = new TreeMap<String, Object>();
         boolean done = false;
         while (!done)
             done = bdecodeNext(buf, rv);
@@ -1041,7 +1041,7 @@ public class SyndieURI {
      *  @since 1.102b-9 adapted from i2ptunnel LocalHTTPServer
      */
     private static SortedMap<String, Object> uriDecode(String encoded) throws URISyntaxException {
-        SortedMap<String, Object> rv = new TreeMap();
+        SortedMap<String, Object> rv = new TreeMap<String, Object>();
         StringTokenizer tok = new StringTokenizer(encoded, "=&;#", true);
         PREV prev = PREV.AMP;
         GOT got;

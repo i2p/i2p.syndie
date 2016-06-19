@@ -18,9 +18,9 @@ public class ThreadReferenceNode extends ReferenceNode {
     private String _subject;
     private long _targetChannelId;
     private boolean _dummy;
-    private ThreadMsgId _msg;
+    private final ThreadMsgId _msg;
     private long _importDate;
-    private Set _tags;
+    private Set<String> _tags;
     private int _messageStatus;
     private String _authorName;
     private Hash _authorHash;
@@ -45,7 +45,7 @@ public class ThreadReferenceNode extends ReferenceNode {
     public void setAuthorId(long authorId) { _authorId = authorId; }
     public void setSubject(String subject) { _subject = subject; }
     public String getSubject() { return _subject; }
-    public Set getTags() { return _tags; }
+    public Set<String> getTags() { return _tags; }
     public void setThreadTarget(long channelId) { _targetChannelId = channelId; }
     /** this node represents something we do not have locally, or is filtered */
     public boolean isDummy() { return _dummy || getUniqueId() < 0; }
@@ -88,15 +88,17 @@ public class ThreadReferenceNode extends ReferenceNode {
         }
         return -1;
     }
-    void getThreadTags(List rv, Map msgIdToTagSet) { 
+
+    void getThreadTags(List<String> rv, Map<Long, Set<String>> msgIdToTagSet) { 
         if (_msg != null) {
-            _tags = (Set)msgIdToTagSet.get(Long.valueOf(_msg.msgId));
+            _tags = msgIdToTagSet.get(Long.valueOf(_msg.msgId));
             if (_tags != null)
                 rv.addAll(_tags);
         }
         for (int i = 0; i < getChildCount(); i++)
             ((ThreadReferenceNode)getChild(i)).getThreadTags(rv, msgIdToTagSet);
     }
+
     long getLatestMessageId() {
         long latestMessageId = -1;
         SyndieURI uri = getURI();
@@ -106,6 +108,7 @@ public class ThreadReferenceNode extends ReferenceNode {
             latestMessageId = Math.max(latestMessageId, ((ThreadReferenceNode)getChild(i)).getLatestMessageId());
         return latestMessageId;
     }
+
     long getLatestImportDate(DBClient client) {
         long latest = _importDate;
         if (!isDummy() && (_msg != null) && (_msg.msgId >= 0) && (latest < 0))
@@ -176,7 +179,7 @@ public class ThreadReferenceNode extends ReferenceNode {
 
     public static ThreadReferenceNode deepThreadCopy(ThreadReferenceNode node) {
         if (node == null) return null;
-        ThreadReferenceNode copy = new ThreadReferenceNode();
+        ThreadReferenceNode copy = new ThreadReferenceNode(node._msg);
         copy._name = node._name;
         copy._uri = node._uri;
         copy._description = node._description;
@@ -188,7 +191,6 @@ public class ThreadReferenceNode extends ReferenceNode {
         copy._dummy = node._dummy;
         copy._importDate = node._importDate;
         copy._messageStatus = node._messageStatus;
-        copy._msg = node._msg;
         copy._scopeHash = node._scopeHash;
         copy._scopeId = node._scopeId;
         copy._scopeName = node._scopeName;
