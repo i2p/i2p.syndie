@@ -1783,7 +1783,9 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         return referenceNodes.subList(start, end);
     }
 
-    
+    /**
+     *  Unused, only for desktop?
+     */    
     public MessageIterator getIterator(SyndieURI uri) {
         ReferenceNode node = getNode(uri);
         if (node == null)

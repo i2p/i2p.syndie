@@ -14,9 +14,6 @@ public final class ThreadMsgId {
         msgId = id;
         messageId = -1;
         authorScopeId = -1;
-        scope = null;
-        unreadable = false;
-        authorized = null;
     }
 
     @Override

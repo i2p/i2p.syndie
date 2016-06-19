@@ -13,10 +13,10 @@ import syndie.db.UI;
  *
  */
 public class TreeMessageIterator implements MessageIterator {
-    private DBClient _client;
-    private UI _ui;
-    private List _roots;
-    private SyndieURI _treeURI;
+    private final DBClient _client;
+    private final UI _ui;
+    private List<ThreadReferenceNode> _roots;
+    private final SyndieURI _treeURI;
     private SyndieURI _currentURI;
     private int _currentIndex;
     private ReferenceNode _currentThreadRoot;
@@ -29,7 +29,7 @@ public class TreeMessageIterator implements MessageIterator {
     private SyndieURI _nextThread;
     private SyndieURI _prevThread;
     
-    public TreeMessageIterator(DBClient client, UI ui, List threadReferenceNodeRoots, SyndieURI treeURI) {
+    public TreeMessageIterator(DBClient client, UI ui, List<ReferenceNode> threadReferenceNodeRoots, SyndieURI treeURI) {
         _client = client;
         _ui = ui;
         _roots = stripLeadingBlank(threadReferenceNodeRoots);
@@ -41,11 +41,11 @@ public class TreeMessageIterator implements MessageIterator {
      * don't traverse that node, obviously (and stripping it lets the inter thread traversal
      * work fine)
      */
-    private static List stripLeadingBlank(List nodes) {
-        List copy = ThreadReferenceNode.deepThreadCopy(nodes); // since we reparent nodes
-        List rv = new ArrayList();
+    private static List<ThreadReferenceNode> stripLeadingBlank(List /* <ReferenceNode> */ nodes) {
+        List<ThreadReferenceNode> copy = ThreadReferenceNode.deepThreadCopy(nodes); // since we reparent nodes
+        List<ThreadReferenceNode> rv = new ArrayList<ThreadReferenceNode>();
         for (int i = 0; i < copy.size(); i++) {
-            ThreadReferenceNode node = (ThreadReferenceNode)copy.get(i);
+            ThreadReferenceNode node = copy.get(i);
             if ( (node.getURI() == null) || (node.getURI().getMessageId() == null) ) {
                 int kids = node.getChildCount();
                 for (int j = 0; j < kids; j++) {
@@ -74,10 +74,10 @@ public class TreeMessageIterator implements MessageIterator {
         _nextThread = null;
         _prevThread = null;
     
-        List traversal = traverse(uri);
+        List<ThreadReferenceNode> traversal = traverse(uri);
         boolean noPrevInThread = false;
         for (int i = _currentIndex-1; i >= 0; i--) {
-            ThreadReferenceNode prev = (ThreadReferenceNode)traversal.get(i);
+            ThreadReferenceNode prev = traversal.get(i);
             if ( (_prevInThread == null) && (!noPrevInThread) ) {
                 ReferenceNode root = prev;
                 while (root.getParent() != null)
@@ -99,7 +99,7 @@ public class TreeMessageIterator implements MessageIterator {
 
         boolean noNextInThread = false;
         for (int i = _currentIndex+1; i < traversal.size(); i++) {
-            ThreadReferenceNode nxt = (ThreadReferenceNode)traversal.get(i);
+            ThreadReferenceNode nxt = traversal.get(i);
             if ( (_nextInThread == null) && (!noNextInThread) ) {
                 ReferenceNode root = nxt;
                 while (root.getParent() != null)
@@ -125,32 +125,36 @@ public class TreeMessageIterator implements MessageIterator {
         
         int threadIndex = _roots.indexOf(_currentThreadRoot);
         if (threadIndex > 0)
-            _prevThread = ((ReferenceNode)_roots.get(threadIndex-1)).getURI();
+            _prevThread = _roots.get(threadIndex-1).getURI();
         
         if (threadIndex + 1 < _roots.size())
-            _nextThread = ((ReferenceNode)_roots.get(threadIndex+1)).getURI();
+            _nextThread = _roots.get(threadIndex+1).getURI();
     }
     
     public ThreadReferenceNode getThreadRoot() { return (ThreadReferenceNode)_currentThreadRoot; }
     
-    private List traverse(final SyndieURI target) {
+    private List<ThreadReferenceNode> traverse(final SyndieURI target) {
         Walker walker = new Walker(target);
         ReferenceNode.walk(_roots, walker);
-        List rv = walker.getNodes();
+        List<ThreadReferenceNode> rv = walker.getNodes();
         _ui.debugMessage("traversal (selected=" + _currentIndex + " root=" + (_currentThreadRoot != null ? _currentThreadRoot.getURI()+"" : "null") + ")");
         for (int i = 0; i < rv.size(); i++)
             _ui.debugMessage(i + ": " + ((ReferenceNode)rv.get(i)).getURI().toString());
         return rv;
     }
-    private class Walker implements ReferenceNode.Visitor {
-        private SyndieURI _target;
-        private List _rv;
+
+    private class Walker implements ReferenceNode.Visitor<ThreadReferenceNode> {
+        private final SyndieURI _target;
+        private final List<ThreadReferenceNode> _rv;
+
         public Walker(SyndieURI target) {
             _target = target;
             _rv = new ArrayList();
         }
-        public List getNodes() { return _rv; }
-        public void visit(ReferenceNode node, int depth, int siblingOrder) {
+
+        public List<ThreadReferenceNode> getNodes() { return _rv; }
+
+        public void visit(ThreadReferenceNode node, int depth, int siblingOrder) {
             SyndieURI uri = node.getURI();
             if (uri != null) {
                 long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());

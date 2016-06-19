@@ -5310,10 +5310,11 @@ public class DBClient {
     private static final String SQL_GET_WATCHED_CHANNELS = "SELECT channelId, importKeys, importBookmarks, importBans, importArchives, highlightUnread FROM nymWatchedChannel nwc JOIN channel c ON c.channelId = nwc.channelId WHERE nymId = ? ORDER BY UPPER(name) ASC";
     
     /** get a list of WatchedChannel for the nym, ordered by the channel's name */
-    public List getWatchedChannels() { return getWatchedChannels(_nymId); }
-    public List getWatchedChannels(long nymId) {
+    public List<WatchedChannel> getWatchedChannels() { return getWatchedChannels(_nymId); }
+
+    public List<WatchedChannel> getWatchedChannels(long nymId) {
         ensureLoggedIn();
-        List rv = new ArrayList();
+        List<WatchedChannel> rv = new ArrayList<WatchedChannel>();
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
@@ -5468,17 +5469,21 @@ public class DBClient {
     }
 
     private void notifyWatchListeners() {
-        List toNotify = new ArrayList();
-        synchronized (_watchListeners) { toNotify.addAll(_watchListeners); }
+        List<WatchEventListener> toNotify;
+        synchronized (_watchListeners) {
+            if (_watchListeners.isEmpty())
+                return;
+            toNotify = new ArrayList<WatchEventListener>(_watchListeners);
+        }
         for (int i = 0; i < toNotify.size(); i++)
-            ((WatchEventListener)toNotify.get(i)).watchesUpdated();
+            toNotify.get(i).watchesUpdated();
     }
     
     public interface WatchEventListener {
         public void watchesUpdated();
     }
 
-    private List _watchListeners = new ArrayList();
+    private final List<WatchEventListener> _watchListeners = new ArrayList<WatchEventListener>();
 
     public void addWatchEventListener(WatchEventListener lsnr) { 
         synchronized (_watchListeners) { _watchListeners.add(lsnr); }
@@ -5492,7 +5497,7 @@ public class DBClient {
         public void messageStatusUpdated(long msgId, int newStatus);
     }
 
-    private List _msgStatusListeners = new ArrayList();
+    private final List<MessageStatusListener> _msgStatusListeners = new ArrayList<MessageStatusListener>();
 
     public void addMessageStatusListener(MessageStatusListener lsnr) { 
         synchronized (_msgStatusListeners) { _msgStatusListeners.add(lsnr); }
@@ -5503,11 +5508,15 @@ public class DBClient {
     }
 
     private void notifyMessageStatusListeners(long msgId, int newStatus) {
-        List toNotify = new ArrayList();
-        synchronized (_msgStatusListeners) { toNotify.addAll(_msgStatusListeners); }
+        List<MessageStatusListener> toNotify;
+        synchronized (_msgStatusListeners) {
+            if (_msgStatusListeners.isEmpty())
+                return;
+            toNotify = new ArrayList<MessageStatusListener>(_msgStatusListeners);
+        }
         _ui.debugMessage("notifyMessageStatus(" + msgId + ", " + newStatus + "): listener count = " + toNotify.size());
         for (int i = 0; i < toNotify.size(); i++)
-            ((MessageStatusListener)toNotify.get(i)).messageStatusUpdated(msgId, newStatus);
+            toNotify.get(i).messageStatusUpdated(msgId, newStatus);
     }
     
     /**
@@ -6348,8 +6357,8 @@ public class DBClient {
     /**
      *  @return Should contain default policies, but may not, see fix in Expirer.loadPolicies()
      */
-    public Set getExpirationPolicies() {
-        Set rv = new HashSet();
+    public Set<ExpirationPolicy> getExpirationPolicies() {
+        Set<ExpirationPolicy> rv = new HashSet<ExpirationPolicy>();
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
@@ -6396,6 +6405,7 @@ public class DBClient {
     
     private static final String SQL_ADD_EXPIRATION_POLICY = "INSERT INTO expirationPolicy (isDataFilePolicy, policyScopeId, maxNumMessages, maxSizeKB, maxAgeDays, mimicDefault) VALUES (?, ?, ?, ?, ?, ?)";
     private static final String SQL_UPDATE_EXPIRATION_POLICY = "UPDATE expirationPolicy SET maxNumMessages = ?, maxSizeKB = ?, maxAgeDays = ?, mimicDefault = ? WHERE isDataFilePolicy = ? AND policyScopeId = ?";
+
     public void saveExpirationPolicy(ExpirationPolicy policy) {
         boolean isDataFile = false;
         long policyScopeId = 0;
@@ -6465,6 +6475,7 @@ public class DBClient {
     }
 
     private static final String SQL_DELETE_EXPIRATION_POLICY = "DELETE FROM expirationPolicy WHERE isDataFilePolicy = ? AND policyScopeId = ?";
+
     public void deleteExpirationPolicy(ExpirationPolicy policy) {
         if (policy.getIsNew()) return; // noop
         
@@ -6492,8 +6503,9 @@ public class DBClient {
     }
 
     private static final String SQL_GET_CANCEL_POLICIES = "SELECT policyScopeId, honorFromAuthor, honorFromForumOwner, honorFromForumManager, honorFromAuthPoster FROM cancelPolicy";
-    public Set getCancelPolicies() {
-        Set rv = new HashSet();
+
+    public Set<CancelPolicy> getCancelPolicies() {
+        Set<CancelPolicy> rv = new HashSet<CancelPolicy>();
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
@@ -6512,7 +6524,7 @@ public class DBClient {
                 boolean honorAuthPoster = rs.getBoolean(5);
                 if (rs.wasNull()) honorAuthPoster = true;
                 
-                CancelPolicy policy = null;
+                CancelPolicy policy;
                 if (scopeId == -1)
                     policy = new CancelPolicy(true);
                 else if (scopeId == -2)
@@ -6540,6 +6552,7 @@ public class DBClient {
     
     private static final String SQL_ADD_CANCEL_POLICY = "INSERT INTO cancelPolicy (policyScopeId, honorFromAuthor, honorFromForumOwner, honorFromForumManager, honorFromAuthPoster) VALUES (?, ?, ?, ?, ?)";
     private static final String SQL_UPDATE_CANCEL_POLICY = "UPDATE cancelPolicy SET honorFromAuthor = ?, honorFromForumOwner = ?, honorFromForumManager = ?, honorFromAuthPoster = ? WHERE policyScopeId = ?";
+
     public void saveCancelPolicy(CancelPolicy policy) {
         long policyScopeId = 0;
         
@@ -6590,6 +6603,7 @@ public class DBClient {
     }
 
     private static final String SQL_DELETE_CANCEL_POLICY = "DELETE FROM cancelPolicy WHERE policyScopeId = ?";
+
     public void deleteCancelPolicy(CancelPolicy policy) {
         if (policy.getIsNew()) return; // noop
         

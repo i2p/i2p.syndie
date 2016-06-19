@@ -37,14 +37,14 @@ public class ThreadBuilder {
         _idTable = new HashMap();
     }
     
-    public List buildThread(Set<ThreadMsgId> threadMsgIds) { 
+    public List<ThreadReferenceNode> buildThread(Set<ThreadMsgId> threadMsgIds) { 
         Timer timer = new Timer("JWZ threader", _ui);
-        List rv = buildThread(threadMsgIds, timer);
+        List<ThreadReferenceNode> rv = buildThread(threadMsgIds, timer);
         timer.complete();
         return rv;
     }
 
-    public List buildThread(Set<ThreadMsgId> threadMsgIds, Timer timer) {
+    public List<ThreadReferenceNode> buildThread(Set<ThreadMsgId> threadMsgIds, Timer timer) {
         Map<ThreadMsgId, List<ThreadMsgId>> tmiToAncestors = new HashMap<ThreadMsgId, List<ThreadMsgId>>();
         Set<ThreadMsgId> newMsgIds = new HashSet<ThreadMsgId>();
         
@@ -368,10 +368,10 @@ public class ThreadBuilder {
         }
         addChildren(msgIds);
         timer.addEvent("children added");
-        List threads = buildThread(msgIds, timer);
+        List<ThreadReferenceNode> threads = buildThread(msgIds, timer);
         timer.addEvent("thread built");
         if (threads.size() > 0)
-            return (ThreadReferenceNode)threads.get(0);
+            return threads.get(0);
         else
             return null;
     }

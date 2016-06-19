@@ -11,10 +11,10 @@ import syndie.db.DBClient;
  * Iterate in a single thread
  */
 public class ThreadMessageIterator implements MessageIterator {
-    private DBClient _client;
-    private ThreadReferenceNode _root;
+    private final DBClient _client;
+    private final ThreadReferenceNode _root;
     
-    private SyndieURI _treeURI;
+    private final SyndieURI _treeURI;
     private SyndieURI _nextNew;
     private SyndieURI _prevNew;
     private SyndieURI _nextInThread;
@@ -47,7 +47,7 @@ public class ThreadMessageIterator implements MessageIterator {
     }
 
     public void recenter(long msgId) {
-        List traversal = traverse();
+        List<ThreadReferenceNode> traversal = traverse();
         ReferenceNode cur = _root.getByUniqueId(msgId);
         recenter(traversal, cur);
     }
@@ -89,12 +89,12 @@ public class ThreadMessageIterator implements MessageIterator {
     
     public ThreadReferenceNode getThreadRoot() { return _root; }
     
-    private List traverse() {
-        List roots = new ArrayList(1);
+    private List<ThreadReferenceNode> traverse() {
+        List<ThreadReferenceNode> roots = new ArrayList<ThreadReferenceNode>(1);
         roots.add(_root);
-        final List rv = new ArrayList();
-        ReferenceNode.walk(roots, new ReferenceNode.Visitor() {
-            public void visit(ReferenceNode node, int depth, int siblingOrder) {
+        final List<ThreadReferenceNode> rv = new ArrayList<ThreadReferenceNode>();
+        ReferenceNode.walk(roots, new ReferenceNode.Visitor<ThreadReferenceNode>() {
+            public void visit(ThreadReferenceNode node, int depth, int siblingOrder) {
                 SyndieURI uri = node.getURI();
                 if (uri != null) {
                     long msgId = _client.getMessageId(uri.getScope(), uri.getMessageId());

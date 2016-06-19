@@ -266,9 +266,9 @@ public class EnclosureBody {
         else
             return null;
     }
-    public Set getPageConfigKeys(int pageNum) { return _pageConfig.get(pageNum).keySet(); }
-    public Set getAttachmentConfigKeys(int attachNum) { return _attachConfig.get(attachNum).keySet(); }
-    public Set getHeaderKeys() { return _headers.keySet(); }
+    public Set<String> getPageConfigKeys(int pageNum) { return _pageConfig.get(pageNum).stringPropertyNames(); }
+    public Set<String> getAttachmentConfigKeys(int attachNum) { return _attachConfig.get(attachNum).stringPropertyNames(); }
+    public Set<String> getHeaderKeys() { return _headers.stringPropertyNames(); }
     public int getReferenceRootCount() { return _references.size(); }
     public ReferenceNode getReferenceRoot(int index) { return _references.get(index); }
     public Properties getHeaders() { return _headers; }

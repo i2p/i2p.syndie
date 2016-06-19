@@ -229,23 +229,24 @@ public class ReferenceNode {
     }
     
     /** stringify a forest of nodes into a format that can be parsed with buildTree() */
-    public static String walk(List<ReferenceNode> roots) {
+    public static <T extends ReferenceNode> String walk(List<T> roots) {
         StringBuilder walked = new StringBuilder();
         for (int i = 0; i < roots.size(); i++) {
-            ReferenceNode node = roots.get(i);
+            T node = roots.get(i);
             append(walked, node, 0);
         }
         return walked.toString();
     }
     
     /** depth first traversal */
-    public static void walk(List<ReferenceNode> roots, Visitor visitor) {
+    public static <T extends ReferenceNode> void walk(List<T> roots, Visitor visitor) {
         for (int i = 0; i < roots.size(); i++) {
-            ReferenceNode node = roots.get(i);
+            T node = roots.get(i);
             node.walk(visitor, 0, i);
         }
     }
-    private void walk(Visitor visitor, int depth, int siblingOrder) {
+
+    protected void walk(Visitor visitor, int depth, int siblingOrder) {
         visitor.visit(this, depth, siblingOrder);
         for (int i = 0; i < _children.size(); i++) {
             ReferenceNode child = _children.get(i);
@@ -262,6 +263,7 @@ public class ReferenceNode {
         }
         return rv;
     }
+
     public static ReferenceNode deepCopy(ReferenceNode node) {
         if (node == null) return null;
         ReferenceNode copy = new ReferenceNode(node.getName(), node.getURI(), node.getDescription(), node.getReferenceType());
@@ -270,8 +272,8 @@ public class ReferenceNode {
         return copy;
     }
     
-    public interface Visitor {
-        public void visit(ReferenceNode node, int depth, int siblingOrder);
+    public interface Visitor<T extends ReferenceNode> {
+        public void visit(T node, int depth, int siblingOrder);
     }
     
 /****

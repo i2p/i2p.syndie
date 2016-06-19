@@ -18,55 +18,63 @@ import syndie.util.DateTime;
  *
  */
 public class ThreadAccumulator {
-    private DBClient _client;
-    private UI _ui;
+    protected final DBClient _client;
+    protected final UI _ui;
     
-    private List _rootURIs;
+    protected final List<SyndieURI> _rootURIs;
     /** fully populated threads, in ReferenceNode form */
-    private List _roots;
+    protected final List<ReferenceNode> _roots;
     /** one List of tags for each root URI, duplicates allowed */
-    private List _threadTags;
+    protected final List<List<String>> _threadTags;
     /** Integer for each thread specifying how many messages are in the thread */
-    private List _threadMessages;
+    protected final List<Integer> _threadMessages;
     /** String describing the subject of the thread */
-    private List _threadSubject;
+    protected final List<String> _threadSubject;
     /** internal channel id of the thread root's author */
-    private List _threadRootAuthorId;
+    protected final List<Long> _threadRootAuthorId;
     /** internal channel id of the most recent post's author */
-    private List _threadLatestAuthorId;
+    protected final List<Long> _threadLatestAuthorId;
     /** when (Long) the most recent post was made */
-    private List _threadLatestPostDate;
+    protected final List<Long> _threadLatestPostDate;
 
     // parsed search critera
-    private boolean _showThreaded;
-    private boolean _includeOwners;
-    private boolean _includeManagers;
-    private boolean _includeAuthorizedPosters;
-    private boolean _includeAuthorizedReplies;
-    private boolean _includeUnauthorizedPosts;
-    private long _earliestReceiveDate;
-    private long _earliestPostDate;
-    private boolean _applyTagFilterToMessages;
-    private int _minPages;
-    private int _maxPages;
-    private int _minAttachments;
-    private int _maxAttachments;
-    private int _minReferences;
-    private int _maxReferences;
-    private int _minKeys;
-    private int _maxKeys;
-    private boolean _alreadyDecrypted;
-    private boolean _pbe;
-    private boolean _privateMessage;
-    private boolean _unreadOnly;
-    private Set _channelHashes;
-    private Set _requiredTags;
-    private Set _wantedTags;
-    private Set _rejectedTags;
+    protected boolean _showThreaded;
+    protected boolean _includeOwners;
+    protected boolean _includeManagers;
+    protected boolean _includeAuthorizedPosters;
+    protected boolean _includeAuthorizedReplies;
+    protected boolean _includeUnauthorizedPosts;
+    protected long _earliestReceiveDate;
+    protected long _earliestPostDate;
+    protected boolean _applyTagFilterToMessages;
+    protected int _minPages;
+    protected int _maxPages;
+    protected int _minAttachments;
+    protected int _maxAttachments;
+    protected int _minReferences;
+    protected int _maxReferences;
+    protected int _minKeys;
+    protected int _maxKeys;
+    protected boolean _alreadyDecrypted;
+    protected boolean _pbe;
+    protected boolean _privateMessage;
+    protected boolean _unreadOnly;
+    protected Set<Hash> _channelHashes;
+    protected Set<String> _requiredTags;
+    protected Set<String> _wantedTags;
+    protected Set<String> _rejectedTags;
     
     public ThreadAccumulator(DBClient client, UI ui) {
         _client = client;
         _ui = ui;
+        _roots = new ArrayList();
+        _rootURIs = new ArrayList();
+        _threadTags = new ArrayList();
+        _threadMessages = new ArrayList();
+        _threadSubject = new ArrayList();
+        _threadRootAuthorId = new ArrayList();
+        _threadLatestAuthorId = new ArrayList();
+        _threadLatestPostDate = new ArrayList();
     }
 
     public static final int SORT_SUBJECT = 1;
@@ -83,7 +91,7 @@ public class ThreadAccumulator {
         if ( (scope == null) || (scope.length == 0) || ( (scope.length == 1) && ("all".equals(scope[0]))) ) {
             _channelHashes = null;
         } else {
-            Set chans = new HashSet();
+            Set<Hash> chans = new HashSet();
             for (int i = 0; i < scope.length; i++) {
                 byte b[] = Base64.decode(scope[i]);
                 if ( (b != null) && (b.length == Hash.HASH_LENGTH) )
@@ -143,8 +151,8 @@ public class ThreadAccumulator {
         _unreadOnly = criteria.getBoolean("unreadonly", false);
     }
     
-    private static final Set getTags(String tags[]) {
-        Set rv = new HashSet();
+    private static final Set<String> getTags(String tags[]) {
+        Set<String> rv = new HashSet<String>();
         if (tags != null) {
             for (int i = 0; i < tags.length; i++) {
                 String s = tags[i].trim();
@@ -155,14 +163,15 @@ public class ThreadAccumulator {
         return rv;
     }
     
-    private static final long getStartDate(Long numDaysAgo) {
+    protected static final long getStartDate(Long numDaysAgo) {
         if (numDaysAgo == null) return -1;
         long now = System.currentTimeMillis();
         long dayBegin = now - (now % 24*60*60*1000L);
         dayBegin -= numDaysAgo.longValue()*24*60*60*1000L;
         return dayBegin;
     }
-    private static final int getInt(Long val) { 
+
+    protected static final int getInt(Long val) { 
         if (val == null) 
             return -1; 
         else 
@@ -183,12 +192,14 @@ public class ThreadAccumulator {
         _includeAuthorizedReplies = authReplies;
         _includeUnauthorizedPosts = unauthorizedPosts;
     }
+
     /** the post was received locally on or after the given date */
     public void setReceivedSince(long date) { _earliestReceiveDate = date; }
     /** the post was created on or after the given date */
     public void setPostSince(long date) { _earliestPostDate = date; }
     /** apply the tag filters to individual messages, not threads as a whole */
     public void applyTagFilterToMessages(boolean apply) { _applyTagFilterToMessages = apply; }
+
     /**
      * minimum and maximum values (inclusive) for various post attributes, or -1 if
      * the value is not relevent
@@ -216,7 +227,8 @@ public class ThreadAccumulator {
     }
 
     public void setScope(Set channelHashes) { _channelHashes = channelHashes; }
-    public void setTags(Set required, Set wanted, Set rejected) {
+
+    public void setTags(Set<String> required, Set<String> wanted, Set<String> rejected) {
         _requiredTags = required;
         _wantedTags = wanted;
         _rejectedTags = rejected;
@@ -239,7 +251,9 @@ AND
 	) 
 )
      */
+
     private static final String SQL_LIST_THREADS_CHAN = "SELECT msgId, scopeChannelId, authorChannelId, targetChannelId FROM channelMessage WHERE (targetChannelId = ? OR scopeChannelId = ?) AND (forceNewThread = TRUE OR  msgId NOT IN ( SELECT DISTINCT mh.msgId FROM messageHierarchy mh JOIN channelMessage cm ON mh.referencedMessageId = cm.messageId JOIN channel c ON c.channelHash = mh.referencedChannelHash AND c.channelId = cm.scopeChannelId ) )";
+
     /* OUTDATED JAVADOC
      * @param channelHashes set of Hash for each channel to pull threads out of (null means all channels!)
      * @param tagsRequired threads must have all of the tags in this set
@@ -257,7 +271,7 @@ AND
         //  - list all tags for each thread
         //  - filter threads per tags
         
-        List rootMsgIds = new ArrayList();
+        List<Long> rootMsgIds = new ArrayList();
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
@@ -325,7 +339,7 @@ AND
             
             // now find the relevent details for each thread
             for (int i = 0; i < rootMsgIds.size(); i++) {
-                Long msgId = (Long)rootMsgIds.get(i);
+                Long msgId = rootMsgIds.get(i);
                 MessageThreadBuilder builder = new MessageThreadBuilder(_client, _ui);
                 MessageInfo info = _client.getMessage(msgId.longValue());
                 if (info == null) // startup maybe?
@@ -349,55 +363,57 @@ AND
         _ui.debugMessage("gather threads trace: " + _client.completeTrace());
     }
     
-    private void init() {
-        _roots = new ArrayList();
-        _rootURIs = new ArrayList();
-        _threadTags = new ArrayList();
-        _threadMessages = new ArrayList();
-        _threadSubject = new ArrayList();
-        _threadRootAuthorId = new ArrayList();
-        _threadLatestAuthorId = new ArrayList();
-        _threadLatestPostDate = new ArrayList();
+    protected void init() {
+        _roots.clear();
+        _rootURIs.clear();
+        _threadTags.clear();
+        _threadMessages.clear();
+        _threadSubject.clear();
+        _threadRootAuthorId.clear();
+        _threadLatestAuthorId.clear();
+        _threadLatestPostDate.clear();
     }
     
     public int getThreadCount() { return _rootURIs.size(); }
-    public SyndieURI getRootURI(int index) { return (SyndieURI)_rootURIs.get(index); }
-    public ReferenceNode getRootThread(int index) { return (ReferenceNode)_roots.get(index); }
+    public SyndieURI getRootURI(int index) { return _rootURIs.get(index); }
+    public ReferenceNode getRootThread(int index) { return _roots.get(index); }
     /** sorted set of tags in the given thread */
-    public Set getTags(int index) { return new TreeSet((List)_threadTags.get(index)); }
+    public Set<String> getTags(int index) { return new TreeSet<String>(_threadTags.get(index)); }
+
     public int getTagCount(int index, String tag) {
         int rv = 0;
         if (tag == null) return 0;
-        List tags = (List)_threadTags.get(index);
+        List<String> tags = _threadTags.get(index);
         if (tags == null) return 0;
         for (int i = 0; i < tags.size(); i++)
-            if (tag.equals((String)tags.get(i)))
+            if (tag.equals(tags.get(i)))
                 rv++;
         return rv;
     }
-    public int getMessages(int index) { return ((Integer)_threadMessages.get(index)).intValue(); }
-    public String getSubject(int index) { return (String)_threadSubject.get(index); }
-    public long getRootAuthor(int index) { return ((Long)_threadRootAuthorId.get(index)).longValue(); }
-    public long getMostRecentAuthor(int index) { return ((Long)_threadLatestAuthorId.get(index)).longValue(); }
-    public long getMostRecentDate(int index) { return ((Long)_threadLatestPostDate.get(index)).longValue(); }
+
+    public int getMessages(int index) { return _threadMessages.get(index).intValue(); }
+    public String getSubject(int index) { return _threadSubject.get(index); }
+    public long getRootAuthor(int index) { return _threadRootAuthorId.get(index).longValue(); }
+    public long getMostRecentAuthor(int index) { return _threadLatestAuthorId.get(index).longValue(); }
+    public long getMostRecentDate(int index) { return _threadLatestPostDate.get(index).longValue(); }
 
     private class Harvester implements ReferenceNode.Visitor {
         private int _messages;
         private ReferenceNode _latest;
-        private List _tags;
+        private List<String> _tags;
         public Harvester() {
             _tags = new ArrayList();
             _messages = 0;
         }
         public int getMessageCount() { return _messages; }
         public ReferenceNode getLatestPost() { return _latest; }
-        public List getTags() { return _tags; }
+        public List<String> getTags() { return _tags; }
         public void visit(ReferenceNode node, int depth, int siblingOrder) {
             _messages++;
             if ( (_latest == null) || (_latest.getURI().getMessageId().longValue() < node.getURI().getMessageId().longValue()) )
                 _latest = node;
             long chanId = _client.getChannelId(node.getURI().getScope());
-            Set tags = _client.getMessageTags(chanId, node.getURI().getMessageId().longValue(), true, true);
+            Set<String> tags = _client.getMessageTags(chanId, node.getURI().getMessageId().longValue(), true, true);
             if (tags != null)
                 _tags.addAll(tags);
         }        
@@ -409,7 +425,7 @@ AND
     private void loadInfo(ReferenceNode threadRoot) {
         // walk the thread to find the latest post / message count / tags
         Harvester visitor = new Harvester();
-        List roots = new ArrayList();
+        List<ReferenceNode> roots = new ArrayList<ReferenceNode>();
         roots.add(threadRoot);
         ReferenceNode.walk(roots, visitor);
         
@@ -417,12 +433,12 @@ AND
         ReferenceNode latestPost = visitor.getLatestPost();
         long latestPostDate = latestPost.getURI().getMessageId().longValue();
         long latestAuthorId = _client.getChannelId(latestPost.getURI().getScope());
-        List tags = visitor.getTags();
+        List<String> tags = visitor.getTags();
     
         long rootAuthorId = -1;
-        List newRoots = filterRoots(tags, threadRoot.getURI(), threadRoot, visitor, true);
+        List<ReferenceNode> newRoots = filterRoots(tags, threadRoot.getURI(), threadRoot, visitor, true);
         for (int i = 0; i < newRoots.size(); i++) {
-            ReferenceNode newRoot = (ReferenceNode)newRoots.get(i);
+            ReferenceNode newRoot = newRoots.get(i);
             long newRootAuthorId = _client.getChannelId(newRoot.getURI().getScope());
             _ui.debugMessage("filter passed for root " + newRoot.getURI().toString());
             _rootURIs.add(newRoot.getURI());
@@ -473,12 +489,13 @@ AND
         }
     }
     
-    private List filterRoots(List tags, SyndieURI rootURI, ReferenceNode root, Harvester visitor, boolean isRoot) {
-        List rv = new ArrayList();
+    private List<ReferenceNode> filterRoots(List<String> tags, SyndieURI rootURI, ReferenceNode root, Harvester visitor, boolean isRoot) {
+        List<ReferenceNode> rv = new ArrayList<ReferenceNode>();
         filterRoots(tags, rootURI, root, visitor, isRoot, rv);
         return rv;
     }
-    private void filterRoots(List tags, SyndieURI rootURI, ReferenceNode root, Harvester visitor, boolean isRoot, List rv) {
+
+    private void filterRoots(List<String> tags, SyndieURI rootURI, ReferenceNode root, Harvester visitor, boolean isRoot, List<ReferenceNode> rv) {
         if (filterPassed(tags, rootURI, root, visitor, isRoot)) {
             _ui.debugMessage("filter passed for root " + rootURI.toString());
             rv.add(root);
@@ -523,7 +540,7 @@ AND
             ReferenceNode child = cur.getChild(i);
             
             long chanId = _client.getChannelId(child.getURI().getScope());
-            Set tags = null;
+            Set<String> tags = null;
             if (child.getURI().getMessageId() != null)
                 tags = _client.getMessageTags(chanId, child.getURI().getMessageId().longValue(), true, true);
             
@@ -567,8 +584,8 @@ AND
         if (cur.getURI().getMessageId() == null) return;
         long chanId = _client.getChannelId(cur.getURI().getScope());
         //MessageInfo msg = _client.getMessage(chanId, cur.getURI().getMessageId());
-        Set msgTags = _client.getMessageTags(chanId, cur.getURI().getMessageId().longValue(), true, true);
-        List tags = new ArrayList(msgTags);
+        Set<String> msgTags = _client.getMessageTags(chanId, cur.getURI().getMessageId().longValue(), true, true);
+        List<String> tags = new ArrayList<String>(msgTags);
         long authorChanId = _client.getMessageAuthor(chanId, cur.getURI().getMessageId().longValue());
         
         // all filtered messages were removed above in removeFilteredChildren
@@ -701,6 +718,7 @@ AND
             _ui.debugMessage("filter pass for " + uri);
         return ok;
     }
+
     private boolean authorFilterPassed(MessageInfo msg, ChannelInfo chan, ReferenceNode node) {
         if (_includeUnauthorizedPosts || chan.getAllowPublicPosts()) return true;
         Hash author = msg.getURI().getScope();
@@ -757,11 +775,11 @@ AND
         //_ui.debugMessage("allowed to post: !auth");
         return false;
     }
+
     /** return true if the tags for the message meet our search criteria */
-    private boolean tagFilterPassed(Collection tags, SyndieURI msg) {
+    private boolean tagFilterPassed(Collection<String> tags, SyndieURI msg) {
         if (_rejectedTags != null) {
-            for (Iterator iter = _rejectedTags.iterator(); iter.hasNext(); ) {
-                String tag = (String)iter.next();
+            for (String tag : _rejectedTags) {
                 if (tags.contains(tag)) {
                     _ui.debugMessage("Rejecting thread tagged with " + tag + ": " + msg.toString());
                     return false;
@@ -770,8 +788,7 @@ AND
                         // substring match
                         String prefix = tag.substring(0, tag.length()-1);
                         boolean substringMatch = false;
-                        for (Iterator msgTagIter = tags.iterator(); msgTagIter.hasNext(); ) {
-                            String cur = (String)msgTagIter.next();
+                        for (String cur : tags) {
                             if (cur.startsWith(prefix)) {
                                 _ui.debugMessage("Rejecting thread prefix tagged with " + tag + ": " + msg.toString());
                                 return false;
@@ -782,15 +799,13 @@ AND
             }
         }
         if ( (_requiredTags != null) && (_requiredTags.size() > 0) ) {
-            for (Iterator iter = _requiredTags.iterator(); iter.hasNext(); ) {
-                String tag = (String)iter.next();
+            for (String tag : _requiredTags) {
                 if (!tags.contains(tag)) {
                     if (tag.endsWith("*") && (tag.length() > 0)) {
                         // substring match
                         String prefix = tag.substring(0, tag.length()-1);
                         boolean substringMatch = false;
-                        for (Iterator msgTagIter = tags.iterator(); msgTagIter.hasNext(); ) {
-                            String cur = (String)msgTagIter.next();
+                        for (String cur : tags) {
                             if (cur.startsWith(prefix)) {
                                 substringMatch = true;
                                 break;
@@ -811,8 +826,7 @@ AND
         }
         if ( (_wantedTags != null) && (_wantedTags.size() > 0) ) {
             boolean found = false;
-            for (Iterator iter = _wantedTags.iterator(); iter.hasNext(); ) {
-                String tag = (String)iter.next();
+            for (String tag : _wantedTags) {
                 if (tags.contains(tag)) {
                     found = true;
                     break;
@@ -820,8 +834,7 @@ AND
                     if (tag.endsWith("*") && (tag.length() > 0)) {
                         // substring match
                         String prefix = tag.substring(0, tag.length()-1);
-                        for (Iterator msgTagIter = tags.iterator(); msgTagIter.hasNext(); ) {
-                            String cur = (String)msgTagIter.next();
+                        for (String cur : tags) {
                             if (cur.startsWith(prefix)) {
                                 found = true;
                                 break;
@@ -843,6 +856,7 @@ AND
     public String toString() {
         StringBuilder buf = new StringBuilder();
         buf.append(" threaded? ").append(_showThreaded);
+        buf.append(" unreadOnly? ").append(_unreadOnly);
         buf.append(" owners? ").append(_includeOwners);
         buf.append(" managers? ").append(_includeManagers);
         buf.append(" authPosters? ").append(_includeAuthorizedPosters);

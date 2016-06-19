@@ -31,57 +31,14 @@ import syndie.util.Timer;
  * up by threads, jwz-style
  */
 public class ThreadAccumulatorJWZ extends ThreadAccumulator {
-    private DBClient _client;
-    private UI _ui;
 
-    private List _rootURIs;
-    /** fully populated threads, in ReferenceNode form */
-    private List _roots;
     /** msgId (Long) to Set of tags on that message */
     private Map _msgTags;
-    /** one List of tags for each root URI, duplicates allowed */
-    private List _threadTags;
-    /** Integer for each thread specifying how many messages are in the thread */
-    private List _threadMessages;
-    /** String describing the subject of the thread */
-    private List _threadSubject;
-    /** internal channel id of the thread root's author */
-    private List _threadRootAuthorId;
-    /** internal channel id of the most recent post's author */
-    private List _threadLatestAuthorId;
-    /** when (Long) the most recent post was made */
-    private List _threadLatestPostDate;
 
-    
     // parsed search critera
-    private boolean _showThreaded;
-    private boolean _includeOwners;
-    private boolean _includeManagers;
-    private boolean _includeAuthorizedPosters;
-    private boolean _includeAuthorizedReplies;
-    private boolean _includeUnauthorizedPosts;
-    private long _earliestReceiveDate;
-    private long _earliestPostDate;
-    private boolean _applyTagFilterToMessages;
-    private int _minPages;
-    private int _maxPages;
-    private int _minAttachments;
-    private int _maxAttachments;
-    private int _minReferences;
-    private int _maxReferences;
-    private int _minKeys;
-    private int _maxKeys;
-    private boolean _alreadyDecrypted;
-    private boolean _pbe;
-    private boolean _publicMessage;
-    private boolean _privateMessage;
-    private boolean _authorizedMessage;
-    private boolean _unreadOnly;
     private String _keyword;
-    private Set _channelHashes;
-    private Set _requiredTags;
-    private Set _wantedTags;
-    private Set _rejectedTags;
+    private boolean _publicMessage;
+    private boolean _authorizedMessage;
     private Set _postByScopeIds;
     
     private int _sortField;
@@ -91,18 +48,18 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
     
     public ThreadAccumulatorJWZ(DBClient client, UI ui) {
         super(client, ui);
-        _client = client;
-        _ui = ui;
         _sortField = SORT_DEFAULT;
         _sortOrderAscending = false;
         //_ui = new NullUI(true);
     }
     
+    @Override
     public void setSort(int sortField, boolean ascending) {
         _sortField = sortField;
         _sortOrderAscending = ascending;
     }
     
+    @Override
     public void setFilter(SyndieURI criteria) {
         if (VERBOSE_DEBUG) _ui.debugMessage("accumulator filter: " + criteria);
         // split up the individual attributes. see doc/web/spec.html#uri_search
@@ -202,99 +159,12 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         return rv;
     }
     
-    private static final long getStartDate(Long numDaysAgo) {
-        if (numDaysAgo == null) return -1;
-        long now = System.currentTimeMillis();
-        long msSinceBegin = now % (24*60*60*1000L);
-        long dayBegin = now - msSinceBegin;
-        dayBegin -= numDaysAgo.longValue()*(24*60*60*1000L);
-        return dayBegin;
-    }
-    private static final int getInt(Long val) { 
-        if (val == null) 
-            return -1; 
-        else 
-            return val.intValue();
-    }
-
-    /**
-     * @param owners include posts by the channel owner
-     * @param managers include posts by those authorized to manage the channel 
-     * @param posters include posts by those authorized to create new threads
-     * @param authReplies include authorized messages by those allowed to reply to authorized posts
-     * @param unauthorizedPosts include authentic yet unauthorized posts
-     */
-    public void setAuthorFilter(boolean owners, boolean managers, boolean posters, boolean authReplies, boolean unauthorizedPosts) {
-        _includeOwners = owners;
-        _includeManagers = managers;
-        _includeAuthorizedPosters = posters;
-        _includeAuthorizedReplies = authReplies;
-        _includeUnauthorizedPosts = unauthorizedPosts;
-    }
-    /** the post was received locally on or after the given date */
-    public void setReceivedSince(long date) { _earliestReceiveDate = date; }
-    /** the post was created on or after the given date */
-    public void setPostSince(long date) { _earliestPostDate = date; }
-    /** apply the tag filters to individual messages, not threads as a whole */
-    public void applyTagFilterToMessages(boolean apply) { _applyTagFilterToMessages = apply; }
-    /**
-     * minimum and maximum values (inclusive) for various post attributes, or -1 if
-     * the value is not relevent
-     */
-    public void setContentFilter(int minPages, int maxPages, int minAttachments, int maxAttachments,
-                                 int minReferences, int maxReferences, int minKeys, int maxKeys) {
-        _minPages = minPages;
-        _maxPages = maxPages;
-        _minAttachments = minAttachments;
-        _maxAttachments = maxAttachments;
-        _minReferences = minReferences;
-        _maxReferences = maxReferences;
-        _minKeys = minKeys;
-        _maxKeys = maxKeys;
-    }
-    /**
-     * @param alreadyDecrypted included posts must already be readable (false means they must not be readable)
-     * @param pbe the post was or is encrypted with a passphrase
-     * @param privateMessage the post was or is encrypted to the channel reply key
-     */
-    public void setStatus(boolean alreadyDecrypted, boolean pbe, boolean privateMessage) {
-        _alreadyDecrypted = alreadyDecrypted;
-        _pbe = pbe;
-        _privateMessage = privateMessage;
-    }
-
-    public void setScope(Set channelHashes) { _channelHashes = channelHashes; }
-    public void setTags(Set required, Set wanted, Set rejected) {
-        _requiredTags = required;
-        _wantedTags = wanted;
-        _rejectedTags = rejected;
-    }
     public void setKeyword(String keyword) { _keyword = keyword; }
         
-    public int getThreadCount() { return _rootURIs.size(); }
-    public SyndieURI getRootURI(int index) { return (SyndieURI)_rootURIs.get(index); }
-    public ReferenceNode getRootThread(int index) { return (ReferenceNode)_roots.get(index); }
-    /** sorted set of tags in the given thread */
-    public Set getTags(int index) { return new TreeSet((List)_threadTags.get(index)); }
-    public int getTagCount(int index, String tag) {
-        int rv = 0;
-        if (tag == null) return 0;
-        List tags = (List)_threadTags.get(index);
-        if (tags == null) return 0;
-        for (int i = 0; i < tags.size(); i++)
-            if (tag.equals((String)tags.get(i)))
-                rv++;
-        return rv;
-    }
-    public int getMessages(int index) { return ((Integer)_threadMessages.get(index)).intValue(); }
-    public String getSubject(int index) { return (String)_threadSubject.get(index); }
-    public long getRootAuthor(int index) { return ((Long)_threadRootAuthorId.get(index)).longValue(); }
-    public long getMostRecentAuthor(int index) { return ((Long)_threadLatestAuthorId.get(index)).longValue(); }
-    public long getMostRecentDate(int index) { return ((Long)_threadLatestPostDate.get(index)).longValue(); }
-    
     /**
      * actually gather the matching threads according to the search criteria
      */
+    @Override
     public void gatherThreads() {
         init();
         if (VERBOSE_DEBUG) _ui.debugMessage("beginning gather threads w/ state: \n" + toString());
@@ -315,16 +185,16 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             //long beforePrep = System.currentTimeMillis();
             long msgIds[] = new long[matchingThreadMsgIds.size()];
             int i = 0;
-            for (Iterator iter = matchingThreadMsgIds.iterator(); iter.hasNext(); i++) {
-                ThreadMsgId tmi = (ThreadMsgId)iter.next();
+            for (Iterator<ThreadMsgId> iter = matchingThreadMsgIds.iterator(); iter.hasNext(); ) {
+                ThreadMsgId tmi = iter.next();
                 msgIds[i] = tmi.msgId;
             }
             //long afterPrep = System.currentTimeMillis();
             List unread = _client.getUnread(msgIds);
             int removed = 0;
             //long beforeStrip = System.currentTimeMillis();
-            for (Iterator iter = matchingThreadMsgIds.iterator(); iter.hasNext(); ) {
-                ThreadMsgId tmi = (ThreadMsgId)iter.next();
+            for (Iterator<ThreadMsgId> iter = matchingThreadMsgIds.iterator(); iter.hasNext(); ) {
+                ThreadMsgId tmi = iter.next();
                 if (!unread.contains(Long.valueOf(tmi.msgId))) {
                     if (VERBOSE_DEBUG) _ui.debugMessage("reject " + tmi + " because it was already read");
                     iter.remove();
@@ -475,7 +345,9 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 "JOIN channel ON scopeChannelId = channelId " +
                 "WHERE m.importDate > ? AND messageId > ? " +
                 "AND m.pbePrompt IS NOT NULL AND m.deletionCause IS NULL";
+
     private Set getMatchingThreadMsgIds() { return getMatchingThreadMsgIds(false); }
+
     private Set getMatchingThreadMsgIds(boolean pbePending) {
         long minImportDate = _earliestReceiveDate;
         long minMsgId = _earliestPostDate;
@@ -974,6 +846,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
     private ThreadReferenceNode[] sort(ThreadReferenceNode roots[]) {
         return sort(roots, null);
     }
+
     private ThreadReferenceNode[] sort(ThreadReferenceNode peers[], ThreadReferenceNode parent) {
         ThreadReferenceNode sorted[] = sortSiblings(peers);
         if (parent != null)
@@ -982,6 +855,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             sort(sorted[i].getChildren(), sorted[i]);
         return sorted;
     }
+
     private ThreadReferenceNode[] sortSiblings(ThreadReferenceNode peers[]) {
         if ( (peers == null) || (peers.length <= 1) ) return peers;
         switch (_sortField) {
@@ -993,6 +867,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 return sortDate(peers);
         }
     }
+
     private ThreadReferenceNode[] sortAuthor(ThreadReferenceNode peers[]) {
         TreeSet sorted = new TreeSet(_sortOrderAscending ? ASCENDING_COMPARATOR : DESCENDING_COMPARATOR);
         HashMap keyToNode = new HashMap();
@@ -1016,6 +891,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             rv[i] = (ThreadReferenceNode)keyToNode.get(iter.next());
         return rv;
     }
+
     private ThreadReferenceNode[] sortForum(ThreadReferenceNode peers[]) { 
         TreeSet sorted = new TreeSet(_sortOrderAscending ? ASCENDING_COMPARATOR : DESCENDING_COMPARATOR);
         HashMap keyToNode = new HashMap();
@@ -1039,6 +915,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             rv[i] = (ThreadReferenceNode)keyToNode.get(iter.next());
         return rv;
     }
+
     private ThreadReferenceNode[] sortSubject(ThreadReferenceNode peers[]) { 
         TreeSet sorted = new TreeSet(_sortOrderAscending ? ASCENDING_COMPARATOR : DESCENDING_COMPARATOR);
         HashMap keyToNode = new HashMap();
@@ -1063,6 +940,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             rv[i] = (ThreadReferenceNode)keyToNode.get(iter.next());
         return rv;
     }
+
     /** sort by *(sub)thread* date, not by message date */
     private ThreadReferenceNode[] sortDate(ThreadReferenceNode peers[]) {
         TreeSet sorted = new TreeSet(_sortOrderAscending ? ASCENDING_COMPARATOR : DESCENDING_COMPARATOR);
@@ -1093,10 +971,12 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         public int compare(Object lhs, Object rhs) { return compareObj(lhs, rhs); }
         public boolean equals(Object obj) { return obj == this; }
     };
+
     private static final Comparator DESCENDING_COMPARATOR = new Comparator() {
         public int compare(Object lhs, Object rhs) { return compareObj(rhs, lhs); } // note order
         public boolean equals(Object obj) { return obj == this; }
     };
+
     private static final int compareObj(Object lhs, Object rhs) {
         if ( (lhs == null) && (rhs == null) ) return 0;
         if (lhs == null) return 1;
@@ -1216,10 +1096,9 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
     }
     
     /** return true if the tags for the message meet our search criteria */
-    private boolean tagFilterPassed(Collection tags) {
+    private boolean tagFilterPassed(Collection<String> tags) {
         if (_rejectedTags != null) {
-            for (Iterator iter = _rejectedTags.iterator(); iter.hasNext(); ) {
-                String tag = (String)iter.next();
+            for (String tag : _rejectedTags) {
                 if (tags.contains(tag)) {
                     if (VERBOSE_DEBUG) _ui.debugMessage("Rejecting thread tagged with " + tag);
                     return false;
@@ -1228,8 +1107,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                         // substring match
                         String prefix = tag.substring(0, tag.length()-1);
                         boolean substringMatch = false;
-                        for (Iterator msgTagIter = tags.iterator(); msgTagIter.hasNext(); ) {
-                            String cur = (String)msgTagIter.next();
+                        for (String cur : tags) {
                             if (cur.startsWith(prefix)) {
                                 if (VERBOSE_DEBUG) _ui.debugMessage("Rejecting thread prefix tagged with " + tag);
                                 return false;
@@ -1240,15 +1118,13 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             }
         }
         if ( (_requiredTags != null) && (_requiredTags.size() > 0) ) {
-            for (Iterator iter = _requiredTags.iterator(); iter.hasNext(); ) {
-                String tag = (String)iter.next();
+            for (String tag : _requiredTags) {
                 if (!tags.contains(tag)) {
                     if (tag.endsWith("*") && (tag.length() > 0)) {
                         // substring match
                         String prefix = tag.substring(0, tag.length()-1);
                         boolean substringMatch = false;
-                        for (Iterator msgTagIter = tags.iterator(); msgTagIter.hasNext(); ) {
-                            String cur = (String)msgTagIter.next();
+                        for (String cur : tags) {
                             if (cur.startsWith(prefix)) {
                                 substringMatch = true;
                                 break;
@@ -1269,8 +1145,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         }
         if ( (_wantedTags != null) && (_wantedTags.size() > 0) ) {
             boolean found = false;
-            for (Iterator iter = _wantedTags.iterator(); iter.hasNext(); ) {
-                String tag = (String)iter.next();
+            for (String tag : _wantedTags) {
                 if (tags.contains(tag)) {
                     found = true;
                     break;
@@ -1278,8 +1153,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                     if (tag.endsWith("*") && (tag.length() > 0)) {
                         // substring match
                         String prefix = tag.substring(0, tag.length()-1);
-                        for (Iterator msgTagIter = tags.iterator(); msgTagIter.hasNext(); ) {
-                            String cur = (String)msgTagIter.next();
+                        for (String cur : tags) {
                             if (cur.startsWith(prefix)) {
                                 found = true;
                                 break;
@@ -1296,50 +1170,5 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             }
         }
         return true;
-    }
-    
-    private void init() {
-        _roots = new ArrayList();
-        _rootURIs = new ArrayList();
-        _threadTags = new ArrayList();
-        _threadMessages = new ArrayList();
-        _threadSubject = new ArrayList();
-        _threadRootAuthorId = new ArrayList();
-        _threadLatestAuthorId = new ArrayList();
-        _threadLatestPostDate = new ArrayList();
-    }
-
-    public String toString() {
-        StringBuilder buf = new StringBuilder();
-        buf.append(" threaded? ").append(_showThreaded);
-        buf.append(" unreadOnly? ").append(_unreadOnly);
-        buf.append(" owners? ").append(_includeOwners);
-        buf.append(" managers? ").append(_includeManagers);
-        buf.append(" authPosters? ").append(_includeAuthorizedPosters);
-        buf.append(" authReplies? ").append(_includeAuthorizedReplies);
-        buf.append(" unauthPosts? ").append(_includeUnauthorizedPosts);
-        if (_earliestReceiveDate > 0)
-            buf.append(" _earliestReceiveDate? ").append(DateTime.getDate(_earliestReceiveDate));
-        if (_earliestPostDate > 0)
-            buf.append(" _earliestPostDate? ").append(DateTime.getDate(_earliestPostDate));
-        buf.append(" applyTagFilterToMessages? ").append(_applyTagFilterToMessages);
-        buf.append(" pagesRequired? ").append(_minPages > 0);
-        buf.append(" attachmentsRequired? ").append(_minAttachments > 0);
-        buf.append(" refsRequired? ").append(_minReferences > 0);
-        buf.append(" keysRequired? ").append(_minKeys > 0);
-        buf.append(" decrypted? ").append(_alreadyDecrypted);
-        buf.append(" PBE? ").append(_pbe);
-        buf.append(" privateMessages? ").append(_privateMessage);
-        if (_channelHashes != null)
-            buf.append(" channels: ").append(_channelHashes);
-        else
-            buf.append(" channels: all");
-        if ( (_requiredTags != null) && (_requiredTags.size() > 0) )
-            buf.append(" requiredTags: [").append(_requiredTags).append("]");
-        if ( (_wantedTags != null) && (_wantedTags.size() > 0) )
-            buf.append(" wantedTags: [").append(_wantedTags).append("]");
-        if ( (_rejectedTags != null) && (_rejectedTags.size() > 0) )
-            buf.append(" rejectedTags: [").append(_rejectedTags).append("]");
-        return buf.toString();
     }
 }

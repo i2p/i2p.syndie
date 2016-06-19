@@ -153,25 +153,28 @@ public class ThreadReferenceNode extends ReferenceNode {
             for (int i = 0; i < children.length; i++)
                 addChild(children[i]);
     }
+
     public ThreadReferenceNode[] getChildren() {
         ThreadReferenceNode rv[] = new ThreadReferenceNode[getChildCount()];
         for (int i = 0; i < rv.length; i++)
             rv[i] = (ThreadReferenceNode)getChild(i);
         return rv;
     }
+
     public void clearParent() { _parent = null; }
     public long getUniqueId() { return (_msg != null ? _msg.msgId : 0-super.getUniqueId()); }
     
-    public static ArrayList deepThreadCopy(List orig) {
+    public static ArrayList<ThreadReferenceNode> deepThreadCopy(List<ThreadReferenceNode> orig) {
         if (orig == null) return new ArrayList();
-        ArrayList rv = new ArrayList(orig.size());
+        ArrayList<ThreadReferenceNode> rv = new ArrayList<ThreadReferenceNode>(orig.size());
         for (int i = 0; i < orig.size(); i++) {
-            ThreadReferenceNode node = (ThreadReferenceNode)orig.get(i);
+            ThreadReferenceNode node = orig.get(i);
             rv.add(deepThreadCopy(node));
         }
         return rv;
     }
-    public static ReferenceNode deepThreadCopy(ThreadReferenceNode node) {
+
+    public static ThreadReferenceNode deepThreadCopy(ThreadReferenceNode node) {
         if (node == null) return null;
         ThreadReferenceNode copy = new ThreadReferenceNode();
         copy._name = node._name;

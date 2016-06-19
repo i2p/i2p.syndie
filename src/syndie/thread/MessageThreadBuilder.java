@@ -63,8 +63,8 @@ public class MessageThreadBuilder {
         Hash chan = uri.getScope();
         String subject = null;
         String authorName = null;
-        List parentURIs = null;
-        List childURIs = null;
+        List<SyndieURI> parentURIs = null;
+        List<SyndieURI> childURIs = null;
         long chanId = _client.getChannelId(uri.getScope());
         if (chanId >= 0) {
             String chanName = _client.getChannelName(chanId);
@@ -114,6 +114,7 @@ public class MessageThreadBuilder {
     }
     
     private static final String SQL_GET_PARENT_URIS = "SELECT referencedChannelHash, referencedMessageId FROM messageHierarchy WHERE msgId = ? ORDER BY referencedCloseness ASC, msgId DESC";
+
     /* CREATE CACHED TABLE messageHierarchy (
      *         msgId                   BIGINT
      *         -- refers to a targetChannelId
@@ -127,14 +128,14 @@ public class MessageThreadBuilder {
      * );
      *
      */
-    private List getParentURIs(long msgId) {
+    private List<SyndieURI> getParentURIs(long msgId) {
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
             stmt = _client.con().prepareStatement(SQL_GET_PARENT_URIS);
             stmt.setLong(1, msgId);
             rs = stmt.executeQuery();
-            List rv = new ArrayList();
+            List<SyndieURI> rv = new ArrayList<SyndieURI>();
             while (rs.next()) {
                 byte chan[] = rs.getBytes(1);
                 long chanMsg = rs.getLong(2);
@@ -154,6 +155,7 @@ public class MessageThreadBuilder {
     }
 
     private static final String SQL_GET_CHILD_URIS = "SELECT c.channelHash, messageId FROM messageHierarchy mh JOIN channelMessage cm ON cm.msgId = mh.msgId JOIN channel c ON c.channelId = cm.scopeChannelId WHERE referencedChannelHash = ? AND referencedMessageId = ? ORDER BY referencedCloseness ASC, msgId DESC";
+
     /* CREATE CACHED TABLE messageHierarchy (
      *         msgId                   BIGINT
      *         -- refers to a targetChannelId
@@ -167,7 +169,7 @@ public class MessageThreadBuilder {
      * );
      *
      */
-    private List getChildURIs(Hash channel, long messageId) {
+    private List<SyndieURI> getChildURIs(Hash channel, long messageId) {
         PreparedStatement stmt = null;
         _client.getMessageIdsAuthenticated(channel);
         ResultSet rs = null;
@@ -176,7 +178,7 @@ public class MessageThreadBuilder {
             stmt.setBytes(1, channel.getData());
             stmt.setLong(2, messageId);
             rs = stmt.executeQuery();
-            List rv = new ArrayList();
+            List<SyndieURI> rv = new ArrayList<SyndieURI>();
             while (rs.next()) {
                 byte scope[] = rs.getBytes(1);
                 long childMessageId = rs.getLong(2);
@@ -204,13 +206,14 @@ public class MessageThreadBuilder {
         pruneEmpty();
         reindexTree(); // walk through the
     }
+
     private void buildTree(ThreadedReferenceNode node) {
         ThreadedReferenceNode cur = node;
-        List parents = node.getParentURIs();
+        List<SyndieURI> parents = node.getParentURIs();
         if (parents != null) {
             //_ui.debugMessage("building tree for " + node.getURI() + ": parents: " + parents);
             for (int i = 0; i < parents.size(); i++) {
-                SyndieURI uri = (SyndieURI)parents.get(i);
+                SyndieURI uri = parents.get(i);
                 ThreadedReferenceNode parent = (ThreadedReferenceNode)_uriToReferenceNode.get(uri);
                 if (parent == null) {
                     parent = new ThreadedReferenceNode(null, uri, null);
@@ -222,6 +225,7 @@ public class MessageThreadBuilder {
             }
         }
     }
+
     private void pruneEmpty() {
         for (Iterator iter = _uriToReferenceNode.keySet().iterator(); iter.hasNext(); ) {
             SyndieURI uri = (SyndieURI)iter.next();
@@ -266,7 +270,7 @@ public class MessageThreadBuilder {
         }
     }
     private void reindexTree() {
-        List roots = new ArrayList(1);
+        List<ThreadedReferenceNode> roots = new ArrayList(1);
         roots.add(_root);
         ThreadWalker walker = new ThreadWalker(_ui);
         ReferenceNode.walk(roots, walker);
@@ -294,29 +298,33 @@ public class MessageThreadBuilder {
     }
     
     private static class ThreadedReferenceNode extends ReferenceNode {
-        private List _parentURIs;
-        private List _childURIs;
+        private List<SyndieURI> _parentURIs;
+        private List<SyndieURI> _childURIs;
+
         public ThreadedReferenceNode(String name, SyndieURI uri, String description) {
             super(name, uri, description, null);
-            _parentURIs = new ArrayList();
-            _childURIs = new ArrayList();
+            _parentURIs = new ArrayList<SyndieURI>();
+            _childURIs = new ArrayList<SyndieURI>();
         }
-        public void setHistory(List parentURIs, List childURIs) {
+
+        public void setHistory(List<SyndieURI> parentURIs, List<SyndieURI> childURIs) {
             if (parentURIs != null) {
                 _parentURIs = parentURIs;
             } else {
                 if ( (_parentURIs == null) || (_parentURIs.size() > 0) )
-                    _parentURIs = new ArrayList();
+                    _parentURIs = new ArrayList<SyndieURI>();
             }
             if (childURIs != null) {
                 _childURIs = childURIs;
             } else {
                 if ( (_childURIs == null) || (_childURIs.size() > 0) )
-                    _childURIs = new ArrayList();
+                    _childURIs = new ArrayList<SyndieURI>();
             }
         }
-        public List getParentURIs() { return _parentURIs; }
-        public List getChildURIs() { return _childURIs; }
+
+        public List<SyndieURI> getParentURIs() { return _parentURIs; }
+        public List<SyndieURI> getChildURIs() { return _childURIs; }
+
         public void setParent(ThreadedReferenceNode node) { _parent = node; }
         public void setTreeIndex(String index) { _treeIndex = index; }
     }
