@@ -308,6 +308,7 @@ class ImportMeta {
             int rows = stmt.executeUpdate();
             if (rows != 1)
                 throw new SQLException("Unable to insert the new channel");
+            client.invalidateChannelCache(channelId, ident);
             return channelId;
         } finally {
             if (stmt != null) stmt.close();
@@ -427,6 +428,7 @@ class ImportMeta {
             stmt.setLong(9, channelId);
 
             if (stmt.executeUpdate() != 1) throw new SQLException("Unable to update the channel for " + ident.toBase64());
+            client.invalidateChannelCache(channelId, ident);
             return channelId;
         } finally {
             if (stmt != null) stmt.close();

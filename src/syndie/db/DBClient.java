@@ -32,6 +32,7 @@ import net.i2p.data.SigningPrivateKey;
 import net.i2p.data.SigningPublicKey;
 import net.i2p.data.Signature;
 import net.i2p.data.Hash;
+import net.i2p.util.LHMCache;
 import net.i2p.util.Log;
 import net.i2p.util.SecureFile;
 import net.i2p.util.SecureFileOutputStream;
@@ -127,6 +128,10 @@ public class DBClient {
         
     private static final String DEFAULT_ADMIN = "SA";
 
+    private static final int CACHE_SIZE = 1024;
+    private final Map<Long, String> _idToNameCache;
+    private final Map<Hash, String> _hashToNameCache;
+    private final Map<Long, Hash> _idToHashCache;
 
     /**
      *  @param rootDir should be a SecureFile
@@ -144,6 +149,9 @@ public class DBClient {
         _shutdownInProgress = false;
         _shouldDefrag = DEFRAG;
         _uriDAO = new SyndieURIDAO(this);
+        _idToNameCache = new LHMCache<Long, String>(CACHE_SIZE);
+        _hashToNameCache = new LHMCache<Hash, String>(CACHE_SIZE);
+        _idToHashCache = new LHMCache<Long, Hash>(CACHE_SIZE);
     }
     
     public void restart(String rootDir) {
@@ -1047,8 +1055,21 @@ public class DBClient {
 
     private static final String SQL_GET_CHANNEL_IDS = "SELECT channelId, channelHash FROM channel";
 
-    /** retrieve a mapping of channelId (Long) to channel hash (Hash) */
+    /**
+     *  retrieve a mapping of channelId (Long) to channel hash (Hash)
+     *  Since 1.106b-3, saves to a local cache
+     */
     public Map<Long, Hash> getChannelIds() {
+        Map<Long, Hash> rv = x_getChannelIds();
+        synchronized(_idToHashCache) {
+            _idToHashCache.clear();
+            _idToHashCache.putAll(rv);
+        }
+        return rv;
+    }
+
+    /** retrieve a mapping of channelId (Long) to channel hash (Hash) */
+    private Map<Long, Hash> x_getChannelIds() {
         Map<Long, Hash> rv = new HashMap<Long, Hash>();
         PreparedStatement stmt = null;
         ResultSet rs = null;
@@ -1076,10 +1097,47 @@ public class DBClient {
         return rv;
     }
     
+    /**
+     *  Invalidate the caches for the
+     *  channel with this ID and this Hash
+     *  @since 1.106b-3
+     */
+    void invalidateChannelCache(long channelId, Hash channelHash) {
+        Long id = Long.valueOf(channelId);
+        synchronized(_idToHashCache) {
+            _idToHashCache.remove(id);
+        }
+        synchronized(_hashToNameCache) {
+            _hashToNameCache.remove(channelHash);
+        }
+        synchronized(_idToNameCache) {
+            _idToNameCache.remove(id);
+        }
+    }
+
     private static final String SQL_GET_CHANNEL_HASH = "SELECT channelHash FROM channel WHERE channelId = ?";
 
+    /**
+     *  Since 1.106b-3, uses a local cache
+     */
     public Hash getChannelHash(long channelId) {
         if (channelId < 0) return null;
+        Long id = Long.valueOf(channelId);
+        synchronized(_idToHashCache) {
+            Hash rv = _idToHashCache.get(id);
+            if (rv != null)
+                return rv;
+        }
+        Hash rv = x_getChannelHash(channelId);
+        if (rv != null) {
+            synchronized(_idToHashCache) {
+                _idToHashCache.put(id, rv);
+            }
+        }
+        return rv;
+    }
+
+    private Hash x_getChannelHash(long channelId) {
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
@@ -1133,23 +1191,44 @@ public class DBClient {
         }
     }
     
-    private static final String SQL_GET_CHANNEL_NAME = "SELECT name, petName FROM channel c LEFT OUTER JOIN nymChannelPetName ncpn ON c.channelId = ncpn.channelId WHERE channelHash = ?";
+    // petName seems to be unused
+    //private static final String SQL_GET_CHANNEL_NAME = "SELECT name, petName FROM channel c LEFT OUTER JOIN nymChannelPetName ncpn ON c.channelId = ncpn.channelId WHERE channelHash = ?";
+    private static final String SQL_GET_CHANNEL_NAME_FAST = "SELECT name FROM channel WHERE channelHash = ?";
 
+    /**
+     *  Since 1.106b-3, uses a local cache
+     */
     public String getChannelName(Hash channel) {
         if (channel == null) return null;
+        synchronized(_hashToNameCache) {
+            String rv = _hashToNameCache.get(channel);
+            if (rv != null)
+                return rv;
+        }
+        String rv = x_getChannelName(channel);
+        if (rv != null) {
+            synchronized(_hashToNameCache) {
+                _hashToNameCache.put(channel, rv);
+            }
+        }
+        return rv;
+    }
+
+    private String x_getChannelName(Hash channel) {
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
-            stmt = _con.prepareStatement(SQL_GET_CHANNEL_NAME);
+            //stmt = _con.prepareStatement(SQL_GET_CHANNEL_NAME);
+            stmt = _con.prepareStatement(SQL_GET_CHANNEL_NAME_FAST);
             stmt.setBytes(1, channel.getData());
             rs = stmt.executeQuery();
             if (rs.next()) {
                 String name = rs.getString(1);
-                String petName = rs.getString(2);
-                if ( (petName == null) || (petName.trim().length() == 0) )
+                //String petName = rs.getString(2);
+                //if ( (petName == null) || (petName.trim().length() == 0) )
                     return name;
-                else
-                    return petName;
+                //else
+                //    return petName;
             } else {
                 return null;
             }
@@ -1162,9 +1241,75 @@ public class DBClient {
             if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
         }
     }
+
+    private static final String SQL_GET_CHANNEL_NAMES = "SELECT channelId, name FROM channel";
+
+    /**
+     *  retrieve a mapping of channelId (Long) to channel name (String)
+     *  @since 1.106b-3
+     */
+    public Map<Long, String> getChannelNames() {
+        Map<Long, String> rv = x_getChannelNames();
+        synchronized(_idToNameCache) {
+            _idToNameCache.clear();
+            _idToNameCache.putAll(rv);
+        }
+        return rv;
+    }
+
+    /**
+     *  retrieve a mapping of channelId (Long) to channel name (String)
+     *  @since 1.106b-3
+     */
+    private Map<Long, String> x_getChannelNames() {
+        Map<Long, String> rv = new HashMap<Long, String>();
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            stmt = _con.prepareStatement(SQL_GET_CHANNEL_NAMES);
+            rs = stmt.executeQuery();
+            while (rs.next()) {
+                long id = rs.getLong(1);
+                if (rs.wasNull())
+                    continue;
+                String name = rs.getString(2);
+                if (rs.wasNull())
+                    continue;
+                rv.put(Long.valueOf(id), name);
+            }
+        } catch (SQLException se) {
+            if (_log.shouldLog(Log.ERROR))
+                _log.error("Error retrieving the channel list", se);
+        } finally {
+            if (rs != null) try { rs.close(); } catch (SQLException se) {}
+            if (stmt != null) try { stmt.close(); } catch (SQLException se) {}
+        }
+        return rv;
+    }
     
     private static final String SQL_GET_CHANNEL_NAME_ID = "SELECT name, petName FROM channel c LEFT OUTER JOIN nymChannelPetName ncpn ON c.channelId = ncpn.channelId WHERE channelId = ?";
+
+    /**
+     *  Since 1.106b-3, uses a local cache
+     */
     public String getChannelName(long chanId) {
+        if (chanId < 0) return null;
+        Long id = Long.valueOf(chanId);
+        synchronized(_idToNameCache) {
+            String rv = _idToNameCache.get(id);
+            if (rv != null)
+                return rv;
+        }
+        String rv = x_getChannelName(chanId);
+        if (rv != null) {
+            synchronized(_idToNameCache) {
+                _idToNameCache.put(id, rv);
+            }
+        }
+        return rv;
+    }
+
+    private String x_getChannelName(long chanId) {
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
@@ -1955,10 +2100,15 @@ public class DBClient {
         }
         
         // ok, now sort the identIds/manageIds/postIds/pubPostIds by their names
-        sortChannels(identIds);
-        sortChannels(manageIds);
-        sortChannels(postIds);
-        sortChannels(pubPostIds);
+        //long begin = System.currentTimeMillis();
+        // build the caches for much faster sorting
+        Map<Long, Hash> idMap = getChannelIds();
+        Map<Long, String> nameMap = getChannelNames();
+        sortChannels(identIds, idMap, nameMap);
+        sortChannels(manageIds, idMap, nameMap);
+        sortChannels(postIds, idMap, nameMap);
+        sortChannels(pubPostIds, idMap, nameMap);
+        //System.out.println("********************** getChannels() sort took " + (System.currentTimeMillis() - begin));
         
         // unused
         //int totalGetEvents = 0;
@@ -1993,15 +2143,22 @@ public class DBClient {
     /**
      *  Sorts by name in current locale
      *  @param chanIds in: unsorted; out: sorted
+     *  @param idMap for speed
+     *  @param nameMap for speed
      */
-    private void sortChannels(List<Long> chanIds) {
+    private static void sortChannels(List<Long> chanIds, Map<Long, Hash> idMap, Map<Long, String> nameMap) {
         TreeMap<String, Long> nameToId = new TreeMap(Collator.getInstance());
         for (int i = 0; i < chanIds.size(); i++) {
             Long id = chanIds.get(i);
-            String name = getChannelName(id.longValue());
-            if (name == null) name = "";
-            name = name + ' ' + id.toString(); // guaranteed to be unique
-            nameToId.put(name, id);
+            String name = nameMap.get(id);
+            Hash h = idMap.get(id);
+            String hash = (h != null) ? h.toBase64() : "~~~~~~~~~~~~~~~~~~~~~";
+            String key;
+            if (name == null)
+                key = hash;
+            else
+                key = name + ' ' + hash; // guaranteed to be unique
+            nameToId.put(key, id);
         }
         chanIds.clear();
         chanIds.addAll(nameToId.values());
@@ -2047,7 +2204,7 @@ public class DBClient {
 
     /**
      * search through the channels for those matching the given criteria
-     * @return list of matching channels (ChannelInfo)
+     * @return list of matching channels (ChannelInfo) unsorted
      */
     public List<ChannelInfo> getChannels(ChannelSearchCriteria criteria) { //String name, Set tagsInclude, Set tagsRequire, Set tagsExclude, String hashPrefix) {
         String name = criteria.getName();
