@@ -58,7 +58,7 @@ import syndie.util.StringUtil;
  *  The interface to the database itself
  *
  *  Note: "messageId" parameters are generally the external ID (timestamp),
- *  and "msgId" paramters are the internal database ID.
+ *  and "msgId" parameters are the internal database ID.
  *
  */
 public class DBClient {

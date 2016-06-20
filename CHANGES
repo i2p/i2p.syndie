@@ -1,7 +1,12 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
-* 2016-06-xx 1.106b-3 (zzz)
+* 2016-06-21 1.106b-3 (zzz)
   - Database speedups and caching
+  - Speed up calculation of unread messages, which was stalling the UI
+  - Fix Unread button, broken in 1.106b-2
+  - Show message dates, not import dates, in Private Msgs button
+  - Consistent placement for Cancel/OK buttons, add icons to buttons
+  - Add icons to status bar and search buttons
 
 * 2016-06-19 1.106b-2 (zzz)
   - Fix database corruption in 1.106b-1

@@ -48,7 +48,7 @@ class SyncInboundFetcher {
      */
     public void start() {
         for (int i = 0; i < THREADS; i++) {
-            Thread t = new Thread(new Runner(), "InboundFetcher" + (i+1) + '/' + THREADS);
+            Thread t = new Thread(new Runner(), "InboundFetcher " + (i+1) + '/' + THREADS);
             t.setDaemon(true);
             t.start();
         }

@@ -412,10 +412,10 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
     }
     
     private static class FilterBar extends BaseComponent implements Translatable, Themeable {
-        private NavigationControl _barNavControl;
-        private URIControl _barURIControl;
-        private Composite _filterRow;
-        private MessageTree _msgTree;
+        private final NavigationControl _barNavControl;
+        private final URIControl _barURIControl;
+        private final Composite _filterRow;
+        private final MessageTree _msgTree;
         private Label _filterLabel;
         private Combo _filterAge;
         private Label _filterKeywordLabel;
@@ -441,7 +441,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
         private ReferenceChooserPopup _forumChooser;
         private int _age; /* max age, in days, to display */
         private Hash _forumScopeOther[];
-        private PreviewControlListener _listener;
+        private final PreviewControlListener _listener;
         
         private static final int DEFAULT_AGE_DAYS = 3653;
 
