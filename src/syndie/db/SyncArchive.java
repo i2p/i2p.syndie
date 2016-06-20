@@ -363,7 +363,7 @@ public class SyncArchive {
         boolean setIsExecuting(boolean executing) {
             boolean changed;
             synchronized (IncomingAction.this) {
-                boolean wasExecuting = _state != IncomingState.INIT;
+                boolean wasExecuting = isExecuting();
                 changed = wasExecuting != executing;
                 if (changed) {
                     if (executing)
