@@ -8,8 +8,8 @@ import net.i2p.data.Base64;
  */
 public class Opts {
     private String _command;
-    private Map _opts;
-    private List _args;
+    private Map<String, List<String>> _opts;
+    private List<String> _args;
     private int _size;
     private boolean _parseOk;
     private String _origLine;
@@ -46,14 +46,14 @@ public class Opts {
     public Opts(String line) {
         this();
         _origLine = line;
-        List elements = splitLine(line);
+        List<String> elements = splitLine(line);
         
         if (elements.size() > 0) {
-            _command = (String)elements.get(0);
+            _command = elements.get(0);
             if (elements.size() > 1) {
                 String elems[] = new String[elements.size()-1];
                 for (int i = 0; i < elems.length; i++)
-                    elems[i] = (String)elements.get(i+1);
+                    elems[i] = elements.get(i+1);
                 _parseOk = parse(elems);
             }
         }
@@ -81,7 +81,7 @@ public class Opts {
                         return false;
                     }
                     String param = args[i+1];
-                    List vals = (List)_opts.get(arg);
+                    List<String> vals = _opts.get(arg);
                     if (vals == null)
                         vals = new ArrayList();
                     vals.add(param);
@@ -105,15 +105,15 @@ public class Opts {
     public String getCommand() { return _command; }
     public void setCommand(String cmd) { _command = cmd; }
     public String getOrigLine() { return _origLine; }
-    public Set getOptNames() { return new HashSet(_opts.keySet()); }
+    public Set<String> getOptNames() { return new HashSet(_opts.keySet()); }
     public String getOptValue(String name) {
-        List vals = (List)_opts.get(name);
+        List<String> vals = _opts.get(name);
         if ( (vals != null) && (vals.size() > 0) )
-            return (String)vals.get(0);
+            return vals.get(0);
         else
             return null;
     }
-    public List getOptValues(String name) { return (List)_opts.get(name); }
+    public List<String> getOptValues(String name) { return _opts.get(name); }
 
     /**
      *  Warning, --foo returns defaultValue, not true.
@@ -148,18 +148,18 @@ public class Opts {
             return Base64.decode(val);
         }
     }
-    public List getArgs() { return _args; }
+    public List<String> getArgs() { return _args; }
     public String getArg(int index) {
         if ( (index >= 0) && (index < _args.size()) )
-            return (String)_args.get(index);
+            return _args.get(index);
         return null;
     }
 
     public int size() { return _size; }
 
     /** return list of missing options, or an empty list if we have all of the required options */
-    public List requireOpts(String opts[]) {
-        List missing = new ArrayList();
+    public List<String> requireOpts(String opts[]) {
+        List<String> missing = new ArrayList();
         for (int i = 0; i < opts.length; i++) {
             if (!_opts.containsKey(opts[i]))
                 missing.add(opts[i]);
@@ -170,7 +170,7 @@ public class Opts {
     public void setOptValue(String name, String val) { addOptValue(name, val); }
     public void addOptValue(String name, String val) {
         if ( (val == null) || (name == null) ) return;
-        List vals = getOptValues(name);
+        List<String> vals = getOptValues(name);
         if (vals == null) {
             vals = new ArrayList();
             _opts.put(name, vals);
@@ -190,8 +190,7 @@ public class Opts {
     
     public String toString() {
         StringBuilder buf = new StringBuilder();
-        for (Iterator iter = _opts.keySet().iterator(); iter.hasNext(); ) {
-            String name = (String)iter.next();
+        for (String name : _opts.keySet()) {
             String val = getOptValue(name);
             buf.append(name).append('=').append(val).append('\t');
         }
@@ -217,8 +216,8 @@ public class Opts {
      *
      * Works as an iterating state machine
      * */
-    private static List splitLine(String line) {
-        List rv = new ArrayList();
+    private static List<String> splitLine(String line) {
+        List<String> rv = new ArrayList();
         if (line == null) return rv;
         char l[] = line.toCharArray();
 
