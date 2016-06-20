@@ -348,10 +348,12 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
             _actions = new Composite(_root, SWT.NONE);
             _actions.setLayout(new FillLayout(SWT.HORIZONTAL));
             _actions.setLayoutData(new GridData(GridData.FILL, GridData.BEGINNING, true, true, 7, 1));
-            _save = new Button(_actions, SWT.PUSH);
             _cancel = new Button(_actions, SWT.PUSH);
+            _save = new Button(_actions, SWT.PUSH);
             _save.setEnabled(false);
             _cancel.setEnabled(false);
+            _save.setImage(ImageUtil.ICON_SYNDICATE_STATUS_OK);
+            _cancel.setImage(ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
 
             _save.addSelectionListener(new SelectionListener() {
                 public void widgetDefaultSelected(SelectionEvent selectionEvent) { saveChanges(); }

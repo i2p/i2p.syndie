@@ -106,6 +106,8 @@ class ManageForumAuthReply extends BaseComponent implements Themeable, Translata
         
         _cancel = new Button(actions, SWT.PUSH);
         _ok = new Button(actions, SWT.PUSH);
+        _ok.setImage(ImageUtil.ICON_SYNDICATE_STATUS_OK);
+        _cancel.setImage(ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
         
         _ok.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { ok(); }

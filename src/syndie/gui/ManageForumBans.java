@@ -114,6 +114,8 @@ class ManageForumBans extends BaseComponent implements Themeable, Translatable {
         _ok.addSelectionListener(new FireSelectionListener() {
             public void fire() { save(); }
         });
+        _ok.setImage(ImageUtil.ICON_SYNDICATE_STATUS_OK);
+        _cancel.setImage(ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
         
         initDnDBanListSrc();
         initDnDTarget();

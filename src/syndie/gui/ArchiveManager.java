@@ -121,6 +121,8 @@ public class ArchiveManager extends BaseComponent implements Translatable, Theme
         
         _cancel = new Button(actions, SWT.PUSH);
         _save = new Button(actions, SWT.PUSH);
+        _cancel.setImage(ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
+        _save.setImage(ImageUtil.ICON_SYNDICATE_STATUS_OK);
         
         _save.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { saveConfig(); }

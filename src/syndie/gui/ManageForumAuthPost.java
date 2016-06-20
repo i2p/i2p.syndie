@@ -142,6 +142,8 @@ class ManageForumAuthPost extends BaseComponent implements Themeable, Translatab
         
         _cancel = new Button(actions, SWT.PUSH);
         _ok = new Button(actions, SWT.PUSH);
+        _ok.setImage(ImageUtil.ICON_SYNDICATE_STATUS_OK);
+        _cancel.setImage(ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
         
         _choiceAnyone.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { pickChoiceAnyone(); }

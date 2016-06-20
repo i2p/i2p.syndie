@@ -170,6 +170,9 @@ class ManageForumArchives extends BaseComponent implements Themeable, Translatab
             public void widgetSelected(SelectionEvent selectionEvent) { ok(); }
         });
 
+        _ok.setImage(ImageUtil.ICON_SYNDICATE_STATUS_OK);
+        _cancel.setImage(ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
+
         _choiceHTTP.setSelection(true);
         
         _translationRegistry.register(this);

@@ -272,11 +272,13 @@ public class CancelManager extends BaseComponent implements Themeable, Translata
             Composite buttons = new Composite(_detailRoot, SWT.NONE);
             buttons.setLayoutData(new GridData(GridData.FILL, GridData.CENTER, true, false, 2, 1));
             buttons.setLayout(new FillLayout(SWT.HORIZONTAL));
-            _save = new Button(buttons, SWT.PUSH);
-            _save.addSelectionListener(new FireSelectionListener() { public void fire() { saveChanges(); } });
             _revert = new Button(buttons, SWT.PUSH);
             _revert.addSelectionListener(new FireSelectionListener() { public void fire() { revertChanges(); } });
+            _save = new Button(buttons, SWT.PUSH);
+            _save.addSelectionListener(new FireSelectionListener() { public void fire() { saveChanges(); } });
             
+            _save.setImage(ImageUtil.ICON_SYNDICATE_STATUS_OK);
+            _revert.setImage(ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
             _save.setText(getText("Save changes"));
             _revert.setText(getText("Revert changes"));
             
