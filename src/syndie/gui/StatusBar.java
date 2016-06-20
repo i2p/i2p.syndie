@@ -106,6 +106,7 @@ class StatusBar extends BaseComponent implements Translatable, Themeable, DBClie
         _root.setLayout(gl);
         
         _bookmark = new Button(_root, SWT.PUSH);
+        _bookmark.setImage(ImageUtil.ICON_VM_BOOKMARK);
         _bookmark.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _bookmark.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) {
@@ -140,6 +141,7 @@ class StatusBar extends BaseComponent implements Translatable, Themeable, DBClie
         });
         
         _newForum = new Button(_root, SWT.PUSH);
+        _newForum.setImage(ImageUtil.ICON_MSG_FLAG_ISNEW);
         _newForum.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         
         _newForumMenu = new Menu(_newForum);
@@ -157,6 +159,7 @@ class StatusBar extends BaseComponent implements Translatable, Themeable, DBClie
         });
         
         _unread = new Button(_root, SWT.PUSH);
+        _unread.setImage(ImageUtil.ICON_MSG_TYPE_NORMAL);
         _unread.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         
         _unreadMenu = new Menu(_unread);
@@ -175,6 +178,7 @@ class StatusBar extends BaseComponent implements Translatable, Themeable, DBClie
         });
         
         _pbe = new Button(_root, SWT.PUSH);
+        _pbe.setImage(ImageUtil.ICON_MSG_FLAG_PBE);
         _pbe.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         
         _pbeMenu = new Menu(_pbe);
@@ -192,6 +196,7 @@ class StatusBar extends BaseComponent implements Translatable, Themeable, DBClie
         });
         
         _priv = new Button(_root, SWT.PUSH);
+        _priv.setImage(ImageUtil.ICON_MSG_TYPE_PRIVATE);
         _priv.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         
         _privMenu = new Menu(_priv);
