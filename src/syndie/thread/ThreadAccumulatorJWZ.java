@@ -189,10 +189,9 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 msgIds[i++] = tmi.msgId;
             }
             //long afterPrep = System.currentTimeMillis();
-            List<Long> unread = _client.getUnread(msgIds);
+            Set<Long> unread = _client.getUnread(msgIds);
             int removed = 0;
             //long beforeStrip = System.currentTimeMillis();
-            // FIXME O(n**2)
             for (Iterator<ThreadMsgId> iter = matchingThreadMsgIds.iterator(); iter.hasNext(); ) {
                 ThreadMsgId tmi = iter.next();
                 if (!unread.contains(Long.valueOf(tmi.msgId))) {

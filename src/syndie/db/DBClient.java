@@ -6086,12 +6086,12 @@ public class DBClient {
     private static final String SQL_GET_MSG_READ = 
             "SELECT msgId FROM nymUnreadMessage WHERE nymId = ? AND msgId IN (";
 
-    /** get a list of msgIds (Long) from the given set who have already been read */
-    public List<Long> getUnread(long msgIds[]) { return getUnread(_nymId, msgIds); }
+    /** get a Set of msgIds (Long) from the given set who have already been read */
+    public Set<Long> getUnread(long msgIds[]) { return getUnread(_nymId, msgIds); }
 
-    public List<Long> getUnread(long nymId, long msgIds[]) {
+    public Set<Long> getUnread(long nymId, long msgIds[]) {
         long begin = System.currentTimeMillis();
-        List<Long> rv = new ArrayList();
+        Set<Long> rv = new HashSet<Long>();
         StringBuilder buf = new StringBuilder(SQL_GET_MSG_READ);
         for (int i = 0; i < msgIds.length; i++) {
             buf.append(msgIds[i]);
