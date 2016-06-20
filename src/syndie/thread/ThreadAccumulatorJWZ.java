@@ -39,7 +39,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
     private String _keyword;
     private boolean _publicMessage;
     private boolean _authorizedMessage;
-    private Set _postByScopeIds;
+    private Set<Long> _postByScopeIds;
     
     private int _sortField;
     private boolean _sortOrderAscending;
@@ -80,7 +80,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         if ( (postBy == null) || (postBy.length == 0) ) {
             _postByScopeIds = null;
         } else {
-            Set chanIds = new HashSet();
+            Set<Long> chanIds = new HashSet();
             for (int i = 0; i < postBy.length; i++) {
                 byte b[] = Base64.decode(postBy[i]);
                 if ( (b != null) && (b.length == Hash.HASH_LENGTH) ) {
@@ -177,7 +177,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         }
         
         // filter by date and scope only
-        Set matchingThreadMsgIds = getMatchingThreadMsgIds();
+        Set<ThreadMsgId> matchingThreadMsgIds = getMatchingThreadMsgIds();
         _ui.debugMessage("matching msgIds: " + matchingThreadMsgIds.size());
         //long beforeFilterStatus = System.currentTimeMillis();
         
@@ -185,14 +185,14 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             //long beforePrep = System.currentTimeMillis();
             long msgIds[] = new long[matchingThreadMsgIds.size()];
             int i = 0;
-            for (Iterator<ThreadMsgId> iter = matchingThreadMsgIds.iterator(); iter.hasNext(); ) {
-                ThreadMsgId tmi = iter.next();
-                msgIds[i] = tmi.msgId;
+            for (ThreadMsgId tmi : matchingThreadMsgIds) {
+                msgIds[i++] = tmi.msgId;
             }
             //long afterPrep = System.currentTimeMillis();
-            List unread = _client.getUnread(msgIds);
+            List<Long> unread = _client.getUnread(msgIds);
             int removed = 0;
             //long beforeStrip = System.currentTimeMillis();
+            // FIXME O(n**2)
             for (Iterator<ThreadMsgId> iter = matchingThreadMsgIds.iterator(); iter.hasNext(); ) {
                 ThreadMsgId tmi = iter.next();
                 if (!unread.contains(Long.valueOf(tmi.msgId))) {
@@ -330,6 +330,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 "WHERE c.channelHash = ? AND m.importDate > ? AND messageId > ? " +
                 "AND m.isCancelled = FALSE AND m.deletionCause IS NULL AND m.readKeyMissing = false " +
                 "AND m.pbePrompt IS NULL AND m.replyKeyMissing = false";
+
     private static final String SQL_GET_BASE_MSGS_ALLCHANS = "SELECT msgId, channelHash, messageId, wasAuthorized, authorChannelId FROM channelMessage " +
                 "JOIN channel ON scopeChannelId = channelId " +
                 "WHERE importDate > ? AND messageId > ? " +
@@ -341,18 +342,19 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 "JOIN channel cs ON scopeChannelId = cs.channelId " +
                 "WHERE c.channelHash = ? AND m.importDate > ? AND messageId > ? " +
                 "AND m.pbePrompt IS NOT NULL AND m.deletionCause IS NULL";
+
     private static final String SQL_GET_BASE_MSGS_ALLCHANS_PBE = "SELECT msgId, channelHash, messageId, wasAuthorized, authorChannelId FROM channelMessage m " +
                 "JOIN channel ON scopeChannelId = channelId " +
                 "WHERE m.importDate > ? AND messageId > ? " +
                 "AND m.pbePrompt IS NOT NULL AND m.deletionCause IS NULL";
 
-    private Set getMatchingThreadMsgIds() { return getMatchingThreadMsgIds(false); }
+    private Set<ThreadMsgId> getMatchingThreadMsgIds() { return getMatchingThreadMsgIds(false); }
 
-    private Set getMatchingThreadMsgIds(boolean pbePending) {
+    private Set<ThreadMsgId> getMatchingThreadMsgIds(boolean pbePending) {
         long minImportDate = _earliestReceiveDate;
         long minMsgId = _earliestPostDate;
         
-        Set matchingThreadMsgIds = new HashSet();
+        Set<ThreadMsgId> matchingThreadMsgIds = new HashSet();
         
         // do gather threads
         PreparedStatement stmt = null;
@@ -453,13 +455,13 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
     }
     
     private void gatherPBEPendingDecryption() {
-        Set matchingThreadMsgIds = getMatchingThreadMsgIds(true);
+        Set<ThreadMsgId> matchingThreadMsgIds = getMatchingThreadMsgIds(true);
         if (VERBOSE_DEBUG) _ui.debugMessage("PBE pending matching msgIds: " + matchingThreadMsgIds.size());
         
         // the messages are still encrypted, so we dont know too much.  fake
         // what we do know though
-        for (Iterator iter = matchingThreadMsgIds.iterator(); iter.hasNext(); ) {
-            ThreadMsgId tmi = (ThreadMsgId)iter.next();
+        for (Iterator<ThreadMsgId> iter = matchingThreadMsgIds.iterator(); iter.hasNext(); ) {
+            ThreadMsgId tmi = iter.next();
             long chanId = _client.getChannelId(tmi.scope);
 
             ThreadReferenceNode node = new ThreadReferenceNode(tmi);
@@ -481,7 +483,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
     }
     
     private ThreadReferenceNode[] buildThreads(Set matchingThreadMsgIds) {
-        List rv = null;
+        List<ThreadReferenceNode> rv = null;
         if (VERBOSE_DEBUG) _ui.debugMessage("building threads w/ matching msgIds: " + matchingThreadMsgIds.size());
         if (_showThreaded) {
             ThreadBuilder b = new ThreadBuilder(_client, _ui);
@@ -505,7 +507,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             //long after = System.currentTimeMillis();
             //if (VERBOSE_DEBUG) _ui.debugMessage("build (un)threads took " + (after-before) + " to build: \n" + rv);
         }
-        return (ThreadReferenceNode[])rv.toArray(new ThreadReferenceNode[0]);
+        return rv.toArray(new ThreadReferenceNode[0]);
     }
     
     private static final String SQL_BUILD_ANCESTORS = 
@@ -709,12 +711,12 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         long targetChannelId = root.getThreadTarget();
         if (targetChannelId == -1)
             return true;
-        Set allowedAuthorIds = new HashSet();
+        Set<Long> allowedAuthorIds = new HashSet();
         if (_includeOwners)
             allowedAuthorIds.add(Long.valueOf(targetChannelId));
-        List authKeys = _client.getAuthorizedPosters(targetChannelId, false, true, true);
+        List<SigningPublicKey> authKeys = _client.getAuthorizedPosters(targetChannelId, false, true, true);
         for (int i = 0; i < authKeys.size(); i++) {
-            Hash chan = ((SigningPublicKey)authKeys.get(i)).calculateHash();
+            Hash chan = authKeys.get(i).calculateHash();
             long chanId = _client.getChannelId(chan);
             // we don't need to worry about authors that can post but that we don't have a channelId for,
             // since we only care about the ones we have messages from (and we always have a channelId for
@@ -749,7 +751,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
             if (!nodeIsAuthorized) {
                 if (VERBOSE_DEBUG) _ui.debugMessage("node wasn't a dummy, but they're not sufficiently authorized: " + node.getAuthorId() + "/" + node.getURI() + " parentAuth?" + parentIsAuthorized);
                 ReferenceNode root = node;
-                List parentURIs = new ArrayList();
+                List<SyndieURI> parentURIs = new ArrayList();
                 while (root.getParent() != null) {
                     root = root.getParent();
                     if (root.getURI() != null)
@@ -869,8 +871,8 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
     }
 
     private ThreadReferenceNode[] sortAuthor(ThreadReferenceNode peers[]) {
-        TreeSet sorted = new TreeSet(_sortOrderAscending ? ASCENDING_COMPARATOR : DESCENDING_COMPARATOR);
-        HashMap keyToNode = new HashMap();
+        TreeSet<String> sorted = new TreeSet(_sortOrderAscending ? ASCENDING_COMPARATOR : DESCENDING_COMPARATOR);
+        HashMap<String, ThreadReferenceNode> keyToNode = new HashMap();
         for (int i = 0; i < peers.length; i++) {
             String author = peers[i].getName();
             if (author == null) author = "";
@@ -887,14 +889,14 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         //_ui.debugMessage("sorting by author/" + _sortOrderAscending + " among " + peers.length + " peers");
         ThreadReferenceNode rv[] = new ThreadReferenceNode[peers.length];
         int i = 0;
-        for (Iterator iter = sorted.iterator(); iter.hasNext(); i++)
-            rv[i] = (ThreadReferenceNode)keyToNode.get(iter.next());
+        for (String key : sorted)
+            rv[i++] = keyToNode.get(key);
         return rv;
     }
 
     private ThreadReferenceNode[] sortForum(ThreadReferenceNode peers[]) { 
-        TreeSet sorted = new TreeSet(_sortOrderAscending ? ASCENDING_COMPARATOR : DESCENDING_COMPARATOR);
-        HashMap keyToNode = new HashMap();
+        TreeSet<String> sorted = new TreeSet(_sortOrderAscending ? ASCENDING_COMPARATOR : DESCENDING_COMPARATOR);
+        HashMap<String, ThreadReferenceNode> keyToNode = new HashMap();
         for (int i = 0; i < peers.length; i++) {
             // todo: make this sort on the forum name, not its local internal channelId
             String target = peers[i].getThreadTarget() + "";
@@ -911,14 +913,14 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         //_ui.debugMessage("sorting by forum/" + _sortOrderAscending + " among " + peers.length + " peers");
         ThreadReferenceNode rv[] = new ThreadReferenceNode[peers.length];
         int i = 0;
-        for (Iterator iter = sorted.iterator(); iter.hasNext(); i++)
-            rv[i] = (ThreadReferenceNode)keyToNode.get(iter.next());
+        for (String key : sorted)
+            rv[i++] = keyToNode.get(key);
         return rv;
     }
 
     private ThreadReferenceNode[] sortSubject(ThreadReferenceNode peers[]) { 
-        TreeSet sorted = new TreeSet(_sortOrderAscending ? ASCENDING_COMPARATOR : DESCENDING_COMPARATOR);
-        HashMap keyToNode = new HashMap();
+        TreeSet<String> sorted = new TreeSet(_sortOrderAscending ? ASCENDING_COMPARATOR : DESCENDING_COMPARATOR);
+        HashMap<String, ThreadReferenceNode> keyToNode = new HashMap();
         for (int i = 0; i < peers.length; i++) {
             String subject = peers[i].getSubject();
             if (subject == null) subject = "";
@@ -936,15 +938,15 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         //_ui.debugMessage("sorting by subject/" + _sortOrderAscending + " among " + peers.length + " peers");
         ThreadReferenceNode rv[] = new ThreadReferenceNode[peers.length];
         int i = 0;
-        for (Iterator iter = sorted.iterator(); iter.hasNext(); i++)
-            rv[i] = (ThreadReferenceNode)keyToNode.get(iter.next());
+        for (String key : sorted)
+            rv[i++] = keyToNode.get(key);
         return rv;
     }
 
     /** sort by *(sub)thread* date, not by message date */
     private ThreadReferenceNode[] sortDate(ThreadReferenceNode peers[]) {
-        TreeSet sorted = new TreeSet(_sortOrderAscending ? ASCENDING_COMPARATOR : DESCENDING_COMPARATOR);
-        HashMap keyToNode = new HashMap();
+        TreeSet<Long> sorted = new TreeSet(_sortOrderAscending ? ASCENDING_COMPARATOR : DESCENDING_COMPARATOR);
+        HashMap<Long, ThreadReferenceNode> keyToNode = new HashMap();
         for (int i = 0; i < peers.length; i++) {
             long when = -1;
             if (_earliestReceiveDate > 0) {
@@ -962,8 +964,8 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
         //_ui.debugMessage("sorting by date/" + _sortOrderAscending + " among " + peers.length + " peers");
         ThreadReferenceNode rv[] = new ThreadReferenceNode[peers.length];
         int i = 0;
-        for (Iterator iter = sorted.iterator(); iter.hasNext(); i++)
-            rv[i] = (ThreadReferenceNode)keyToNode.get(iter.next());
+        for (Long key : sorted)
+            rv[i++] = keyToNode.get(key);
         return rv;
     }
     
