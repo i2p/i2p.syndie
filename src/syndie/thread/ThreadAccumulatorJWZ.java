@@ -389,7 +389,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                         if (rs.wasNull()) author = -1;
                         
                         ThreadMsgId tmi = new ThreadMsgId(msgId);
-                        tmi.scope = Hash.create(scope);
+                        tmi.scope = new Hash(scope);
                         tmi.messageId = messageId;
                         tmi.authorized = wasAuth;
                         tmi.authorScopeId = author;
@@ -425,7 +425,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                     if (rs.wasNull()) author = -1;
 
                     ThreadMsgId tmi = new ThreadMsgId(msgId);
-                    tmi.scope = Hash.create(scope);
+                    tmi.scope = new Hash(scope);
                     tmi.messageId = messageId;
                     tmi.authorized = wasAuth;
                     tmi.authorScopeId = author;
@@ -561,7 +561,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                     ancestor.messageId = messageId;
                     ancestor.authorScopeId = author;
                     if ( (chanHash != null) && (chanHash.length == Hash.HASH_LENGTH) )
-                        ancestor.scope = Hash.create(chanHash);
+                        ancestor.scope = new Hash(chanHash);
                     
                     // if we don't have the actual data, just use a dummy
                     if ( (pbePrompt != null) || (replyKeyMissing) || (readKeyMissing) ) {
@@ -673,7 +673,7 @@ public class ThreadAccumulatorJWZ extends ThreadAccumulator {
                 ancestor.messageId = messageId;
                 ancestor.authorScopeId = author;
                 if ( (chanHash != null) && (chanHash.length == Hash.HASH_LENGTH) )
-                    ancestor.scope = Hash.create(chanHash);
+                    ancestor.scope = new Hash(chanHash);
 
                 // if we don't have the actual data, just use a dummy
                 if ( (pbePrompt != null) || (replyKeyMissing) || (readKeyMissing) ) {

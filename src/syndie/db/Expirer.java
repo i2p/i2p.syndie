@@ -222,7 +222,7 @@ public class Expirer {
             int size = msg.getExactSizeKB();
             
             SharedArchive.Channel scope = _sharedArchive.getChannels()[msg.getScopeIndex()];
-            SyndieURI uri = SyndieURI.createMessage(Hash.create(scope.getScope()), messageId);
+            SyndieURI uri = SyndieURI.createMessage(new Hash(scope.getScope()), messageId);
             
             data.totalSizeKB += size;
             

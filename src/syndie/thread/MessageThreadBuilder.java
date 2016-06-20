@@ -142,7 +142,7 @@ public class MessageThreadBuilder {
                 if (rs.wasNull())
                     chanMsg = -1;
                 if ( (chan != null) && (chan.length == Hash.HASH_LENGTH) && (chanMsg >= 0) )
-                    rv.add(SyndieURI.createMessage(Hash.create(chan), chanMsg));
+                    rv.add(SyndieURI.createMessage(new Hash(chan), chanMsg));
             }
             return rv;
         } catch (SQLException se) {
@@ -183,7 +183,7 @@ public class MessageThreadBuilder {
                 byte scope[] = rs.getBytes(1);
                 long childMessageId = rs.getLong(2);
                 if (!rs.wasNull() && (scope != null) && (scope.length == Hash.HASH_LENGTH)) {
-                    rv.add(SyndieURI.createMessage(Hash.create(scope), childMessageId));
+                    rv.add(SyndieURI.createMessage(new Hash(scope), childMessageId));
                 } else {
                     _ui.errorMessage("error getting children of " + channel.toBase64() + ":" + messageId + ": messageId=" + childMessageId);
                 }
