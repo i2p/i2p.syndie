@@ -578,13 +578,13 @@ class StatusBar extends BaseComponent implements Translatable, Themeable, DBClie
         MenuItem items[] = _privMenu.getItems();
         for (int i = 0; i < items.length; i++)
             items[i].dispose();
-        final List unreadMsgIds = _client.getPrivateMsgIds(false);
+        final List<Long> unreadMsgIds = _client.getPrivateMsgIds(false);
         for (int i = 0; i < unreadMsgIds.size(); i++) {
-            long msgId = ((Long)unreadMsgIds.get(i)).longValue();
+            long msgId = unreadMsgIds.get(i).longValue();
             long authorId = _client.getMessageAuthor(msgId);
             String author = _client.getChannelName(authorId);
             if (author == null) author = "";
-            long when = _client.getMessageImportDate(msgId);
+            long when = _client.getMessageId(msgId);
             String subject = _client.getMessageSubject(msgId);
             if (subject == null) subject = "";
             String str = DateTime.getDate(when) + ": " + author + " - " + subject;
@@ -607,7 +607,7 @@ class StatusBar extends BaseComponent implements Translatable, Themeable, DBClie
                 public void widgetSelected(SelectionEvent selectionEvent) { markAllRead(); }
                 private void markAllRead() {
                     for (int i = 0; i < unreadMsgIds.size(); i++) {
-                        Long msgId = (Long)unreadMsgIds.get(i);
+                        Long msgId = unreadMsgIds.get(i);
                         _client.markMessageRead(msgId.longValue());
                     }
                     _dataCallback.readStatusUpdated();
