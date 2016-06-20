@@ -61,10 +61,12 @@ do
 		# translate calls must be one of the forms:
 		# _("foo")
 		# _x("foo")
+		# --keyword don't use default, picks up some getString("foo")
 		# To start a new translation, copy the header from an old translation to the new .po file,
 		# then ant distclean poupdate.
 		find $JPATHS -name *.java > $TMPFILE
 		xgettext -f $TMPFILE -F -L java --from-code=UTF-8 --add-comments\
+	                 --keyword \
 	                 --keyword=getText \
 	                 --keyword=strans \
 	                 --keyword=_x \
