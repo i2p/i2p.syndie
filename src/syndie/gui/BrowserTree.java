@@ -95,6 +95,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         _superInit = System.currentTimeMillis();
         
         _searchAdvanced = new Button((Composite)getControl(), SWT.PUSH);
+        _searchAdvanced.setImage(ImageUtil.ICON_VIEW);
         _searchAdvanced.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
         _searchAdvanced.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { searchAdvanced(); }

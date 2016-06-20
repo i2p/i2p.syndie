@@ -84,6 +84,7 @@ class ReferenceChooserSearch extends BaseComponent implements Translatable {
         _publicPost.setLayoutData(gd);
         
         _search = new Button(_root, SWT.PUSH);
+        _search.setImage(ImageUtil.ICON_VIEW);
         gd = new GridData(GridData.FILL_BOTH);
         gd.horizontalSpan = 2;
         _search.setLayoutData(gd);

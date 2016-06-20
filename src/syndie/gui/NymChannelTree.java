@@ -335,6 +335,7 @@ public class NymChannelTree implements Themeable, Translatable {
         });
 
         _searchButton = new Button(_top, SWT.PUSH);
+        _searchButton.setImage(ImageUtil.ICON_VIEW);
         _searchButton.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
         _searchButton.addSelectionListener(new FireSelectionListener() { 
             public void fire() { 
