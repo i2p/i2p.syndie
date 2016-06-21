@@ -67,6 +67,7 @@ do
 		find $JPATHS -name *.java > $TMPFILE
 		xgettext -f $TMPFILE -F -L java --from-code=UTF-8 --add-comments\
 	                 --keyword \
+	                 --keyword=ngettext:1,2 \
 	                 --keyword=getText \
 	                 --keyword=strans \
 	                 --keyword=_x \
