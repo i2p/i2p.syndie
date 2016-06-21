@@ -7,6 +7,7 @@
   - Show message dates, not import dates, in Private Msgs button
   - Consistent placement for Cancel/OK buttons, add icons to buttons
   - Add icons to status bar and search buttons
+  - More fixes for possible database corruption
 
 * 2016-06-19 1.106b-2 (zzz)
   - Fix database corruption in 1.106b-1
