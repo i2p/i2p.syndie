@@ -36,6 +36,21 @@ public class DateTime {
         } 
     }
 
+    /**
+     *  Current locale.
+     *  Returns error string if too old or too far in future.
+     *  @since 1.106b-4
+     */
+    public static final String getDateMedium(long when) { 
+        if (when <= 0)
+            return UNSET_DATE;
+        if (when < EARLIEST_DATE || when > System.currentTimeMillis() + LATEST_DATE)
+            return INVALID_DATE;
+        synchronized (_dayFmtMedium) { 
+            return _dayFmtMedium.format(new Date(when)); 
+        } 
+    }
+
     private static final DateFormat _dayFmtMedium = DateFormat.getDateInstance(DateFormat.MEDIUM);
     private static final DateFormat _dateTimeFmt = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);
 

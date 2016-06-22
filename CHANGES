@@ -1,5 +1,9 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
+* 2016-06-xx 1.106b-4 (zzz)
+  - Clean up 'find forums' popup, add icons to buttons,
+    improve message count and last post columns
+
 * 2016-06-21 1.106b-3 (zzz)
   - Database speedups and caching
   - Speed up calculation of unread messages, which was stalling the UI

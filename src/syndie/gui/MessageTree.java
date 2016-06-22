@@ -2213,6 +2213,7 @@ public class MessageTree extends BaseComponent implements Translatable, Themeabl
     
     protected void setMinWidth(TreeColumn col, String txt, int extra, int min) {
         int width = getWidth(txt) + _tree.getGridLineWidth()*2 + extra;
+        int max = _showChannel ? 300 : 450;
         if (width < min)
             width = min;
         else if (width > 500)

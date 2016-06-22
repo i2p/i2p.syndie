@@ -207,7 +207,7 @@ public class NymChannelTree implements Themeable, Translatable {
         _colName = new TreeColumn(_tree, SWT.LEFT);
         _colAvatar = new TreeColumn(_tree, SWT.CENTER);
         _colDesc = new TreeColumn(_tree, SWT.LEFT);
-        _colMsgs = new TreeColumn(_tree, SWT.LEFT);
+        _colMsgs = new TreeColumn(_tree, SWT.CENTER);
         _colLastPost = new TreeColumn(_tree, SWT.LEFT);
         _colAttributes = new TreeColumn(_tree, SWT.LEFT);
         _tree.setHeaderVisible(true);
@@ -416,6 +416,8 @@ public class NymChannelTree implements Themeable, Translatable {
         _bottom.setLayout(new FillLayout(SWT.HORIZONTAL));
         
         _nymChannelsButton = new Button(_bottom, SWT.PUSH);
+        // probably not the right image, but we don't have one for "special forums"
+        _nymChannelsButton.setImage(ImageUtil.ICON_WATCHEDFORUM);
         _nymChannelsButton.addSelectionListener(new FireSelectionListener() { 
             public void fire() {
                 if (_nymChannelsSource == null)
@@ -426,6 +428,7 @@ public class NymChannelTree implements Themeable, Translatable {
         });
         
         _bookmarksButton = new Button(_bottom, SWT.PUSH);
+        _bookmarksButton.setImage(ImageUtil.ICON_VM_BOOKMARK);
         _bookmarksButton.addSelectionListener(new FireSelectionListener() { 
             public void fire() {
                 if (_bookmarksSource == null)
@@ -1105,16 +1108,29 @@ public class NymChannelTree implements Themeable, Translatable {
         
         int total = r.totalMessages;
         
-        if (total > 0)
-            item.setText(3, unread + "/" + privMsgs + "/" + total);
-        else
+        if (total > 0) {
+            if (privMsgs > 0) {
+                if (_privateOnly && !_unreadOnly)
+                    item.setText(3, Integer.toString(privMsgs));
+                else if (!_privateOnly && _unreadOnly)
+                    item.setText(3, Integer.toString(unread));
+                else
+                    item.setText(3, unread + " / " + privMsgs + " / " + total);
+            } else if (_unreadOnly && !_privateOnly) {
+                item.setText(3, Integer.toString(unread));
+            } else {
+                item.setText(3, unread + " / " + total);
+            }
+        } else {
             item.setText(3, "");
+        }
         
         long when = r.lastPostDate;
         if (when > 0)
             // FIXME see above, no time available from DB
             //item.setText(4, DateTime.getDateTime(when));
-            item.setText(4, DateTime.getDate(when));
+            //item.setText(4, DateTime.getDate(when));
+            item.setText(4, DateTime.getDateMedium(when));
         else
             item.setText(4, "");
         
