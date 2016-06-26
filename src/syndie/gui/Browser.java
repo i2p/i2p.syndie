@@ -2933,9 +2933,11 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         _forumMenuBrowse.setText(X + registry.getText("Read all"));
         _forumMenuBrowseForums.setText(X + registry.getText("Read all by forum"));
         _forumMenuReadPrivate.setText(X + registry.getText("Read private messages"));
+        _forumMenuReadPrivate.setImage(ImageUtil.ICON_MSG_TYPE_PRIVATE);
         _forumMenuCreate.setText(X + registry.getText("Create"));
         _forumMenuCreate.setImage(ImageUtil.ICON_CREATEFORUM);
         _forumMenuManageRoot.setText(X + registry.getText("Manage"));
+        _forumMenuManageRoot.setImage(ImageUtil.ICON_MANAGEABLEFORUM);
         
         _forumMenuSearch.setImage(ImageUtil.ICON_VIEWFORUM);
         _postMenuRoot.setText(X + registry.getText("Post"));
@@ -2952,6 +2954,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         _syndicateMenuConfig.setText(X + registry.getText("Control syndication"));
         _syndicateMenuConfig.setImage(ImageUtil.ICON_CONTROLSYNDICATION);
         _syndicateMenuOnline.setText(X + registry.getText("Toggle online state"));
+        _syndicateMenuOnline.setImage(ImageUtil.ICON_ONLINE);
         _syndicateMenuArchive.setText(X + registry.getText("Manage archive"));
         _syndicateMenuArchive.setImage(ImageUtil.ICON_MANAGEARCHIVE);
 
