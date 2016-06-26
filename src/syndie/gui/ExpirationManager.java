@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import net.i2p.data.Hash;
@@ -31,7 +32,7 @@ import syndie.db.JobRunner;
 import syndie.db.UI;
 
 public class ExpirationManager extends BaseComponent implements Themeable, Translatable {
-    private Composite _parent;
+    private final Composite _parent;
     private Composite _root;
     private CTabFolder _tabs;
     private Button _execute;
@@ -40,9 +41,9 @@ public class ExpirationManager extends BaseComponent implements Themeable, Trans
     private ExpirationPolicy _defaultDataFile;
     private ExpirationPolicy _watchedDB;
     private ExpirationPolicy _watchedDataFile;
-    private ArrayList _channelDB;
-    private ArrayList _channelDataFile;
-    private ArrayList _channelNames;
+    private final List<ExpirationPolicy> _channelDB;
+    private final List<ExpirationPolicy> _channelDataFile;
+    private final List<String> _channelNames;
     
     public ExpirationManager(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, Composite parent) {
         super(client, ui, themes, trans);
@@ -66,7 +67,7 @@ public class ExpirationManager extends BaseComponent implements Themeable, Trans
         } else {
             long chanId = _client.getChannelId(scope);
             for (int i = 0; i < _channelDB.size(); i++) {
-                ExpirationPolicy db = (ExpirationPolicy)_channelDB.get(i);
+                ExpirationPolicy db = _channelDB.get(i);
                 if (db.getPolicyChannelId() == chanId) {
                     _tabs.setSelection(i+2);
                     return;
@@ -134,7 +135,7 @@ public class ExpirationManager extends BaseComponent implements Themeable, Trans
         buildWatchedTab();
         _ui.debugMessage("watched tab built");
         for (int i = 0; i < _channelDB.size(); i++) {
-            buildChannelTab((ExpirationPolicy)_channelDB.get(i), (ExpirationPolicy)_channelDataFile.get(i));
+            buildChannelTab(_channelDB.get(i), _channelDataFile.get(i));
             _ui.debugMessage("channel[" + i + "] tab built");
         }
         
@@ -238,8 +239,8 @@ public class ExpirationManager extends BaseComponent implements Themeable, Trans
         if (dbPolicies.size() != dataFilePolicies.size()) {
             _ui.errorMessage("channel policy inconsistency: dbPolicies: " + dbPolicies.size() + " dataFile: " + dataFilePolicies.size());
         }
-        TreeMap nameToScopeId = new TreeMap();
-        TreeMap scopeIdToName = new TreeMap();
+        Map<String, Long> nameToScopeId = new TreeMap();
+        Map<Long, String> scopeIdToName = new TreeMap();
         for (Iterator iter = dbPolicies.iterator(); iter.hasNext(); ) {
             ExpirationPolicy policy = (ExpirationPolicy)iter.next();
             long chanId = policy.getPolicyChannelId();
@@ -260,8 +261,7 @@ public class ExpirationManager extends BaseComponent implements Themeable, Trans
             scopeIdToName.put(Long.valueOf(chanId), chanName);
         }
         
-        for (Iterator iter = nameToScopeId.values().iterator(); iter.hasNext(); ) {
-            Long scopeId = (Long)iter.next();
+        for (Long scopeId : nameToScopeId.values()) {
             ExpirationPolicy db = getPolicy(scopeId.longValue(), dbPolicies);
             ExpirationPolicy dataFile = getPolicy(scopeId.longValue(), dataFilePolicies);
             if ( (db != null) && (dataFile != null) ) {
@@ -272,9 +272,8 @@ public class ExpirationManager extends BaseComponent implements Themeable, Trans
         }
     }
     
-    private ExpirationPolicy getPolicy(long scopeId, Set policies) {
-        for (Iterator iter = policies.iterator(); iter.hasNext(); ) {
-            ExpirationPolicy policy = (ExpirationPolicy)iter.next();
+    private ExpirationPolicy getPolicy(long scopeId, Set<ExpirationPolicy> policies) {
+        for (ExpirationPolicy policy : policies) {
             if (policy.getPolicyChannelId() == scopeId)
                 return policy;
         }
@@ -298,7 +297,7 @@ public class ExpirationManager extends BaseComponent implements Themeable, Trans
                     items[i].setText(registry.getText("Watched forums"));
                     break;
                 default:
-                    String name = (String)_channelNames.get(i-2);
+                    String name = _channelNames.get(i-2);
                     items[i].setText(name);
                     break;
             }
@@ -306,8 +305,8 @@ public class ExpirationManager extends BaseComponent implements Themeable, Trans
     }
     
     private class PolicyGroup {
-        private CTabItem _tab;
-        private Composite _tabRoot;
+        private final CTabItem _tab;
+        private final Composite _tabRoot;
         private Composite _detailRoot;
         private PolicyDetail _db;
         private PolicyDetail _dataFile;
@@ -391,11 +390,11 @@ public class ExpirationManager extends BaseComponent implements Themeable, Trans
     }
   
     private class PolicyDetail {
-        private PolicyGroup _group;
-        private Composite _groupRoot;
+        private final PolicyGroup _group;
+        private final Composite _groupRoot;
         private Composite _detailRoot;
-        private ExpirationPolicy _policy;
-        private ExpirationPolicy _policyOrig;
+        private final ExpirationPolicy _policy;
+        private final ExpirationPolicy _policyOrig;
         
         private Label _type;
         
@@ -503,7 +502,7 @@ public class ExpirationManager extends BaseComponent implements Themeable, Trans
                 _maxNumMsgsLabel.setEnabled(true);
                 _maxNumMsgsVal.setEnabled(true);
             } else {
-                _maxNumMsgsVal.setText(0 + "");
+                _maxNumMsgsVal.setText("0");
                 _maxNumMsgsEnable.setSelection(false);
                 _maxNumMsgsLabel.setEnabled(false);
                 _maxNumMsgsVal.setEnabled(false);
@@ -515,7 +514,7 @@ public class ExpirationManager extends BaseComponent implements Themeable, Trans
                 _maxSizeKBLabel.setEnabled(true);
                 _maxSizeKBVal.setEnabled(true);
             } else {
-                _maxSizeKBVal.setText(0 + "");
+                _maxSizeKBVal.setText("0");
                 _maxSizeKBEnable.setSelection(false);
                 _maxSizeKBLabel.setEnabled(false);
                 _maxSizeKBVal.setEnabled(false);
@@ -527,7 +526,7 @@ public class ExpirationManager extends BaseComponent implements Themeable, Trans
                 _maxAgeDaysLabel.setEnabled(true);
                 _maxAgeDaysVal.setEnabled(true);
             } else {
-                _maxAgeDaysVal.setText(0 + "");
+                _maxAgeDaysVal.setText("0");
                 _maxAgeDaysEnable.setSelection(false);
                 _maxAgeDaysLabel.setEnabled(false);
                 _maxAgeDaysVal.setEnabled(false);
