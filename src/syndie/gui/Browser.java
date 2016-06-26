@@ -920,7 +920,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         
         timer.addEvent("advanced menu constructed");
         
-        new MenuItem(_mainMenu, SWT.SEPARATOR);
+        //new MenuItem(_mainMenu, SWT.SEPARATOR);
         
         _helpMenuRoot = new MenuItem(_mainMenu, SWT.CASCADE);
         Menu helpMenu = new Menu(_helpMenuRoot);

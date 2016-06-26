@@ -41,9 +41,9 @@ import syndie.db.NullUI;
  *
  */
 public class ImageUtil {
-    private static final Set _indisposableImages = Collections.synchronizedSet(new HashSet());
+    private static final Set<Image> _indisposableImages = Collections.synchronizedSet(new HashSet());
     /** resource name to Image */
-    private static final Map _loadedResources = new HashMap();
+    private static final Map<String, Image> _loadedResources = new HashMap<String, Image>();
     private static File _tmpDir;
     
     private static Timer _timer;
@@ -503,7 +503,7 @@ public class ImageUtil {
         
         ICON_MSG = createImageFromResource("iconMessage.png");
         ICON_UNREADMESSAGE = createImageFromResource("iconUnreadMessage.png");
-        ICON_CONTROLSYNDICATION = createImageFromResource("iconControlSyndiation.png");
+        ICON_CONTROLSYNDICATION = createImageFromResource("iconControlSyndication.png");
 
     
         ICON_SYNDICATE_TYPE_DIRECT = createImageFromResource("iconDirect.png");
@@ -693,7 +693,7 @@ public class ImageUtil {
     public static Image createImageFromResource(String resource, boolean cache) {
         if (false) return Display.getDefault().getSystemImage(SWT.ICON_WARNING);
         synchronized (_loadedResources) {
-            Image img = (Image)_loadedResources.get(resource);
+            Image img = _loadedResources.get(resource);
             if (cache && (img != null))
                 return img;
             //_timer.addEvent("before getResource("+resource+")");
@@ -722,16 +722,20 @@ public class ImageUtil {
                         }
 
                     } catch (IllegalArgumentException iae) {
+                        _timer.addEvent("Failed to load " + resource + ": " + iae);
                         return null;
                     } catch (SWTException se) {
+                        _timer.addEvent("Failed to load " + resource + ": " + se);
                         return null;
                     }
                 } else { // no tmpDir yet
                     try {
                         img = new Image(Display.getDefault(), in);
                     } catch (IllegalArgumentException iae) {
+                        _timer.addEvent("Failed to load " + resource + ": " + iae);
                         return null;
                     } catch (SWTException se) {
+                        _timer.addEvent("Failed to load " + resource + ": " + se);
                         return null;
                     }                    
                 }
@@ -741,6 +745,7 @@ public class ImageUtil {
                 return img;
 
             } else {
+                _timer.addEvent("Failed to load " + resource);
                 return null;
             }
         }
