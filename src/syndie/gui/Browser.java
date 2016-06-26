@@ -2907,9 +2907,12 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
     public void translate(TranslationRegistry registry) {
         _shell.setText(registry.getText("Syndie"));
         _closeAllTabs.setText(registry.getText("Close all tabs"));
+        _closeAllTabs.setImage(ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
         _closeOtherTabs.setText(registry.getText("Close other tabs"));
+        _closeOtherTabs.setImage(ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
         _copyTabLocation.setText(registry.getText("Copy tab location"));
         _bookmarkTab.setText(registry.getText("Bookmark tab"));
+        _bookmarkTab.setImage(ImageUtil.ICON_VM_BOOKMARK);
         
         _fileMenuRoot.setText(X + registry.getText("File"));
         _fileMenuOpen.setText(X + registry.getText("Open Syndie URI"));
@@ -2922,6 +2925,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         
         _fileMenuExit.setImage(ImageUtil.ICON_FM_EXIT);
         _fileMenuImport.setImage(ImageUtil.ICON_FM_IMPORT);
+        _fileMenuImportBulk.setImage(ImageUtil.ICON_FM_IMPORT);
         _fileMenuExport.setImage(ImageUtil.ICON_FM_EXPORT);
 
 
