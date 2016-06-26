@@ -5377,9 +5377,9 @@ public class DBClient {
     private static final String SQL_DELETE_NYM_REF_URIS = "DELETE FROM uriAttribute WHERE uriId IN (SELECT uriId FROM resourceGroup WHERE nymId = ? AND uriId > -1)";
     private static final String SQL_DELETE_NYM_REFS = "DELETE FROM resourceGroup WHERE nymId = ?";
 
-    public void setNymReferences(List nymRefNodes) { setNymReferences(_nymId, nymRefNodes); }
+    public void setNymReferences(List<NymReferenceNode> nymRefNodes) { setNymReferences(_nymId, nymRefNodes); }
 
-    public void setNymReferences(long nymId, List nymRefNodes) {
+    public void setNymReferences(long nymId, List<NymReferenceNode> nymRefNodes) {
         ensureLoggedIn();
         try { 
             exec(SQL_DELETE_NYM_REF_URIS, nymId); 

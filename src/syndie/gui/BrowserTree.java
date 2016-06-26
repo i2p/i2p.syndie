@@ -60,9 +60,9 @@ import syndie.db.UI;
  *  This is the left-side panel
  */
 class BrowserTree extends ReferenceChooserTree implements Translatable, Themeable {
-    private Browser _browserInstance;
-    private BookmarkControl _bookmarkControl;
-    private BanControl _banControl;
+    private final Browser _browserInstance;
+    private final BookmarkControl _bookmarkControl;
+    private final BanControl _banControl;
     private Menu _menu;
     
     private Button _searchAdvanced;
@@ -70,10 +70,10 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
     private ReferenceChooserSearch _searchDetail;
     private Shell _searchDetailPopup;
 
-    private long _startInit;
-    private long _superInit;
+    //private long _startInit;
+    //private long _superInit;
     
-    private List _nymRefs;
+    private List<NymReferenceNode> _nymRefs;
     
     public BrowserTree(Browser browser, DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans, NavigationControl nav, URIControl uriControl, BanControl banControl, BookmarkControl bookmarkControl, Composite parent, ChoiceListener lsnr, AcceptanceListener accept, Timer timer) {
         super(client, ui, themes, trans, nav, uriControl, parent, lsnr, accept, false, false, timer);
@@ -84,15 +84,17 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         //_bookmarkEditor = new BookmarkEditorPopup(browser, parent.getShell());
         //long t2 = System.currentTimeMillis();
         //System.out.println("tree curInit: " + (t1-_superInit) + ", superInit:" + (_superInit-_startInit) + " editor init: " + (t2-t1));
-        if (_nymRefs != null)
-            _browserInstance.bookmarksUpdated(_nymRefs);
-        _nymRefs = null;
+
+        // huh? can't happen
+        //if (_nymRefs != null)
+        //    _browserInstance.bookmarksUpdated(_nymRefs);
+        //_nymRefs = null;
     }
     
     protected void initComponents(boolean register, boolean multi, Timer timer) {
-        _startInit = System.currentTimeMillis();
+        //_startInit = System.currentTimeMillis();
         super.initComponents(false, true, timer);
-        _superInit = System.currentTimeMillis();
+        //_superInit = System.currentTimeMillis();
         
         _searchAdvanced = new Button((Composite)getControl(), SWT.PUSH);
         _searchAdvanced.setImage(ImageUtil.ICON_VIEW);
@@ -524,7 +526,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
             while (true) {
                 boolean found = false;
                 for (int i = 0; i < _nymRefs.size(); i++) {
-                    ReferenceNode node = (ReferenceNode)_nymRefs.get(i);
+                    ReferenceNode node = _nymRefs.get(i);
                     String name = prefix + idx;
                     if (name.equals(node.getName())) {
                         found = true;
@@ -558,7 +560,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
     private ReferenceNode getParent(long parentGroupId) {
         if (_nymRefs == null) return null;
         for (int i = 0; i < _nymRefs.size(); i++) {
-            ReferenceNode node = (ReferenceNode)_nymRefs.get(i);
+            ReferenceNode node = _nymRefs.get(i);
             ReferenceNode found = node.getByUniqueId(parentGroupId);
             if (found != null)
                 return found;
@@ -735,7 +737,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         NymReferenceNode parent = null;
         if (node.getParentGroupId() != -1) {
             for (int i = 0; i < _nymRefs.size(); i++) {
-                NymReferenceNode cur = (NymReferenceNode)_nymRefs.get(i);
+                NymReferenceNode cur = _nymRefs.get(i);
                 parent = (NymReferenceNode)cur.getByUniqueId(node.getParentGroupId());
                 if (parent != null)
                     break;
@@ -746,7 +748,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         } else {
             // remove dups
             for (int i = 0; i < _nymRefs.size(); i++) {
-                ReferenceNode child = (ReferenceNode)_nymRefs.get(i);
+                ReferenceNode child = _nymRefs.get(i);
                 if ( (node.getURI() != null) && (node.getURI().equals(child.getURI())) ) {
                     // its a link to the same URL in the same category
                     _nymRefs.remove(i);
