@@ -43,7 +43,8 @@ class BrowseForumTab extends BrowserTab {
                 _description = getText("Forum") + ' ' + _name;
             _icon = ImageUtil.ICON_FORUMMESSAGES;
         } else {
-            _name = getText("All forums");
+            boolean byForum = uri.getBoolean("byforum", false);
+            _name = byForum ? getText("All forums") : getText("All messages");
             _description = getText("Browse all forums");
             _icon = ImageUtil.ICON_TAB_BROWSE;
         }
