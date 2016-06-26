@@ -935,12 +935,15 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { view(URIHelper.instance().createBugReportURI()); }
             public void widgetSelected(SelectionEvent selectionEvent) { view(URIHelper.instance().createBugReportURI()); }
         });
+
+      /****  TODO
         _helpMenuFAQ = new MenuItem(helpMenu, SWT.PUSH);
         _helpMenuFAQ.setEnabled(false);
         _helpMenuGUIManual = new MenuItem(helpMenu, SWT.PUSH);
         _helpMenuGUIManual.setEnabled(false);
         _helpMenuTextManual = new MenuItem(helpMenu, SWT.PUSH);
         _helpMenuTextManual.setEnabled(false);
+      ****/
         
         _shell.setMenuBar(_mainMenu);
         
@@ -2986,9 +2989,12 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         _helpMenuAbout.setImage(ImageUtil.ICON_HM_ABOUT);
         _helpMenuBugReport.setText(X + registry.getText("File a new bug report"));
         _helpMenuBugReport.setImage(ImageUtil.ICON_HM_BUG);
-        _helpMenuFAQ.setText(X + registry.getText("FAQ"));
-        _helpMenuGUIManual.setText(X + registry.getText("GUI manual"));
-        _helpMenuTextManual.setText(X + registry.getText("Text interface manual"));
+        if (_helpMenuFAQ != null)
+            _helpMenuFAQ.setText(X + registry.getText("FAQ"));
+        if (_helpMenuGUIManual != null)
+            _helpMenuGUIManual.setText(X + registry.getText("GUI manual"));
+        if (_helpMenuTextManual != null)
+            _helpMenuTextManual.setText(X + registry.getText("Text interface manual"));
         
         if (_systrayTip != null) {
             _systrayTip.setText(registry.getText("Syndie"));
