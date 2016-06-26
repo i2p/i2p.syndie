@@ -91,6 +91,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         //_nymRefs = null;
     }
     
+    @Override
     protected void initComponents(boolean register, boolean multi, Timer timer) {
         //_startInit = System.currentTimeMillis();
         super.initComponents(false, true, timer);
@@ -189,6 +190,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
          */
     }
     
+    @Override
     public void setSearchResults(Collection resultNodes) {
         super.setSearchResults(resultNodes);
         if (_searchDetail != null)
@@ -224,6 +226,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         });
     }
     
+    @Override
     protected void configTreeListeners(final Tree tree) {
         BrowserTreeListener lsnr = new BrowserTreeListener(tree);
         tree.addKeyListener(lsnr);
@@ -725,6 +728,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
         }
     }
 
+    @Override
     protected void bookmarksRebuilt(ArrayList nymRefs) {
         if (_browserInstance != null)
             _browserInstance.bookmarksUpdated(nymRefs);
@@ -768,6 +772,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
     
     // confirm delete is created on demand, and translated on creation
     
+    @Override
     public void translate(TranslationRegistry registry) {
         super.translate(registry);
         //_searchMenuView.setText(registry.getText("View"));
@@ -776,6 +781,7 @@ class BrowserTree extends ReferenceChooserTree implements Translatable, Themeabl
             _searchDetailPopup.setText(registry.getText("Search"));
     }
     
+    @Override
     public void applyTheme(Theme theme) {
         super.applyTheme(theme);
         if (_searchDetailPopup != null)

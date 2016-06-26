@@ -53,12 +53,12 @@ import syndie.db.UI;
  *
  */
 public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserTree.AcceptanceListener, MessageTree.MessageTreeListener, Themeable, Translatable {
-    private Shell _parentShell;
+    private final Shell _parentShell;
     private Shell _shell;
-    private NavigationControl _navControl;
-    private BanControl _banControl;
-    private BookmarkControl _bookmarkControl;
-    private LinkBuilderSource _target;
+    private final NavigationControl _navControl;
+    private final BanControl _banControl;
+    private final BookmarkControl _bookmarkControl;
+    private final LinkBuilderSource _target;
     
     private Label _textLabel;
     private Text _text;
@@ -140,16 +140,16 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
     private Hash _forum;
     
     /** list of NymKey instances shown in the syndieReadKeyCombo */
-    private List _readKeys;
+    private List<NymKey> _readKeys;
     /** list of NymKey instances shown in the syndiePostKeyCombo */
-    private List _postKeys;
+    private List<NymKey> _postKeys;
     /** list of NymKey instances shown in the syndieReplyKeyCombo */
-    private List _replyKeys;
+    private List<NymKey> _replyKeys;
     /** list of NymKey instances shown in the syndieManageKeyCombo */
-    private List _manageKeys;
+    private List<NymKey> _manageKeys;
     
     /** archives (SyndieURI) populating the archiveCombo */
-    private List _archives;
+    private final List<SyndieURI> _archives;
     
     /** has limitOptions been called */
     private boolean _fieldsLimited;
@@ -434,6 +434,7 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
         
         _actionCancel = new Button(actionRow, SWT.PUSH);
         _actionCancel.setText(getText("Cancel"));
+        _actionCancel.setImage(ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
         _actionCancel.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { onCancel(); }
             public void widgetSelected(SelectionEvent selectionEvent) { onCancel(); }
@@ -441,6 +442,7 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
 
         _actionOk = new Button(actionRow, SWT.PUSH);
         _actionOk.setText(getText("OK"));
+        _actionOk.setImage(ImageUtil.ICON_SYNDICATE_STATUS_OK);
         _actionOk.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { onOk(); }
             public void widgetSelected(SelectionEvent selectionEvent) { onOk(); }
@@ -659,7 +661,7 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
                 int selected = _linkTypeArchiveCombo.getSelectionIndex();
                 SyndieURI archiveURI = null;
                 if (selected >= 0) {
-                    archiveURI = (SyndieURI)_archives.get(selected);
+                    archiveURI = _archives.get(selected);
                 } else {
                     String txt = _linkTypeArchiveCombo.getText();
                     try {
@@ -1102,7 +1104,7 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
         if (orig.getReadKey() != null) {
             attributes.put("readKey", SyndieURI.encodeKey(orig.getReadKey().getData()));
         } else if (_syndieReadKey.getSelection() && (_readKeys != null) && (_readKeys.size() > 0) ) {
-            NymKey key = (NymKey)_readKeys.get(_syndieReadKeyCombo.getSelectionIndex());
+            NymKey key = _readKeys.get(_syndieReadKeyCombo.getSelectionIndex());
             attributes.put("readKey", SyndieURI.encodeKey(key.getData()));
         } else {
             attributes.remove("readKey");
@@ -1111,7 +1113,7 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
         if (orig.getPostKey() != null) {
             attributes.put("postKey", SyndieURI.encodeKey(orig.getPostKey().getData()));
         } else if (_syndiePostKey.getSelection() && (_postKeys != null) && (_postKeys.size() > 0) ) {
-            NymKey key = (NymKey)_postKeys.get(_syndiePostKeyCombo.getSelectionIndex());
+            NymKey key = _postKeys.get(_syndiePostKeyCombo.getSelectionIndex());
             attributes.put("postKey", SyndieURI.encodeKey(key.getData()));
         } else {
             attributes.remove("postKey");
@@ -1120,7 +1122,7 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
         if (orig.getReplyKey() != null) {
             attributes.put("replyKey", SyndieURI.encodeKey(orig.getReplyKey().getData()));
         } else if (_syndieReplyKey.getSelection() && (_replyKeys != null) && (_replyKeys.size() > 0) ) {
-            NymKey key = (NymKey)_replyKeys.get(_syndieReplyKeyCombo.getSelectionIndex());
+            NymKey key = _replyKeys.get(_syndieReplyKeyCombo.getSelectionIndex());
             attributes.put("replyKey", SyndieURI.encodeKey(key.getData()));
         } else {
             attributes.remove("replyKey");
@@ -1129,7 +1131,7 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
         if (orig.getManageKey() != null) {
             attributes.put("manageKey", SyndieURI.encodeKey(orig.getManageKey().getData()));
         } else if (_syndieManageKey.getSelection() && (_manageKeys != null) && (_manageKeys.size() > 0) ) {
-            NymKey key = (NymKey)_manageKeys.get(_syndieManageKeyCombo.getSelectionIndex());
+            NymKey key = _manageKeys.get(_syndieManageKeyCombo.getSelectionIndex());
             attributes.put("manageKey", SyndieURI.encodeKey(key.getData()));
         } else {
             attributes.remove("manageKey");
@@ -1210,9 +1212,9 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
                 _syndieReplyKeyCombo.removeAll();
                 _syndieManageKeyCombo.removeAll();
                 
-                List nymKeys = _client.getNymKeys(uri.getScope(), null);
+                List<NymKey> nymKeys = _client.getNymKeys(uri.getScope(), null);
                 for (int i = 0; i < nymKeys.size(); i++) {
-                    NymKey key = (NymKey)nymKeys.get(i);
+                    NymKey key = nymKeys.get(i);
                     if (Constants.KEY_FUNCTION_POST.equalsIgnoreCase(key.getFunction())) {
                         _syndiePostKey.setEnabled(true);
                         _syndiePostKeyCombo.setEnabled(true);
@@ -1253,7 +1255,7 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
                     _syndieReadKey.setSelection(true);
                     int foundIndex = -1;
                     for (int i = 0; i < _readKeys.size(); i++) {
-                        NymKey key = (NymKey)_readKeys.get(i);
+                        NymKey key = _readKeys.get(i);
                         if (DataHelper.eq(key.getData(), uri.getReadKey().getData())) {
                             foundIndex = i;
                             break;
@@ -1274,7 +1276,7 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
                     _syndiePostKey.setSelection(true);
                     int foundIndex = -1;
                     for (int i = 0; i < _postKeys.size(); i++) {
-                        NymKey key = (NymKey)_postKeys.get(i);
+                        NymKey key = _postKeys.get(i);
                         if (DataHelper.eq(key.getData(), uri.getPostKey().getData())) {
                             foundIndex = i;
                             break;
@@ -1295,7 +1297,7 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
                     _syndieReplyKey.setSelection(true);
                     int foundIndex = -1;
                     for (int i = 0; i < _replyKeys.size(); i++) {
-                        NymKey key = (NymKey)_replyKeys.get(i);
+                        NymKey key = _replyKeys.get(i);
                         if (DataHelper.eq(key.getData(), uri.getReplyKey().getData())) {
                             foundIndex = i;
                             break;
@@ -1316,7 +1318,7 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
                     _syndieManageKey.setSelection(true);
                     int foundIndex = -1;
                     for (int i = 0; i < _manageKeys.size(); i++) {
-                        NymKey key = (NymKey)_manageKeys.get(i);
+                        NymKey key = _manageKeys.get(i);
                         if (DataHelper.eq(key.getData(), uri.getManageKey().getData())) {
                             foundIndex = i;
                             break;
@@ -1396,7 +1398,7 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
             _syndieMessageDetailAttachmentNum.removeAll();
             int attachments = msg.getAttachmentCount();
             for (int i = 0; i < attachments; i++)
-                _syndieMessageDetailAttachmentNum.add(""+i);
+                _syndieMessageDetailAttachmentNum.add(Integer.toString(i));
             if (attachments > 0) {
                 _syndieMessageDetailAttachment.setEnabled(true);
                 _syndieMessageDetailAttachmentNum.setEnabled(true);
@@ -1419,7 +1421,7 @@ public class LinkBuilderPopup extends BaseComponent implements ReferenceChooserT
             _syndieMessageDetailPageNum.removeAll();
             int pages = msg.getPageCount();
             for (int i = 0; i < pages; i++)
-                _syndieMessageDetailPageNum.add(""+i);
+                _syndieMessageDetailPageNum.add(Integer.toString(i));
             if (pages > 0) {
                 _syndieMessageDetailPage.setEnabled(true);
                 _syndieMessageDetailPageNum.setEnabled(true);

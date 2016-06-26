@@ -21,17 +21,18 @@ import syndie.db.UI;
 
 /**
  * the old tree-based reference chooser
+ * Holds a ReferenceChooserTree
  */
 class ReferenceChooserPopupImpl extends BaseComponent implements ReferenceChooserPopup, ReferenceChooserTree.ChoiceListener, ReferenceChooserTree.AcceptanceListener, Translatable {
-    private Shell _parent;
-    private NavigationControl _navControl;
-    private URIControl _uriControl;
+    private final Shell _parent;
+    private final NavigationControl _navControl;
+    private final URIControl _uriControl;
     private Shell _shell;
     private ReferenceChooserTree.AcceptanceListener _lsnr;
     private ReferenceChooserTree _tree;
     private ReferenceChooserSearch _search;
     private ReferenceChooserInfo _info;
-    private String _titleVal;
+    private final String _titleVal;
     
     public ReferenceChooserPopupImpl(DBClient client, UI ui, ThemeRegistry themes, TranslationRegistry trans,
                                      Shell parent, NavigationControl navControl, URIControl uriControl, String titleVal) {
