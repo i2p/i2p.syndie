@@ -43,9 +43,10 @@ public class ArchiveManager extends BaseComponent implements Translatable, Theme
     private Label _advertised;
     private Button _advertisedManage;
     
-    private Label _deniableLabel;
-    private Label _deniable;
-    private Button _deniableManage;
+    // Unimplemented, not sure what jr had in mind
+    //private Label _deniableLabel;
+    //private Label _deniable;
+    //private Button _deniableManage;
     
     private Label _bannedLabel;
     private Label _banned;
@@ -97,12 +98,14 @@ public class ArchiveManager extends BaseComponent implements Translatable, Theme
             public void widgetSelected(SelectionEvent selectionEvent) { manageAdvertised(); }
         });
         
+      /****
         _deniableLabel = new Label(manageable, SWT.NONE);
         _deniableLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
         _deniable = new Label(manageable, SWT.NONE);
         _deniable.setLayoutData(new GridData(GridData.BEGINNING, GridData.CENTER, false, false));
         _deniableManage = new Button(manageable, SWT.PUSH);
         _deniableManage.setLayoutData(new GridData(GridData.FILL, GridData.FILL, false, false));
+      ****/
         
         _bannedLabel = new Label(manageable, SWT.NONE);
         _bannedLabel.setLayoutData(new GridData(GridData.END, GridData.CENTER, false, false));
@@ -133,9 +136,11 @@ public class ArchiveManager extends BaseComponent implements Translatable, Theme
             public void widgetSelected(SelectionEvent selectionEvent) { loadConfig(); }
         });
         
+      /****
         _deniable.setEnabled(false);
         _deniableLabel.setEnabled(false);
         _deniableManage.setEnabled(false);
+      ****/
         
         populateCombos();
         
@@ -165,7 +170,7 @@ public class ArchiveManager extends BaseComponent implements Translatable, Theme
         _banned.setText(chans.size()+"");
         _bannedManage.setEnabled(chans.size() > 0);
         
-        _deniable.setText(0+"");
+        //_deniable.setText(0+"");
         _root.layout(true, true);
     }
     
@@ -316,9 +321,11 @@ public class ArchiveManager extends BaseComponent implements Translatable, Theme
         _advertised.setFont(theme.DEFAULT_FONT);
         _advertisedManage.setFont(theme.BUTTON_FONT);
 
+      /****
         _deniableLabel.setFont(theme.DEFAULT_FONT);
         _deniable.setFont(theme.DEFAULT_FONT);
         _deniableManage.setFont(theme.BUTTON_FONT);
+      ****/
 
         _bannedLabel.setFont(theme.DEFAULT_FONT);
         _banned.setFont(theme.DEFAULT_FONT);
@@ -337,8 +344,10 @@ public class ArchiveManager extends BaseComponent implements Translatable, Theme
         _advertisedLabel.setText(registry.getText("Advertised archives") + ':');
         _advertisedManage.setText(registry.getText("Manage") + "...");
         
+      /****
         _deniableLabel.setText(registry.getText("Deniable forums") + ':');
         _deniableManage.setText(registry.getText("Manage") + "...");
+      ****/
         
         _bannedLabel.setText(registry.getText("Banned forums/authors") + ':');
         _bannedManage.setText(registry.getText("Manage") + "...");
