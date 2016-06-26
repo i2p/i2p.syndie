@@ -139,6 +139,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
     private MenuItem _bookmarkTab;
     private MenuItem _fileMenuRoot;
     private MenuItem _fileMenuOpen;
+    // null if systray not available
     private MenuItem _fileMenuMinimize;
     private MenuItem _fileMenuImport;
     private MenuItem _fileMenuImportBulk;
@@ -197,6 +198,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
     private MenuItem _helpMenuFAQ;
     private MenuItem _helpMenuGUIManual;
     private MenuItem _helpMenuTextManual;
+    // following 3 will be null if systray not available
     private Tray _systray;
     private TrayItem _systrayRoot;
     private ToolTip _systrayTip;
@@ -315,10 +317,13 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         
         timer.addEvent("main shell constructed");
         
+        if (initSystray())
+            timer.addEvent("systray constructed");
+        else
+            timer.addEvent("systray not available");
+        // must be after initsystray so we know if systray is available
         initMenu(timer);
         timer.addEvent("main menu constructed");
-        initSystray();
-        timer.addEvent("systray constructed");
         
         // Top 90%, holding the bookmarks and tabs
         _sash = new SashForm(_root, SWT.HORIZONTAL);
@@ -632,11 +637,13 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             public void widgetSelected(SelectionEvent selectionEvent) { openPrompt(); }
         });
         _fileMenuOpen.setAccelerator(SWT.MOD1 + 'o');
-        _fileMenuMinimize = new MenuItem(fileMenu, SWT.PUSH);
-        _fileMenuMinimize.addSelectionListener(new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent selectionEvent) { _shell.setVisible(false); }
-            public void widgetSelected(SelectionEvent selectionEvent) { _shell.setVisible(false); }
-        });
+        if (_systray != null) {
+            _fileMenuMinimize = new MenuItem(fileMenu, SWT.PUSH);
+            _fileMenuMinimize.addSelectionListener(new SelectionListener() {
+                public void widgetDefaultSelected(SelectionEvent selectionEvent) { _shell.setVisible(false); }
+                public void widgetSelected(SelectionEvent selectionEvent) { _shell.setVisible(false); }
+            });
+        }
         new MenuItem(fileMenu, SWT.SEPARATOR);
         _fileMenuImport = new MenuItem(fileMenu, SWT.PUSH);
         _fileMenuImport.addSelectionListener(new SelectionListener() {
@@ -1202,13 +1209,21 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         s.open();
     }
     
-    private void initSystray() {
+    /**
+     *  @return success
+     */
+    private boolean initSystray() {
         _systray = _shell.getDisplay().getSystemTray();
+        if (_systray == null)
+            return false;
+        Image img = createSystrayIcon();
+        if (img == null)
+            return false;
         _systrayRoot = new TrayItem(_systray, SWT.NONE);
         _systrayTip = new ToolTip(_shell, SWT.BALLOON);
         //_systrayTip.setAutoHide(false);
         _systrayRoot.setToolTip(_systrayTip);
-        _systrayRoot.setImage(createSystrayIcon());
+        _systrayRoot.setImage(img);
         _systrayRoot.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) {
                 _shell.setVisible(!_shell.isVisible());
@@ -1217,6 +1232,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
                 _shell.setVisible(!_shell.isVisible());
             }
         });
+        return true;
     }
     
     private void exit() {
@@ -1230,10 +1246,12 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
             
             // windows doesn't clean up the systray icon so quickly on exit, so
             // lets force it to show nothing explicitly
-            _systrayRoot.setImage(null);
-            _systrayRoot.setVisible(false);
-            _systrayRoot.dispose();
-            _systray.dispose();
+            if (_systray != null) {
+                _systrayRoot.setImage(null);
+                _systrayRoot.setVisible(false);
+                _systrayRoot.dispose();
+                _systray.dispose();
+            }
             _shell.setVisible(false);
             
             JobRunner.instance().stop();
@@ -2869,6 +2887,7 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         return null;
     }
     
+    /** may return null on error */
     private Image createSystrayIcon() {
         return ImageUtil.resize(ImageUtil.ICON_SHELL, 16, 16, false);
     }
@@ -2891,7 +2910,8 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         
         _fileMenuRoot.setText(X + registry.getText("File"));
         _fileMenuOpen.setText(X + registry.getText("Open Syndie URI"));
-        _fileMenuMinimize.setText(X + registry.getText("Minimize to the systray"));
+        if (_fileMenuMinimize != null)
+            _fileMenuMinimize.setText(X + registry.getText("Minimize to the systray"));
         _fileMenuImport.setText(X + registry.getText("Import"));
         _fileMenuImportBulk.setText(X + registry.getText("Import bulk"));
         _fileMenuExport.setText(X + registry.getText("Export"));
@@ -2967,8 +2987,10 @@ public class Browser implements UI, BrowserControl, NavigationControl, Translata
         _helpMenuGUIManual.setText(X + registry.getText("GUI manual"));
         _helpMenuTextManual.setText(X + registry.getText("Text interface manual"));
         
-        _systrayTip.setText(registry.getText("Syndie"));
-        _systrayTip.setMessage(registry.getText("Syndie is running"));
+        if (_systrayTip != null) {
+            _systrayTip.setText(registry.getText("Syndie"));
+            _systrayTip.setMessage(registry.getText("Syndie is running"));
+        }
     }
     
     public void applyTheme(Theme theme) {
