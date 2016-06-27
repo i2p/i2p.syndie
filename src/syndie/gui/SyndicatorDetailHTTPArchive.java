@@ -372,6 +372,8 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         _cancel = new Button(actions, SWT.PUSH);
         _save = new Button(actions, SWT.PUSH);
         _save.setEnabled(false);
+        _cancel.setImage(ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
+        _save.setImage(ImageUtil.ICON_SYNDICATE_STATUS_OK);
         
         configActions();
         
@@ -602,8 +604,10 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         row = new Composite(dialog, SWT.NONE);
         row.setLayout(new FillLayout(SWT.HORIZONTAL));
         row.setLayoutData(new GridData(GridData.FILL, GridData.FILL, true, false));
+        Button cancel = new Button(row, SWT.PUSH);
         Button save = new Button(row, SWT.PUSH);
         save.setText(getText("Save"));
+        save.setImage(ImageUtil.ICON_SYNDICATE_STATUS_OK);
         save.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { saveFreenet(); }
             public void widgetSelected(SelectionEvent selectionEvent) { saveFreenet(); }
@@ -619,8 +623,8 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
                 //loadData();
             }
         });
-        Button cancel = new Button(row, SWT.PUSH);
         cancel.setText(getText("Cancel"));
+        cancel.setImage(ImageUtil.ICON_SYNDICATE_STATUS_ERROR);
         cancel.addSelectionListener(new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent selectionEvent) { dialog.dispose(); }
             public void widgetSelected(SelectionEvent selectionEvent) { dialog.dispose(); }
@@ -631,10 +635,11 @@ class SyndicatorDetailHTTPArchive extends BaseComponent implements Themeable, Tr
         dialog.open();
     }
     
-    private int getInt(String str) {
+    private static int getInt(String str) {
         if (str == null) return -1;
         try { return Integer.parseInt(str); } catch (NumberFormatException nfe) { return -1; }
     }
+
     private void genKey(Shell parent, String fcpHost, int fcpPort, Text targetPub, Text targetPriv) {
         System.out.println("genKey called");
         try {
