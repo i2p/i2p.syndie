@@ -121,14 +121,14 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
     private ManageForumAuthManage _manageForumAuthManage;
     private ManageForumAuthReply _manageForumAuthReply;
     
-    private List _managerHashes;
-    private List _posterHashes;
-    private List _pubArchiveURIs;
-    private List _privArchiveURIs;
+    private List<Hash> _managerHashes;
+    private List<Hash> _posterHashes;
+    private List<SyndieURI> _pubArchiveURIs;
+    private List<SyndieURI> _privArchiveURIs;
     private String _passphrase;
     private String _prompt;
     
-    private List _listeners;
+    private List<StateListener> _listeners;
     
     private boolean _showActions;
     
@@ -377,10 +377,11 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
     
     ChannelInfo getChannelInfo() { return _client.getChannel(_scopeId); }
     
-    List getPublicArchiveURIs() { return new ArrayList(_pubArchiveURIs); }
-    List getPrivateArchiveURIs() { return new ArrayList(_privArchiveURIs); }
+    List<SyndieURI> getPublicArchiveURIs() { return new ArrayList(_pubArchiveURIs); }
+
+    List<SyndieURI> getPrivateArchiveURIs() { return new ArrayList(_privArchiveURIs); }
     
-    void setArchives(List pubURIs, List privURIs) {
+    void setArchives(List<SyndieURI> pubURIs, List<SyndieURI> privURIs) {
         _pubArchiveURIs.clear();
         _pubArchiveURIs.addAll(pubURIs);
         _privArchiveURIs.clear();
@@ -507,15 +508,15 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
                         return false;
                 }
             }
-            public Set getPublicTags() { return Collections.EMPTY_SET; }
-            public Set getPrivateTags() { 
+            public Set<String> getPublicTags() { return Collections.EMPTY_SET; }
+            public Set<String> getPrivateTags() { 
                 String tags[] = StringUtil.split(" \t\r\n,", _tags.getText(), false);
                 Set rv = new HashSet(tags.length);
                 for (int i = 0; i < tags.length; i++)
                     rv.add(tags[i]);
                 return rv;
             }
-            public Set getAuthorizedPosters() { 
+            public Set<SigningPublicKey> getAuthorizedPosters() { 
                 if (_manageForumAuthPost != null) {
                     return getPubKeys(_manageForumAuthPost.getAuthorizedPosters());
                 } else {
@@ -526,7 +527,7 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
                         return new HashSet();
                 }
             }
-            public Set getAuthorizedManagers() {
+            public Set<SigningPublicKey> getAuthorizedManagers() {
                 if (_manageForumAuthManage != null) {
                     return getPubKeys(_manageForumAuthManage.getAuthorizedManagers());
                 } else {
@@ -537,10 +538,10 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
                         return new HashSet();
                 }
             }
-            private Set getPubKeys(List scopes) {
-                Set rv = new HashSet();
+            private Set<SigningPublicKey> getPubKeys(List<Hash> scopes) {
+                Set<SigningPublicKey> rv = new HashSet();
                 for (int i = 0; i < scopes.size(); i++) {
-                    Hash scope = (Hash)scopes.get(i);
+                    Hash scope = scopes.get(i);
                     SigningPublicKey key = _client.getChannelIdentKey(scope);
                     if (key != null)
                         rv.add(key);
@@ -548,9 +549,9 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
                 return rv;
             }
             public String getReferences() { return (_referenceNodeRoots != null ? ReferenceNode.walk(_referenceNodeRoots) : ""); }
-            public Set getPublicArchives() { return getArchives(_pubArchiveURIs); }
-            public Set getPrivateArchives() { return getArchives(_privArchiveURIs); }
-            private Set getArchives(List uris) {
+            public Set<SyndieURI> getPublicArchives() { return getArchives(_pubArchiveURIs); }
+            public Set<SyndieURI> getPrivateArchives() { return getArchives(_privArchiveURIs); }
+            private Set<SyndieURI> getArchives(List uris) {
                 Set archives = new HashSet();
                 for (Iterator iter = uris.iterator(); iter.hasNext(); ) {
                     SyndieURI uri = (SyndieURI)iter.next();
@@ -571,7 +572,7 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
             public String getPassphrase() { return _passphrase; }
             public String getPassphrasePrompt() { return _prompt; }
             /** return the read keys we explicitly want to deliver in the metadata, or null/empty if we don't care */
-            public List getCurrentReadKeys() { 
+            public List<SessionKey> getCurrentReadKeys() { 
                 if ( (_manageForumAuthRead != null) && (_manageForumAuthRead.getReadKeyPublicRetroactive()) ) {
                     // all session keys we know for reading posts in the forum, whether they were private or public
                     return _client.getReadKeys(_client.getChannelHash(_scopeId), false);
@@ -579,11 +580,11 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
                     return null;
                 }
             }
-            public List getCancelledURIs() { return _client.getChannelCancelURIs(_scopeId); }
+            public List<SyndieURI> getCancelledURIs() { return _client.getChannelCancelURIs(_scopeId); }
         });
         exec.execute();
         for (int i = 0; i < _listeners.size(); i++)
-            ((StateListener)_listeners.get(i)).settingsModified(false);
+            _listeners.get(i).settingsModified(false);
         
         String errs = exec.getErrors();
         if ( (errs != null) && (errs.trim().length() > 0) ) {
@@ -613,9 +614,9 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
                 // open a new post to the appropriate locations containing the read key
                 if (readKey == null) {
                     // use the existing readkey to send
-                    List nks = _client.getNymKeys(uri.getScope(), Constants.KEY_FUNCTION_READ);
+                    List<NymKey> nks = _client.getNymKeys(uri.getScope(), Constants.KEY_FUNCTION_READ);
                     for (int i = 0; i < nks.size(); i++) {
-                        NymKey nk = (NymKey)nks.get(i);
+                        NymKey nk = nks.get(i);
                         if (!nk.getIsExpired()) {
                             readKey = new SessionKey(nk.getData());
                             break;
@@ -623,9 +624,9 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
                     }
                     if (readKey == null) {
                         // could be attached to the channel and not the nym, so try it there too
-                        List rks = _client.getReadKeys(uri.getScope(), true);
+                        List<SessionKey> rks = _client.getReadKeys(uri.getScope(), true);
                         for (int i = 0; i < rks.size(); i++) {
-                            SessionKey rk = (SessionKey)rks.get(i);
+                            SessionKey rk = rks.get(i);
                             if (!_client.getChannelReadKeyIsPublic(uri.getScope(), rk)) {
                                 readKey = rk;
                                 break;
@@ -633,9 +634,9 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
                         }
                     }
                 }
-                List scopes = _manageForumAuthRead.getSendExplicit();
+                List<Hash> scopes = _manageForumAuthRead.getSendExplicit();
                 for (int i = 0; i < scopes.size(); i++) {
-                    Hash to = (Hash)scopes.get(i);
+                    Hash to = scopes.get(i);
                     _ui.debugMessage("pop up a window to post the read key to " + to.toBase64());
                     _navControl.view(_uriControl.createPostURI(to, null, true, createReferences(uri.getScope(), readKey), null));
                     //_browser.createPostURI(to, null, true, readKey);
@@ -648,9 +649,9 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
             }
             if ( (postIdentity != null) && (_manageForumAuthPost != null) ) {
                 // open a new post to the appropriate locations containing the post identity's keys
-                List scopes = _manageForumAuthPost.getSendNewExplicit();
+                List<Hash> scopes = _manageForumAuthPost.getSendNewExplicit();
                 for (int i = 0; i < scopes.size(); i++) {
-                    Hash to = (Hash)scopes.get(i);
+                    Hash to = scopes.get(i);
                     _ui.debugMessage("pop up a window to post the post identity key to " + to.toBase64());
                     _navControl.view(_uriControl.createPostURI(to, null, true, createReferences(uri.getScope(), postIdentity, Constants.KEY_FUNCTION_POST), new File[] { postFile }));
                     //_browser.createPostURI(to, null, true, readKey);
@@ -663,9 +664,9 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
             }
             if ( (manageIdentity != null) && (_manageForumAuthManage != null) ) {
                 // open a new post to the appropriate locations containing the manage identity's keys
-                List scopes = _manageForumAuthManage.getSendNewExplicit();
+                List<Hash> scopes = _manageForumAuthManage.getSendNewExplicit();
                 for (int i = 0; i < scopes.size(); i++) {
-                    Hash to = (Hash)scopes.get(i);
+                    Hash to = scopes.get(i);
                     _ui.debugMessage("pop up a window to post the manage identity key to " + to.toBase64());
                     _navControl.view(_uriControl.createPostURI(to, null, true, createReferences(uri.getScope(), manageIdentity, Constants.KEY_FUNCTION_MANAGE), new File[] { manageFile }));
                     //_browser.createPostURI(to, null, true, readKey);
@@ -678,9 +679,9 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
             }
             if ( (_manageForumAuthReply != null) && (_manageForumAuthReply.getRotate()) ) {
                 // open a new post to the appropriate locations containing the reply keys
-                List scopes = _manageForumAuthReply.getSendNewExplicit();
+                List<Hash> scopes = _manageForumAuthReply.getSendNewExplicit();
                 for (int i = 0; i < scopes.size(); i++) {
-                    Hash to = (Hash)scopes.get(i);
+                    Hash to = scopes.get(i);
                     _ui.debugMessage("pop up a window to post the reply key to " + to.toBase64());
                     _navControl.view(_uriControl.createPostURI(to, null, true, createReplyReferences(uri.getScope()), null));
                     //_browser.createPostURI(to, null, true, readKey);
@@ -700,7 +701,7 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
         }
     }
     
-    private List createReferences(Hash scope, SessionKey readKey) { 
+    private List<ReferenceNode> createReferences(Hash scope, SessionKey readKey) { 
         //_browser.getUI().debugMessage("todo: create references for the read key in " + scope + ": " + readKey);
         SyndieURI uri = SyndieURI.createScope(scope);
         Map attributes = uri.getAttributes();
@@ -710,14 +711,15 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
         rv.add(node);
         return rv;
     }
-    private List createReferences(Hash scope, Hash postIdentity, String keyFunction) {
+
+    private List<ReferenceNode> createReferences(Hash scope, Hash postIdentity, String keyFunction) {
         //_browser.getUI().debugMessage("todo: create references for the " + keyFunction + " key in " + scope + ": " + postIdentity);
         SyndieURI uri = SyndieURI.createScope(scope);
         Map attributes = uri.getAttributes();
-        List nymKeys = _client.getNymKeys(postIdentity, Constants.KEY_FUNCTION_MANAGE);
+        List<NymKey> nymKeys = _client.getNymKeys(postIdentity, Constants.KEY_FUNCTION_MANAGE);
         SigningPrivateKey privKey = null;
         for (int i = 0; i < nymKeys.size(); i++) {
-            NymKey k = (NymKey)nymKeys.get(i);
+            NymKey k = nymKeys.get(i);
             if (k.getData() != null)
                 privKey = new SigningPrivateKey(k.getData());
         }
@@ -733,14 +735,15 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
         rv.add(node);
         return rv;
     }
-    private List createReplyReferences(Hash scope) {
+
+    private List<ReferenceNode> createReplyReferences(Hash scope) {
         //_browser.getUI().debugMessage("todo: create references for the reply key in " + scope);
         SyndieURI uri = SyndieURI.createScope(scope);
         Map attributes = uri.getAttributes();
-        List nymKeys = _client.getNymKeys(scope, Constants.KEY_FUNCTION_REPLY);
+        List<NymKey> nymKeys = _client.getNymKeys(scope, Constants.KEY_FUNCTION_REPLY);
         PrivateKey privKey = null;
         for (int i = 0; i < nymKeys.size(); i++) {
-            NymKey k = (NymKey)nymKeys.get(i);
+            NymKey k = nymKeys.get(i);
             if (k.getData() != null)
                 privKey = new PrivateKey(k.getData());
         }
@@ -764,7 +767,7 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
                 _cancel.setEnabled(true);
             }
             for (int i = 0; i < _listeners.size(); i++)
-                ((StateListener)_listeners.get(i)).settingsModified(true);
+                _listeners.get(i).settingsModified(true);
         }
         _modified = true;
     }
@@ -919,7 +922,7 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
             _cancel.setEnabled(false);
         }
         for (int i = 0; i < _listeners.size(); i++)
-            ((StateListener)_listeners.get(i)).settingsModified(false);
+            _listeners.get(i).settingsModified(false);
     }
     private static final String str(String orig) { return (orig != null ? orig : ""); }
     private void loadArchives(ChannelInfo info) {
@@ -985,30 +988,33 @@ public class ManageForum extends BaseComponent implements Translatable, Themeabl
         redrawRefs();
         modified();
     }
-    void setBanned(ArrayList scopes) {
+
+    void setBanned(List<Hash> scopes) {
         // remove all the old ban refs, and add in new banned refs
         TrimRefs trim = new TrimRefs(true);
         ReferenceNode.walk(_referenceNodeRoots, trim);
         for (int i = 0; i < scopes.size(); i++)
-            _referenceNodeRoots.add(new ReferenceNode("banned", SyndieURI.createScope((Hash)scopes.get(i)), "", Constants.REF_TYPE_BANNED));
+            _referenceNodeRoots.add(new ReferenceNode("banned", SyndieURI.createScope(scopes.get(i)), "", Constants.REF_TYPE_BANNED));
         _banGroup.setText(getText("Bans") + ": " + scopes.size() + " ");
         _banRemoveAll.setEnabled(scopes.size() > 0);
         _banGroup.getParent().layout(new Control[] { _banGroup });
         modified();
     }
-    ArrayList getRefs() { return _referenceNodeRoots; }
-    ArrayList getBanned() { 
+
+    List<ReferenceNode> getRefs() { return _referenceNodeRoots; }
+
+    List<Hash> getBanned() { 
         BannedRefs banned = new BannedRefs();
         ReferenceNode.walk(_referenceNodeRoots, banned);
         return banned.getScopes();
     }
     
     private static class BannedRefs implements ReferenceNode.Visitor {
-        private final ArrayList _scopes;
+        private final List<Hash> _scopes;
 
         public BannedRefs() { _scopes = new ArrayList(); }
 
-        public ArrayList getScopes() { return _scopes; }
+        public List<Hash> getScopes() { return _scopes; }
 
         public void visit(ReferenceNode node, int depth, int siblingOrder) {
             if (node.getURI() == null) return;

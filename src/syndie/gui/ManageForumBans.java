@@ -4,7 +4,6 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 import net.i2p.data.Base64;
@@ -63,10 +62,12 @@ class ManageForumBans extends BaseComponent implements Themeable, Translatable {
     private SashForm _sash;
     private RefTree _refTree;
     private Group _banGroup;
+    // Warning, SWT class, not java.util
     private List _localBans;
-    private final ArrayList<Hash> _localBanHashes;
+    private final java.util.List<Hash> _localBanHashes;
+    // Warning, SWT class, not java.util
     private List _targetBans;
-    private final ArrayList<Hash> _targetBanHashes;
+    private final java.util.List<Hash> _targetBanHashes;
     private Button _ok;
     private Button _cancel;
     
@@ -138,14 +139,14 @@ class ManageForumBans extends BaseComponent implements Themeable, Translatable {
     
     private void loadData() {
         _targetBanHashes.clear();
-        ArrayList scopes = _manage.getBanned();
+        java.util.List<Hash> scopes = _manage.getBanned();
         if (scopes != null)
             _targetBanHashes.addAll(scopes);
         redrawTarget();
         
         _localBans.setRedraw(false);
         _localBanHashes.clear();
-        ArrayList<Hash> banned = _client.getBannedChannels();
+        java.util.List<Hash> banned = _client.getBannedChannels();
         for (int i = 0; i < banned.size(); i++) {
             _localBanHashes.add(banned.get(i));
             _localBans.add(banned.get(i).toBase64());
@@ -190,7 +191,7 @@ class ManageForumBans extends BaseComponent implements Themeable, Translatable {
                 
                 _ui.debugMessage("drop: " + evt);
                 
-                ArrayList<Hash> scopes = getToAdd(evt.data.toString());
+                java.util.List<Hash> scopes = getToAdd(evt.data.toString());
                 for (int i = 0; i < scopes.size(); i++) {
                     Hash scope = scopes.get(i);
                     if (!_targetBanHashes.contains(scope))
@@ -202,10 +203,10 @@ class ManageForumBans extends BaseComponent implements Themeable, Translatable {
         });
     }
     
-    private ArrayList<Hash> getToAdd(String data) {
+    private java.util.List<Hash> getToAdd(String data) {
         if (_isDragging) {
             // from the ban list
-            ArrayList<Hash> rv = new ArrayList<Hash>();
+            java.util.List<Hash> rv = new ArrayList<Hash>();
             int indexes[] = _localBans.getSelectionIndices();
             for (int i = 0; i < indexes.length; i++) {
                 rv.add(_localBanHashes.get(indexes[i]));
@@ -239,18 +240,18 @@ class ManageForumBans extends BaseComponent implements Themeable, Translatable {
         }
 
         Scopes scopes = new Scopes();
-        ArrayList pre = new ArrayList();
+        java.util.List<ReferenceNode> pre = new ArrayList();
         pre.add(rv);
         ReferenceNode.walk(pre, scopes);
         return scopes.getScopes();
     }
     
     private static class Scopes implements ReferenceNode.Visitor {
-        private final ArrayList _scopes;
+        private final java.util.List<Hash> _scopes;
 
         public Scopes() { _scopes = new ArrayList(); }
 
-        public ArrayList getScopes() { return _scopes; }
+        public java.util.List<Hash> getScopes() { return _scopes; }
 
         public void visit(ReferenceNode node, int depth, int siblingOrder) {
             SyndieURI uri = node.getURI();
