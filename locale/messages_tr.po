@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: I2P\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-01-20 22:47+0000\n"
-"PO-Revision-Date: 2016-04-05 04:49+0000\n"
+"POT-Creation-Date: 2016-06-21 12:55+0000\n"
+"PO-Revision-Date: 2016-08-01 15:19+0000\n"
 "Last-Translator: Kaya Zeren <kayazeren@gmail.com>\n"
 "Language-Team: Turkish (Turkey) (http://www.transifex.com/otf/I2P/language/tr_TR/)\n"
 "MIME-Version: 1.0\n"
@@ -62,14 +62,14 @@ msgid "Reply key unknown"
 msgstr "Yanıt anahtarı bilinmiyor"
 
 #: src/syndie/db/ImportResult.java:60 src/syndie/gui/BackupSecrets.java:153
-#: src/syndie/gui/Syndicator.java:913 src/syndie/gui/Syndicator.java:915
+#: src/syndie/gui/Syndicator.java:929 src/syndie/gui/Syndicator.java:931
 #: src/syndie/gui/desktop/MessageEditorPanel.java:432
 msgid "Passphrase required"
 msgstr "Parola zorunlu"
 
 #: src/syndie/db/ImportResult.java:66
 msgid "No enclosure type"
-msgstr "Herhangi bir taşıyıcı tipi yok"
+msgstr "Herhangi bir taşıyıcı türü yok"
 
 #: src/syndie/db/ImportResult.java:70
 msgid "Bad enclosure format"
@@ -77,7 +77,7 @@ msgstr "Taşıyıcı biçimi hatalı"
 
 #: src/syndie/db/ImportResult.java:74
 msgid "Bad enclosure type"
-msgstr "Taşıyıcı tipi hatalı"
+msgstr "Taşıyıcı türü hatalı"
 
 #: src/syndie/db/ImportResult.java:78
 msgid "Bad message format"
@@ -107,7 +107,7 @@ msgstr "Bilinmeyen kanal"
 msgid "Unknown author"
 msgstr "Bilinmeyen yazar"
 
-#: src/syndie/db/ImportResult.java:106 src/syndie/gui/MessageEditor.java:2469
+#: src/syndie/db/ImportResult.java:106 src/syndie/gui/MessageEditor.java:2470
 #: src/syndie/gui/desktop/MessagePanel.java:189
 msgid "Not authorized"
 msgstr "İzin verilmemiş"
@@ -144,30 +144,14 @@ msgstr "Şifre çözülemedi"
 msgid "Bad header"
 msgstr "Üst bilgi hatalı"
 
-#: src/syndie/db/ImportResult.java:144 src/syndie/gui/Browser.java:1550
-#: src/syndie/gui/SWTUI.java:179
+#: src/syndie/db/ImportResult.java:144 src/syndie/gui/Browser.java:1571
+#: src/syndie/gui/SWTUI.java:177
 msgid "Internal error"
 msgstr "İç hata"
 
-#: src/syndie/db/ReadMenu.java:994
-msgid "readKey"
-msgstr "okunmuşAnahtarı"
-
-#: src/syndie/db/ReadMenu.java:997
-msgid "postKey"
-msgstr "göndermeAnahtarı"
-
-#: src/syndie/db/ReadMenu.java:1000
-msgid "manageKey"
-msgstr "yönetimAnahtarı"
-
-#: src/syndie/db/ReadMenu.java:1003
-msgid "replyKey"
-msgstr "yanıtAnahtarı"
-
-#: src/syndie/db/ReadMenu.java:1017
-msgid "url"
-msgstr "internet adresi"
+#: src/syndie/db/ImportResult.java:149
+msgid "Interrupted"
+msgstr "Kesildi"
 
 #: src/syndie/gui/ArchiveDefaults.java:207
 #: src/syndie/gui/ArchiveDefaults.java:430
@@ -180,7 +164,7 @@ msgid "Edit name"
 msgstr "Adı düzenle"
 
 #: src/syndie/gui/ArchiveDefaults.java:267
-#: src/syndie/gui/ManageForumArchives.java:498
+#: src/syndie/gui/ManageForumArchives.java:499
 msgid "Archive name"
 msgstr "Arşiv adı"
 
@@ -188,32 +172,32 @@ msgstr "Arşiv adı"
 #: src/syndie/gui/ArchiveDefaults.java:344
 #: src/syndie/gui/ArchiveDefaults.java:439
 #: src/syndie/gui/ArchiveDefaultsPopup.java:98
-#: src/syndie/gui/ArchiveManager.java:346
-#: src/syndie/gui/BackupSecrets.java:505 src/syndie/gui/Browser.java:1660
+#: src/syndie/gui/ArchiveManager.java:347
+#: src/syndie/gui/BackupSecrets.java:504 src/syndie/gui/Browser.java:1681
 #: src/syndie/gui/ForumReferenceChooserPopup.java:161
 #: src/syndie/gui/ImageBuilderPopup.java:256
-#: src/syndie/gui/LinkBuilderPopup.java:432
-#: src/syndie/gui/ManageForumArchives.java:504
-#: src/syndie/gui/ManageForumAuthManage.java:313
-#: src/syndie/gui/ManageForumAuthPost.java:424
-#: src/syndie/gui/ManageForumAuthRead.java:342
-#: src/syndie/gui/ManageForumAuthReply.java:238
+#: src/syndie/gui/LinkBuilderPopup.java:436
+#: src/syndie/gui/ManageForumArchives.java:505
+#: src/syndie/gui/ManageForumAuthManage.java:315
+#: src/syndie/gui/ManageForumAuthPost.java:426
+#: src/syndie/gui/ManageForumAuthRead.java:344
+#: src/syndie/gui/ManageForumAuthReply.java:240
 #: src/syndie/gui/ManageForumBans.java:319
-#: src/syndie/gui/ManageForumReferences.java:541
+#: src/syndie/gui/ManageForumReferences.java:538
 #: src/syndie/gui/MessageChooserPopup.java:49
 #: src/syndie/gui/MessageChooserPopup.java:123
 #: src/syndie/gui/MessageEditorSpell.java:85
 #: src/syndie/gui/MessageEditorSpell.java:221
-#: src/syndie/gui/MessageEditorStyler.java:437
+#: src/syndie/gui/MessageEditorStyler.java:438
 #: src/syndie/gui/PassphrasePrompt.java:143
 #: src/syndie/gui/ReferenceChooserInfo.java:528
 #: src/syndie/gui/ReferenceChooserInfo.java:540
 #: src/syndie/gui/ReferenceChooserInfo.java:547
 #: src/syndie/gui/ReferenceChooserInfo.java:554
-#: src/syndie/gui/ReferenceEditor.java:690 src/syndie/gui/Syndicator.java:512
-#: src/syndie/gui/Syndicator.java:544
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:622
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1078
+#: src/syndie/gui/ReferenceEditor.java:690 src/syndie/gui/Syndicator.java:535
+#: src/syndie/gui/Syndicator.java:567
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:623
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1080
 #: src/syndie/gui/WebRipPageControl.java:362 src/syndie/gui/Wizard.java:175
 #: src/syndie/gui/desktop/ChangePassPopup.java:74
 #: src/syndie/gui/desktop/MessageEditorPanel.java:525
@@ -223,25 +207,25 @@ msgstr "İptal"
 #: src/syndie/gui/ArchiveDefaults.java:293
 #: src/syndie/gui/ArchiveDefaults.java:352
 #: src/syndie/gui/ArchiveDefaults.java:447
-#: src/syndie/gui/ArchiveManager.java:218
-#: src/syndie/gui/BackupSecrets.java:504 src/syndie/gui/Browser.java:1111
+#: src/syndie/gui/ArchiveManager.java:219
+#: src/syndie/gui/BackupSecrets.java:503 src/syndie/gui/Browser.java:1113
 #: src/syndie/gui/ImageBuilderPopup.java:263
-#: src/syndie/gui/LinkBuilderPopup.java:439
-#: src/syndie/gui/ManageForumArchives.java:503
-#: src/syndie/gui/ManageForumAuthManage.java:312
-#: src/syndie/gui/ManageForumAuthPost.java:423
-#: src/syndie/gui/ManageForumAuthRead.java:341
-#: src/syndie/gui/ManageForumAuthReply.java:237
+#: src/syndie/gui/LinkBuilderPopup.java:443
+#: src/syndie/gui/ManageForumArchives.java:504
+#: src/syndie/gui/ManageForumAuthManage.java:314
+#: src/syndie/gui/ManageForumAuthPost.java:425
+#: src/syndie/gui/ManageForumAuthRead.java:343
+#: src/syndie/gui/ManageForumAuthReply.java:239
 #: src/syndie/gui/ManageForumBans.java:318
-#: src/syndie/gui/ManageForumReferences.java:540
+#: src/syndie/gui/ManageForumReferences.java:537
 #: src/syndie/gui/MessageChooserPopup.java:122
-#: src/syndie/gui/MessageEditor.java:593
-#: src/syndie/gui/MessageEditor.java:1401
+#: src/syndie/gui/MessageEditor.java:594
+#: src/syndie/gui/MessageEditor.java:1402
 #: src/syndie/gui/MessageEditorSpell.java:99
-#: src/syndie/gui/MessageEditorStyler.java:436
+#: src/syndie/gui/MessageEditorStyler.java:437
 #: src/syndie/gui/PassphrasePrompt.java:142
 #: src/syndie/gui/ReferenceEditor.java:689
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:486
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:487
 #: src/syndie/gui/WebRipPageControl.java:371
 msgid "OK"
 msgstr "Tamam"
@@ -260,13 +244,13 @@ msgid "Edit proxy"
 msgstr "Vekil sunucuyu düzenle"
 
 #: src/syndie/gui/ArchiveDefaults.java:401
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1060
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1062
 msgid "Proxy host"
 msgstr "Vekil sunucu"
 
 #: src/syndie/gui/ArchiveDefaults.java:411
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:553
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1061
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:554
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1063
 msgid "Port"
 msgstr "Kapı"
 
@@ -286,7 +270,7 @@ msgid "Proxy"
 msgstr "Vekil sunucu"
 
 #: src/syndie/gui/ArchiveDefaults.java:546
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:535
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:536
 msgid "Read only"
 msgstr "Salt okunur"
 
@@ -326,64 +310,64 @@ msgstr "Varsayılan arşivler aşağıda listelenen Syndie kopyalarınız ile ta
 msgid "Save archives as your own"
 msgstr "Arşivler sizin olarak kaydedilsin"
 
-#: src/syndie/gui/ArchiveManager.java:197
-#: src/syndie/gui/ArchiveManager.java:336 src/syndie/gui/ViewForum.java:851
+#: src/syndie/gui/ArchiveManager.java:199
+#: src/syndie/gui/ArchiveManager.java:337 src/syndie/gui/ViewForum.java:851
 msgid "Advertised archives"
 msgstr "Duyurulan arşivler"
 
-#: src/syndie/gui/ArchiveManager.java:201
+#: src/syndie/gui/ArchiveManager.java:203
 msgid ""
 "If you allow people to sync off your archive, you can tell them about some "
 "alternate archives they can sync off as well"
 msgstr "Kişilere arşivinizle eşitleme izni veriyorsanız, eşitleme için alternatif arşivler önerebilirsiniz"
 
-#: src/syndie/gui/ArchiveManager.java:252 src/syndie/gui/Browser.java:1906
-#: src/syndie/gui/Browser.java:1907
+#: src/syndie/gui/ArchiveManager.java:253 src/syndie/gui/Browser.java:1927
+#: src/syndie/gui/Browser.java:1928
 msgid "Banned"
 msgstr "Engellenmiş"
 
-#: src/syndie/gui/ArchiveManager.java:258
+#: src/syndie/gui/ArchiveManager.java:259
 msgid ""
 "These authors and forums are completely ignored, with all of the associated "
 "messages refused"
 msgstr "Bu yazar ve forumlar tümüyle yok sayılır ve tüm iletileri geri çevirilir."
 
-#: src/syndie/gui/ArchiveManager.java:270
+#: src/syndie/gui/ArchiveManager.java:271
 msgid "Full hash"
 msgstr "Tam karma"
 
-#: src/syndie/gui/ArchiveManager.java:279
+#: src/syndie/gui/ArchiveManager.java:280
 msgid "Unban checked"
 msgstr "Engellemeyi kaldırma işaretlendi"
 
-#: src/syndie/gui/ArchiveManager.java:333
+#: src/syndie/gui/ArchiveManager.java:334
 msgid "Manage expiration policies"
 msgstr "Sona erme ilkeleri yönetimi"
 
-#: src/syndie/gui/ArchiveManager.java:334
+#: src/syndie/gui/ArchiveManager.java:335
 msgid "Manage cancel policies"
 msgstr "İptal ilkeleri yönetimi"
 
-#: src/syndie/gui/ArchiveManager.java:337
-#: src/syndie/gui/ArchiveManager.java:340
-#: src/syndie/gui/ArchiveManager.java:343 src/syndie/gui/BrowseForum.java:721
-#: src/syndie/gui/Browser.java:2898 src/syndie/gui/BrowserTree.java:347
-#: src/syndie/gui/ManageForum.java:1167
+#: src/syndie/gui/ArchiveManager.java:338
+#: src/syndie/gui/ArchiveManager.java:341
+#: src/syndie/gui/ArchiveManager.java:344 src/syndie/gui/BrowseForum.java:721
+#: src/syndie/gui/Browser.java:2918 src/syndie/gui/BrowserTree.java:348
+#: src/syndie/gui/ManageForum.java:1169
 msgid "Manage"
 msgstr "Yönetim"
 
-#: src/syndie/gui/ArchiveManager.java:339
+#: src/syndie/gui/ArchiveManager.java:340
 msgid "Deniable forums"
 msgstr "Reddedilebilir forumlar"
 
-#: src/syndie/gui/ArchiveManager.java:342 src/syndie/gui/ViewForum.java:853
+#: src/syndie/gui/ArchiveManager.java:343 src/syndie/gui/ViewForum.java:853
 msgid "Banned forums/authors"
 msgstr "Engellenmiş forum ve yazarlar"
 
-#: src/syndie/gui/ArchiveManager.java:345
-#: src/syndie/gui/AttachmentPreview.java:388
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:605
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1077
+#: src/syndie/gui/ArchiveManager.java:346
+#: src/syndie/gui/AttachmentPreview.java:392
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:606
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1079
 #: src/syndie/gui/desktop/MessageEditorPanel.java:502
 msgid "Save"
 msgstr "Kaydet"
@@ -396,52 +380,52 @@ msgstr "Arşiv ayarları yönetimi"
 msgid "Restore normal size"
 msgstr "Normal boyuta geri döndür"
 
-#: src/syndie/gui/AttachmentPreview.java:311
+#: src/syndie/gui/AttachmentPreview.java:315
 msgid "Unable to load attachment"
 msgstr "Ek yüklenemedi"
 
 #. FIXME not being displayed
-#: src/syndie/gui/AttachmentPreview.java:323
+#: src/syndie/gui/AttachmentPreview.java:327
 msgid "No preview available"
 msgstr "Önizleme yok"
 
-#: src/syndie/gui/AttachmentPreview.java:359
+#: src/syndie/gui/AttachmentPreview.java:363
 msgid "Attachment saved"
 msgstr "Ek kaydedildi"
 
-#: src/syndie/gui/AttachmentPreview.java:360
+#: src/syndie/gui/AttachmentPreview.java:364
 msgid "Attachment saved to"
 msgstr "Ek şuraya kaydedildi"
 
-#: src/syndie/gui/AttachmentPreview.java:365
+#: src/syndie/gui/AttachmentPreview.java:369
 msgid "Error saving attachment"
 msgstr "Ek kaydedilirken bir sorun çıktı"
 
-#: src/syndie/gui/AttachmentPreview.java:366
+#: src/syndie/gui/AttachmentPreview.java:370
 msgid "Attachment could not be saved"
 msgstr "Ek kaydedilemedi"
 
-#: src/syndie/gui/AttachmentPreview.java:382
-#: src/syndie/gui/LinkBuilderPopup.java:367
-#: src/syndie/gui/LinkBuilderPopup.java:398
-#: src/syndie/gui/ManageForum.java:1153
-#: src/syndie/gui/ManageForumArchives.java:491
-#: src/syndie/gui/ManageForumReferences.java:537
+#: src/syndie/gui/AttachmentPreview.java:386
+#: src/syndie/gui/LinkBuilderPopup.java:371
+#: src/syndie/gui/LinkBuilderPopup.java:402
+#: src/syndie/gui/ManageForum.java:1155
+#: src/syndie/gui/ManageForumArchives.java:492
+#: src/syndie/gui/ManageForumReferences.java:534
 #: src/syndie/gui/ManageReferenceChooser.java:609
 #: src/syndie/gui/MessageReferencesEditor.java:530
 #: src/syndie/gui/NymChannelTree.java:1146
 #: src/syndie/gui/ReferenceChooserInfo.java:520
 #: src/syndie/gui/ReferenceChooserInfo.java:531
-#: src/syndie/gui/ReferenceChooserSearch.java:171
+#: src/syndie/gui/ReferenceChooserSearch.java:172
 #: src/syndie/gui/ReferencesPanel.java:327
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1054
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1056
 #: src/syndie/gui/ViewForum.java:846
 msgid "Name"
 msgstr "Ad"
 
-#: src/syndie/gui/AttachmentPreview.java:383
-#: src/syndie/gui/ManageForum.java:1155
-#: src/syndie/gui/ManageForumReferences.java:536
+#: src/syndie/gui/AttachmentPreview.java:387
+#: src/syndie/gui/ManageForum.java:1157
+#: src/syndie/gui/ManageForumReferences.java:533
 #: src/syndie/gui/ManageReferenceChooser.java:606
 #: src/syndie/gui/MessageReferencesEditor.java:529
 #: src/syndie/gui/NymChannelTree.java:1147
@@ -451,27 +435,27 @@ msgstr "Ad"
 msgid "Description"
 msgstr "Açıklama"
 
-#: src/syndie/gui/AttachmentPreview.java:384
+#: src/syndie/gui/AttachmentPreview.java:388
 #: src/syndie/gui/ImageBuilderPopup.java:236
 msgid "Size"
 msgstr "Boyut"
 
-#: src/syndie/gui/AttachmentPreview.java:385
-#: src/syndie/gui/ManageForumArchives.java:492
+#: src/syndie/gui/AttachmentPreview.java:389
+#: src/syndie/gui/ManageForumArchives.java:493
 #: src/syndie/gui/ManageReferenceChooser.java:607
 #: src/syndie/gui/MessageReferencesEditor.java:531
 #: src/syndie/gui/ReferencesPanel.java:328
 msgid "Type"
-msgstr "Tip"
+msgstr "Tür"
 
-#: src/syndie/gui/AttachmentPreview.java:386
+#: src/syndie/gui/AttachmentPreview.java:390
 msgid "Save as"
 msgstr "Farklı kaydet"
 
-#: src/syndie/gui/AttachmentPreview.java:387
+#: src/syndie/gui/AttachmentPreview.java:391
 #: src/syndie/gui/ImageBuilderPopup.java:153
-#: src/syndie/gui/LinkBuilderPopup.java:230
-#: src/syndie/gui/LinkBuilderPopup.java:244
+#: src/syndie/gui/LinkBuilderPopup.java:234
+#: src/syndie/gui/LinkBuilderPopup.java:248
 #: src/syndie/gui/ReferenceEditor.java:688
 #: src/syndie/gui/desktop/ControlMenuPanel.java:624
 #: src/syndie/gui/desktop/ControlMenuPanel.java:632
@@ -493,9 +477,9 @@ msgid "There was an error backing up the keys"
 msgstr "Anahtarlar yedeklenirken bir sorun çıktı"
 
 #: src/syndie/gui/BackupSecrets.java:194 src/syndie/gui/LogTab.java:284
-#: src/syndie/gui/ManageForum.java:589
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:655
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:674
+#: src/syndie/gui/ManageForum.java:591
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:656
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:676
 msgid "Error"
 msgstr "Hata"
 
@@ -507,51 +491,51 @@ msgstr "Anahtarlar şuraya yedeklendi"
 msgid "Backup successful"
 msgstr "Yedekleme tamamlandı"
 
-#: src/syndie/gui/BackupSecrets.java:305 src/syndie/gui/BackupSecrets.java:382
+#: src/syndie/gui/BackupSecrets.java:305 src/syndie/gui/BackupSecrets.java:381
 msgid "The secrets file was corrupt"
 msgstr "Parola dosyası bozulmuş"
 
-#: src/syndie/gui/BackupSecrets.java:306 src/syndie/gui/BackupSecrets.java:383
+#: src/syndie/gui/BackupSecrets.java:306 src/syndie/gui/BackupSecrets.java:382
 msgid "Error reading"
 msgstr "Okuma hatası"
 
-#: src/syndie/gui/BackupSecrets.java:368
+#: src/syndie/gui/BackupSecrets.java:367
 msgid "Restored keys/meta/corrupt meta"
 msgstr "Geri yüklenen anahtar/üst veri bozulmuş"
 
-#: src/syndie/gui/BackupSecrets.java:369
+#: src/syndie/gui/BackupSecrets.java:368
 msgid "Restored"
 msgstr "Geri yüklendi"
 
-#: src/syndie/gui/BackupSecrets.java:437
+#: src/syndie/gui/BackupSecrets.java:436
 msgid "Forum management key"
 msgstr "Forum yönetimi anahtarı"
 
-#: src/syndie/gui/BackupSecrets.java:439
+#: src/syndie/gui/BackupSecrets.java:438
 msgid "Forum reply key"
 msgstr "Forum yanıtlama anahtarı"
 
-#: src/syndie/gui/BackupSecrets.java:441
+#: src/syndie/gui/BackupSecrets.java:440
 msgid "Forum post key"
 msgstr "Forum ileti gönderme anahtarı"
 
-#: src/syndie/gui/BackupSecrets.java:443
+#: src/syndie/gui/BackupSecrets.java:442
 msgid "Forum read key"
 msgstr "Forum okuma anahtarı"
 
-#: src/syndie/gui/BackupSecrets.java:446
+#: src/syndie/gui/BackupSecrets.java:445
 msgid "Expired"
 msgstr "Süresi geçmiş"
 
-#: src/syndie/gui/BackupSecrets.java:501
+#: src/syndie/gui/BackupSecrets.java:500
 msgid "Backup related forum profile?"
 msgstr "İlgili forum profili yedeklensin mi?"
 
-#: src/syndie/gui/BackupSecrets.java:502
+#: src/syndie/gui/BackupSecrets.java:501
 msgid "Backup expired keys?"
 msgstr "Süresi geçmiş anahtarlar yedeklensin mi?"
 
-#: src/syndie/gui/BackupSecrets.java:503
+#: src/syndie/gui/BackupSecrets.java:502
 msgid "Passphrase required to restore"
 msgstr "Parolanın geri yüklenmesi istendi"
 
@@ -583,8 +567,8 @@ msgstr "Bu forumun referansları yayınlanmış"
 msgid "This forum has specific admins"
 msgstr "Bu forumun öze yöneticileri var"
 
-#: src/syndie/gui/BrowseForum.java:722 src/syndie/gui/Browser.java:1814
-#: src/syndie/gui/Browser.java:2901 src/syndie/gui/BrowserTree.java:358
+#: src/syndie/gui/BrowseForum.java:722 src/syndie/gui/Browser.java:1835
+#: src/syndie/gui/Browser.java:2921 src/syndie/gui/BrowserTree.java:359
 #: src/syndie/gui/MessageEditorTab.java:119
 #: src/syndie/gui/desktop/MessageEditorPanel.java:520
 msgid "Post"
@@ -617,14 +601,14 @@ msgid "Ban this forum"
 msgstr "Bu forumu engelle"
 
 #: src/syndie/gui/BrowseForumTab.java:43
-#: src/syndie/gui/LinkBuilderPopup.java:223
-#: src/syndie/gui/MessageTree.java:2564 src/syndie/gui/MessageView.java:1002
+#: src/syndie/gui/LinkBuilderPopup.java:227
+#: src/syndie/gui/MessageTree.java:2585 src/syndie/gui/MessageView.java:1006
 #: src/syndie/gui/desktop/MessageEditorPanel.java:463
-#: src/syndie/gui/desktop/ResumeablePanel.java:244
+#: src/syndie/gui/desktop/ResumeablePanel.java:243
 msgid "Forum"
 msgstr "Forum"
 
-#: src/syndie/gui/BrowseForumTab.java:46 src/syndie/gui/MessageTree.java:964
+#: src/syndie/gui/BrowseForumTab.java:46 src/syndie/gui/MessageTree.java:970
 msgid "All forums"
 msgstr "Tüm forumlar"
 
@@ -632,36 +616,36 @@ msgstr "Tüm forumlar"
 msgid "Browse all forums"
 msgstr "Tüm forumlara gözat"
 
-#: src/syndie/gui/Browser.java:857 src/syndie/gui/Browser.java:991
+#: src/syndie/gui/Browser.java:859 src/syndie/gui/Browser.java:993
 msgid "Start HTTP archive server"
 msgstr "HTTP arşiv sunucusunu başlat"
 
-#: src/syndie/gui/Browser.java:860 src/syndie/gui/Browser.java:993
+#: src/syndie/gui/Browser.java:862 src/syndie/gui/Browser.java:995
 msgid "Stop HTTP archive server"
 msgstr "HTTP arşiv sunucusunu durdur"
 
-#: src/syndie/gui/Browser.java:863 src/syndie/gui/Browser.java:995
+#: src/syndie/gui/Browser.java:865 src/syndie/gui/Browser.java:997
 msgid "Configure HTTP archive server"
 msgstr "HTTP arşiv sunucusunu ayarla"
 
-#: src/syndie/gui/Browser.java:1108
+#: src/syndie/gui/Browser.java:1110
 msgid "HTTP listen port"
 msgstr "HTTP dinleme kapısı"
 
-#: src/syndie/gui/Browser.java:1109
+#: src/syndie/gui/Browser.java:1111
 msgid "Others can post new messages to this server"
 msgstr "Diğer kişiler bu sunucuya yeni ileti gönderebilir"
 
-#: src/syndie/gui/Browser.java:1110
+#: src/syndie/gui/Browser.java:1112
 #: src/syndie/gui/desktop/ControlMenuPanel.java:639
 msgid "Run on startup"
 msgstr "Başlangıçta çalıştırılsın"
 
-#: src/syndie/gui/Browser.java:1138 src/syndie/gui/Browser.java:2942
+#: src/syndie/gui/Browser.java:1140 src/syndie/gui/Browser.java:2962
 msgid "About"
 msgstr "Hakkında"
 
-#: src/syndie/gui/Browser.java:1182
+#: src/syndie/gui/Browser.java:1193
 #: src/syndie/gui/ManageReferenceChooserPopup.java:106
 #: src/syndie/gui/MessageEditorFind.java:180
 #: src/syndie/gui/ReferencesPanel.java:326
@@ -670,23 +654,23 @@ msgstr "Hakkında"
 msgid "Close"
 msgstr "Kapat"
 
-#: src/syndie/gui/Browser.java:1213
+#: src/syndie/gui/Browser.java:1224
 msgid "Confirm exit"
 msgstr "Kapatma onayı"
 
-#: src/syndie/gui/Browser.java:1214
+#: src/syndie/gui/Browser.java:1225
 msgid "Are you sure you want to exit Syndie?"
 msgstr "Syndie yazılımı kapatmak istediğinize emin misiniz?"
 
-#: src/syndie/gui/Browser.java:1552
+#: src/syndie/gui/Browser.java:1573
 msgid "There was an internal error viewing"
 msgstr "Görüntüleme sırasında bir sorun çıktı"
 
-#: src/syndie/gui/Browser.java:1629 src/syndie/gui/desktop/Desktop.java:729
+#: src/syndie/gui/Browser.java:1650 src/syndie/gui/desktop/Desktop.java:729
 msgid "External URL selected"
 msgstr "Dış İnternet adresi seçilmiş"
 
-#: src/syndie/gui/Browser.java:1632 src/syndie/gui/desktop/Desktop.java:732
+#: src/syndie/gui/Browser.java:1653 src/syndie/gui/desktop/Desktop.java:732
 msgid ""
 "The URL selected refers to a resource outside of Syndie.  You may load this "
 "in the browser of your choice, but doing so may be risky, as Syndie cannot "
@@ -694,427 +678,427 @@ msgid ""
 "identity or security."
 msgstr "Seçilmiş İnternet adresi Syndie dışında bir kaynağı gösteriyor. İsteğinize göre bu adresi web tarayıcınız içinden yükleyebilirsiniz ancak riskli olduğunu unutmayın. Syndie web tarayıcınızı koruyamaz ve ayrıca bu bağlantıyı izlemeniz kimliğinizi ya da güvenliğinizi tehlikeye atabilir."
 
-#: src/syndie/gui/Browser.java:1633
+#: src/syndie/gui/Browser.java:1654
 msgid "DO NOT OPEN THE URL IF YOU ARE UNSURE!!!"
 msgstr "EMİN DEĞİLSENİZ İNTERNET ADRESİNİ AÇMAYIN!!!"
 
-#: src/syndie/gui/Browser.java:1643
+#: src/syndie/gui/Browser.java:1664
 msgid "URL is invalid and cannot be opened"
 msgstr "İnternet adtresi geçersiz olduğundan açılamadı"
 
-#: src/syndie/gui/Browser.java:1671
+#: src/syndie/gui/Browser.java:1692
 msgid "Open in Syndie using I2P proxy"
 msgstr "I2P vekil sunucusunu kullanarak Syndie içinde aç"
 
-#: src/syndie/gui/Browser.java:1690
+#: src/syndie/gui/Browser.java:1711
 msgid "Open in browser"
 msgstr "Web tarayıcı içinde aç"
 
-#: src/syndie/gui/Browser.java:1712 src/syndie/gui/desktop/Desktop.java:760
+#: src/syndie/gui/Browser.java:1733 src/syndie/gui/desktop/Desktop.java:760
 msgid "Invalid URI"
 msgstr "İnternet adresi geçersiz"
 
-#: src/syndie/gui/Browser.java:1713 src/syndie/gui/desktop/Desktop.java:761
+#: src/syndie/gui/Browser.java:1734 src/syndie/gui/desktop/Desktop.java:761
 msgid "The URI visited is not understood by Syndie"
 msgstr "Syndie, bakılan İnternet adresini anlayamadı"
 
-#: src/syndie/gui/Browser.java:1811 src/syndie/gui/Browser.java:2933
+#: src/syndie/gui/Browser.java:1832 src/syndie/gui/Browser.java:2953
 #: src/syndie/gui/LogTab.java:280
 msgid "Logs"
 msgstr "Günlükler"
 
-#: src/syndie/gui/Browser.java:1812
+#: src/syndie/gui/Browser.java:1833
 msgid "Watch log messages"
 msgstr "İzleme günlüğü iletileri"
 
-#: src/syndie/gui/Browser.java:1815 src/syndie/gui/MessageEditorTab.java:137
+#: src/syndie/gui/Browser.java:1836 src/syndie/gui/MessageEditorTab.java:137
 #: src/syndie/gui/desktop/MessageTreePanel.java:556
 msgid "Post a new message"
 msgstr "Yeni ileti gönder"
 
-#: src/syndie/gui/Browser.java:1817
+#: src/syndie/gui/Browser.java:1838
 msgid "Text UI"
 msgstr "Metin Kullanıcı Arayüzü"
 
-#: src/syndie/gui/Browser.java:1818
+#: src/syndie/gui/Browser.java:1839
 msgid "Text-based interface"
 msgstr "Metin temelli arayüz"
 
-#: src/syndie/gui/Browser.java:1889 src/syndie/gui/desktop/Desktop.java:1065
+#: src/syndie/gui/Browser.java:1910 src/syndie/gui/desktop/Desktop.java:1065
 msgid ""
 "All of the messages in it will be removed and you will never receive any "
 "messages in it again, or posts written by the forum's owner.  Do you want to"
 " ban"
 msgstr "İçindeki tüm iletiler silinecek ve içindeki iletileri ya da forum sahibi tarafından yazılmış iletileri bir daha alamayacaksınız. engellemek istediğinize emin misiniz?"
 
-#: src/syndie/gui/Browser.java:1892 src/syndie/gui/desktop/Desktop.java:1068
+#: src/syndie/gui/Browser.java:1913 src/syndie/gui/desktop/Desktop.java:1068
 msgid "Confirm ban"
 msgstr "Engellemeyi onayla"
 
-#: src/syndie/gui/Browser.java:1928 src/syndie/gui/desktop/Desktop.java:1097
+#: src/syndie/gui/Browser.java:1949 src/syndie/gui/desktop/Desktop.java:1097
 msgid "Do you really want to tell everyone to ignore this message?"
 msgstr "Gerçekten herkese bu iletiyi yok saymalarını söylemek istediğinize emin misiniz?"
 
-#: src/syndie/gui/Browser.java:1929 src/syndie/gui/desktop/Desktop.java:1098
+#: src/syndie/gui/Browser.java:1950 src/syndie/gui/desktop/Desktop.java:1098
 msgid "Confirm cancel"
 msgstr "İptali onayla"
 
-#: src/syndie/gui/Browser.java:1942 src/syndie/gui/Syndicator.java:281
-#: src/syndie/gui/Syndicator.java:414 src/syndie/gui/Syndicator.java:518
-#: src/syndie/gui/Syndicator.java:550 src/syndie/gui/desktop/Desktop.java:1111
+#: src/syndie/gui/Browser.java:1963 src/syndie/gui/Syndicator.java:278
+#: src/syndie/gui/Syndicator.java:437 src/syndie/gui/Syndicator.java:541
+#: src/syndie/gui/Syndicator.java:573 src/syndie/gui/desktop/Desktop.java:1111
 msgid "Cancelled"
 msgstr "İptal edildi"
 
-#: src/syndie/gui/Browser.java:1943 src/syndie/gui/desktop/Desktop.java:1112
+#: src/syndie/gui/Browser.java:1964 src/syndie/gui/desktop/Desktop.java:1112
 msgid "Selected message cancelled"
 msgstr "Seçilmiş ileti iptal edildi"
 
-#: src/syndie/gui/Browser.java:1964 src/syndie/gui/desktop/Desktop.java:1133
+#: src/syndie/gui/Browser.java:1985 src/syndie/gui/desktop/Desktop.java:1133
 msgid "Do you really want to locally delete this message?"
 msgstr "Gerçekten bu iletiyi yerel olara silmek istediğinize emin misiniz?"
 
-#: src/syndie/gui/Browser.java:1965 src/syndie/gui/desktop/Desktop.java:1134
+#: src/syndie/gui/Browser.java:1986 src/syndie/gui/desktop/Desktop.java:1134
 msgid "Confirm delete"
 msgstr "Silmeyi onayla"
 
-#: src/syndie/gui/Browser.java:1978 src/syndie/gui/desktop/Desktop.java:1147
+#: src/syndie/gui/Browser.java:1999 src/syndie/gui/desktop/Desktop.java:1147
 msgid "Deleted"
 msgstr "Silindi"
 
-#: src/syndie/gui/Browser.java:1979 src/syndie/gui/desktop/Desktop.java:1148
+#: src/syndie/gui/Browser.java:2000 src/syndie/gui/desktop/Desktop.java:1148
 msgid "Selected message deleted"
 msgstr "Seçilmiş ileti silindi"
 
-#: src/syndie/gui/Browser.java:1992
+#: src/syndie/gui/Browser.java:2013
 msgid "Select font"
-msgstr "Yazı tipini seçin"
+msgstr "Yazı türünü seçin"
 
-#: src/syndie/gui/Browser.java:2184 src/syndie/gui/Browser.java:2873
+#: src/syndie/gui/Browser.java:2205 src/syndie/gui/Browser.java:2893
 #: src/syndie/gui/desktop/ControlMenuPanel.java:628
 msgid "Open Syndie URI"
 msgstr "Syndie İnternet Adresini Aç"
 
-#: src/syndie/gui/Browser.java:2187
-#: src/syndie/gui/ManageForumArchives.java:493
+#: src/syndie/gui/Browser.java:2208
+#: src/syndie/gui/ManageForumArchives.java:494
 #: src/syndie/gui/ReferenceEditor.java:679
 msgid "Location"
 msgstr "Konum"
 
-#: src/syndie/gui/Browser.java:2194
+#: src/syndie/gui/Browser.java:2215
 #: src/syndie/gui/desktop/ControlMenuPanel.java:630
 msgid "Open"
 msgstr "Aç"
 
 #. retranslate each time
-#: src/syndie/gui/Browser.java:2297
+#: src/syndie/gui/Browser.java:2319
 #: src/syndie/gui/desktop/ControlMenuPanel.java:468
 msgid "Import syndie file"
 msgstr "Syndie dosyasını al"
 
-#: src/syndie/gui/Browser.java:2298 src/syndie/gui/Browser.java:2485
+#: src/syndie/gui/Browser.java:2320 src/syndie/gui/Browser.java:2507
 #: src/syndie/gui/desktop/ControlMenuPanel.java:469
 msgid "All files"
 msgstr "Tüm dosyalar"
 
-#: src/syndie/gui/Browser.java:2298
+#: src/syndie/gui/Browser.java:2320
 #: src/syndie/gui/desktop/ControlMenuPanel.java:469
 msgid "Syndie files"
 msgstr "Syndie dosyaları"
 
-#: src/syndie/gui/Browser.java:2318 src/syndie/gui/Browser.java:2353
+#: src/syndie/gui/Browser.java:2340 src/syndie/gui/Browser.java:2375
 #: src/syndie/gui/desktop/ControlMenuPanel.java:534
 msgid "Import complete"
 msgstr "Alma tamamlandı"
 
-#: src/syndie/gui/Browser.java:2319 src/syndie/gui/Browser.java:2354
+#: src/syndie/gui/Browser.java:2341 src/syndie/gui/Browser.java:2376
 #: src/syndie/gui/desktop/ControlMenuPanel.java:535
 msgid "Messages imported successfully/total"
 msgstr "Alınan iletiler alınan/toplam"
 
 #. retranslate each time
-#: src/syndie/gui/Browser.java:2333
+#: src/syndie/gui/Browser.java:2355
 msgid "Import directories recursively"
 msgstr "Alt klasörler de alınsın"
 
-#: src/syndie/gui/Browser.java:2428 src/syndie/gui/Browser.java:2877
+#: src/syndie/gui/Browser.java:2450 src/syndie/gui/Browser.java:2897
 msgid "Export"
 msgstr "Ver"
 
-#: src/syndie/gui/Browser.java:2445
+#: src/syndie/gui/Browser.java:2467
 msgid "Export to"
 msgstr "Şuraya ver"
 
-#: src/syndie/gui/Browser.java:2484
+#: src/syndie/gui/Browser.java:2506
 msgid "Syndie secrets files"
 msgstr "Syndie parola dosyaları"
 
-#: src/syndie/gui/Browser.java:2487
+#: src/syndie/gui/Browser.java:2509
 msgid "Select Syndie secrets file to restore"
 msgstr "Geri yüklenecek Syndie parola dosyasını seçin"
 
-#: src/syndie/gui/Browser.java:2498 src/syndie/gui/Browser.java:2891
+#: src/syndie/gui/Browser.java:2520 src/syndie/gui/Browser.java:2911
 msgid "Find forums"
 msgstr "Forum arama"
 
-#: src/syndie/gui/Browser.java:2866 src/syndie/gui/Browser.java:2950
-#: src/syndie/gui/BugReport.java:671 src/syndie/gui/StatusBar.java:225
+#: src/syndie/gui/Browser.java:2886 src/syndie/gui/Browser.java:2970
+#: src/syndie/gui/BugReport.java:671 src/syndie/gui/StatusBar.java:234
 msgid "Syndie"
 msgstr "Syndie"
 
-#: src/syndie/gui/Browser.java:2867
+#: src/syndie/gui/Browser.java:2887
 msgid "Close all tabs"
 msgstr "Tüm sekmeleri kapat"
 
-#: src/syndie/gui/Browser.java:2868
+#: src/syndie/gui/Browser.java:2888
 msgid "Close other tabs"
 msgstr "Diğer sekmeleri kapat"
 
-#: src/syndie/gui/Browser.java:2869
+#: src/syndie/gui/Browser.java:2889
 msgid "Copy tab location"
 msgstr "Sekme konumunu kopyala"
 
-#: src/syndie/gui/Browser.java:2870
+#: src/syndie/gui/Browser.java:2890
 msgid "Bookmark tab"
 msgstr "Sekmeyi yer imlerine ekle"
 
-#: src/syndie/gui/Browser.java:2872 src/syndie/gui/ImageBuilderPopup.java:143
+#: src/syndie/gui/Browser.java:2892 src/syndie/gui/ImageBuilderPopup.java:143
 msgid "File"
 msgstr "Dosya"
 
-#: src/syndie/gui/Browser.java:2874
+#: src/syndie/gui/Browser.java:2894
 msgid "Minimize to the systray"
 msgstr "Sistem tepsisine küçült"
 
-#: src/syndie/gui/Browser.java:2875
+#: src/syndie/gui/Browser.java:2895
 #: src/syndie/gui/desktop/ControlMenuPanel.java:621
 #: src/syndie/gui/desktop/ControlMenuPanel.java:625
 msgid "Import"
 msgstr "Al"
 
-#: src/syndie/gui/Browser.java:2876
+#: src/syndie/gui/Browser.java:2896
 msgid "Import bulk"
 msgstr "Toplu alma"
 
-#: src/syndie/gui/Browser.java:2878
+#: src/syndie/gui/Browser.java:2898
 msgid "Quit"
 msgstr "Çık"
 
-#: src/syndie/gui/Browser.java:2885
+#: src/syndie/gui/Browser.java:2905
 #: src/syndie/gui/ManageReferenceChooser.java:613
 #: src/syndie/gui/MessagePreview.java:318
 #: src/syndie/gui/MessageTreePreview.java:232
 #: src/syndie/gui/ReferencesPanel.java:150
-#: src/syndie/gui/ReferencesPanel.java:195 src/syndie/gui/Syndicator.java:487
-#: src/syndie/gui/Syndicator.java:526 src/syndie/gui/ViewForum.java:374
+#: src/syndie/gui/ReferencesPanel.java:195 src/syndie/gui/Syndicator.java:510
+#: src/syndie/gui/Syndicator.java:549 src/syndie/gui/ViewForum.java:374
 #: src/syndie/gui/desktop/MessageTreePanel.java:701
 msgid "View"
 msgstr "Görüntüle"
 
-#: src/syndie/gui/Browser.java:2886
+#: src/syndie/gui/Browser.java:2906
 msgid "Show bookmarks"
 msgstr "Yer imlerini görüntüle"
 
-#: src/syndie/gui/Browser.java:2890 src/syndie/gui/NymChannelSource.java:66
+#: src/syndie/gui/Browser.java:2910 src/syndie/gui/NymChannelSource.java:66
 msgid "Forums"
 msgstr "Forumlar"
 
-#: src/syndie/gui/Browser.java:2892
+#: src/syndie/gui/Browser.java:2912
 msgid "Read forums"
 msgstr "Forumları oku"
 
-#: src/syndie/gui/Browser.java:2893
+#: src/syndie/gui/Browser.java:2913
 msgid "Read all"
 msgstr "Tümünü oku"
 
-#: src/syndie/gui/Browser.java:2894
+#: src/syndie/gui/Browser.java:2914
 msgid "Read all by forum"
 msgstr "Foruma göre tümünü oku"
 
-#: src/syndie/gui/Browser.java:2895
+#: src/syndie/gui/Browser.java:2915
 msgid "Read private messages"
 msgstr "Özel iletileri oku"
 
-#: src/syndie/gui/Browser.java:2896 src/syndie/gui/ReferenceEditor.java:684
+#: src/syndie/gui/Browser.java:2916 src/syndie/gui/ReferenceEditor.java:684
 msgid "Create"
 msgstr "Oluştur"
 
-#: src/syndie/gui/Browser.java:2902
+#: src/syndie/gui/Browser.java:2922
 msgid "New post"
 msgstr "Yeni ileti"
 
-#: src/syndie/gui/Browser.java:2904
+#: src/syndie/gui/Browser.java:2924
 msgid "Post web rip"
 msgstr "Web kopyası gönder"
 
-#: src/syndie/gui/Browser.java:2905
+#: src/syndie/gui/Browser.java:2925
 msgid "Resume draft"
 msgstr "Taslağa devam et"
 
-#: src/syndie/gui/Browser.java:2907
-#: src/syndie/gui/ReferenceChooserTree.java:1044
+#: src/syndie/gui/Browser.java:2927
+#: src/syndie/gui/ReferenceChooserTree.java:1058
 msgid "Manageable forums"
 msgstr "Yönetilebilir forumlar"
 
-#: src/syndie/gui/Browser.java:2908
+#: src/syndie/gui/Browser.java:2928
 msgid "Postable forums"
 msgstr "Gönderilebilir forumlar"
 
-#: src/syndie/gui/Browser.java:2909
+#: src/syndie/gui/Browser.java:2929
 msgid "Publically postable forums"
 msgstr "Herkese açık olarak gönderilebilir forumlar"
 
-#: src/syndie/gui/Browser.java:2911 src/syndie/gui/SyndicatorTab.java:27
+#: src/syndie/gui/Browser.java:2931 src/syndie/gui/SyndicatorTab.java:27
 msgid "Syndicate"
 msgstr "Eşitle"
 
-#: src/syndie/gui/Browser.java:2912
+#: src/syndie/gui/Browser.java:2932
 msgid "Control syndication"
 msgstr "Eşitlemeyi denetle"
 
-#: src/syndie/gui/Browser.java:2914
+#: src/syndie/gui/Browser.java:2934
 msgid "Toggle online state"
 msgstr "Çevrimiçi durumunu değiştir"
 
-#: src/syndie/gui/Browser.java:2915
+#: src/syndie/gui/Browser.java:2935
 msgid "Manage archive"
 msgstr "Arşiv yönetimi"
 
-#: src/syndie/gui/Browser.java:2918 src/syndie/gui/WelcomeScreen.java:393
+#: src/syndie/gui/Browser.java:2938 src/syndie/gui/WelcomeScreen.java:403
 msgid "Language"
 msgstr "Dil"
 
 #. _languageMenuEdit.setText(X + registry.getText("Translate"));
 #. _languageMenuRefresh.setText(X + registry.getText("Refresh translations"));
-#: src/syndie/gui/Browser.java:2924
+#: src/syndie/gui/Browser.java:2944
 msgid "Style"
 msgstr "Stil"
 
-#: src/syndie/gui/Browser.java:2926
+#: src/syndie/gui/Browser.java:2946
 msgid "Change font"
-msgstr "Yazı tipini değiştir"
+msgstr "Yazı türünü değiştir"
 
-#: src/syndie/gui/Browser.java:2927
+#: src/syndie/gui/Browser.java:2947
 msgid "Increase font"
 msgstr "Yazı boyutunu büyüt"
 
-#: src/syndie/gui/Browser.java:2928
+#: src/syndie/gui/Browser.java:2948
 msgid "Decrease font"
 msgstr "Yazı büyütünü küçült"
 
-#: src/syndie/gui/Browser.java:2929
+#: src/syndie/gui/Browser.java:2949
 msgid "Reset style"
 msgstr "Stili sıfırla"
 
-#: src/syndie/gui/Browser.java:2930
+#: src/syndie/gui/Browser.java:2950
 #: src/syndie/gui/desktop/ControlMenuPanel.java:640
 msgid "Configure"
 msgstr "Ayarla"
 
-#: src/syndie/gui/Browser.java:2932 src/syndie/gui/MessageTree.java:958
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1056
+#: src/syndie/gui/Browser.java:2952 src/syndie/gui/MessageTree.java:964
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1058
 msgid "Advanced"
 msgstr "Gelişmiş"
 
-#: src/syndie/gui/Browser.java:2934
+#: src/syndie/gui/Browser.java:2954
 msgid "Text interface"
 msgstr "Metin arayüzü"
 
-#: src/syndie/gui/Browser.java:2935
+#: src/syndie/gui/Browser.java:2955
 msgid "Backup secrets"
 msgstr "Parolaları yedekle"
 
-#: src/syndie/gui/Browser.java:2936
+#: src/syndie/gui/Browser.java:2956
 msgid "Restore secrets"
 msgstr "Parolaları geri yükle"
 
-#: src/syndie/gui/Browser.java:2937
+#: src/syndie/gui/Browser.java:2957
 msgid "SQL interface"
 msgstr "SQL arayüzü"
 
-#: src/syndie/gui/Browser.java:2938
+#: src/syndie/gui/Browser.java:2958
 msgid "Dump resources"
 msgstr "Kaynakları indir"
 
-#: src/syndie/gui/Browser.java:2939
+#: src/syndie/gui/Browser.java:2959
 msgid "Dump resource differences"
 msgstr "Kaynak farklılıklarını indir"
 
-#: src/syndie/gui/Browser.java:2941
+#: src/syndie/gui/Browser.java:2961
 msgid "Help"
 msgstr "Yardım"
 
-#: src/syndie/gui/Browser.java:2944 src/syndie/gui/BugReportTab.java:42
+#: src/syndie/gui/Browser.java:2964 src/syndie/gui/BugReportTab.java:42
 msgid "File a new bug report"
 msgstr "Hata raporu ilet"
 
-#: src/syndie/gui/Browser.java:2946
+#: src/syndie/gui/Browser.java:2966
 msgid "FAQ"
 msgstr "SSS"
 
-#: src/syndie/gui/Browser.java:2947
+#: src/syndie/gui/Browser.java:2967
 msgid "GUI manual"
 msgstr "Görsel arayüz kılavuzu"
 
-#: src/syndie/gui/Browser.java:2948
+#: src/syndie/gui/Browser.java:2968
 msgid "Text interface manual"
 msgstr "Metin arayüzü kılavuzu"
 
-#: src/syndie/gui/Browser.java:2951
+#: src/syndie/gui/Browser.java:2971
 msgid "Syndie is running"
 msgstr "Syndie çalışmıyor"
 
-#: src/syndie/gui/BrowserTree.java:176
+#: src/syndie/gui/BrowserTree.java:177
 msgid "Forum search"
 msgstr "Forum arama"
 
 #. _searchMenuView.setText(registry.getText("View"));
-#: src/syndie/gui/BrowserTree.java:211 src/syndie/gui/BrowserTree.java:771
-#: src/syndie/gui/BrowserTree.java:773 src/syndie/gui/NymChannelTree.java:1158
-#: src/syndie/gui/ReferenceChooserSearch.java:177
+#: src/syndie/gui/BrowserTree.java:212 src/syndie/gui/BrowserTree.java:772
+#: src/syndie/gui/BrowserTree.java:774 src/syndie/gui/NymChannelTree.java:1158
+#: src/syndie/gui/ReferenceChooserSearch.java:178
 msgid "Search"
 msgstr "Arama"
 
-#: src/syndie/gui/BrowserTree.java:303
+#: src/syndie/gui/BrowserTree.java:304
 msgid "View all selected"
 msgstr "Tüm seçilmişleri görüntüle"
 
-#: src/syndie/gui/BrowserTree.java:312
+#: src/syndie/gui/BrowserTree.java:313
 msgid "Unwatch all selected"
 msgstr "Tüm seçilmişleri izlemeyi bırak"
 
-#: src/syndie/gui/BrowserTree.java:323
+#: src/syndie/gui/BrowserTree.java:324
 msgid "Unbookmark all selected"
 msgstr "Tüm seçilmişleri yer imlerinden kaldır"
 
-#: src/syndie/gui/BrowserTree.java:327
+#: src/syndie/gui/BrowserTree.java:328
 msgid "Are you sure you want to delete these bookmarks?"
 msgstr "Bu yer imlerini silmek istediğinize emin misiniz?"
 
-#: src/syndie/gui/BrowserTree.java:328 src/syndie/gui/BrowserTree.java:573
-#: src/syndie/gui/ManageForum.java:408
+#: src/syndie/gui/BrowserTree.java:329 src/syndie/gui/BrowserTree.java:574
+#: src/syndie/gui/ManageForum.java:410
 #: src/syndie/gui/desktop/ResumeablePanel.java:117
 #: src/syndie/gui/desktop/ResumeablePanel.java:120
 msgid "Confirm"
 msgstr "Onayla"
 
-#: src/syndie/gui/BrowserTree.java:370 src/syndie/gui/BrowserTree.java:427
+#: src/syndie/gui/BrowserTree.java:371 src/syndie/gui/BrowserTree.java:428
 msgid "Add bookmark"
 msgstr "Yer imi ekle"
 
-#: src/syndie/gui/BrowserTree.java:377 src/syndie/gui/BrowserTree.java:434
+#: src/syndie/gui/BrowserTree.java:378 src/syndie/gui/BrowserTree.java:435
 #: src/syndie/gui/ReferencesPanel.java:323
 msgid "Add folder"
 msgstr "Klasör ekle"
 
-#: src/syndie/gui/BrowserTree.java:389
+#: src/syndie/gui/BrowserTree.java:390
 msgid "View selected"
 msgstr "Seçilmişi görüntüle"
 
-#: src/syndie/gui/BrowserTree.java:403
+#: src/syndie/gui/BrowserTree.java:404
 msgid "View all children"
 msgstr "Tüm alt ögeleri görüntüle"
 
-#: src/syndie/gui/BrowserTree.java:411
+#: src/syndie/gui/BrowserTree.java:412
 #: src/syndie/gui/ManageReferenceChooser.java:612
 #: src/syndie/gui/ReferencesPanel.java:185
 #: src/syndie/gui/ReferencesPanel.java:200
@@ -1122,53 +1106,53 @@ msgstr "Tüm alt ögeleri görüntüle"
 msgid "Edit"
 msgstr "Düzenle"
 
-#: src/syndie/gui/BrowserTree.java:419
-#: src/syndie/gui/ManageForumAuthManage.java:302
-#: src/syndie/gui/ManageForumAuthManage.java:307
-#: src/syndie/gui/ManageForumAuthPost.java:413
-#: src/syndie/gui/ManageForumAuthPost.java:418
-#: src/syndie/gui/ManageForumAuthRead.java:337
-#: src/syndie/gui/ManageForumAuthReply.java:231
+#: src/syndie/gui/BrowserTree.java:420
+#: src/syndie/gui/ManageForumAuthManage.java:304
+#: src/syndie/gui/ManageForumAuthManage.java:309
+#: src/syndie/gui/ManageForumAuthPost.java:415
+#: src/syndie/gui/ManageForumAuthPost.java:420
+#: src/syndie/gui/ManageForumAuthRead.java:339
+#: src/syndie/gui/ManageForumAuthReply.java:233
 #: src/syndie/gui/ReferencesPanel.java:189
 #: src/syndie/gui/ReferencesPanel.java:205
 #: src/syndie/gui/ReferencesPanel.java:325
 msgid "Delete"
 msgstr "Sil"
 
-#: src/syndie/gui/BrowserTree.java:510
+#: src/syndie/gui/BrowserTree.java:511
 #: src/syndie/gui/desktop/AddReferenceSource.java:99
 msgid "New folder"
 msgstr "Yeni klasör"
 
-#: src/syndie/gui/BrowserTree.java:572
+#: src/syndie/gui/BrowserTree.java:573
 msgid "Are you sure you want to delete this bookmark?"
 msgstr "Bu yer imini silmek istediğinize emin misiniz?"
 
-#: src/syndie/gui/BrowserTree.java:631 src/syndie/gui/ViewForum.java:857
+#: src/syndie/gui/BrowserTree.java:632 src/syndie/gui/ViewForum.java:857
 msgid "View the selected forum"
 msgstr "Seçilmiş forumu görüntüle"
 
-#: src/syndie/gui/BrowserTree.java:637
+#: src/syndie/gui/BrowserTree.java:638
 msgid "Highlight the forum's unread messages"
 msgstr "Forumun okunmamış iletileri vurgulansın"
 
-#: src/syndie/gui/BrowserTree.java:646
+#: src/syndie/gui/BrowserTree.java:647
 msgid "Import their recommended bookmarks"
 msgstr "Önerdikleri yer imlerini al"
 
-#: src/syndie/gui/BrowserTree.java:655
+#: src/syndie/gui/BrowserTree.java:656
 msgid "Import their recommended archives"
 msgstr "Önerdikleri arşivleri al"
 
-#: src/syndie/gui/BrowserTree.java:664
+#: src/syndie/gui/BrowserTree.java:665
 msgid "Import keys they recommended"
 msgstr "Önerdikleri anahtarları al"
 
-#: src/syndie/gui/BrowserTree.java:673
+#: src/syndie/gui/BrowserTree.java:674
 msgid "Import and honor bans they recommended"
 msgstr "Önerdikleri engellemeleri al ve uygula"
 
-#: src/syndie/gui/BrowserTree.java:684
+#: src/syndie/gui/BrowserTree.java:685
 msgid "Stop watching the selected forum"
 msgstr "Seçilmiş forumu izlemeyi bırak"
 
@@ -1186,7 +1170,7 @@ msgstr "Bileşen"
 
 #: src/syndie/gui/BugReport.java:666
 msgid "Bug type"
-msgstr "Hata tipi"
+msgstr "Hata türü"
 
 #: src/syndie/gui/BugReport.java:667
 msgid "Severity"
@@ -1221,13 +1205,13 @@ msgid "Attachments"
 msgstr "Ekler"
 
 #: src/syndie/gui/BugReport.java:676
-#: src/syndie/gui/ManageForumArchives.java:502
-#: src/syndie/gui/ManageForumAuthManage.java:301
-#: src/syndie/gui/ManageForumAuthManage.java:306
-#: src/syndie/gui/ManageForumAuthPost.java:412
-#: src/syndie/gui/ManageForumAuthPost.java:417
-#: src/syndie/gui/ManageForumAuthRead.java:336
-#: src/syndie/gui/ManageForumAuthReply.java:230
+#: src/syndie/gui/ManageForumArchives.java:503
+#: src/syndie/gui/ManageForumAuthManage.java:303
+#: src/syndie/gui/ManageForumAuthManage.java:308
+#: src/syndie/gui/ManageForumAuthPost.java:414
+#: src/syndie/gui/ManageForumAuthPost.java:419
+#: src/syndie/gui/ManageForumAuthRead.java:338
+#: src/syndie/gui/ManageForumAuthReply.java:232
 #: src/syndie/gui/ManageReferenceChooser.java:610
 #: src/syndie/gui/MessageEditorSpell.java:220
 msgid "Add"
@@ -1242,7 +1226,7 @@ msgstr "Sil"
 msgid "Post bug report"
 msgstr "Hata raporu gönder"
 
-#: src/syndie/gui/BugReport.java:680 src/syndie/gui/MessageEditor.java:2511
+#: src/syndie/gui/BugReport.java:680 src/syndie/gui/MessageEditor.java:2512
 #: src/syndie/gui/WebRipPostControl.java:210
 msgid "Post to"
 msgstr "Şuraya gönder"
@@ -1257,7 +1241,7 @@ msgstr "Rapor imzası"
 
 #: src/syndie/gui/BugReport.java:685
 msgid "Anonymous"
-msgstr "Anonim"
+msgstr "İsimsiz"
 
 #: src/syndie/gui/BugReportTab.java:41
 msgid "Bug report"
@@ -1272,36 +1256,36 @@ msgstr "Varsayılan ilke"
 msgid "Managed forums"
 msgstr "Yönetilen forumlar"
 
-#: src/syndie/gui/CancelManager.java:280
-#: src/syndie/gui/ExpirationManager.java:346
-#: src/syndie/gui/ManageForum.java:1159
+#: src/syndie/gui/CancelManager.java:282
+#: src/syndie/gui/ExpirationManager.java:348
+#: src/syndie/gui/ManageForum.java:1161
 #: src/syndie/gui/desktop/ProfilePanel.java:422
 msgid "Save changes"
 msgstr "Değişiklikleri kaydet"
 
-#: src/syndie/gui/CancelManager.java:281
-#: src/syndie/gui/ExpirationManager.java:347
+#: src/syndie/gui/CancelManager.java:283
+#: src/syndie/gui/ExpirationManager.java:349
 msgid "Revert changes"
 msgstr "Değişiklikleri geri al"
 
-#: src/syndie/gui/CancelManager.java:294
-#: src/syndie/gui/ExpirationManager.java:360
+#: src/syndie/gui/CancelManager.java:296
+#: src/syndie/gui/ExpirationManager.java:362
 msgid "Delete policy"
 msgstr "İlkeyi sil"
 
-#: src/syndie/gui/CancelManager.java:370
+#: src/syndie/gui/CancelManager.java:372
 msgid "Honor cancel messages from the message author"
 msgstr "İleti yazarından gelen iptal iletilerine saygı göster"
 
-#: src/syndie/gui/CancelManager.java:381
+#: src/syndie/gui/CancelManager.java:383
 msgid "Honor cancel messages from the forum owner"
 msgstr "Forum sahibinden gelen iptal iletilerine saygı göster"
 
-#: src/syndie/gui/CancelManager.java:392
+#: src/syndie/gui/CancelManager.java:394
 msgid "Honor cancel messages from any forum manager"
 msgstr "Herhangi bir forum yöneticisinden gelen iptal iletilerine saygı göster"
 
-#: src/syndie/gui/CancelManager.java:404
+#: src/syndie/gui/CancelManager.java:406
 msgid "Honor cancel messages from any explicitly authorized forum posters"
 msgstr "Açık olarak izin verilmiş forum ileti göndericilerinden gelen iptal iletilerine saygı göster"
 
@@ -1316,31 +1300,31 @@ msgstr "Sona erme ilkelerini yürüt"
 
 #: src/syndie/gui/ExpirationManager.java:298
 #: src/syndie/gui/NymChannelSource.java:67
-#: src/syndie/gui/ReferenceChooserTree.java:1046
+#: src/syndie/gui/ReferenceChooserTree.java:1060
 msgid "Watched forums"
 msgstr "İzlenen forumlar"
 
-#: src/syndie/gui/ExpirationManager.java:462
+#: src/syndie/gui/ExpirationManager.java:464
 msgid "Same as the default policy"
 msgstr "Varsayılan ilke ile aynı"
 
-#: src/syndie/gui/ExpirationManager.java:494
+#: src/syndie/gui/ExpirationManager.java:496
 msgid "Internal message data"
 msgstr "İç ileti verileri"
 
-#: src/syndie/gui/ExpirationManager.java:496
+#: src/syndie/gui/ExpirationManager.java:498
 msgid "Sharable external message data"
 msgstr "Paylaşılabilir dış ileti verileri"
 
-#: src/syndie/gui/ExpirationManager.java:566
+#: src/syndie/gui/ExpirationManager.java:568
 msgid "Max number of messages"
 msgstr "En fazla ileti sayısı"
 
-#: src/syndie/gui/ExpirationManager.java:617
+#: src/syndie/gui/ExpirationManager.java:619
 msgid "Max total size (KBytes)"
 msgstr "En fazla toplam boyut (KBayt)"
 
-#: src/syndie/gui/ExpirationManager.java:668
+#: src/syndie/gui/ExpirationManager.java:670
 msgid "Max age (days)"
 msgstr "En fazla yaş (gün)"
 
@@ -1362,14 +1346,14 @@ msgid "Include image"
 msgstr "Görsel ekle"
 
 #: src/syndie/gui/ImageBuilderPopup.java:134
-#: src/syndie/gui/LinkBuilderPopup.java:279
-#: src/syndie/gui/MessageEditor.java:2767
+#: src/syndie/gui/LinkBuilderPopup.java:283
+#: src/syndie/gui/MessageEditor.java:2768
 #: src/syndie/gui/MessageViewBody.java:359
 msgid "Attachment"
 msgstr "Ek"
 
 #: src/syndie/gui/ImageBuilderPopup.java:171
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1086
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1088
 #: src/syndie/gui/desktop/MessageEditorPanel.java:514
 msgid "Preview"
 msgstr "Önizleme"
@@ -1390,50 +1374,50 @@ msgstr "Sayfada bir küçük görsel görüntüle"
 msgid "Strip EXIF data from the image"
 msgstr "Görselin EXIF verisi çıkarılsın"
 
-#: src/syndie/gui/LinkBuilderPopup.java:176
+#: src/syndie/gui/LinkBuilderPopup.java:180
 msgid "Link to"
 msgstr "Bağlantı"
 
-#: src/syndie/gui/LinkBuilderPopup.java:186
+#: src/syndie/gui/LinkBuilderPopup.java:190
 msgid "Link text"
 msgstr "Bağlantı metni"
 
-#: src/syndie/gui/LinkBuilderPopup.java:219
+#: src/syndie/gui/LinkBuilderPopup.java:223
 msgid "Full Syndie URL"
 msgstr "Tam Syndie İnternet Adresi"
 
-#: src/syndie/gui/LinkBuilderPopup.java:238
+#: src/syndie/gui/LinkBuilderPopup.java:242
 msgid "Message"
 msgstr "İleti"
 
-#: src/syndie/gui/LinkBuilderPopup.java:261
+#: src/syndie/gui/LinkBuilderPopup.java:265
 msgid "Link to the message as a whole"
 msgstr "İleti bütün olarak bağlansın"
 
-#: src/syndie/gui/LinkBuilderPopup.java:266
-#: src/syndie/gui/MessageTree.java:1760
+#: src/syndie/gui/LinkBuilderPopup.java:270
+#: src/syndie/gui/MessageTree.java:1774
 #: src/syndie/gui/MessageViewBody.java:240
 msgid "Page"
 msgstr "Sayfa"
 
-#: src/syndie/gui/LinkBuilderPopup.java:300
+#: src/syndie/gui/LinkBuilderPopup.java:304
 msgid "Include read key"
 msgstr "Okuma anahtarı eklensin"
 
-#: src/syndie/gui/LinkBuilderPopup.java:316
+#: src/syndie/gui/LinkBuilderPopup.java:320
 msgid "Include post key"
 msgstr "İleti gönderme anahtarı eklensin"
 
-#: src/syndie/gui/LinkBuilderPopup.java:332
+#: src/syndie/gui/LinkBuilderPopup.java:336
 msgid "Include reply key"
 msgstr "Yanıtlama anahtarı eklensin"
 
-#: src/syndie/gui/LinkBuilderPopup.java:348
+#: src/syndie/gui/LinkBuilderPopup.java:352
 msgid "Include manage key"
 msgstr "Yönetim anahtarı eklensin"
 
-#: src/syndie/gui/LinkBuilderPopup.java:377
-#: src/syndie/gui/LinkBuilderPopup.java:408
+#: src/syndie/gui/LinkBuilderPopup.java:381
+#: src/syndie/gui/LinkBuilderPopup.java:412
 msgid "Destination"
 msgstr "Hedef"
 
@@ -1449,7 +1433,7 @@ msgstr "Günlük iletileri"
 msgid "Debug"
 msgstr "Hata ayıklama"
 
-#: src/syndie/gui/LogTab.java:283 src/syndie/gui/Syndicator.java:1155
+#: src/syndie/gui/LogTab.java:283 src/syndie/gui/Syndicator.java:1177
 msgid "Status"
 msgstr "Durum"
 
@@ -1457,72 +1441,72 @@ msgstr "Durum"
 msgid "Log levels"
 msgstr "Günlük düzeyleri"
 
-#: src/syndie/gui/ManageForum.java:409
+#: src/syndie/gui/ManageForum.java:411
 msgid "Do you want to discard these changes to the forum?"
 msgstr "Forum üzerinde yaptığınız değişiklikleri geri almak ister misiniz?"
 
-#: src/syndie/gui/ManageForum.java:590
+#: src/syndie/gui/ManageForum.java:592
 msgid "Internal error saving the forum"
 msgstr "Forum kaydedilirken bir iç sorun çıktı"
 
-#: src/syndie/gui/ManageForum.java:800
+#: src/syndie/gui/ManageForum.java:802
 msgid "Current"
 msgstr "Geçerli"
 
-#: src/syndie/gui/ManageForum.java:814 src/syndie/gui/WelcomeScreen.java:317
+#: src/syndie/gui/ManageForum.java:816 src/syndie/gui/WelcomeScreen.java:327
 msgid "Default"
 msgstr "Varsayılan"
 
-#: src/syndie/gui/ManageForum.java:847 src/syndie/gui/WelcomeScreen.java:346
+#: src/syndie/gui/ManageForum.java:849 src/syndie/gui/WelcomeScreen.java:356
 msgid "Select a 48x48 pixel PNG image"
 msgstr "48x48 piksel PNG görseli seçin"
 
-#: src/syndie/gui/ManageForum.java:849 src/syndie/gui/WelcomeScreen.java:348
+#: src/syndie/gui/ManageForum.java:851 src/syndie/gui/WelcomeScreen.java:358
 msgid "PNG image"
 msgstr "PNG görseli"
 
-#: src/syndie/gui/ManageForum.java:955
+#: src/syndie/gui/ManageForum.java:957
 msgid "Archives"
 msgstr "Arşivler"
 
-#: src/syndie/gui/ManageForum.java:975 src/syndie/gui/ManageForum.java:1055
-#: src/syndie/gui/ManageForumReferences.java:539
+#: src/syndie/gui/ManageForum.java:977 src/syndie/gui/ManageForum.java:1057
+#: src/syndie/gui/ManageForumReferences.java:536
 #: src/syndie/gui/ManageReferenceChooserPopup.java:107
-#: src/syndie/gui/MessageEditor.java:2516
+#: src/syndie/gui/MessageEditor.java:2517
 #: src/syndie/gui/MessageViewBody.java:311
 msgid "References"
 msgstr "Referanslar"
 
-#: src/syndie/gui/ManageForum.java:992 src/syndie/gui/ManageForum.java:1064
-#: src/syndie/gui/ManageForum.java:1096
+#: src/syndie/gui/ManageForum.java:994 src/syndie/gui/ManageForum.java:1066
+#: src/syndie/gui/ManageForum.java:1098
 msgid "Bans"
 msgstr "Engellemeler"
 
-#: src/syndie/gui/ManageForum.java:1154 src/syndie/gui/MessageEditor.java:2075
-#: src/syndie/gui/MessageTree.java:2566
-#: src/syndie/gui/ReferenceChooserSearch.java:168
+#: src/syndie/gui/ManageForum.java:1156 src/syndie/gui/MessageEditor.java:2076
+#: src/syndie/gui/MessageTree.java:2587
+#: src/syndie/gui/ReferenceChooserSearch.java:169
 #: src/syndie/gui/ViewForum.java:847 src/syndie/gui/WebRipPostControl.java:209
 msgid "Tags"
 msgstr "Etiketler"
 
-#: src/syndie/gui/ManageForum.java:1156 src/syndie/gui/ViewForum.java:849
+#: src/syndie/gui/ManageForum.java:1158 src/syndie/gui/ViewForum.java:849
 msgid "Expiration"
 msgstr "Sona erme"
 
-#: src/syndie/gui/ManageForum.java:1157 src/syndie/gui/ViewForum.java:850
+#: src/syndie/gui/ManageForum.java:1159 src/syndie/gui/ViewForum.java:850
 msgid "Manage expiration"
 msgstr "Sona erme yönetimi"
 
-#: src/syndie/gui/ManageForum.java:1160
+#: src/syndie/gui/ManageForum.java:1162
 #: src/syndie/gui/desktop/ProfilePanel.java:423
 msgid "Cancel changes"
 msgstr "Değişiklikleri iptal et"
 
-#: src/syndie/gui/ManageForum.java:1163
+#: src/syndie/gui/ManageForum.java:1165
 msgid "Authorization and authentication"
 msgstr "İzinler ve kimlik doğrulaması"
 
-#: src/syndie/gui/ManageForum.java:1164
+#: src/syndie/gui/ManageForum.java:1166
 msgid ""
 "Forum authorization and authentication takes four forms - those allowed to "
 "read a forum's posts, those allowed to post to a forum, those allowed to "
@@ -1530,85 +1514,85 @@ msgid ""
 "administrators"
 msgstr "Forum izinleri ve kimlik doğrulaması dört şekilde olabilir. Forum iletilerini okuma, foruma ileti gönderme, forum yönetimi ve forum yöneticilerinden gelen kişisel yanıtları okuma"
 
-#: src/syndie/gui/ManageForum.java:1165
+#: src/syndie/gui/ManageForum.java:1167
 msgid "Read posts"
 msgstr "İletileri okuma"
 
-#: src/syndie/gui/ManageForum.java:1166
+#: src/syndie/gui/ManageForum.java:1168
 msgid "Create posts"
 msgstr "İleti gönderme"
 
-#: src/syndie/gui/ManageForum.java:1168
-#: src/syndie/gui/ManageForumAuthReply.java:225
+#: src/syndie/gui/ManageForum.java:1170
+#: src/syndie/gui/ManageForumAuthReply.java:227
 msgid "Read forum feedback"
 msgstr "Forum geribildirimini okuma"
 
-#: src/syndie/gui/ManageForum.java:1170 src/syndie/gui/ManageForum.java:1173
-#: src/syndie/gui/ManageForum.java:1176
+#: src/syndie/gui/ManageForum.java:1172 src/syndie/gui/ManageForum.java:1175
+#: src/syndie/gui/ManageForum.java:1178
 msgid "Remove all"
 msgstr "Tümünü kaldır"
 
-#: src/syndie/gui/ManageForum.java:1171 src/syndie/gui/ManageForum.java:1174
-#: src/syndie/gui/ManageForum.java:1177
+#: src/syndie/gui/ManageForum.java:1173 src/syndie/gui/ManageForum.java:1176
+#: src/syndie/gui/ManageForum.java:1179
 #: src/syndie/gui/ReferenceEditor.java:680
 msgid "Select"
 msgstr "Seçin"
 
-#: src/syndie/gui/ManageForum.java:1179
+#: src/syndie/gui/ManageForum.java:1181
 msgid "Click to change avatar"
 msgstr "Avatarı değiştirmek için tıklayın"
 
-#: src/syndie/gui/ManageForum.java:1180 src/syndie/gui/WelcomeScreen.java:330
+#: src/syndie/gui/ManageForum.java:1182 src/syndie/gui/WelcomeScreen.java:340
 msgid "Load from file"
 msgstr "Dosyadan yükle"
 
-#: src/syndie/gui/ManageForumArchives.java:489
+#: src/syndie/gui/ManageForumArchives.java:490
 msgid "Archives advertised"
 msgstr "Arşivler duyuruldu"
 
-#: src/syndie/gui/ManageForumArchives.java:494
+#: src/syndie/gui/ManageForumArchives.java:495
 #: src/syndie/gui/ViewForum.java:731
 msgid "Public"
 msgstr "Herkese açık"
 
-#: src/syndie/gui/ManageForumArchives.java:496
+#: src/syndie/gui/ManageForumArchives.java:497
 msgid "Anyone can see this, not just authorized readers"
 msgstr "Bunu yalnız izinli değil tüm kullanıcılar görebilir"
 
-#: src/syndie/gui/ManageForumArchives.java:499
+#: src/syndie/gui/ManageForumArchives.java:500
 msgid "HTTP URL"
 msgstr "HTTP İnternet Adresi"
 
-#: src/syndie/gui/ManageForumArchives.java:500
+#: src/syndie/gui/ManageForumArchives.java:501
 msgid "Freenet key"
 msgstr "Freenet anahtarı"
 
-#: src/syndie/gui/ManageForumArchives.java:501
+#: src/syndie/gui/ManageForumArchives.java:502
 msgid "Syndie URI"
 msgstr "Syndie İnternet Adresi"
 
-#: src/syndie/gui/ManageForumAuthManage.java:299
+#: src/syndie/gui/ManageForumAuthManage.java:301
 msgid "Who can manage the forum?"
 msgstr "Forumu yönetebilecek kişiler"
 
-#: src/syndie/gui/ManageForumAuthManage.java:304
+#: src/syndie/gui/ManageForumAuthManage.java:306
 msgid "Create a new identity and allow it to manage the forum"
 msgstr "Yeni bir kimlik oluşturarak forum yönetimi izni ver"
 
-#: src/syndie/gui/ManageForumAuthManage.java:305
+#: src/syndie/gui/ManageForumAuthManage.java:307
 msgid "Send the new identity key to the administrators of the selected forums"
 msgstr "Yeni kimlik anahtarını seçilmiş forumların yöneticilerine gönder"
 
-#: src/syndie/gui/ManageForumAuthManage.java:308
-#: src/syndie/gui/ManageForumAuthPost.java:419
+#: src/syndie/gui/ManageForumAuthManage.java:310
+#: src/syndie/gui/ManageForumAuthPost.java:421
 msgid ""
 "Post the new identity's key in a passphrase protected message to the forum"
 msgstr "Yeni kimliğin anahtarını foruma parola ile korunmuş bir ileti içinde gönder"
 
-#: src/syndie/gui/ManageForumAuthManage.java:309
-#: src/syndie/gui/ManageForumAuthPost.java:420
-#: src/syndie/gui/ManageForumAuthRead.java:339
-#: src/syndie/gui/ManageForumAuthReply.java:234
+#: src/syndie/gui/ManageForumAuthManage.java:311
+#: src/syndie/gui/ManageForumAuthPost.java:422
+#: src/syndie/gui/ManageForumAuthRead.java:341
+#: src/syndie/gui/ManageForumAuthReply.java:236
 #: src/syndie/gui/PassphrasePrompt.java:139
 #: src/syndie/gui/PassphrasePrompt.java:140
 #: src/syndie/gui/desktop/Desktop.java:424
@@ -1616,85 +1600,85 @@ msgstr "Yeni kimliğin anahtarını foruma parola ile korunmuş bir ileti içind
 msgid "Passphrase"
 msgstr "Parola"
 
-#: src/syndie/gui/ManageForumAuthManage.java:310
-#: src/syndie/gui/ManageForumAuthPost.java:421
-#: src/syndie/gui/ManageForumAuthRead.java:340
-#: src/syndie/gui/ManageForumAuthReply.java:235
+#: src/syndie/gui/ManageForumAuthManage.java:312
+#: src/syndie/gui/ManageForumAuthPost.java:423
+#: src/syndie/gui/ManageForumAuthRead.java:342
+#: src/syndie/gui/ManageForumAuthReply.java:237
 msgid "Prompt"
 msgstr "Soru"
 
-#: src/syndie/gui/ManageForumAuthPost.java:405
+#: src/syndie/gui/ManageForumAuthPost.java:407
 msgid "Who can post in the forum?"
 msgstr "Foruma ileti gönderebilecek kişiler"
 
-#: src/syndie/gui/ManageForumAuthPost.java:407
+#: src/syndie/gui/ManageForumAuthPost.java:409
 #: src/syndie/gui/ReferenceChooserInfo.java:523
-#: src/syndie/gui/ReferenceChooserSearch.java:175
+#: src/syndie/gui/ReferenceChooserSearch.java:176
 msgid "Anyone can post"
 msgstr "Herkes ileti gönderebilir"
 
-#: src/syndie/gui/ManageForumAuthPost.java:408
+#: src/syndie/gui/ManageForumAuthPost.java:410
 msgid "Only authorized users can post or reply"
 msgstr "Yalnız izin verilmiş kullanıcılar gönderip yanıtlayabilir"
 
-#: src/syndie/gui/ManageForumAuthPost.java:409
+#: src/syndie/gui/ManageForumAuthPost.java:411
 msgid "Anyone can reply to an authorized post"
 msgstr "İzin verilen bir iletiyi herkes yanıtlayabilir"
 
-#: src/syndie/gui/ManageForumAuthPost.java:411
+#: src/syndie/gui/ManageForumAuthPost.java:413
 msgid "What identities are authorized?"
 msgstr "İzin verilen kimlikler"
 
-#: src/syndie/gui/ManageForumAuthPost.java:415
+#: src/syndie/gui/ManageForumAuthPost.java:417
 msgid "Create a new identity and allow it to post"
 msgstr "Yeni bir kimlik oluşturarak ileti gönderme izni ver"
 
-#: src/syndie/gui/ManageForumAuthPost.java:416
+#: src/syndie/gui/ManageForumAuthPost.java:418
 msgid ""
 "Send the new identity's key to the administrators of the selected forums"
 msgstr "Yeni kimlik anahtarını seçilmiş forumların yöneticilerine gönder"
 
-#: src/syndie/gui/ManageForumAuthRead.java:328
+#: src/syndie/gui/ManageForumAuthRead.java:330
 msgid "Who can read posts?"
 msgstr "İletileri okuyabilecek kişiler"
 
-#: src/syndie/gui/ManageForumAuthRead.java:330
+#: src/syndie/gui/ManageForumAuthRead.java:332
 msgid "Anyone can read posts"
 msgstr "İletileri herkes okuyabilir"
 
-#: src/syndie/gui/ManageForumAuthRead.java:331
+#: src/syndie/gui/ManageForumAuthRead.java:333
 msgid "Apply retroactively"
 msgstr "Geçmişe dönük olarak uygula"
 
-#: src/syndie/gui/ManageForumAuthRead.java:332
+#: src/syndie/gui/ManageForumAuthRead.java:334
 msgid "Those already allowed to read posts"
 msgstr "İletileri okumasına izin verilenler"
 
-#: src/syndie/gui/ManageForumAuthRead.java:333
+#: src/syndie/gui/ManageForumAuthRead.java:335
 msgid "Rotate the keys used"
 msgstr "Kullanılan anahtarları döndür"
 
-#: src/syndie/gui/ManageForumAuthRead.java:334
+#: src/syndie/gui/ManageForumAuthRead.java:336
 msgid "Anyone who has a newly created key"
 msgstr "Yeni oluşturmuş anahtara sahip kişiler"
 
-#: src/syndie/gui/ManageForumAuthRead.java:335
+#: src/syndie/gui/ManageForumAuthRead.java:337
 msgid "Send the key explicitly to the managers of the following forums"
 msgstr "Anahtarı açı kolarak şu forumların yöneticilerine gönder"
 
-#: src/syndie/gui/ManageForumAuthRead.java:338
+#: src/syndie/gui/ManageForumAuthRead.java:340
 msgid "Post the key in a passphrase protected message to the forum"
 msgstr "Anahtarı parola ile korunmuş bir ileti içinde gönder"
 
-#: src/syndie/gui/ManageForumAuthReply.java:227
+#: src/syndie/gui/ManageForumAuthReply.java:229
 msgid "Rotate the reply key"
 msgstr "Yanıt anahtarını döndür"
 
-#: src/syndie/gui/ManageForumAuthReply.java:229
+#: src/syndie/gui/ManageForumAuthReply.java:231
 msgid "Send the new key to the administrators of the selected forums"
 msgstr "Yeni anahtarı seçilmiş forumların yöneticilerine gönder"
 
-#: src/syndie/gui/ManageForumAuthReply.java:233
+#: src/syndie/gui/ManageForumAuthReply.java:235
 msgid "Post the new key in a passphrase protected message to the forum"
 msgstr "Yeni anahtarı foruma parola ile korunmuş bir ileti içinde gönder"
 
@@ -1707,18 +1691,18 @@ msgid "Banned scopes"
 msgstr "Engellenmiş kapsamlar"
 
 #: src/syndie/gui/ManageForumReferences.java:185
-#: src/syndie/gui/ManageForumReferences.java:543
+#: src/syndie/gui/ManageForumReferences.java:540
 #: src/syndie/gui/MessageReferencesEditor.java:534
 #: src/syndie/gui/ReferencesPanel.java:324
 msgid "Add reference"
 msgstr "Referans ekle"
 
-#: src/syndie/gui/ManageForumReferences.java:538
+#: src/syndie/gui/ManageForumReferences.java:535
 #: src/syndie/gui/MessageReferencesEditor.java:532
 msgid "Target"
 msgstr "Hedef"
 
-#: src/syndie/gui/ManageForumReferences.java:542
+#: src/syndie/gui/ManageForumReferences.java:539
 #: src/syndie/gui/MessageReferencesEditor.java:533
 msgid "Remove reference"
 msgstr "Referansı sil"
@@ -1739,192 +1723,192 @@ msgstr "Yerel yer imlerine al"
 msgid "Import all to local bookmarks"
 msgstr "Tümünü yerel yer imlerine al"
 
-#: src/syndie/gui/MessageEditor.java:515
+#: src/syndie/gui/MessageEditor.java:516
 msgid "Post empty message?"
 msgstr "İleti boş olarak gönderilsin mi?"
 
-#: src/syndie/gui/MessageEditor.java:516
+#: src/syndie/gui/MessageEditor.java:517
 msgid "Do you really want to post this empty message?"
 msgstr "Boş bir ileti göndermek istediğinize emin misiniz?"
 
 #. no ancestors with a subject found
 #. TODO return null and have caller set italic font?
-#: src/syndie/gui/MessageEditor.java:523 src/syndie/gui/MessageView.java:450
-#: src/syndie/gui/MessageView.java:490
+#: src/syndie/gui/MessageEditor.java:524 src/syndie/gui/MessageView.java:450
+#: src/syndie/gui/MessageView.java:458 src/syndie/gui/MessageView.java:492
 msgid "No subject"
 msgstr "Konu yok"
 
-#: src/syndie/gui/MessageEditor.java:524
+#: src/syndie/gui/MessageEditor.java:525
 msgid "Do you really want to post a message without a subject?"
 msgstr "Konusu olmayan bir ileti göndermek istediğinize emin misiniz?"
 
-#: src/syndie/gui/MessageEditor.java:550 src/syndie/gui/MessageEditor.java:556
+#: src/syndie/gui/MessageEditor.java:551 src/syndie/gui/MessageEditor.java:557
 msgid ""
 "There was an error creating the message.  Please view the log for more "
 "information."
 msgstr "İleti oluşturulurken bir sorun çıktı. Lütfen ayrıntılı bilgi almak için günlüğe bakın."
 
-#: src/syndie/gui/MessageEditor.java:551 src/syndie/gui/MessageEditor.java:557
+#: src/syndie/gui/MessageEditor.java:552 src/syndie/gui/MessageEditor.java:558
 msgid "Error creating the message"
 msgstr "İleti oluşturulurken bir sorun çıktı"
 
-#: src/syndie/gui/MessageEditor.java:570
+#: src/syndie/gui/MessageEditor.java:571
 msgid "Message created"
 msgstr "İleti oluşturuldu"
 
-#: src/syndie/gui/MessageEditor.java:581
+#: src/syndie/gui/MessageEditor.java:582
 msgid ""
 "Message created successfully! \n"
 "Please be sure to syndicate it to the arcives so others may read it. \n"
 "The message timestamp has been randomized to protect your anonymity. \n"
-msgstr "İleti oluşturuldu!\nBaşkalarının okuyabilmesi için iletiyi arşivler ile eşitlediğinize emin olun.\nİletinin zaman damgası anonimliğinizi korumak için rastgele değiştirildi.\n"
+msgstr "İleti oluşturuldu!\nBaşkalarının okuyabilmesi için iletiyi arşivler ile eşitlediğinize emin olun.\nİletinin zaman damgası isimsiz kalmanızı sağlamak için rastgele değiştirildi.\n"
 
-#: src/syndie/gui/MessageEditor.java:587
+#: src/syndie/gui/MessageEditor.java:588
 msgid "Display this message next time"
 msgstr "Bu ileti gelecek sefer de görüntülensin"
 
-#: src/syndie/gui/MessageEditor.java:700
+#: src/syndie/gui/MessageEditor.java:701
 msgid "Are you sure you want to cancel this message?"
 msgstr "Bu iletiyi iptal etmek istediğinize emin misiniz?"
 
-#: src/syndie/gui/MessageEditor.java:701
+#: src/syndie/gui/MessageEditor.java:702
 msgid "Confirm message cancellation"
 msgstr "İleti iptalini onayla"
 
-#: src/syndie/gui/MessageEditor.java:929
-#: src/syndie/gui/MessageEditor.java:1555
-#: src/syndie/gui/MessageEditor.java:1584
+#: src/syndie/gui/MessageEditor.java:930
+#: src/syndie/gui/MessageEditor.java:1556
+#: src/syndie/gui/MessageEditor.java:1585
 msgid "Page "
 msgstr "Sayfa"
 
-#: src/syndie/gui/MessageEditor.java:1376
-#: src/syndie/gui/MessageEditor.java:1380
+#: src/syndie/gui/MessageEditor.java:1377
+#: src/syndie/gui/MessageEditor.java:1381
 msgid "Page title"
 msgstr "Sayfa başlığı"
 
-#: src/syndie/gui/MessageEditor.java:1434
+#: src/syndie/gui/MessageEditor.java:1435
 #: src/syndie/gui/MessageEditorToolbar.java:344
 msgid "Anyone can read the post"
 msgstr "İletiyi herkes okuyabilir"
 
-#: src/syndie/gui/MessageEditor.java:1435
+#: src/syndie/gui/MessageEditor.java:1436
 #: src/syndie/gui/MessageEditorToolbar.java:345
 msgid "Authorized readers of the forum can read the post"
 msgstr "İletiyi izin verilmiş forum okuyucuları okuyabilir"
 
-#: src/syndie/gui/MessageEditor.java:1436
+#: src/syndie/gui/MessageEditor.java:1437
 #: src/syndie/gui/MessageEditorToolbar.java:346
 msgid "Passphrase required to read the post"
 msgstr "İletiyi okumak için parola gereklidir"
 
-#: src/syndie/gui/MessageEditor.java:1437
+#: src/syndie/gui/MessageEditor.java:1438
 #: src/syndie/gui/MessageEditorToolbar.java:347
 msgid "Only forum administrators can read the post"
 msgstr "İletiyi yalnız forum yöneticileri okuyabilir"
 
-#: src/syndie/gui/MessageEditor.java:1520
+#: src/syndie/gui/MessageEditor.java:1521
 #: src/syndie/gui/desktop/MessageEditorPanel.java:536
 msgid "Post the message"
 msgstr "İletiyi gönder"
 
-#: src/syndie/gui/MessageEditor.java:1521
+#: src/syndie/gui/MessageEditor.java:1522
 #: src/syndie/gui/desktop/MessageEditorPanel.java:534
 msgid "Save the message for later"
 msgstr "İletiyi daha sonra gönderilmek üzere kaydet"
 
-#: src/syndie/gui/MessageEditor.java:1522
+#: src/syndie/gui/MessageEditor.java:1523
 msgid "Cancel the message"
 msgstr "İletiyi iptal et"
 
-#: src/syndie/gui/MessageEditor.java:1620
+#: src/syndie/gui/MessageEditor.java:1621
 msgid "Add web rip"
 msgstr "Web kopyası ekle"
 
-#: src/syndie/gui/MessageEditor.java:1669
+#: src/syndie/gui/MessageEditor.java:1670
 msgid "Rip failed"
 msgstr "Kopya eklenemedi"
 
-#: src/syndie/gui/MessageEditor.java:1752
+#: src/syndie/gui/MessageEditor.java:1753
 msgid "Edit the message"
 msgstr "İletiyi düzenle"
 
-#: src/syndie/gui/MessageEditor.java:1754
+#: src/syndie/gui/MessageEditor.java:1755
 msgid "Preview the message"
 msgstr "İleti önizlemesi"
 
-#: src/syndie/gui/MessageEditor.java:2073
+#: src/syndie/gui/MessageEditor.java:2074
 msgid "Hide"
 msgstr "Gizle"
 
-#: src/syndie/gui/MessageEditor.java:2074
-#: src/syndie/gui/MessageEditor.java:2111 src/syndie/gui/MessageTree.java:2562
+#: src/syndie/gui/MessageEditor.java:2075
+#: src/syndie/gui/MessageEditor.java:2112 src/syndie/gui/MessageTree.java:2583
 #: src/syndie/gui/ReferenceChooserInfo.java:534
-#: src/syndie/gui/desktop/ResumeablePanel.java:246
+#: src/syndie/gui/desktop/ResumeablePanel.java:245
 msgid "Subject"
 msgstr "Konu"
 
-#: src/syndie/gui/MessageEditor.java:2076
-#: src/syndie/gui/MessageEditor.java:2510 src/syndie/gui/MessageTree.java:2563
-#: src/syndie/gui/MessageView.java:1001
+#: src/syndie/gui/MessageEditor.java:2077
+#: src/syndie/gui/MessageEditor.java:2511 src/syndie/gui/MessageTree.java:2584
+#: src/syndie/gui/MessageView.java:1005
 #: src/syndie/gui/ReferenceChooserInfo.java:535
 #: src/syndie/gui/desktop/MessageEditorPanel.java:464
 msgid "Author"
 msgstr "Yazar"
 
-#: src/syndie/gui/MessageEditor.java:2077
+#: src/syndie/gui/MessageEditor.java:2078
 msgid "Signed by"
 msgstr "İmzalayan"
 
-#: src/syndie/gui/MessageEditor.java:2078
+#: src/syndie/gui/MessageEditor.java:2079
 msgid "Hidden?"
 msgstr "Gizli"
 
-#: src/syndie/gui/MessageEditor.java:2079
+#: src/syndie/gui/MessageEditor.java:2080
 msgid "Privacy"
 msgstr "Gizlilik"
 
-#: src/syndie/gui/MessageEditor.java:2110
+#: src/syndie/gui/MessageEditor.java:2111
 msgid "Headers"
 msgstr "Üstbilgiler"
 
-#: src/syndie/gui/MessageEditor.java:2468
+#: src/syndie/gui/MessageEditor.java:2469
 msgid ""
 "The selected author does not have permission to write in the selected forum "
 "- please adjust your selection"
 msgstr "Seçilmiş yazarın seçilmiş foruma ileti gönderme izni yok. Lütfen seçiminizi değiştirin"
 
-#: src/syndie/gui/MessageEditor.java:2512
+#: src/syndie/gui/MessageEditor.java:2513
 msgid "Change author"
 msgstr "Yazarı değiştir"
 
-#: src/syndie/gui/MessageEditor.java:2513
+#: src/syndie/gui/MessageEditor.java:2514
 msgid "Change forum"
 msgstr "Forumu değiştir"
 
-#: src/syndie/gui/MessageEditor.java:2514
+#: src/syndie/gui/MessageEditor.java:2515
 msgid "Change signed by"
 msgstr "İmzalayanı değiştir"
 
-#: src/syndie/gui/MessageEditor.java:2517
+#: src/syndie/gui/MessageEditor.java:2518
 #: src/syndie/gui/MessageViewBody.java:259
 msgid "Thread"
 msgstr "Konu"
 
-#: src/syndie/gui/MessageEditor.java:2525
+#: src/syndie/gui/MessageEditor.java:2526
 msgid "Attach file"
 msgstr "Dosya ekle"
 
-#: src/syndie/gui/MessageEditor.java:2547
+#: src/syndie/gui/MessageEditor.java:2548
 msgid ""
 "The attachment could not be added, as it exceeds the maximum attachment size"
 " ("
 msgstr "Dosya boyutu izin verilen değerden büyük olduğundan eklenemedi ("
 
-#: src/syndie/gui/MessageEditor.java:2548
+#: src/syndie/gui/MessageEditor.java:2549
 msgid "Too large"
 msgstr "Çok büyük"
 
-#: src/syndie/gui/MessageEditor.java:2770
+#: src/syndie/gui/MessageEditor.java:2771
 msgid "none"
 msgstr "yok"
 
@@ -2006,72 +1990,72 @@ msgstr "Yoksay"
 msgid "Ignore all"
 msgstr "Tümünü yoksay"
 
-#: src/syndie/gui/MessageEditorStyler.java:365
+#: src/syndie/gui/MessageEditorStyler.java:366
 msgid "default"
 msgstr "varsayılan"
 
 #. todo: translate
-#: src/syndie/gui/MessageEditorStyler.java:420
+#: src/syndie/gui/MessageEditorStyler.java:421
 msgid "Text style chooser"
 msgstr "Metin stili seçici"
 
-#: src/syndie/gui/MessageEditorStyler.java:421
+#: src/syndie/gui/MessageEditorStyler.java:422
 msgid "Styling"
 msgstr "Stil"
 
-#: src/syndie/gui/MessageEditorStyler.java:422
+#: src/syndie/gui/MessageEditorStyler.java:423
 msgid "Bold"
 msgstr "Koyu"
 
-#: src/syndie/gui/MessageEditorStyler.java:423
+#: src/syndie/gui/MessageEditorStyler.java:424
 msgid "Italic"
 msgstr "Yatık"
 
-#: src/syndie/gui/MessageEditorStyler.java:424
+#: src/syndie/gui/MessageEditorStyler.java:425
 msgid "Underline"
 msgstr "Altı çizili"
 
-#: src/syndie/gui/MessageEditorStyler.java:425
+#: src/syndie/gui/MessageEditorStyler.java:426
 msgid "Strikeout"
 msgstr "Üstü çizili"
 
-#: src/syndie/gui/MessageEditorStyler.java:426
-msgid "Adjust the font"
-msgstr "Yazı tipini ayarla"
-
 #: src/syndie/gui/MessageEditorStyler.java:427
+msgid "Adjust the font"
+msgstr "Yazı türünü ayarla"
+
+#: src/syndie/gui/MessageEditorStyler.java:428
 msgid "Adjust the font size"
 msgstr "Yazı boyutunu ayarla"
 
-#: src/syndie/gui/MessageEditorStyler.java:428
+#: src/syndie/gui/MessageEditorStyler.java:429
 msgid "Alignment"
 msgstr "Hizalama"
 
-#: src/syndie/gui/MessageEditorStyler.java:429
+#: src/syndie/gui/MessageEditorStyler.java:430
 msgid "Left"
 msgstr "Sola"
 
-#: src/syndie/gui/MessageEditorStyler.java:430
+#: src/syndie/gui/MessageEditorStyler.java:431
 msgid "Align the text to the left"
 msgstr "Metni sola hizalar"
 
-#: src/syndie/gui/MessageEditorStyler.java:431
+#: src/syndie/gui/MessageEditorStyler.java:432
 msgid "Center"
 msgstr "Ortaya"
 
-#: src/syndie/gui/MessageEditorStyler.java:432
+#: src/syndie/gui/MessageEditorStyler.java:433
 msgid "Align the text to the center"
 msgstr "Metni ortaya hizalar"
 
-#: src/syndie/gui/MessageEditorStyler.java:433
+#: src/syndie/gui/MessageEditorStyler.java:434
 msgid "Right"
 msgstr "Sağa"
 
-#: src/syndie/gui/MessageEditorStyler.java:434
+#: src/syndie/gui/MessageEditorStyler.java:435
 msgid "Align the text to the right"
 msgstr "Metni sağa hizalar"
 
-#: src/syndie/gui/MessageEditorStyler.java:435
+#: src/syndie/gui/MessageEditorStyler.java:436
 msgid "This is the sample text"
 msgstr "Örnek metin"
 
@@ -2097,7 +2081,7 @@ msgstr "İletiyi kimlerin okumasına izin vermek istiyorsunuz?"
 
 #: src/syndie/gui/MessageEditorToolbar.java:356
 msgid "Toggle the type of the current page"
-msgstr "Geçerli sayfanın tipini değiştirin"
+msgstr "Geçerli sayfanın türünü değiştirin"
 
 #: src/syndie/gui/MessageEditorToolbar.java:364
 msgid "Add new page"
@@ -2303,7 +2287,7 @@ msgstr "İleti okunmamış"
 msgid "Message was privately encrypted"
 msgstr "İleti kişisel olarak şifrelenmiş"
 
-#: src/syndie/gui/MessagePreview.java:319 src/syndie/gui/MessageView.java:1000
+#: src/syndie/gui/MessagePreview.java:319 src/syndie/gui/MessageView.java:1004
 #: src/syndie/gui/desktop/MessageTreePanel.java:557
 msgid "Reply"
 msgstr "Yanıtla"
@@ -2333,237 +2317,233 @@ msgid "Error parsing date"
 msgstr "Tarih işlenirken bir sorun çıktı"
 
 #. translators: you may use "Last {0} day" for the singular if that's better
-#: src/syndie/gui/MessageTree.java:749 src/syndie/gui/MessageTree.java:750
+#: src/syndie/gui/MessageTree.java:755 src/syndie/gui/MessageTree.java:756
 #, java-format
 msgid "Last day"
 msgid_plural "Last {0} days"
 msgstr[0] "Son {0} gün"
 
 #. translators: you may use "Last {0} week" for the singular if that's better
-#: src/syndie/gui/MessageTree.java:752 src/syndie/gui/MessageTree.java:753
+#: src/syndie/gui/MessageTree.java:758 src/syndie/gui/MessageTree.java:759
 #, java-format
 msgid "Last week"
 msgid_plural "Last {0} weeks"
 msgstr[0] "Son {0} hafta"
 
 #. translators: you may use "Last {0} month" for the singular if that's better
-#: src/syndie/gui/MessageTree.java:755 src/syndie/gui/MessageTree.java:756
-#: src/syndie/gui/MessageTree.java:757
+#: src/syndie/gui/MessageTree.java:761 src/syndie/gui/MessageTree.java:762
+#: src/syndie/gui/MessageTree.java:763
 #, java-format
 msgid "Last month"
 msgid_plural "Last {0} months"
 msgstr[0] "Son {0} ay"
 
 #. translators: you may use "Last {0} year" for the singular if that's better
-#: src/syndie/gui/MessageTree.java:759 src/syndie/gui/MessageTree.java:760
-#: src/syndie/gui/MessageTree.java:761 src/syndie/gui/MessageTree.java:762
+#: src/syndie/gui/MessageTree.java:765 src/syndie/gui/MessageTree.java:766
+#: src/syndie/gui/MessageTree.java:767 src/syndie/gui/MessageTree.java:768
 #, java-format
 msgid "Last year"
 msgid_plural "Last {0} years"
 msgstr[0] "Son {0} yıl"
 
-#: src/syndie/gui/MessageTree.java:780
+#: src/syndie/gui/MessageTree.java:786
 msgid "Any tags"
 msgstr "Tüm etiketler"
 
-#: src/syndie/gui/MessageTree.java:956
+#: src/syndie/gui/MessageTree.java:962
 msgid "Filter"
 msgstr "Süzgeç"
 
-#: src/syndie/gui/MessageTree.java:956
+#: src/syndie/gui/MessageTree.java:962
 msgid "Since"
 msgstr "Başlangıç"
 
-#: src/syndie/gui/MessageTree.java:959
+#: src/syndie/gui/MessageTree.java:965
 msgid "Text"
 msgstr "Metin"
 
-#: src/syndie/gui/MessageTree.java:960
+#: src/syndie/gui/MessageTree.java:966
 msgid "Tag"
 msgstr "Etiket"
 
-#: src/syndie/gui/MessageTree.java:961
+#: src/syndie/gui/MessageTree.java:967
 msgid "Unread only"
 msgstr "Yalnız okunmamışlar"
 
-#: src/syndie/gui/MessageTree.java:962
+#: src/syndie/gui/MessageTree.java:968
 msgid "Search pages and subjects for the phrase"
 msgstr "İfade sayfa ve konularda aransın"
 
-#: src/syndie/gui/MessageTree.java:965
+#: src/syndie/gui/MessageTree.java:971
 msgid "Bookmarked forums"
 msgstr "Yer imlerine eklenmiş forumlar"
 
-#: src/syndie/gui/MessageTree.java:966
+#: src/syndie/gui/MessageTree.java:972
 msgid "Specific forum"
 msgstr "Belirli bir forum"
 
-#: src/syndie/gui/MessageTree.java:968
+#: src/syndie/gui/MessageTree.java:974
 msgid "Readable by: anyone"
 msgstr "Okuyabilecekler: Hiç kimse"
 
-#: src/syndie/gui/MessageTree.java:969
+#: src/syndie/gui/MessageTree.java:975
 msgid "Readable by: authorized readers"
 msgstr "Okuyabilecekler: İzin verilmiş okuyucular"
 
-#: src/syndie/gui/MessageTree.java:970
+#: src/syndie/gui/MessageTree.java:976
 msgid "Readable by: those with a passphrase"
 msgstr "Okuyabilecekler: Parolayı bilenler"
 
-#: src/syndie/gui/MessageTree.java:971
+#: src/syndie/gui/MessageTree.java:977
 msgid "Readable by: forum administrators"
 msgstr "Okuyabilecekler: Forum yöneticileri"
 
-#: src/syndie/gui/MessageTree.java:972
+#: src/syndie/gui/MessageTree.java:978
 msgid "Use local import date instead of (unreliable) message creation date"
 msgstr "(Güvenilmez) ileti oluşturma tarihi yerine yerel alma tarihi kullanılsın"
 
-#: src/syndie/gui/MessageTree.java:973
+#: src/syndie/gui/MessageTree.java:979
 msgid "Organize results in threads"
 msgstr "Sonuçlar konular şeklinde gruplansın"
 
-#: src/syndie/gui/MessageTree.java:974
+#: src/syndie/gui/MessageTree.java:980
 msgid "Show a preview of the selected message"
 msgstr "Seçilmiş iletinin önizlemesi görüntülensin"
 
-#: src/syndie/gui/MessageTree.java:975
+#: src/syndie/gui/MessageTree.java:981
 msgid "Mark messages read when opened"
 msgstr "Açılan iletiler okunmuş olarak işaretlensin"
 
-#: src/syndie/gui/MessageTree.java:976
+#: src/syndie/gui/MessageTree.java:982
 msgid "Mark messages read when previewed"
 msgstr "Önizlenen iletiler okunmuş olarak işaretlensin"
 
-#: src/syndie/gui/MessageTree.java:977
+#: src/syndie/gui/MessageTree.java:983
 msgid "Messages requiring a new passphrase"
 msgstr "Yeni bir parola gerektiren iletiler"
 
-#: src/syndie/gui/MessageTree.java:1598
+#: src/syndie/gui/MessageTree.java:1612
 msgid "Message filtering in progress"
 msgstr "İletiler süzülüyor"
 
-#: src/syndie/gui/MessageTree.java:1705
+#: src/syndie/gui/MessageTree.java:1719
 msgid "No items to display"
 msgstr "Görüntülenecek herhangi bir öge yok"
 
-#: src/syndie/gui/MessageTree.java:2115
-msgid "agelocal"
-msgstr "yaşyerel"
-
 #. message is not locally known
-#: src/syndie/gui/MessageTree.java:2125
+#: src/syndie/gui/MessageTree.java:2146
 msgid "Message is not known locally"
 msgstr "İleti yerel olarak bilinmiyor"
 
-#: src/syndie/gui/MessageTree.java:2565 src/syndie/gui/MessageView.java:1003
+#: src/syndie/gui/MessageTree.java:2586 src/syndie/gui/MessageView.java:1007
 #: src/syndie/gui/ReferenceChooserInfo.java:536
-#: src/syndie/gui/desktop/ResumeablePanel.java:245
+#: src/syndie/gui/desktop/ResumeablePanel.java:244
 msgid "Date"
 msgstr "Tarih"
 
-#: src/syndie/gui/MessageTree.java:2574
+#: src/syndie/gui/MessageTree.java:2595
 msgid "View the message"
 msgstr "İletiyi görüntüle"
 
-#: src/syndie/gui/MessageTree.java:2575
+#: src/syndie/gui/MessageTree.java:2596
 msgid "Reply to the message"
 msgstr "İletiyi yanıtla"
 
-#: src/syndie/gui/MessageTree.java:2576
+#: src/syndie/gui/MessageTree.java:2597
 msgid "View the forum's messages"
 msgstr "Forum iletilerini görüntüle"
 
-#: src/syndie/gui/MessageTree.java:2577 src/syndie/gui/NymChannelTree.java:529
+#: src/syndie/gui/MessageTree.java:2598 src/syndie/gui/NymChannelTree.java:530
 msgid "View the forum's profile"
 msgstr "Forum profilini görüntüle"
 
-#: src/syndie/gui/MessageTree.java:2578
+#: src/syndie/gui/MessageTree.java:2599
 msgid "View the author's blog"
 msgstr "Yazarın blogunu görüntüle"
 
-#: src/syndie/gui/MessageTree.java:2579
+#: src/syndie/gui/MessageTree.java:2600
 msgid "View the author's profile"
 msgstr "Yazarın profilini görüntüle"
 
-#: src/syndie/gui/MessageTree.java:2580
+#: src/syndie/gui/MessageTree.java:2601
 msgid "Bookmark the forum"
 msgstr "Forumu yer imlerine ekle"
 
-#: src/syndie/gui/MessageTree.java:2581
+#: src/syndie/gui/MessageTree.java:2602
 msgid "Bookmark the author"
 msgstr "Yazarı yer imlerine ekle"
 
-#: src/syndie/gui/MessageTree.java:2582
+#: src/syndie/gui/MessageTree.java:2603
 msgid "Expand the thread fully"
 msgstr "Konuyu tamamen genişlet"
 
-#: src/syndie/gui/MessageTree.java:2583
+#: src/syndie/gui/MessageTree.java:2604
 msgid "Collapse the thread fully"
 msgstr "Konuyu tamamen daralt"
 
-#: src/syndie/gui/MessageTree.java:2584
+#: src/syndie/gui/MessageTree.java:2605
 msgid "Expand all threads fully"
 msgstr "Tüm konuları tamamen genişlet"
 
-#: src/syndie/gui/MessageTree.java:2585
+#: src/syndie/gui/MessageTree.java:2606
 msgid "Collapse all threads fully"
 msgstr "Tüm konuları tamamen daralt"
 
-#: src/syndie/gui/MessageTree.java:2586
+#: src/syndie/gui/MessageTree.java:2607
 msgid "Mark the message as read"
 msgstr "İletiyi okunmuş olarak işaretle"
 
-#: src/syndie/gui/MessageTree.java:2587
+#: src/syndie/gui/MessageTree.java:2608
 msgid "Mark the thread as read"
 msgstr "Konuyu okunmuş olarak işaretle"
 
-#: src/syndie/gui/MessageTree.java:2588
+#: src/syndie/gui/MessageTree.java:2609
 msgid "Mark the message as unread"
 msgstr "İletiyi okunmamış olarak işaretle"
 
-#: src/syndie/gui/MessageTree.java:2589
+#: src/syndie/gui/MessageTree.java:2610
 msgid "Mark the forum as read"
 msgstr "Forumu okunmuş olarak işaretle"
 
-#: src/syndie/gui/MessageTree.java:2590
+#: src/syndie/gui/MessageTree.java:2611
 msgid "Delete the message locally"
 msgstr "İletileri yerel olarak sil"
 
-#: src/syndie/gui/MessageTree.java:2591 src/syndie/gui/PageRenderer.java:1579
+#: src/syndie/gui/MessageTree.java:2612 src/syndie/gui/PageRenderer.java:1579
 msgid "Cancel the message (tell others to delete it)"
 msgstr "İletiyi iptal et (diğerlerine silmelerini ilet)"
 
-#: src/syndie/gui/MessageTree.java:2593
+#: src/syndie/gui/MessageTree.java:2614
 msgid "Mark Read"
 msgstr "Okunmuş Olarak İşaretle"
 
-#: src/syndie/gui/MessageTree.java:2594
+#: src/syndie/gui/MessageTree.java:2615
 msgid "Mark Thread Read"
 msgstr "Konuyu Okunmuş Olarak İşaretle"
 
-#: src/syndie/gui/MessageTree.java:2595
+#: src/syndie/gui/MessageTree.java:2616
 msgid "Refresh"
 msgstr "Yenile"
 
-#: src/syndie/gui/MessageTree.java:2596
+#: src/syndie/gui/MessageTree.java:2617
 #: src/syndie/gui/desktop/MessageTreePanel.java:643
 msgid "Expand"
 msgstr "Genişlet"
 
-#: src/syndie/gui/MessageTree.java:2597
+#: src/syndie/gui/MessageTree.java:2618
 #: src/syndie/gui/desktop/MessageTreePanel.java:673
 msgid "Collapse"
 msgstr "Daralt"
 
-#: src/syndie/gui/MessageTree.java:2598
+#: src/syndie/gui/MessageTree.java:2619
 msgid "Expand All"
 msgstr "Tümünü Genişlet"
 
-#: src/syndie/gui/MessageTree.java:2599
+#: src/syndie/gui/MessageTree.java:2620
 msgid "Collapse All"
 msgstr "Tümünü Daralt"
 
-#: src/syndie/gui/MessageTree.java:2601
+#: src/syndie/gui/MessageTree.java:2622
 msgid "Page size"
 msgstr "Sayfa boyutu"
 
@@ -2571,16 +2551,16 @@ msgstr "Sayfa boyutu"
 msgid "Unspecified"
 msgstr "Belirtilmemiş"
 
-#: src/syndie/gui/MessageView.java:394 src/syndie/gui/Syndicator.java:958
+#: src/syndie/gui/MessageView.java:394 src/syndie/gui/Syndicator.java:980
 msgid "Imported"
 msgstr "Alındı"
 
-#: src/syndie/gui/MessageView.java:588
+#: src/syndie/gui/MessageView.java:590
 #: src/syndie/gui/desktop/MessagePanel.java:232
 msgid "Passphrase incorrect"
 msgstr "Parola hatalı"
 
-#: src/syndie/gui/MessageView.java:589
+#: src/syndie/gui/MessageView.java:591
 #: src/syndie/gui/desktop/MessagePanel.java:233
 msgid ""
 "The message could not be reimported - the passphrase was not correct.  Would"
@@ -2588,58 +2568,58 @@ msgid ""
 msgstr "Parola hatalı olduğundan ileti alınamadı. Yeniden denemek ister misiniz?"
 
 #. duplicate the reply menu
-#: src/syndie/gui/MessageView.java:1005 src/syndie/gui/MessageView.java:1010
+#: src/syndie/gui/MessageView.java:1009 src/syndie/gui/MessageView.java:1014
 #: src/syndie/gui/PageRenderer.java:1517
 msgid "Private reply to author"
 msgstr "Yazara kişisel yanıt"
 
-#: src/syndie/gui/MessageView.java:1006 src/syndie/gui/MessageView.java:1011
+#: src/syndie/gui/MessageView.java:1010 src/syndie/gui/MessageView.java:1015
 msgid "Private reply to forum administrators"
 msgstr "Forum yöneticilerine kişisel yanıt"
 
-#: src/syndie/gui/MessageView.java:1007 src/syndie/gui/MessageView.java:1012
+#: src/syndie/gui/MessageView.java:1011 src/syndie/gui/MessageView.java:1016
 #: src/syndie/gui/PageRenderer.java:1509
 msgid "Public reply to forum"
 msgstr "Foruma herkese açık yanıt"
 
-#: src/syndie/gui/MessageView.java:1014 src/syndie/gui/PageRenderer.java:1596
+#: src/syndie/gui/MessageView.java:1018 src/syndie/gui/PageRenderer.java:1596
 msgid "Ban author"
 msgstr "Yazarı engelle"
 
-#: src/syndie/gui/MessageView.java:1015 src/syndie/gui/PageRenderer.java:1478
+#: src/syndie/gui/MessageView.java:1019 src/syndie/gui/PageRenderer.java:1478
 msgid "Bookmark author"
 msgstr "Yazarı yer imlerine ekle"
 
-#: src/syndie/gui/MessageView.java:1016
+#: src/syndie/gui/MessageView.java:1020
 msgid "View author's information"
 msgstr "Yazar bilgilerini görüntüle"
 
-#: src/syndie/gui/MessageView.java:1017
+#: src/syndie/gui/MessageView.java:1021
 msgid "View author's forum"
 msgstr "Yazarın forumunu görüntüle"
 
-#: src/syndie/gui/MessageView.java:1019 src/syndie/gui/PageRenderer.java:1588
+#: src/syndie/gui/MessageView.java:1023 src/syndie/gui/PageRenderer.java:1588
 msgid "Ban forum"
 msgstr "Forumu engelle"
 
-#: src/syndie/gui/MessageView.java:1020 src/syndie/gui/PageRenderer.java:1470
+#: src/syndie/gui/MessageView.java:1024 src/syndie/gui/PageRenderer.java:1470
 msgid "Bookmark forum"
 msgstr "Forumu yer imlerine ekle"
 
-#: src/syndie/gui/MessageView.java:1022 src/syndie/gui/PageRenderer.java:1443
+#: src/syndie/gui/MessageView.java:1026 src/syndie/gui/PageRenderer.java:1443
 #: src/syndie/gui/ViewForum.java:343
 msgid "View forum profile"
 msgstr "Forum profilini görüntüle"
 
-#: src/syndie/gui/MessageView.java:1024
+#: src/syndie/gui/MessageView.java:1028
 msgid "View forum messages"
 msgstr "Forum iletilerini görüntüle"
 
-#: src/syndie/gui/MessageView.java:1026 src/syndie/gui/Wizard.java:173
+#: src/syndie/gui/MessageView.java:1030 src/syndie/gui/Wizard.java:173
 msgid "Next"
 msgstr "Sonraki"
 
-#: src/syndie/gui/MessageView.java:1027
+#: src/syndie/gui/MessageView.java:1031
 msgid "Prev"
 msgstr "Önceki"
 
@@ -2674,38 +2654,38 @@ msgstr "Açık ileti gönderilebilen forumlar"
 msgid "Publicly postable forums"
 msgstr "Herkese açık olarak ileti gönderilebilen forumlar"
 
-#: src/syndie/gui/NymChannelTree.java:368
+#: src/syndie/gui/NymChannelTree.java:369
 #: src/syndie/gui/NymChannelTree.java:1156
 msgid "Search term"
 msgstr "Aranacak ifade"
 
-#: src/syndie/gui/NymChannelTree.java:462
+#: src/syndie/gui/NymChannelTree.java:463
 msgid "Combined view of the selected forums"
 msgstr "Seçilmiş forumların birleştirilmiş görünümü"
 
-#: src/syndie/gui/NymChannelTree.java:519
+#: src/syndie/gui/NymChannelTree.java:520
 msgid "View the forum"
 msgstr "Forumu görüntüle"
 
-#: src/syndie/gui/NymChannelTree.java:540
+#: src/syndie/gui/NymChannelTree.java:541
 msgid "Manage the forum"
 msgstr "Forumu yönet"
 
-#: src/syndie/gui/NymChannelTree.java:552
+#: src/syndie/gui/NymChannelTree.java:553
 msgid "Post in the forum"
 msgstr "Foruma ileti gönder"
 
-#: src/syndie/gui/NymChannelTree.java:566
+#: src/syndie/gui/NymChannelTree.java:567
 #: src/syndie/gui/desktop/MessageTreePanel.java:567
 #: src/syndie/gui/desktop/ProfilePanel.java:427
 msgid "Unwatch the forum"
 msgstr "Forumu izlemekten vazgeç"
 
-#: src/syndie/gui/NymChannelTree.java:575
+#: src/syndie/gui/NymChannelTree.java:576
 msgid "View the resource"
 msgstr "Kaynağı görüntüle"
 
-#: src/syndie/gui/NymChannelTree.java:588
+#: src/syndie/gui/NymChannelTree.java:589
 msgid "Drop the reference"
 msgstr "Referansı sil"
 
@@ -2751,33 +2731,33 @@ msgid "View all"
 msgstr "Tümünü görüntüle"
 
 #: src/syndie/gui/NymChannelTree.java:1161
-#: src/syndie/gui/desktop/LinkEdge.java:65
+#: src/syndie/gui/desktop/LinkEdge.java:64
 msgid "Special forums"
 msgstr "Özel forumlar"
 
 #: src/syndie/gui/NymChannelTree.java:1162
-#: src/syndie/gui/desktop/LinkEdge.java:82
+#: src/syndie/gui/desktop/LinkEdge.java:81
 msgid "Bookmarks"
 msgstr "Yer imleri"
 
-#: src/syndie/gui/PageEditor.java:862
+#: src/syndie/gui/PageEditor.java:863
 msgid "Restore normal editor size"
 msgstr "Normal düzenleyici boyutuna dön"
 
-#: src/syndie/gui/PageEditor.java:865
+#: src/syndie/gui/PageEditor.java:866
 msgid "Show maximized preview"
 msgstr "Büyütülmüş görünüme geç"
 
-#: src/syndie/gui/PageEditor.java:945
+#: src/syndie/gui/PageEditor.java:946
 msgid "Restore normal preview size"
 msgstr "Normal önizleme boyutuna dön"
 
-#: src/syndie/gui/PageEditor.java:948
+#: src/syndie/gui/PageEditor.java:949
 msgid "Show maximized editor"
 msgstr "Büyütülmüş düzenleyiciye geç"
 
 #. translators: arg 1 is a date/time; arg2 is the author
-#: src/syndie/gui/PageEditor.java:1076
+#: src/syndie/gui/PageEditor.java:1077
 #, java-format
 msgid "On {0}, {1} wrote"
 msgstr "{0}, {1} yazmış"
@@ -2915,7 +2895,7 @@ msgstr "Forum özeti"
 
 #: src/syndie/gui/ReferenceChooserInfo.java:522
 #: src/syndie/gui/ReferenceChooserInfo.java:533
-#: src/syndie/gui/ReferenceChooserSearch.java:173
+#: src/syndie/gui/ReferenceChooserSearch.java:174
 msgid "Hash"
 msgstr "Karma"
 
@@ -2950,54 +2930,54 @@ msgstr "İnternet adresi"
 msgid "Reference chooser"
 msgstr "Referans seçici"
 
-#: src/syndie/gui/ReferenceChooserSearch.java:169
+#: src/syndie/gui/ReferenceChooserSearch.java:170
 msgid "The channel name must start with this string"
 msgstr "Kanal adı bu dizge ile başlamalıdır"
 
-#: src/syndie/gui/ReferenceChooserSearch.java:170
+#: src/syndie/gui/ReferenceChooserSearch.java:171
 msgid "Forum search criteria"
 msgstr "Forum arama ölçütü"
 
-#: src/syndie/gui/ReferenceChooserSearch.java:172
+#: src/syndie/gui/ReferenceChooserSearch.java:173
 msgid ""
 "-tag excludes, +tag requires all, without a prefix requires one or more"
 msgstr "-etiketi katmaz, +etiketi tümünü zorunlu kılar, bir ön ek olmadığında bir ya da bir kaçı zorunlu olur"
 
-#: src/syndie/gui/ReferenceChooserSearch.java:174
+#: src/syndie/gui/ReferenceChooserSearch.java:175
 msgid "The channel hash must start with this string"
 msgstr "Kanal karması bu dizge ile başlamalıdır"
 
-#: src/syndie/gui/ReferenceChooserSearch.java:176
+#: src/syndie/gui/ReferenceChooserSearch.java:177
 msgid "If true, include channels that anyone is allowed to post to"
 msgstr "Bu seçenek etkinleştirildiğinde herkesin ileti göndermesine izin verilen kanallar katılır"
 
-#: src/syndie/gui/ReferenceChooserTree.java:615
+#: src/syndie/gui/ReferenceChooserTree.java:617
 msgid ""
 "To use Syndie, you need to 'syndicate' messages between you and some remote "
 "archives.  Would you like to configure your syndication now?"
 msgstr "Syndie yazılımını kullanmak için iletileri kendinizdeki ve uzaktaki arşivler ile 'eşitlemeniz' gerekir. Şimdi eşitleme ayarlarını yapmak istediğinize emin misiniz?"
 
-#: src/syndie/gui/ReferenceChooserTree.java:616
+#: src/syndie/gui/ReferenceChooserTree.java:618
 msgid "Schedule syndication?"
 msgstr "Eşitleme zamanlaması"
 
-#: src/syndie/gui/ReferenceChooserTree.java:850
+#: src/syndie/gui/ReferenceChooserTree.java:864
 msgid "Requires password"
 msgstr "Parola gereklidir"
 
-#: src/syndie/gui/ReferenceChooserTree.java:858
+#: src/syndie/gui/ReferenceChooserTree.java:872
 msgid "Forum key unknown"
 msgstr "Forum anahtarı bilinmiyor"
 
-#: src/syndie/gui/ReferenceChooserTree.java:1040
+#: src/syndie/gui/ReferenceChooserTree.java:1054
 msgid "Bookmarked references"
 msgstr "Yer imlerine eklenmiş referanslar"
 
-#: src/syndie/gui/ReferenceChooserTree.java:1042
+#: src/syndie/gui/ReferenceChooserTree.java:1056
 msgid "Writable forums"
 msgstr "Yazılabilir forumlar"
 
-#: src/syndie/gui/ReferenceChooserTree.java:1048
+#: src/syndie/gui/ReferenceChooserTree.java:1062
 msgid "Imported resources"
 msgstr "Alınmış kaynaklar"
 
@@ -3060,502 +3040,510 @@ msgstr "SQL"
 msgid "Advanced SQL interface"
 msgstr "Gelişmiş SQL arayüzü"
 
-#: src/syndie/gui/SWTUI.java:144 src/syndie/gui/desktop/Desktop.java:351
+#: src/syndie/gui/SWTUI.java:142 src/syndie/gui/desktop/Desktop.java:351
 msgid "Already running"
 msgstr "Zaten çalışıyor"
 
-#: src/syndie/gui/SWTUI.java:148 src/syndie/gui/desktop/Desktop.java:357
+#: src/syndie/gui/SWTUI.java:146 src/syndie/gui/desktop/Desktop.java:357
 msgid "Syndie is already running - please use the existing Syndie window"
 msgstr "Syndie yazılımı zaten çalışıyor. Lütfen açık olan Syndie penceresini kullanın"
 
-#: src/syndie/gui/SWTUI.java:151 src/syndie/gui/SWTUI.java:189
+#: src/syndie/gui/SWTUI.java:149 src/syndie/gui/SWTUI.java:187
 #: src/syndie/gui/desktop/ControlMenuPanel.java:636
 #: src/syndie/gui/desktop/Desktop.java:362
 #: src/syndie/gui/desktop/Desktop.java:459
 msgid "Exit"
 msgstr "Çık"
 
-#: src/syndie/gui/SWTUI.java:185
+#: src/syndie/gui/SWTUI.java:183
 msgid ""
 "Syndie ran into an internal error trying to start up - please see the logs"
 msgstr "Syndie içinde bir sorun çıktı ve yeniden başlatılmaya çalışılıyor. Lütfen günlüklere bakın"
 
-#: src/syndie/gui/StatusBar.java:353
+#: src/syndie/gui/StatusBar.java:362
 msgid "Private msgs"
 msgstr "Kişisel iletiler"
 
-#: src/syndie/gui/StatusBar.java:362
+#: src/syndie/gui/StatusBar.java:371
 msgid "Drafts"
 msgstr "Taslaklar"
 
-#: src/syndie/gui/StatusBar.java:471
+#: src/syndie/gui/StatusBar.java:480
 msgid "View unread in bookmarked forums"
 msgstr "Yer imlerine eklenmiş forumlardaki okunmamış iletileri görüntüle"
 
-#: src/syndie/gui/StatusBar.java:482
+#: src/syndie/gui/StatusBar.java:491
 msgid "View unread in all forums"
 msgstr "Tüm forumlardaki okunmamış iletileri görüntüle"
 
-#: src/syndie/gui/StatusBar.java:521
+#: src/syndie/gui/StatusBar.java:531
 msgid "Unread"
 msgstr "Okunmamış"
 
-#: src/syndie/gui/StatusBar.java:600
+#: src/syndie/gui/StatusBar.java:609
 msgid "Mark all as read"
 msgstr "Tümünü okunmuş olarak işaretle"
 
-#: src/syndie/gui/StatusBar.java:687
+#: src/syndie/gui/StatusBar.java:696
 msgid "Forums requiring password"
 msgstr "Parola korumalı forumlar"
 
-#: src/syndie/gui/StatusBar.java:690
+#: src/syndie/gui/StatusBar.java:699
 msgid "Ban these forums"
 msgstr "Bu forumları engelle"
 
-#: src/syndie/gui/StatusBar.java:695 src/syndie/gui/StatusBar.java:736
+#: src/syndie/gui/StatusBar.java:704 src/syndie/gui/StatusBar.java:745
 msgid "Are you sure?"
 msgstr "Emin misiniz?"
 
-#: src/syndie/gui/StatusBar.java:696 src/syndie/gui/StatusBar.java:737
-#: src/syndie/gui/Syndicator.java:293
+#: src/syndie/gui/StatusBar.java:705 src/syndie/gui/StatusBar.java:746
+#: src/syndie/gui/Syndicator.java:290
 msgid "Delete?"
 msgstr "Silinsin mi?"
 
-#: src/syndie/gui/StatusBar.java:728
+#: src/syndie/gui/StatusBar.java:737
 msgid "Messages requiring password"
 msgstr "Parola korumalı ileti"
 
-#: src/syndie/gui/StatusBar.java:731
+#: src/syndie/gui/StatusBar.java:740
 msgid "Delete these messages"
 msgstr "Bu iletileri sil"
 
-#: src/syndie/gui/StatusBar.java:764
+#: src/syndie/gui/StatusBar.java:773
 msgid "Pass. reqd"
 msgstr "Parola korumalı"
 
-#: src/syndie/gui/StatusBar.java:786
+#: src/syndie/gui/StatusBar.java:795
 msgid "Saved"
 msgstr "Kaydedildi"
 
-#: src/syndie/gui/StatusBar.java:882
+#: src/syndie/gui/StatusBar.java:891
 msgid "New forums"
 msgstr "Yeni forumlar"
 
-#: src/syndie/gui/StatusBar.java:934
+#: src/syndie/gui/StatusBar.java:1017
 msgid "Online: Syndication is enabled"
 msgstr "Çevrimiçi: Eşitleme etkin"
 
-#: src/syndie/gui/StatusBar.java:937
+#: src/syndie/gui/StatusBar.java:1020
 msgid "Offline: Syndication is deferred"
 msgstr "Çevrimdışı: Eşitleme ertelenmiş"
 
-#: src/syndie/gui/StatusBar.java:953
+#: src/syndie/gui/StatusBar.java:1036
 msgid "Deferred"
 msgstr "Ertelenmiş"
 
-#: src/syndie/gui/StatusBar.java:956
+#: src/syndie/gui/StatusBar.java:1039
 msgid "None scheduled"
 msgstr "Hiçbiri zamanlanmamış"
 
-#: src/syndie/gui/StatusBar.java:959 src/syndie/gui/Syndicator.java:688
-#: src/syndie/gui/Syndicator.java:739
+#: src/syndie/gui/StatusBar.java:1042 src/syndie/gui/Syndicator.java:704
+#: src/syndie/gui/Syndicator.java:755
 msgid "Now"
 msgstr "Şimdi"
 
-#: src/syndie/gui/StatusBar.java:1027
+#: src/syndie/gui/StatusBar.java:1110
 msgid "messages"
 msgstr "ileti"
 
-#: src/syndie/gui/StatusBar.java:1044
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1070
+#: src/syndie/gui/StatusBar.java:1127
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1072
 msgid "Next sync"
 msgstr "Sonraki eşitleme"
 
-#: src/syndie/gui/StatusBar.java:1045
+#: src/syndie/gui/StatusBar.java:1128
 msgid "Bookmark"
 msgstr "Yer imi"
 
-#: src/syndie/gui/Syndicator.java:292
+#: src/syndie/gui/Syndicator.java:289
 msgid "Are you sure you want to delete this archive? "
 msgstr "Bu arşivi silmek istediğinize emin misiniz?"
 
-#: src/syndie/gui/Syndicator.java:392
+#: src/syndie/gui/Syndicator.java:415
 msgid "Settings"
 msgstr "Ayarlar"
 
-#: src/syndie/gui/Syndicator.java:401
+#: src/syndie/gui/Syndicator.java:424
 msgid "Sync now (recurring)"
 msgstr "Şimdi eşitle (yinelenen)"
 
-#: src/syndie/gui/Syndicator.java:406
+#: src/syndie/gui/Syndicator.java:429
 msgid "Sync now (one time)"
 msgstr "Şimdi eşitle (bir kez)"
 
-#: src/syndie/gui/Syndicator.java:412
+#: src/syndie/gui/Syndicator.java:435
 msgid "Cancel sync"
 msgstr "Eşitlemeyi iptal et"
 
-#: src/syndie/gui/Syndicator.java:416
+#: src/syndie/gui/Syndicator.java:439
 msgid "Cancel next sync"
 msgstr "Sonraki eşitlemeyi iptal et"
 
-#: src/syndie/gui/Syndicator.java:420
+#: src/syndie/gui/Syndicator.java:443
 msgid "Schedule sync"
 msgstr "Eşitleme zamanla"
 
-#: src/syndie/gui/Syndicator.java:428 src/syndie/gui/Syndicator.java:441
-#: src/syndie/gui/Syndicator.java:456
+#: src/syndie/gui/Syndicator.java:451 src/syndie/gui/Syndicator.java:464
+#: src/syndie/gui/Syndicator.java:479
 msgid "Clear complete actions"
 msgstr "Tamamlanmış işlemleri temizle"
 
-#: src/syndie/gui/Syndicator.java:470
+#: src/syndie/gui/Syndicator.java:493
 msgid "Clear"
 msgstr "Temizle"
 
-#: src/syndie/gui/Syndicator.java:494
+#: src/syndie/gui/Syndicator.java:517
 msgid "Resolve passphrase prompt"
 msgstr "Parola sorusunu çözümle"
 
-#: src/syndie/gui/Syndicator.java:501 src/syndie/gui/Syndicator.java:534
+#: src/syndie/gui/Syndicator.java:524 src/syndie/gui/Syndicator.java:557
 msgid "Clear action"
 msgstr "İşlemi temizle"
 
-#: src/syndie/gui/Syndicator.java:605
+#: src/syndie/gui/Syndicator.java:628
 msgid "HTTP archive"
 msgstr "HTTP arşivi"
 
-#: src/syndie/gui/Syndicator.java:690
+#: src/syndie/gui/Syndicator.java:706
 msgid "Syndicating"
 msgstr "Eşitleniyor"
 
 #. never successfully fetched
-#: src/syndie/gui/Syndicator.java:692 src/syndie/gui/Syndicator.java:768
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:918
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:927
+#: src/syndie/gui/Syndicator.java:708 src/syndie/gui/Syndicator.java:784
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:920
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:929
 msgid "Never"
 msgstr "Asla"
 
-#: src/syndie/gui/Syndicator.java:694
+#: src/syndie/gui/Syndicator.java:710
 msgid "No syndication scheduled"
 msgstr "Herhangi bir eşitleme zamanlanmamış"
 
-#: src/syndie/gui/Syndicator.java:698
+#: src/syndie/gui/Syndicator.java:714
 msgid "Offline: Set as online to start"
 msgstr "Çevrimdışı: Başlatmak için çevrimiçi olarak ayarlayın"
 
-#: src/syndie/gui/Syndicator.java:702
+#: src/syndie/gui/Syndicator.java:718
 msgid "Syndication scheduled"
 msgstr "Eşitleme zamanlanmış"
 
-#: src/syndie/gui/Syndicator.java:737
+#: src/syndie/gui/Syndicator.java:753
 msgid "Fetch index"
 msgstr "Dizin alınıyor"
 
-#: src/syndie/gui/Syndicator.java:742
+#: src/syndie/gui/Syndicator.java:758
 msgid "In Progress"
 msgstr "İşleniyor"
 
-#: src/syndie/gui/Syndicator.java:756 src/syndie/gui/Syndicator.java:771
+#: src/syndie/gui/Syndicator.java:772 src/syndie/gui/Syndicator.java:787
 msgid "Fetch error"
 msgstr "Alma sırasında bir sorun çıktı"
 
-#: src/syndie/gui/Syndicator.java:760
+#: src/syndie/gui/Syndicator.java:776
 msgid "Fetch complete"
 msgstr "Alma işlemi tamamlandı"
 
 #. text doesn't change
-#: src/syndie/gui/Syndicator.java:833
+#: src/syndie/gui/Syndicator.java:849
 msgid "Fetches"
 msgstr "Alınanlar"
 
-#: src/syndie/gui/Syndicator.java:841 src/syndie/gui/Syndicator.java:1025
+#: src/syndie/gui/Syndicator.java:857 src/syndie/gui/Syndicator.java:1047
 msgid "Complete"
 msgstr "Tamamlandı"
 
-#: src/syndie/gui/Syndicator.java:899 src/syndie/gui/Syndicator.java:1080
+#: src/syndie/gui/Syndicator.java:915 src/syndie/gui/Syndicator.java:1102
 msgid "Forum info"
 msgstr "Forum bilgileri"
 
-#: src/syndie/gui/Syndicator.java:925
+#: src/syndie/gui/Syndicator.java:941
 msgid "Fetch failed"
 msgstr "Alınamadı"
 
-#: src/syndie/gui/Syndicator.java:929
+#: src/syndie/gui/Syndicator.java:945
 msgid "Fetching keys"
 msgstr "Anahtarlar alınıyor"
 
-#: src/syndie/gui/Syndicator.java:942
+#: src/syndie/gui/Syndicator.java:958
 msgid "Fetching message"
 msgstr "İleti alınıyor"
 
-#: src/syndie/gui/Syndicator.java:954 src/syndie/gui/Syndicator.java:1103
+#: src/syndie/gui/Syndicator.java:970
+msgid "Queued for Import"
+msgstr "Alınmak üzere kuyruğa eklendi"
+
+#: src/syndie/gui/Syndicator.java:973
+msgid "Importing"
+msgstr "Alınıyor"
+
+#: src/syndie/gui/Syndicator.java:976 src/syndie/gui/Syndicator.java:1125
 msgid "Queued"
 msgstr "Kuyrukta"
 
 #. text doesn't change
-#: src/syndie/gui/Syndicator.java:1017
+#: src/syndie/gui/Syndicator.java:1039
 msgid "Pushes"
 msgstr "Gönderilenler"
 
-#: src/syndie/gui/Syndicator.java:1087
+#: src/syndie/gui/Syndicator.java:1109
 msgid "Pushing keys"
 msgstr "Anahtarlar gönderiliyor"
 
-#: src/syndie/gui/Syndicator.java:1095
+#: src/syndie/gui/Syndicator.java:1117
 msgid "Pushing message"
 msgstr "İleti gönderiliyor"
 
-#: src/syndie/gui/Syndicator.java:1110
+#: src/syndie/gui/Syndicator.java:1132
 msgid "Error pushing"
 msgstr "Gönderme sırasında bir sorun çıktı"
 
-#: src/syndie/gui/Syndicator.java:1114
+#: src/syndie/gui/Syndicator.java:1136
 msgid "Pushed"
 msgstr "Gönderildi"
 
-#: src/syndie/gui/Syndicator.java:1154
+#: src/syndie/gui/Syndicator.java:1176
 msgid "Time"
 msgstr "Saat"
 
-#: src/syndie/gui/Syndicator.java:1156
+#: src/syndie/gui/Syndicator.java:1178
 msgid "Summary"
 msgstr "Özet"
 
-#: src/syndie/gui/Syndicator.java:1158
+#: src/syndie/gui/Syndicator.java:1180
 msgid "No archives defined - click 'Add archive' to add one"
 msgstr "Henüz bir arşiv tanımlanmamış. Yeni bir tane eklemek için 'arşiv ekle' üzerine tıklayın"
 
-#: src/syndie/gui/Syndicator.java:1169
+#: src/syndie/gui/Syndicator.java:1191
 #: src/syndie/gui/desktop/SyndicatorPanel.java:225
 msgid "Add archive"
 msgstr "Arşiv ekle"
 
-#: src/syndie/gui/Syndicator.java:1171
+#: src/syndie/gui/Syndicator.java:1193
 msgid "Cancel syndications"
 msgstr "Eşitlemeleri iptal et"
 
-#: src/syndie/gui/Syndicator.java:1174
+#: src/syndie/gui/Syndicator.java:1196
 #: src/syndie/gui/desktop/SyndicatorPanel.java:228
 msgid "Delete archive"
 msgstr "Arşivi sil"
 
-#: src/syndie/gui/Syndicator.java:1178
+#: src/syndie/gui/Syndicator.java:1200
 msgid "Sync Now"
 msgstr "Şimdi Eşitle"
 
-#: src/syndie/gui/Syndicator.java:1180
+#: src/syndie/gui/Syndicator.java:1202
 msgid "Sync Now (one time only)"
 msgstr "Şimdi Eşitle (bir kez)"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:451
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:452
 msgid "Whitelist"
 msgstr "Beyaz liste"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:515
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:516
 msgid "Freenet configuration"
 msgstr "Freenet ayarları"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:523
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:524
 msgid "Public key"
 msgstr "Herkese açık anahtar"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:537
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:538
 msgid "Write only"
 msgstr "Yalnız yazma"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:544
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:545
 msgid "FCP host"
 msgstr "FCP sunucusu"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:566
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:567
 msgid "Private key"
 msgstr "Kişisel anahtar"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:575
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:576
 msgid "Generate new"
 msgstr "Yeni oluştur"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:654
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:673
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:655
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:675
 msgid "Error communicating with the Freenet server"
 msgstr "Freenet sunucusu ile bağlantı kurulurken bir sorun çıktı"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:923
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:925
 msgid "ASAP"
 msgstr "En Kısa Zamanda"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1055
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1057
 msgid "Archive URL"
 msgstr "Arşiv İnternet adresi"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1057
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1059
 msgid "Specify posting key"
 msgstr "Göndeme anahtarını belirtin"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1058
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1060
 msgid "Specify reading key"
 msgstr "Okuma anahtarını belirtin"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1059
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1061
 msgid "Configure freenet settings"
 msgstr "Freenet ayarlarını yapın"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1062
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1064
 msgid "Push policy"
 msgstr "Gönderme ilkesi"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1063
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1065
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1067
 msgid "Max message size"
 msgstr "En büyük ileti boyutu"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1064
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1066
 msgid "Pull policy"
 msgstr "Alma ilkesi"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1066
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1068
 msgid "Pull any private messages?"
 msgstr "Tüm kişisel iletiler alınsın"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1067
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1069
 msgid "Pull private messages for us only?"
 msgstr "Yalnız benim kişisel iletilerim alınsın"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1068
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1070
 msgid "Pull passphrase protected messages?"
 msgstr "Parola korumalı iletiler alınsın"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1069
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1071
 msgid "Last sync"
 msgstr "Son eşitleme"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1071
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1073
 msgid "Sync ASAP"
 msgstr "Hemen Eşitle"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1072
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1074
 msgid "Never sync"
 msgstr "Asla eşitleme"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1073
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1075
 msgid "Sync only once"
 msgstr "Yalnız bir kez eşitle"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1074
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1076
 msgid "Min sync delay"
 msgstr "En küçük eşitleme gecikmesi"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1075
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1077
 msgid "Sync failures"
 msgstr "Eşitleme sorunları"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1076
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1078
 msgid "Back off after failing?"
 msgstr "Sorun çıktığında geri çekil"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1080
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1082
 msgid "Age to treat as 'recent'"
 msgstr "'Yeni' olarak değerlendirilecek yaş"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1081
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1083
 msgid "Oldest message to send"
 msgstr "Gönderilen en eski ileti"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1082
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1084
 msgid "Whitelisted category"
 msgstr "Beyaz liste kategorisi"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1084
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1086
 msgid ""
 "Forums that are referenced in the specified category (and posts to those "
 "forums) are allowed to be imported"
 msgstr "Belirtilen kategorideki forumların (ve bu forumlardaki iletilerin) alınmasına izin verilir"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1085
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1087
 msgid "Only pull whitelisted content (reduces anonymity but saves bandwidth)"
-msgstr "Yalnız beyaz listede bulunan içerikler alınsın (anonimliği azaltır ancak bant genişliğini harcamaz)"
+msgstr "Yalnız beyaz listede bulunan içerikler alınsın (isimsizliği azaltır ancak bant genişliğini harcamaz)"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1123
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1125
 msgid "Send all messages they don't have"
 msgstr "Onlarda bulunmayan tüm iletiler gönderilsin"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1124
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1126
 msgid "Send locally created messages they don't have"
 msgstr "Onlarda bulunmayan ve yerel olarak oluşturulmuş iletiler gönderilsin"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1125
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1127
 msgid "Send nothing"
 msgstr "Hiç bir şey gönderilmesin"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1132
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1150
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1134
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1152
 msgid "KBytes"
 msgstr "KBayt"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1138
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1140
 msgid "Recent messages we don't have"
 msgstr "Bende bulunamayan son iletiler"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1139
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1141
 msgid "All messages we don't have"
 msgstr "Bende bulunmayan tüm iletiler"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1140
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1142
 msgid "Recent messages in forums we know"
 msgstr "Bildiğim forumlardaki yeni iletiler"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1141
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1143
 msgid "All messages in forums we know"
 msgstr "Bildiğim forumlardaki tüm iletiler"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1142
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1144
 msgid "Everything the archive considers recent (PIR)"
 msgstr "Arşivin yeni olarak değerlendirdiği her şey (PIR)"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1143
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1145
 msgid "Nothing"
 msgstr "Hiç birşey"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1156
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1158
 msgid "Whatever the archive advertises as new"
 msgstr "Arşivin yeni olarak duyurduğu herşey"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1157
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1158
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1172
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1173
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1159
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1160
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1174
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1175
 #, java-format
 msgid "{0} week"
 msgid_plural "{0} weeks"
 msgstr[0] "{0} hafta"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1159
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1160
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1161
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1162
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1174
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1175
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1163
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1164
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1176
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1177
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1178
 #, java-format
 msgid "{0} month"
 msgid_plural "{0} months"
 msgstr[0] "{0} ay"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1163
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1164
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1165
 #: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1166
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1177
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1167
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1168
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1179
 #, java-format
 msgid "{0} year"
 msgid_plural "{0} years"
 msgstr[0] "{0} yıl"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1178
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1180
 msgid "Unlimited"
 msgstr "Sınırsız"
 
-#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1185
+#: src/syndie/gui/SyndicatorDetailHTTPArchive.java:1187
 #, java-format
 msgid "{0} hour"
 msgid_plural "{0} hours"
@@ -3714,76 +3702,76 @@ msgstr "Web kopyası oluşturuldu. Lütfen paylaşmak için diğerleri ile eşit
 msgid "Web rip created"
 msgstr "Web kopyası oluşturuldu"
 
-#: src/syndie/gui/WelcomeScreen.java:397 src/syndie/gui/Wizard.java:171
+#: src/syndie/gui/WelcomeScreen.java:407 src/syndie/gui/Wizard.java:171
 #: src/syndie/gui/desktop/WelcomePopup.java:161
 msgid "Welcome to Syndie!"
 msgstr "Syndie yazılımına hoşgeldiniz!"
 
-#: src/syndie/gui/WelcomeScreen.java:398
+#: src/syndie/gui/WelcomeScreen.java:408
 msgid ""
 "This wizard will help you set up your new Syndie installation. First we'll "
 "set up your identity, and then we'll configure some archives for you to "
 "syndicate with."
 msgstr "Bu yardımcı Syndie yazılımını ayarlamanızı sağlar. Önce kimliğinizi oluşturacağız. Ardından eşitleme işlemleri yapacağınız bazı arşivleri ayarlayacağız."
 
-#: src/syndie/gui/WelcomeScreen.java:400
+#: src/syndie/gui/WelcomeScreen.java:410
 msgid ""
 "It is strongly recommended that you have I2P running before you start "
 "Syndie."
 msgstr "Syndie yazılımını başlatmadan önce I2P yazılımının çalıştırılmış olması önemle önerilir."
 
-#: src/syndie/gui/WelcomeScreen.java:401
+#: src/syndie/gui/WelcomeScreen.java:411
 msgid ""
 "If I2P is not running, please start it and wait 5 minutes before proceeding."
 msgstr "I2P çalışmıyorsa, başlatın ve herhangi bir işlem yapmadan önce 5 dakika bekleyin."
 
-#: src/syndie/gui/WelcomeScreen.java:405
+#: src/syndie/gui/WelcomeScreen.java:415
 msgid ""
 "Syndie will create a new identity for you to use with which to post messages"
-" in other forums and to runyour own blog/forum."
+" in other forums and to run your own blog/forum."
 msgstr "Syndie, diğer forumlara ileti gönderebilmeniz ve kendi blogunuzu/forumunuzu sunabilmeniz için bir kimlik oluşturacak."
 
-#: src/syndie/gui/WelcomeScreen.java:408
+#: src/syndie/gui/WelcomeScreen.java:418
 msgid "What name would you like to use for your new identity?"
 msgstr "Yeni kimliğiniz için hangi adı kullanmak istersiniz?"
 
-#: src/syndie/gui/WelcomeScreen.java:409
+#: src/syndie/gui/WelcomeScreen.java:419
 msgid "Syndie user"
 msgstr "Syndie kullanıcısı"
 
-#: src/syndie/gui/WelcomeScreen.java:410
+#: src/syndie/gui/WelcomeScreen.java:420
 msgid "Click the image to select the avatar would you like to use"
 msgstr "Kullanmak istediğiniz avatar görseline tıklayın"
 
-#: src/syndie/gui/WelcomeScreen.java:411
+#: src/syndie/gui/WelcomeScreen.java:421
 msgid ""
 "In your new identity's blog/forum, would  you like to allow other people to "
 "post?"
 msgstr "Yeni kimliğinizin blogu/forumu içine diğer kişilerin ileti gönderebilmesini istiyor musunuz?"
 
-#: src/syndie/gui/WelcomeScreen.java:412
+#: src/syndie/gui/WelcomeScreen.java:422
 msgid "Yes, let anyone reply to existing posts and post new topics"
 msgstr "Evet, herkes ileti yazıp varolan iletileri yanıtlayabilsin"
 
-#: src/syndie/gui/WelcomeScreen.java:413
+#: src/syndie/gui/WelcomeScreen.java:423
 msgid "Yes, let anyone reply to existing posts"
 msgstr "Evet, herkes varolan iletileri yanıtlayabilsin"
 
-#: src/syndie/gui/WelcomeScreen.java:414
+#: src/syndie/gui/WelcomeScreen.java:424
 msgid "No"
 msgstr "Hayır"
 
-#: src/syndie/gui/WelcomeScreen.java:417
+#: src/syndie/gui/WelcomeScreen.java:427
 msgid "Next it's time to select some archives to syndicate with."
 msgstr "Şimdi eşitleme yapılacak bazı arşivler seçeceğiz."
 
-#: src/syndie/gui/WelcomeScreen.java:418
+#: src/syndie/gui/WelcomeScreen.java:428
 msgid ""
 "Syndie messages are propagated from one Syndie instance to another by a "
 "process called 'syndication'."
 msgstr "Syndie iletileri bir Syndie kopyasından diğerine 'eşitleme' (syndication) denilen bir işlem ile yayılır."
 
-#: src/syndie/gui/WelcomeScreen.java:419
+#: src/syndie/gui/WelcomeScreen.java:429
 msgid ""
 "Each client connects to one or more archives and uploads any messages which "
 "the client has, but the archive does not, and downloads any messages which "
@@ -3792,29 +3780,29 @@ msgid ""
 "community."
 msgstr "Her bir istemci bir ya da bir kaç arşive bağlanarak istemcide bulunan ancak arşivde bulunmayan iletileri yükler, arşivde bulunan ancak istemcide bulunmayan iletileri indirir. Böylece iletiler Syndie topluluğundaki istemciler ve arşivler arasında yayılır."
 
-#: src/syndie/gui/WelcomeScreen.java:422
+#: src/syndie/gui/WelcomeScreen.java:432
 msgid ""
 "To join a Syndie community, you need to syndicate with one or more archives "
 "of that community."
 msgstr "Bir Syndie topluluğuna katılmak için bu topluluktaki bir ya da birkaç arşivi eşitlemeniz gerekir."
 
-#: src/syndie/gui/WelcomeScreen.java:425
+#: src/syndie/gui/WelcomeScreen.java:435
 msgid ""
 "The default archives shipped with your Syndie install are listed above. "
 "Double-click a field to edit it."
 msgstr "Syndie kurulumunda önerilen varsayılan arşivleri aşağıda görebilirsiniz. Düzenlemek istediğiniz alana çift tıklayın."
 
-#: src/syndie/gui/WelcomeScreen.java:426
+#: src/syndie/gui/WelcomeScreen.java:436
 msgid ""
 "Please make any necessary changes and uncheck any archives that you don't "
 "want."
 msgstr "Lütfen gerekli değişiklikleri yapın ve eşitlemek istemediğiniz arşivlerin işaretini kaldırın."
 
-#: src/syndie/gui/WelcomeScreen.java:429
+#: src/syndie/gui/WelcomeScreen.java:439
 msgid "Congratulations! Your Syndie installation is configured!"
 msgstr "Tebrikler! Syndie ayarlarınız tamamlandı!"
 
-#: src/syndie/gui/WelcomeScreen.java:430
+#: src/syndie/gui/WelcomeScreen.java:440
 msgid "Click Finish to start exploring Syndie."
 msgstr "Syndie yazılımını keşfetmek için Tamam üzerine tıklayın."
 
@@ -4182,24 +4170,24 @@ msgstr "Seçilmiş iletiyi tamamen silmek istediğinize emin misiniz?"
 msgid "Are you sure you want to completely drop the selected messages?"
 msgstr "Seçilmiş iletileri tamamen silmek istediğinize emin misiniz?"
 
-#: src/syndie/gui/desktop/ResumeablePanel.java:228
-#: src/syndie/gui/desktop/ResumeablePanel.java:267
+#: src/syndie/gui/desktop/ResumeablePanel.java:227
+#: src/syndie/gui/desktop/ResumeablePanel.java:266
 msgid "Resume"
 msgstr "Sürdür"
 
-#: src/syndie/gui/desktop/ResumeablePanel.java:229
+#: src/syndie/gui/desktop/ResumeablePanel.java:228
 msgid "Resume postponed messages"
 msgstr "Ertelenmiş iletileri sürdür"
 
-#: src/syndie/gui/desktop/ResumeablePanel.java:277
+#: src/syndie/gui/desktop/ResumeablePanel.java:276
 msgid "Abort"
 msgstr "Durdur"
 
-#: src/syndie/gui/desktop/ResumeablePanel.java:336
+#: src/syndie/gui/desktop/ResumeablePanel.java:335
 msgid "Create a new message"
 msgstr "Yeni ileti oluştur"
 
-#: src/syndie/gui/desktop/ResumeablePanel.java:337
+#: src/syndie/gui/desktop/ResumeablePanel.java:336
 msgid "Don't create a message at this time"
 msgstr "Şu anda bir ileti oluşturma"
 
