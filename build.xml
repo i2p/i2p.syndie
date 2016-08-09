@@ -1139,11 +1139,27 @@
         <delete file="syndie-installer*.jar" />
         <delete file="syndie-installer*.exe" />
         <delete file="syndie-update.xpi2p" />
+        <delete file="syndie-mac64.xpi2p" />
+        <delete file="syndie-mac64-update.xpi2p" />
         <delete file="syndie-win32.xpi2p" />
         <delete file="syndie-win32-update.xpi2p" />
+        <delete file="syndie-win64.xpi2p" />
+        <delete file="syndie-win64-update.xpi2p" />
         <delete file="syndie-linux-i386.xpi2p" />
         <delete file="syndie-linux-i386-update.xpi2p" />
         <delete file="syndie-linux-x86-64.xpi2p" />
+        <delete file="syndie-linux-x86-64-update.xpi2p" />
+        <delete file="syndie-update.su3" />
+        <delete file="syndie-mac64.su3" />
+        <delete file="syndie-mac64-update.su3" />
+        <delete file="syndie-win32.su3" />
+        <delete file="syndie-win32-update.su3" />
+        <delete file="syndie-win64.su3" />
+        <delete file="syndie-win64-update.su3" />
+        <delete file="syndie-linux-i386.su3" />
+        <delete file="syndie-linux-i386-update.su3" />
+        <delete file="syndie-linux-x86-64.su3" />
+        <delete file="syndie-linux-x86-64-update.su3" />
     </target>
 
     <target name="totallyclean" depends="distclean" description="Most thorough clearning">
