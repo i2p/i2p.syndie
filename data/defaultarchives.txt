@@ -15,40 +15,46 @@
 ## I2P then non-I2P please
 ## Alphabetical within categories
 ##########################################
-archive.1.name=mosfet.i2p
-archive.1.url=http://mosfet.i2p/archive/?i2paddresshelper=zADgixl~iNqxQyKEWAVWUHoWcyDx7Mwk-gLgvr64W3Bl6tPiwDySSKt10gXIElar2eh1XEJCMy-j7j-NFXl-WxRE7lQy8DrTIBVMetFhYmPVmhYQcBubxqT5L1e8Luon-jvgCTLArElMilauG6HP6h9L5lTjAZZRBkGLfiplfHEYWvLsRiI2R9DfquF4EfpNaJyN1CDclQ7Apola9cYmW5s6Tzdyl2FeVd2vo5ne1VdatgPoEwpvNjf9CJuQwqgiVI34wIV3dY92OpiZDhIHKGl1FLs3Ke5vvzdZqceyBR3EkoLifrD5p5TK8JXYzM9C8xV0vD-aaWI1genoWoyhJ2ioMKbVZAQMMqKHyUcP5Q4AHqj0c8DXzVWCSsJN1LOg30WLdMLmLnshiogIO70D~hXvCsSzE3T5krpQOzhreotZlxyhFC8seYDF3nsJuEpHEXm4aZvUsuBmr7PHemlelfP9Qg-Aaj2s~lHb97OAXA5DW5uPc1pkDnSHnPPlDorTAAAA
+archive.1.name=Lazy Edward
+archive.1.url=http://6d2tru665udiixwb7miyml7joxusehwmrbikyjjpwwwdpand2lza.b32.i2p/
 archive.1.proxy=127.0.0.1:4444
 archive.1.pullpolicy=RecentMessagesOnly
 archive.1.syncbydefault=true
 ##########################################
-archive.2.name=syndie.echelon.i2p
-archive.2.url=http://syndie.echelon.i2p/?i2paddresshelper=4W79xrs~ZVo2nXynH8Dyl4gOTL2qQoCOyndoJaXDkt5bGDemvaCp6AayGWxMM1aFLfZayS6dy79-UGK2xabOMatg~zcvb3QNOgelAXpMhLBb3htZchXHoWed73Zu8HhBM9RkU2hEoknVIQ6wYWCDTabPwTy0AiMgnL7sPvlIUr3OoYx6K6~QUJ4aY3qhOxlT7~agx~AB8YG9lRpwMcooCy-vxwDOIP3pX71sy-0ag~-lE4UmQ3MSSzlNp7KquzKkMk07BD7TpDrxJpfi9zCqsFCuYYHnHTrsyVApFS-DZZdb0aNHPeKmenimJIiDQgueU3xwVvdINv1puT3Zkzt2H1rMqqu5SMLsesjcRuPsaCazL40J5-7f2aZ1~mGJbxUxQY~53y9eSoCR7-n1W~qL4i6LxwEXpFS4IXWi3lA8hq7i-NqMZwbwHP8elAFg~kNaW9cgeRn~LX0lCZc5ztbYc2qJeMMFtR0kSG3PvOcci961maQYbcEpHVjfgFfFxR4KAAAA
+archive.2.name=mosfet.i2p
+archive.2.url=http://mosfet.i2p/archive/?i2paddresshelper=zADgixl~iNqxQyKEWAVWUHoWcyDx7Mwk-gLgvr64W3Bl6tPiwDySSKt10gXIElar2eh1XEJCMy-j7j-NFXl-WxRE7lQy8DrTIBVMetFhYmPVmhYQcBubxqT5L1e8Luon-jvgCTLArElMilauG6HP6h9L5lTjAZZRBkGLfiplfHEYWvLsRiI2R9DfquF4EfpNaJyN1CDclQ7Apola9cYmW5s6Tzdyl2FeVd2vo5ne1VdatgPoEwpvNjf9CJuQwqgiVI34wIV3dY92OpiZDhIHKGl1FLs3Ke5vvzdZqceyBR3EkoLifrD5p5TK8JXYzM9C8xV0vD-aaWI1genoWoyhJ2ioMKbVZAQMMqKHyUcP5Q4AHqj0c8DXzVWCSsJN1LOg30WLdMLmLnshiogIO70D~hXvCsSzE3T5krpQOzhreotZlxyhFC8seYDF3nsJuEpHEXm4aZvUsuBmr7PHemlelfP9Qg-Aaj2s~lHb97OAXA5DW5uPc1pkDnSHnPPlDorTAAAA
 archive.2.proxy=127.0.0.1:4444
 archive.2.pullpolicy=RecentMessagesOnly
 archive.2.syncbydefault=true
 ##########################################
-archive.3.name=syndie.welterde.i2p
-archive.3.url=http://syndie.welterde.i2p/?i2paddresshelper=tYPP3G3Ul1wXDxyotkqzT7wCHHm0c4e-JeKbWSU0dbPI3lGm1hxKEMHXRORk8VrxaGZz1UtnQp3ERMY-8zEd~D56v4Bw0PLu~KV~pTxE7RNld-ACKTBYGj6OBmWcNYHCqjzakJOLUzZKydJDphTa3Fozpp1UyoXtZU-u8p6VJeFMhBUT1AkvCxFThFyQUmQ~zFit-LSL3TG2Y564X4b7NeWBQ4HvrxsUBgga0IJhKiLO4rXeUk~DmjwyM~nyLT2puTEJqm8T44CoglVpnJiqG6hENPCTnZ0Qh5ecZjWrP8e5jo4Dr3bYV17pSxBzeYdqOSEU4LnWAqh1fAsLolkBOHaL9Qb2JjMV-1cXlwowx8XA0pHcgIFSi-sfpRHNs0eRWIqmJEerKJiV1oS1TKM3mUCDNXw0n1L6aXFroeY-zDo5RL4lNdXvXTaw6uKIbnVgZt9qflLPp871CfEfpK27fNRlvNvQp7B2xlGCqODACL5~SKZH~28BvuCiWVHgxuEJAAAA
+archive.3.name=syndie.echelon.i2p
+archive.3.url=http://syndie.echelon.i2p/?i2paddresshelper=4W79xrs~ZVo2nXynH8Dyl4gOTL2qQoCOyndoJaXDkt5bGDemvaCp6AayGWxMM1aFLfZayS6dy79-UGK2xabOMatg~zcvb3QNOgelAXpMhLBb3htZchXHoWed73Zu8HhBM9RkU2hEoknVIQ6wYWCDTabPwTy0AiMgnL7sPvlIUr3OoYx6K6~QUJ4aY3qhOxlT7~agx~AB8YG9lRpwMcooCy-vxwDOIP3pX71sy-0ag~-lE4UmQ3MSSzlNp7KquzKkMk07BD7TpDrxJpfi9zCqsFCuYYHnHTrsyVApFS-DZZdb0aNHPeKmenimJIiDQgueU3xwVvdINv1puT3Zkzt2H1rMqqu5SMLsesjcRuPsaCazL40J5-7f2aZ1~mGJbxUxQY~53y9eSoCR7-n1W~qL4i6LxwEXpFS4IXWi3lA8hq7i-NqMZwbwHP8elAFg~kNaW9cgeRn~LX0lCZc5ztbYc2qJeMMFtR0kSG3PvOcci961maQYbcEpHVjfgFfFxR4KAAAA
 archive.3.proxy=127.0.0.1:4444
 archive.3.pullpolicy=RecentMessagesOnly
-archive.3.pushpolicy=SendNothing
-archive.3.syncbydefault=false
+archive.3.syncbydefault=true
 ##########################################
-archive.4.name=archive.i2p-projekt.de:8080 (clearnet)
-archive.4.url=http://archive.i2p-projekt.de:8080
-archive.4.pushpolicy=RecentMessagesOnly
+archive.4.name=syndie.welterde.i2p
+archive.4.url=http://syndie.welterde.i2p/?i2paddresshelper=tYPP3G3Ul1wXDxyotkqzT7wCHHm0c4e-JeKbWSU0dbPI3lGm1hxKEMHXRORk8VrxaGZz1UtnQp3ERMY-8zEd~D56v4Bw0PLu~KV~pTxE7RNld-ACKTBYGj6OBmWcNYHCqjzakJOLUzZKydJDphTa3Fozpp1UyoXtZU-u8p6VJeFMhBUT1AkvCxFThFyQUmQ~zFit-LSL3TG2Y564X4b7NeWBQ4HvrxsUBgga0IJhKiLO4rXeUk~DmjwyM~nyLT2puTEJqm8T44CoglVpnJiqG6hENPCTnZ0Qh5ecZjWrP8e5jo4Dr3bYV17pSxBzeYdqOSEU4LnWAqh1fAsLolkBOHaL9Qb2JjMV-1cXlwowx8XA0pHcgIFSi-sfpRHNs0eRWIqmJEerKJiV1oS1TKM3mUCDNXw0n1L6aXFroeY-zDo5RL4lNdXvXTaw6uKIbnVgZt9qflLPp871CfEfpK27fNRlvNvQp7B2xlGCqODACL5~SKZH~28BvuCiWVHgxuEJAAAA
+archive.4.proxy=127.0.0.1:4444
+archive.4.pullpolicy=RecentMessagesOnly
+archive.4.pushpolicy=SendNothing
 archive.4.syncbydefault=false
 ##########################################
-archive.5.name=syndie.welterde.de (clearnet)
-archive.5.url=http://syndie.welterde.de/
-archive.5.pushpolicy=SendNothing
+archive.5.name=archive.i2p-projekt.de:8080 (clearnet)
+archive.5.url=http://archive.i2p-projekt.de:8080
+archive.5.pushpolicy=RecentMessagesOnly
 archive.5.syncbydefault=false
 ##########################################
-archive.6.name=syndielzlvbxdsah.onion:8080 (Tor)
-archive.6.url=http://syndielzlvbxdsah.onion:8080
-archive.6.proxy=127.0.0.1:8118
-archive.6.pullpolicy=RecentMessagesOnly
+archive.6.name=syndie.welterde.de (clearnet)
+archive.6.url=http://syndie.welterde.de/
+archive.6.pushpolicy=SendNothing
 archive.6.syncbydefault=false
+##########################################
+archive.7.name=syndielzlvbxdsah.onion:8080 (Tor)
+archive.7.url=http://syndielzlvbxdsah.onion:8080
+archive.7.proxy=127.0.0.1:8118
+archive.7.pullpolicy=RecentMessagesOnly
+archive.7.syncbydefault=false
 ##########################################
 
 ##########################################
