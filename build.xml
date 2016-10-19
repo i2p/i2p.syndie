@@ -1057,6 +1057,8 @@
         </exec>
         <delete includeemptydirs="true" quiet="false">
             <fileset dir="../${ant.project.name}-${syndie.release.version}/_MTN" />
+            <fileset dir="../${ant.project.name}-${syndie.release.version}/debian-alt"/>
+            <fileset dir="../${ant.project.name}-${syndie.release.version}/lib"/>
         </delete>
         <tar longfile="gnu" destfile="${source.tarball.name}" compression="bzip2">
             <tarfileset dir="../${ant.project.name}-${syndie.release.version}" prefix="${ant.project.name}-${syndie.release.version}">
