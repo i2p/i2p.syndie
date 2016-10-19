@@ -3,17 +3,18 @@ Section: java
 Priority: extra
 Maintainer: Kill Your TV <killyourtv@i2pmail.org>
 Build-Depends: debhelper (>= 7.0.50~)
-Build-Depends-Indep: ant, default-jdk, libswt-gtk-3-java | libswt-gtk-3.6-java | libswt-gtk-3.5-java , libhsqldb-java, i2p-router | i2p
+Build-Depends-Indep: ant, openjdk-7-jdk, libswt-gtk-3-java, libhsqldb-java, i2p-router | i2p
 Standards-Version: 3.9.3
 Homepage: http://syndie.i2p2.de
 
 Package: syndie
 Architecture: all
-Depends: ${shlibs:Depends}, ${misc:Depends}, ${java:Depends}, default-jre | java5-runtime | java6-runtime, libhsqldb-java,
- libswt-gtk-3.5-java | libswt-gtk-3.6-java | libswt-gtk-3-java, libhsqldb-java, i2p-router | i2p
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${java:Depends},
+ openjdk-9-jre | openjdk-8-jre | openjdk-7-jre | default-jre | java9-runtime | java8-runtime | java7-runtime,
+ libswt-gtk-3-java, libhsqldb-java, i2p-router | i2p
 Suggests: tor, freenet
 Enhances: tor, i2p-router, i2p
-Description: open source system for operating distributed forums
+Description: Syndie anonymous distributed forums
  Syndie is java-based open source system for operating secure distributed
  forums.
  .

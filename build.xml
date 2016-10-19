@@ -112,12 +112,28 @@
         <attribute name="name" default="" />
         <attribute name="type-class" />
         <attribute name="additional" default=""/>
-
         <sequential>
             <jar destfile="${pkgtemp.dir}/bin/syndie@{name}.jar">
                 <manifest>
                     <attribute name="Main-Class" value="@{type-class}" />
                     <attribute name="Class-Path" value="../lib/i2p.jar ../lib/hsqldb.jar ../lib/syndie.jar @{additional}" />
+                    <attribute name="Built-By" value="${build.built-by}" />
+                    <attribute name="Build-Date" value="${build.timestamp}" />
+                    <attribute name="Base-Revision" value="${workspace.version}" />
+                </manifest>
+            </jar>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="make-stub-jar-debian">
+        <attribute name="name" default="" />
+        <attribute name="type-class" />
+        <attribute name="additional" default=""/>
+        <sequential>
+            <jar destfile="${pkgtemp.dir}/bin/syndie@{name}.jar">
+                <manifest>
+                    <attribute name="Main-Class" value="@{type-class}" />
+                    <attribute name="Class-Path" value="${i2p.jar} ${hsqldb.jar} /usr/share/syndie/syndie.jar @{additional}" />
                     <attribute name="Built-By" value="${build.built-by}" />
                     <attribute name="Build-Date" value="${build.timestamp}" />
                     <attribute name="Base-Revision" value="${workspace.version}" />
@@ -514,6 +530,7 @@
         </jar>
     </target>
 
+    <!-- note hardcoded hsqldb path, won't work for debian -->
     <target name="jar-cli" depends="compile-cli" description="Build jar with only the cli in ./build">
         <property name="build.built-by" value="unknown" />
         <jar jarfile="${build.dir}/syndie-cli.jar">
@@ -934,6 +951,13 @@
         <make-stub-jar name="-cli" type-class="${cli.class}" />
     </target>
 
+    <!-- use this target from debian/rules -->
+    <target name="stub-jars-debian" depends="jar, preppkg-debian" description="Create manifest-only jars for Syndie">
+        <make-stub-jar-debian name="-desktop" additional="${swt.jar}" type-class="${desktop.class}" />
+        <make-stub-jar additional="${swt.jar}" type-class="${tabs.class}" />
+        <make-stub-jar name="-cli" type-class="${cli.class}" />
+    </target>
+
     <target name="preppkg" depends="prep-docs, jar">
         <copy file="${swt.jar}" tofile="${pkgtemp.dir}/lib/swt.jar" />
         <copy file="${hsqldb.jar}" todir="${pkgtemp.dir}/lib" />
@@ -941,7 +965,19 @@
         <copy file="${build.dir}/syndie.jar" todir="${pkgtemp.dir}/lib" />
     </target>
 
-    <target name="prep-docs">
+    <target name="preppkg-debian" depends="prep-docs-debian, jar">
+        <copy file="${build.dir}/syndie.jar" todir="${pkgtemp.dir}/lib" />
+    </target>
+
+    <target name="prep-docs" depends="prep-docs-debian">
+        <copy file="lib/hsqldb_lic.txt" todir="${pkgtemp.dir}/doc/licenses" />
+        <replaceregexp file="${pkgtemp.dir}/doc/LICENSE" byline="true"
+            match="lib/hsqldb_lic.txt"
+            replace="licenses/hsqldb_lic.txt">
+        </replaceregexp>
+    </target>
+
+    <target name="prep-docs-debian">
         <copy todir="${pkgtemp.dir}/bin">
             <fileset dir="./bin" />
         </copy>
@@ -952,17 +988,12 @@
             <fileset dir="doc/web" />
         </copy>
         <copy file="LICENSE" todir="${pkgtemp.dir}/doc/"/>
-        <copy file="lib/hsqldb_lic.txt" todir="${pkgtemp.dir}/doc/licenses" />
         <copy todir="${pkgtemp.dir}/doc/licenses">
             <fileset dir="doc/licenses/" excludes="SWT/**" />
         </copy>
         <replaceregexp file="${pkgtemp.dir}/doc/LICENSE" byline="true"
             match="doc/licenses/"
             replace="licenses/">
-        </replaceregexp>
-        <replaceregexp file="${pkgtemp.dir}/doc/LICENSE" byline="true"
-            match="lib/hsqldb_lic.txt"
-            replace="licenses/hsqldb_lic.txt">
         </replaceregexp>
     </target>
 
@@ -1031,6 +1062,8 @@
             <tarfileset dir="../${ant.project.name}-${syndie.release.version}" prefix="${ant.project.name}-${syndie.release.version}">
                 <include name="**/**" />
                 <exclude name="debian/**"/>
+                <exclude name="debian-alt/**"/>
+                <exclude name="lib/**"/>
                 <exclude name="**/*.sh"/>
             </tarfileset>
             <tarfileset dir="../${ant.project.name}-${syndie.release.version}" prefix="${ant.project.name}-${syndie.release.version}" filemode="755">
@@ -1038,6 +1071,14 @@
                 <include name="**/*.sh" />
             </tarfileset>
         </tar>
+    </target>
+
+    <target name="debian-binary">
+        <exec executable="fakeroot" failonerror="true">
+            <arg value="debian/rules" />
+            <arg value="clean" />
+            <arg value="binary" />
+        </exec>
     </target>
 
     <target name="debian-tarball" depends="source-tarball">

@@ -35,8 +35,6 @@ public class TextUI implements UI {
         } catch (UnsupportedEncodingException uee) {
             errorMessage("internal error, your JVM doesn't support UTF-8?", uee);
             throw new RuntimeException("Broken JVM");
-        } catch (IOException ioe) {
-            ioe.printStackTrace();
         }
     }
     private static final class NullOutputStream extends OutputStream {

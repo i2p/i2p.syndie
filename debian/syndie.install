@@ -1,4 +1,7 @@
-dist/syndie.jar usr/share/syndie
-lib/servlet.jar usr/share/syndie
+build/syndie.jar usr/share/syndie
+pkg-temp/bin/syndie-cli usr/bin
+pkg-temp/bin/syndie-desktop usr/bin
+pkg-temp/bin/syndie usr/bin
 debian/syndie.xpm usr/share/pixmaps
 debian/syndie.desktop usr/share/applications
+debian/syndie-desktop.desktop usr/share/applications

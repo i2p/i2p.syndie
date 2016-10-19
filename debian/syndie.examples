@@ -1,1 +1,3 @@
-bin/*
+bin/bulkimport.syndie
+bin/httpgetdist.syndie
+bin/runhttpserv.syndie

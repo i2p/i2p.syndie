@@ -1,5 +1,8 @@
 [Version key: $major.$minor$type, $type: a(lpha), b(eta), r(elease)c(andidate)]
 
+* 2016-10-19 1.10tbd (zzz)
+  - Debian packaging fixes
+
 * 2016-08-14 1.107b-0 (zzz)
   - Add 'Lazy Edward' default archive
 
