@@ -954,8 +954,8 @@
     <!-- use this target from debian/rules -->
     <target name="stub-jars-debian" depends="jar, preppkg-debian" description="Create manifest-only jars for Syndie">
         <make-stub-jar-debian name="-desktop" additional="${swt.jar}" type-class="${desktop.class}" />
-        <make-stub-jar additional="${swt.jar}" type-class="${tabs.class}" />
-        <make-stub-jar name="-cli" type-class="${cli.class}" />
+        <make-stub-jar-debian additional="${swt.jar}" type-class="${tabs.class}" />
+        <make-stub-jar-debian name="-cli" type-class="${cli.class}" />
     </target>
 
     <target name="preppkg" depends="prep-docs, jar">
