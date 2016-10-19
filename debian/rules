@@ -8,12 +8,13 @@
 
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
+export DEB_HOST_ARCH_CPU := $(shell dpkg-architecture -qDEB_HOST_ARCH_CPU)
 
 %:
 	dh $@
 
 override_dh_auto_build:
-	ant stub-jars-debian -Dlib.dir=/usr/share/java -Di2p.jar=/usr/share/i2p/lib/i2p.jar -Djavac.version=1.7 '-Djavac.compilerargs=-bootclasspath /usr/lib/jvm/java-7-openjdk-amd64/jre/lib/rt.jar:/usr/lib/jvm/java-7-openjdk-amd64/jre/lib/jce.jar'
+	ant stub-jars-debian -Dlib.dir=/usr/share/java -Di2p.jar=/usr/share/i2p/lib/i2p.jar -Djavac.version=1.7 "-Djavac.compilerargs=-bootclasspath /usr/lib/jvm/java-7-openjdk-$(DEB_HOST_ARCH_CPU)/jre/lib/rt.jar:/usr/lib/jvm/java-7-openjdk-$(DEB_HOST_ARCH_CPU)/jre/lib/jce.jar"
 	chmod 755 pkg-temp/bin/*.jar
 	mv pkg-temp/bin/syndie-cli.jar pkg-temp/bin/syndie-cli
 	mv pkg-temp/bin/syndie.jar pkg-temp/bin/syndie
