@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mime-info xmlns='http://www.freedesktop.org/standards/shared-mime-info'>
+	<mime-type type="application/x-i2p-syndie">
+		<comment>I2P Syndie data</comment>
+		<glob pattern="*.syndie"/>
+		<magic priority="75">
+			<match value="Syndie.Message.1." type="string" offset="0"/>
+		</magic>
+	</mime-type>
+</mime-info>
