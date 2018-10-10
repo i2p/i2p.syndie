@@ -43,7 +43,7 @@ no setup required:</p>
  <li>Create a monotone nym:<br />
      <code>mtn genkey arbitrary@name</code></li>
  <li>Pull the latest code into your monotone database:<br />
-     <code>mtn --db=./syndie.mtn pull mtn.i2p2.de "i2p.syndie"</code></li>
+     <code>mtn --db=./syndie.mtn pull mtn.i2p-projekt.de "i2p.syndie"</code></li>
  <li>Check out the latest code from your monotone database into a new "workspace"<br />
      <code>mtn --db=./syndie.mtn checkout --branch="i2p.syndie" syndie</code></li>
  <li>You're good to go!  The code is now in <code>./syndie/</code></li>
@@ -55,7 +55,7 @@ your monotone workspace (<code>./syndie/</code>) and run <code>mtn update</code>
 <h2>Contributing to Syndie development</h2>
 
 <p>If you will be contributing to the codebase repeatedly you'll want to get
-commit priviledges on the <code>mtn.i2p2.de</code> repository directly.
+commit priviledges on the <code>mtn.i2p-projekt.de</code> repository directly.
 </p>
 
 <ol>
@@ -86,11 +86,11 @@ end
 </ol>
 
 <p>Once the keys are authorized the transient nym will be granted write
-permission to the <code>mtn.i2p2.de</code> repository.</p>
+permission to the <code>mtn.i2p-projekt.de</code> repository.</p>
 
 <p>Monotone development cheatsheet:</p>
 <ul>
- <li><code>mtn sync mtn.i2p2.de --branch="i2p.syndie"</code><br />
+ <li><code>mtn sync mtn.i2p-projekt.de --branch="i2p.syndie"</code><br />
      this pulls the latest changes from the repository into your database, and
      pushes your latest already-committed changes from your database into the
      repository.</li>
