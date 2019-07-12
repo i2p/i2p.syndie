@@ -264,7 +264,7 @@ class AttachmentPreview extends BaseComponent implements Translatable, Themeable
                 _type.setVisible(false);
         }
         
-        _size.setText(DataHelper.formatSize2(bytes).replace("&nbsp;", " ") + 'B');
+        _size.setText(DataHelper.formatSize2(bytes, false) + 'B');
         
         timer.addEvent("options displayed");
         timer.addEvent("data fetched");

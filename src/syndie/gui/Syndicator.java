@@ -1144,7 +1144,7 @@ public class Syndicator extends BaseComponent implements Translatable, Themeable
     }
     
     private static String formatSize(long sz) {
-        return DataHelper.formatSize2(sz).replace("&nbsp;", " ") + 'B';
+        return DataHelper.formatSize2(sz, false) + 'B';
     }
 
     private void resizeCols(TreeItem item) {
